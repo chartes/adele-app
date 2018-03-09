@@ -4,7 +4,7 @@
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip install flask
+pip install flask sqlalchemy
 ```
 
 The database will be fetched from https://github.com/chartes/adele each time the server is restarted.
