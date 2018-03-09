@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <title>{{ title }} - Microblog</title>
+    </head>
+    <body>
+        <table>
+        {% for d in doc %}
+        <tr>
+        <td>
+            <h1>Dossier {{ d[0] }} </h1>
+            <h2>{{ d[1] }}</h2>
+            <h3>{{ d[2] }}</h3>
+            <img src="http://193.48.42.68/loris/adele/dossiers/{{ d[0] }}.jpg/full/full/0/default.jpg"
+                 width="180px" height="180px"
+            />
+        </td>
+        </tr>
+        {% endfor %}
+    </tr>
+        <table>
+    </body>
+</html>
