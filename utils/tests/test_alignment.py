@@ -1,20 +1,16 @@
 import unittest
-import lxml.etree as ET
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import create_session
 from sqlalchemy import create_engine
 
+from config import Config
 
-DB_URL="/Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite"
-
-DOC_ID = 20
-DOC_FILEPATH = "/Users/mrgecko/Documents/Dev/Data/adele/dossiers/{0}.xml".format(DOC_ID)
 NS_TI = {"ti": "http://www.tei-c.org/ns/1.0"}
 
 
 class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
-    ALIGNMENT_STMT = """
+    ALIGNMENT_STMT = lambda doc_id, transcription_id : """
     -- Transcription vs Translation
     SELECT
       transcription.transcription_id,
@@ -30,15 +26,16 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
       JOIN  translation
         ON alignment_translation.translation_id = translation.translation_id
     WHERE
+      transcription.transcription_id = {transcription_id} 
+      and
       transcription.doc_id = {doc_id} 
       and 
       translation.doc_id = {doc_id}
     ;
-    """.format(doc_id=DOC_ID)
+    """.format(doc_id=doc_id, transcription_id=transcription_id)
 
     def setUp(self):
-        self.doc = ET.parse(DOC_FILEPATH)
-        self.engine = create_engine("sqlite:///{url}".format(url=DB_URL))
+        self.engine = create_engine("sqlite:///{url}".format(url=Config.TESTS_DB_URL))
 
         def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
             disc = '_'.join(col.name for col in constraint.columns)
@@ -48,7 +45,8 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
         self.session = create_session(bind=self.engine)
 
-        self.res = self.engine.execute(TestTranscriptionTranslationAlignment.ALIGNMENT_STMT).fetchall()
+        stmt = TestTranscriptionTranslationAlignment.ALIGNMENT_STMT(20, 20)
+        self.res = self.engine.execute(stmt).fetchall()
 
     def test_both_ids_match(self):
         # expect consistency between translation and traduction ids (shouldn't happen)
@@ -60,8 +58,8 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         self.assertSetEqual(transcription_ids, translation_ids, "Something is wrong with the IDs")
 
     def test_alignment_is_correct(self):
-        with open("./data/transcription_doc20.txt", "r") as transcription_f, \
-             open("./data/translation_doc20.txt", "r") as translation_f:
+        with open("utils/tests/data/transcription_doc20.txt", "r") as transcription_f, \
+             open("utils/tests/data/translation_doc20.txt", "r") as translation_f:
             transcription_lines = transcription_f.read().splitlines()
             translation_lines = translation_f.read().splitlines()
 

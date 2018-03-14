@@ -16,3 +16,5 @@ class Config(object):
 
         SQLALCHEMY_DATABASE_URI = os.path.join('db', 'adele.sqlite')
         SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+        TESTS_DB_URL=SQLALCHEMY_DATABASE_URI
