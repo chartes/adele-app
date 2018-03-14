@@ -9,5 +9,5 @@ install:
 # command to run tests
 script:
   - mkdir db
-  - wget https://github.com/chartes/adele/raw/master/adele.sqlite db/adele.sqlite
+  - cd db && curl -O https://github.com/chartes/adele/raw/master/adele.sqlite db/adele.sqlite
   - python -m unittest utils/tests/test_alignment.py
