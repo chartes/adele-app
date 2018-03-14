@@ -1,11 +1,21 @@
 from flask import render_template
 from app import app, db
 
+from app.database.alignment.alignment_translation import align_translation
 
 
 @app.route('/')
 @app.route('/index')
 def index():
     doc = db.execute("select * from document").fetchall()
-    user = {'username': 'Miguel'}
-    return render_template('index.html', title='Home', user=user, doc=doc)
+    return render_template('index.html', title='Adele',  doc=doc)
+
+@app.route('/alignment/translation/<doc_id>/<transcription_id>')
+def r_align_translation(doc_id, transcription_id):
+    res = align_translation(doc_id, transcription_id)
+    if len(res) > 0:
+        alignment=[ {"transcription":t[2], "translation":t[3]} for t in res]
+    else:
+        #no result, should raise an error
+        alignment = []
+    return render_template('alignment.html', alignment=alignment)

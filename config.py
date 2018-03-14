@@ -1,14 +1,18 @@
 import os
 import urllib.request
 
+import shutil
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
-    local_filename, headers = urllib.request.urlretrieve(
-        'https://github.com/chartes/adele/raw/master/adele.sqlite',
-        os.path.join('db', 'adele.sqlite')
-    )
 
+    with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response,\
+            open(os.path.join('db', 'adele.sqlite'), 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
 
-    SQLALCHEMY_DATABASE_URI = local_filename
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+        #local_filename="/Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite"
+        #local_filename = "/Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite"
+
+        SQLALCHEMY_DATABASE_URI = os.path.join('db', 'adele.sqlite')
+        SQLALCHEMY_TRACK_MODIFICATIONS = False

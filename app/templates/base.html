@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}
+    {% if title %}{{ title }}{% endif %}
+    {% endblock %}
+    {% block head_scripts %}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+        <link rel="stylesheet" href="css/base.css">
+        <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+    {% endblock head_scripts %}
+</head>
+<body>
+    {% block navbar %}
+        <nav class="navbar navbar-default">
+        </nav>
+    {% endblock %}
+
+    {% block content %}
+        <div class="container">
+            {# application content needs to be provided in the app_content block #}
+            {% block app_content %}{% endblock %}
+        </div>
+    {% endblock %}
+</body>
+</html>

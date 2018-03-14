@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Alignment</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="container">
+        <table class="table is-striped is-fullwidth">
+        {% for al in alignment %}
+            <tr>
+                <td>{{ al.transcription }}</td>
+                <td>{{ al.translation }}</td>
+            </tr>
+        {%  endfor %}
+        </table>
+    </div>
+{% endblock content %}
+
