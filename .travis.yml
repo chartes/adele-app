@@ -10,4 +10,4 @@ install:
 script:
   - mkdir db
   - cd db && curl -O https://github.com/chartes/adele/raw/master/adele.sqlite
-  - python -m unittest utils/tests/test_alignment.py
+  - cd .. && python -m unittest utils/tests/test_alignment.py
