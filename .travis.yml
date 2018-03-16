@@ -6,6 +6,7 @@ python:
 # command to install dependencies
 install:
   - pip install sqlalchemy
+  - pip install flask
 # command to run tests
 script:
   - mkdir db
