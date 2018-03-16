@@ -12,7 +12,6 @@ class Config(object):
         shutil.copyfileobj(response, out_file)
 
         #local_filename="/Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite"
-        #local_filename = "/Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite"
 
         SQLALCHEMY_DATABASE_URI = os.path.join('db', 'adele.sqlite')
         SQLALCHEMY_TRACK_MODIFICATIONS = False
