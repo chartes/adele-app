@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from config import Config
 
 NS_TI = {"ti": "http://www.tei-c.org/ns/1.0"}
+TEST_DATA_DIR = "app/tests/data"
 
 
 class TestTranscriptionTranslationAlignment(unittest.TestCase):
@@ -48,7 +49,7 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         cls.session = create_session(bind=cls.engine)
 
         cls.doc_list = []
-        for root, directories, filenames in os.walk('utils/tests/data/transcription'):
+        for root, directories, filenames in os.walk(os.path.join(TEST_DATA_DIR, 'transcription')):
             for filename in filenames:
                 if filename.endswith(".txt"):
                     cls.doc_list.append(filename.split(".")[0])
@@ -70,8 +71,8 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
     def test_alignment_is_correct(self):
         for doc in TestTranscriptionTranslationAlignment.doc_list:
-            with open("utils/tests/data/transcription/{0}.txt".format(doc), "r") as transcription_f, \
-                 open("utils/tests/data/translation/{0}.txt".format(doc), "r") as translation_f:
+            with open(os.path.join(TEST_DATA_DIR, "transcription", "{0}.txt").format(doc), "r") as transcription_f, \
+                 open(os.path.join(TEST_DATA_DIR, "translation", "{0}.txt").format(doc), "r") as translation_f:
                 transcription_lines = transcription_f.read().splitlines()
                 translation_lines = translation_f.read().splitlines()
 
