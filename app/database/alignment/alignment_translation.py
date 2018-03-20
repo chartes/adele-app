@@ -1,6 +1,7 @@
 from app import db
 
-def __get_translation_alignment(transcription_id) : """
+def __get_translation_alignment(transcription_id):
+    return """
    -- Transcription vs Translation
    SELECT
      transcription.transcription_id,
