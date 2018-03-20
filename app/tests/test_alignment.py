@@ -47,7 +47,7 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         cls.doc_list = []
         for root, directories, filenames in os.walk(os.path.join(TEST_DATA_DIR, 'transcription')):
             for filename in filenames:
-                if filename.endswith("10.txt"):
+                if filename.endswith(".txt"):
                     cls.doc_list.append(filename.split(".")[0])
 
         cls.doc_list.sort()
@@ -79,16 +79,16 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
                 if len(translation_lines) == 0:
                     translation_ids = set([l["translation_id"] for l in res if l["translation_id"] != None])
-                    self.assertEqual(len(translation_ids), 0, "There is no translation for doc {0}".format(doc))
+                    self.assertEqual(0, len(translation_ids), "There is no translation for doc {0}".format(doc))
                 else:
                     self.assertEqual(len([l for l in transcription_lines if len(l)>0]), len([l["transcription"] for l in res if len(l["transcription"])>0]), "Transcription lines count does not match for doc {0}".format(doc))
                     for i, transcription in enumerate(transcription_lines):
                         print(res[i])
-                        self.assertEqual(res[i]["transcription"], transcription, "Transcription ptrs look wrong for doc {0}".format(doc))
+                        self.assertEqual(transcription, res[i]["transcription"] , "Transcription ptrs look wrong for doc {0}".format(doc))
 
                     self.assertEqual(len([l for l in translation_lines if len(l)>0]), len([l["translation"] for l in res if len(l["translation"])>0]), "Translation lines count does not match for doc {0}".format(doc))
                     for i, translation in enumerate(translation_lines):
-                        self.assertEqual(res[i]["translation"], translation, "Translation ptrs look wrong for doc {0}".format(doc))
+                        self.assertEqual(translation, res[i]["translation"], "Translation ptrs look wrong for doc {0}".format(doc))
 
             print("Alignment transcription/translation for doc {0} is OK".format(doc) )
 

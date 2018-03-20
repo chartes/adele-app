@@ -998,21 +998,21 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,391,511,522);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,392,523,562);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,393,613,623);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,394,812,926);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,395,1040,1042);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,396,1414,1430);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,397,2000,2003);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,398,2290,2301);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,394,812,830);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,395,944,946);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,396,1318,1334);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,397,1904,1907);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (48,398,2194,2205);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,399,218,235);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,400,235,241);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,401,249,259);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,402,261,268);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,403,270,278);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,404,387,490);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,405,531,533);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,406,755,762);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,407,1191,1200);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,404,387,394);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,405,435,437);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,406,659,666);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (48,407,1095,1104);
 --========================================
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (408,0,'jpilla','Pierre de Ferrières fut sénéchal de Saintonge de 1321 à 1324, après avoir été sénéchal de Rouergue.');
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (409,0,'jpilla','La titulature du roi dans ses actes et sur ses sceaux est toujours, par tradition, rex Francorum ; les contemporains transposent plus volontiers la formule vernaculaire en rex Francie ; les actes de l’administration royale hésitent entre les deux formes, quand elles ne sont pas abrégées. - Les fils de Philippe le Bel, de 1314 à 1328, ont pris régulièrement le titre complémentaire de roi de Navarre.');
@@ -1921,15 +1921,15 @@ INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (822,0,'jpilla',
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,799,32,45);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,800,181,187);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,801,385,396);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,802,653,664);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,803,778,782);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,804,799,805);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,805,807,821);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,806,841,856);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,807,858,879);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,808,880,893);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,809,914,930);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,810,971,988);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,802,652,663);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,803,776,780);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,804,797,803);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,805,805,819);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,806,838,853);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,807,855,876);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,808,877,890);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,809,911,927);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,810,968,985);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (73,811,35,47);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (73,812,215,222);
@@ -1971,13 +1971,13 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,824,71,93);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,825,113,126);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,826,174,179);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,827,261,267);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,828,437,440);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,829,851,858);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,830,885,895);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,831,1046,1052);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,832,1085,1092);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,833,1145,1156);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,827,260,266);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,828,436,439);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,829,850,857);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,830,884,894);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,831,1045,1051);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,832,1084,1091);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,833,1144,1155);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (74,834,40,45);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (74,835,71,94);
@@ -2221,9 +2221,9 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,937,435,450);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,938,450,457);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,939,461,472);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,940,766,1390);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,941,2039,2088);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,942,2088,2104);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,940,766,769);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,941,1418,1467);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (81,942,1467,1483);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (81,943,76,84);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (81,944,125,133);

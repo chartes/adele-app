@@ -15,7 +15,7 @@ religiosis venditas,
 una<ex>m</ex> vid<ex>e</ex>lic<ex>et</ex> ad Spinam Henrici, q<ex>u</ex>atuor
 arpenta <ex>et</ex> unu<ex>m</ex> q<ex>u</ex>arteriu<ex>m</ex> v<ex>e</ex>l ci<ex>r</ex>citer ad
 arpentu<ex>m</ex> illi<ex>us</ex> t<ex>er</ex>ritorii <ex>con</ex>tinentem, <ex>et</ex>
-aliam sitam juxta viam q<ex>u</ex>a itur vers<ex>us</ex>
+aliam sitam juxta viam q<ex>u</ex>a itur  vers<ex>us</ex>
 Aciacu<ex>m</ex>, arpentu<ex>m</ex> unu<ex>m</ex> <ex>et</ex> dimidiu<ex>m</ex> vel
 circit<ex>er</ex> <ex>con</ex>tinentem arpentu<ex>m</ex>
 suprad<ex>i</ex>c<ex>tu</ex>m,

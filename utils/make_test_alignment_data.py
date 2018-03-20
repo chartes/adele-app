@@ -44,6 +44,7 @@ def stringify_children(node):
             chain(*((tounicode(child, with_tail=False), child.tail) for child in node.getchildren())),
             (node.tail,)) if chunk)
     s = s.replace(' xmlns="http://www.tei-c.org/ns/1.0"', '')
+    s = s.replace(u'\xa0', ' ')
     return re.sub('\n', '', s)#.rstrip()
 
 
@@ -78,7 +79,7 @@ def remove_nodes(node, tag, ns):
 
 if __name__ == "__main__":
 
-    filenames = [f for f in os.listdir(ROOT) if f.endswith("10.xml")]
+    filenames = [f for f in os.listdir(ROOT) if f.endswith(".xml")]
     filenames.sort()
 
     for f in filenames:
