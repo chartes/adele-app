@@ -1,4 +1,6 @@
 DELETE FROM note ;
+DELETE FROM translation_has_note ;
+DELETE FROM transcription_has_note ;
 --========================================
 ------------------------------------------
 ------------------------------------------
@@ -27,28 +29,28 @@ INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (18,0,'jpilla','
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (19,0,'jpilla','La chancellerie elle aussi a été laissée vacante par Philippe Auguste, depuis 1185. Elle était dirigée par un chef effectif, qui prit rapidement le titre de garde des sceaux, "cil qui porte le scel". Dès la fin du XIIIe siècle, on lui donna par courtoisie (ou il prit par ailleurs) le titre de "chancelier", qui fut bientôt officiellement réintroduit à la chancellerie (alors qu’il restait hors d’usage à la Curie pontificale où la charge avait elle aussi été laissée vacante).');
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (20,0,'jpilla','L’un des principaux conseillers du roi, frère hospitalier, élu évêque de Senlis en 1213/14. A compter de 1201, son intervention dans l’administration du royaume et plus spécialement à la chancellerie est marquée par cette formule "Donné... par la main de frère Guérin", qui bien sûr ne se rapporte pas à l’exécution matérielle , mais au rôle de chef de la chancellerie (la formule "Data par manum...", introduite à l’imitation évidente des privilèges pontificaux, est devenue dès les années 1110 la formule usuelle de la souscription de chancellerie au bas des actes royaux). Guérin sera d’ailleurs orné du titre de chancelier à la fin de sa vie (1223-1227).');
 ------------------------------------------
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,0,214,222);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,1,294,299);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,2,334,342);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,3,1413,1483);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,4,1483,1491);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,5,1603,1627);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,6,1643,1655);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,7,1659,1666);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,8,1680,1688);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,9,1708,1727);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,10,1746,1770);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,0,215,223);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,1,295,300);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,2,335,343);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,3,1417,1487);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,4,1488,1496);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,5,1609,1633);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,6,1649,1661);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,7,1665,1672);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,8,1686,1694);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,9,1714,1733);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (1,10,1752,1776);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,11,141,146);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,12,192,198);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,13,221,228);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,14,1051,1089);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,15,1170,1191);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,16,1212,1224);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,17,1230,1239);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,18,1256,1260);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,19,1279,1309);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,20,1324,1337);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,15,1171,1192);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,16,1213,1225);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,17,1231,1240);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,18,1257,1261);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,19,1280,1310);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (1,20,1325,1338);
 --========================================
 ------------------------------------------
 ------------------------------------------
@@ -300,10 +302,10 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,83,268,289);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,84,290,300);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,85,491,498);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,86,1012,1028);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,87,1424,1479);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,88,1512,1518);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,89,2455,2476);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,86,1013,1029);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,87,1425,1480);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,88,1513,1519);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (28,89,2456,2477);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (28,90,26,33);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (28,91,159,168);
@@ -482,17 +484,17 @@ INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (185,0,'jpilla',
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (186,0,'jpilla','Le quatre des nones de janvier est le 2 janvier. Faute d’étude adéquate, il est difficile de décider si le rédacteur a suivi un usage septentrional (style de Pâques), qui imposerait de convertir le millésime en « 1220 », ou le style de Noël, d’usage normal à Béziers comme à Narbonne (le millésime « 1219 » aurait alors été changé depuis le 25 décembre précédant, et correspondrait donc au millésime 1219 n. st.).');
 ------------------------------------------
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,164,92,110);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,165,331,353);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,166,416,421);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,167,644,653);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,168,686,729);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,169,839,870);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,170,1492,1551);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,171,3318,3343);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,172,3343,3444);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,173,3444,3463);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,174,4122,4135);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,175,4135,4164);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,165,333,355);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,166,419,424);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,167,648,657);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,168,690,733);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,169,843,874);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,170,1501,1561);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,171,3341,3376);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,172,3376,3477);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,173,3478,3497);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,174,4161,4174);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (32,175,4174,4203);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,176,60,66);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,177,186,189);
@@ -503,8 +505,8 @@ INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALU
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,182,486,496);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,183,815,840);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,184,1808,1857);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,185,2210,2216);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,186,2216,2242);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,185,2211,2217);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (32,186,2217,2243);
 --========================================
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (187,0,'jpilla','Hugues II (1136-1208) succède à son père Hugues Ier, comte de Rodez, vers 1156. En mai 1195, il associe au pouvoir son fils aîné Hugues III, qui devient ainsi comte à côté de son père. Après la mort de Hugues III en 1196, c’est le cinquième fils du vieux comte qui est à son tour associé, Guillem. Hugues II étant mort sans postérité en 1196, son père, qui a survécu, nomme à sa place Guillaume, son cinquième fils, comte de Rodez de 1196 à 1208.');
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (188,0,'jpilla','Hugues II (1136-1208) succède à son père Hugues Ier, comte de Rodez, vers 1156. En mai 1195, il associe au pouvoir son fils aîné Hugues III, qui devient ainsi comte à côté de son père. Après la mort de Hugues III en 1196, c’est le cinquième fils du vieux comte qui est à son tour associé, Guillem. Hugues II étant mort sans postérité en 1196, son père, qui a survécu, nomme à sa place Guillaume, son cinquième fils, comte de Rodez de 1196 à 1208.');
@@ -525,10 +527,10 @@ INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (200,0,'jpilla',
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,187,54,58);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,188,58,120);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,189,899,908);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,190,925,939);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,191,1269,1274);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,192,1439,1447);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,193,1566,1572);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,190,926,940);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,191,1271,1276);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,192,1441,1449);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (33,193,1568,1574);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (33,194,48,52);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (33,195,52,99);
@@ -1380,27 +1382,27 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,558,1342,1358);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,559,1403,1420);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,560,1432,1449);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,561,1482,1499);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,562,1509,1527);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,563,1596,1614);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,561,1491,1508);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,562,1518,1536);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (59,563,1605,1623);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,564,0,5);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,565,13,23);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,566,160,173);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,567,173,181);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,568,386,391);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,569,641,648);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,570,654,665);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,571,691,699);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,572,708,714);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,573,735,742);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,574,758,764);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,575,784,791);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,576,812,821);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,577,833,842);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,578,856,865);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,579,876,882);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,580,929,937);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,566,170,183);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,567,193,201);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,568,406,411);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,569,661,668);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,570,674,685);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,571,711,719);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,572,728,734);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,573,755,762);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,574,778,784);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,575,804,811);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,576,832,841);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,577,853,862);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,578,876,885);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,579,896,902);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (59,580,949,957);
 --========================================
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (581,0,'jpilla','Louis VII, roi de France de 1137 à 1180, duc d’Aquitaine du chef de son épouse Aliénor de 1137 à 1152.');
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (582,0,'jpilla','Adélaïde de Maurienne, épouse du roi Louis VI depuis 1115, mère de Louis VII, morte en 1154.');
@@ -1700,8 +1702,8 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (68,699,4903,4917);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (68,700,5287,5301);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (68,701,5870,5874);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (68,702,6065,6452);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (68,703,6094,6153);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (68,702,6065,6463);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (68,703,6105,6164);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (68,704,51,60);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (68,705,229,235);
@@ -1839,11 +1841,11 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,765,634,656);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,766,695,703);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,767,724,731);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,768,3605,3606);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,769,3606,3617);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,770,3838,3844);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,771,3862,3872);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,772,3975,4005);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,768,3614,3615);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,769,3624,3635);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,770,3867,3873);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,771,3891,3901);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (71,772,4004,4034);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (71,773,90,108);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (71,774,202,210);
@@ -1919,15 +1921,15 @@ INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (822,0,'jpilla',
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,799,32,45);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,800,181,187);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,801,385,396);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,802,652,663);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,803,776,780);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,804,797,803);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,805,805,819);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,806,838,853);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,807,855,876);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,808,877,890);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,809,911,927);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,810,968,985);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,802,653,664);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,803,778,782);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,804,799,805);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,805,807,821);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,806,841,856);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,807,858,879);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,808,880,893);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,809,914,930);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (73,810,971,988);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (73,811,35,47);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (73,812,215,222);
@@ -1969,13 +1971,13 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,824,71,93);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,825,113,126);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,826,174,179);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,827,260,266);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,828,436,439);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,829,850,857);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,830,884,894);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,831,1045,1051);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,832,1084,1091);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,833,1144,1155);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,827,261,267);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,828,437,440);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,829,851,858);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,830,885,895);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,831,1046,1052);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,832,1085,1092);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (74,833,1145,1156);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (74,834,40,45);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (74,835,71,94);
@@ -2041,12 +2043,12 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (76,862,1225,1232);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (76,863,1271,1282);
 ------------------------------------------
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,864,315,319);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,865,364,373);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,866,1239,1244);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,867,1363,1368);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,868,1430,1445);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,869,1450,1454);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,864,316,320);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,865,365,374);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,866,1240,1245);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,867,1364,1369);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,868,1431,1446);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (76,869,1451,1455);
 --========================================
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (870,0,'jpilla','Charles II le Chauve. Dernier fils de Louis le Pieux, le roi a depuis juin 841 conforté contre son demi-frère Lothaire la base de son pouvoir en Francie occidentale, grâce à une alliance avec son autre demi-frère Louis. On le saisit ici au retour d’une campagne contre Pépin II d’Aquitaine, qu’il a mis en déroute.');
 INSERT INTO note (note_id,note_type_id,user_ref,content) VALUES (871,0,'jpilla','Avallon, Yonne, ch-l. arr.');
@@ -2560,7 +2562,7 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (92,1086,908,931);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (92,1087,1249,1255);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (92,1088,1318,1330);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (92,1089,1408,1419);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (92,1089,1419,1430);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (92,1090,52,65);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (92,1091,188,202);
@@ -2718,29 +2720,29 @@ INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) 
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1132,334,365);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1133,375,392);
 INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1134,510,530);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1135,1338,1345);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1136,1345,1353);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1137,2043,2088);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1138,2218,2231);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1139,2379,2398);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1140,2460,2484);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1141,2484,2490);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1142,2667,2687);
-INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1143,2687,2705);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1135,1352,1359);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1136,1359,1367);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1137,2068,2113);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1138,2265,2278);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1139,2462,2481);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1140,2543,2567);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1141,2567,2573);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1142,2761,2781);
+INSERT INTO transcription_has_note (transcription_id,note_id,ptr_start,ptr_end) VALUES (106,1143,2781,2799);
 ------------------------------------------
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1144,18,26);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1145,42,62);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1146,91,97);
 INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1147,343,352);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1148,453,470);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1149,508,521);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1150,536,540);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1151,840,847);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1152,847,854);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1153,1486,1521);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1154,1590,1603);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1155,1693,1702);
-INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1156,1829,1841);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1148,464,481);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1149,562,575);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1150,590,594);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1151,923,930);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1152,930,937);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1153,1569,1604);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1154,1673,1686);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1155,1784,1793);
+INSERT INTO translation_has_note (translation_id,note_id,ptr_start,ptr_end) VALUES (106,1156,1987,1999);
 --========================================
 ------------------------------------------
 ------------------------------------------

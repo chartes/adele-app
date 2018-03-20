@@ -1,6 +1,6 @@
 from app import db
 
-ALIGNMENT_STMT = lambda doc_id, transcription_id : """
+def __get_translation_alignment(transcription_id) : """
    -- Transcription vs Translation
    SELECT
      transcription.transcription_id,
@@ -17,17 +17,25 @@ ALIGNMENT_STMT = lambda doc_id, transcription_id : """
        ON alignment_translation.translation_id = translation.translation_id
    WHERE
      transcription.transcription_id = {t_id} 
-     and
-     transcription.doc_id = {doc_id} 
-     and 
-     translation.doc_id = {doc_id}
    ;
-   """.format(t_id=transcription_id, doc_id=doc_id)
+   """.format(t_id=transcription_id)
 
-"""
-"""
-def align_translation(doc_id, transcription_id):
-    stmt = ALIGNMENT_STMT(doc_id, transcription_id)
+
+def align_translation(transcription_id):
+    """Fetches rows from alignment_translation.
+
+        Retrieves rows from the transcription and translation tables
+        using the alignment_transcription table to join data
+
+        Args:
+            transcription_id : a transcription_id
+        Returns:
+            A list of rows.
+            Each returned row is a tuple with the following database fields:
+            (transcription.transcription_id,  translation.translation_id, transcription_row, translation_row)
+
+    """
+    stmt = __get_translation_alignment(transcription_id)
     rows = db.execute(stmt).fetchall()
     for row in [row for row in rows]:
         print(row)

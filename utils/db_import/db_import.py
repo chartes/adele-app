@@ -69,7 +69,7 @@ clean_entities = lambda s: s.replace("&amp;", "&").replace("&gt;", ">").replace(
 nullIfNone = lambda v, callback=None : "null" if v is None else callback(v) if callback is not None else v
 escapeQuotes = lambda s: s.replace('"', '\\"')
 
-def get_rid_of_notes(content):
+def get_rid_of_terms(content):
     while content.find("<term") > -1:
         content = re.sub("<term[^>]*>", repl='', string=content, count=1)
         content = re.sub("</term[^>]*>", repl='', string=content, count=1)
@@ -77,16 +77,19 @@ def get_rid_of_notes(content):
 
 
 def stringify_children(node):
-    import lxml.etree as ET
     from itertools import chain
     from lxml.etree import tounicode
+
+    if node.tail is not None and '\n' in node.tail:
+        node.tail = ""
+
     s = ''.join(
         chunk for chunk in chain(
             (node.text,),
             chain(*((tounicode(child, with_tail=False), child.tail) for child in node.getchildren())),
             (node.tail,)) if chunk)
     s = s.replace(' xmlns="http://www.tei-c.org/ns/1.0"', '')
-    return re.sub('\s+', ' ', s).rstrip()
+    return re.sub('\n', '', s)#.rstrip()
 
 p = re.compile("<[^>]+>((.|\s)*)<\/[^>]+>")
 def get_tag_xml_content(node):
@@ -103,10 +106,11 @@ def get_text_format(div):
         "p": p, "has_p" : len(p) > 0
     }
 
-def remove_nodes(node, xpath_expr, ns=NS_TI):
-    for child in node.xpath(xpath_expr, namespaces=ns):
-        child.getparent().remove(child)
+
+def remove_nodes(node, tag, ns):
+    ET.strip_elements(node, "{"+ns+"}"+tag, with_tail=False)
     return node
+
 
 def extract_terms(e):
     global note_id
@@ -332,7 +336,6 @@ for f in filenames:
     """
     regeste = doc.xpath(XPATH_TI_ARGUMENT, namespaces=NS_TI)
     if len(regeste) == 0:
-        #raise ValueError("document {0} has no argument".format(f))
         pass
     else:
         dossiers[f]["argument"] = "<p>{0}</p>".format(stringify_children(regeste[0]))
@@ -340,8 +343,6 @@ for f in filenames:
     """
     For the time being we just skipp <add> tags 
     """
-    doc = remove_nodes(doc, "//ti:add", NS_TI)
-
     facsim_coord_tr = doc.xpath(XPATH_TI_FACSIM_COORDS_TRANSCRIPTION, namespaces=NS_TI)
     facsim_note_tr = doc.xpath(XPATH_TI_FACSIM_ANNO_TRANSCRIPTION, namespaces=NS_TI)
 
@@ -377,16 +378,17 @@ for f in filenames:
         char_index = 1
         ##transcription
         for i, v in enumerate(tf["verses"]):
-            extract = extract_terms(copy.deepcopy(v))
-            #extracted_verse = get_tag_xml_content(v)
-            verse, terms = extract
+            verse = remove_nodes(copy.deepcopy(v), "add", NS_TI["ti"])
+            verse, terms = extract_terms(verse)
             verse = clean_entities(verse)
             if len(verse.strip()) > 0:
-                #dossiers[f]["transcription"].append("<l>{0}</l>".format(verse))
                 dossiers[f]["transcription"].append(verse)
                 dossiers[f]["transcription_notes"] += terms
-                #print(len(get_rid_of_notes(verse)))
-                verse_wo_notes = get_rid_of_notes(verse)
+                #print(len(get_rid_of_terms(verse)))
+                verse_wo_notes = get_rid_of_terms(verse)
+                verse_wo_notes = verse_wo_notes
+                #print(verse_wo_notes, (char_index, char_index+len(verse_wo_notes)))
+
                 dossiers[f]["alignment_transcription_ptrs"].append(
                     (char_index, char_index+len(verse_wo_notes))
                 )
@@ -413,16 +415,18 @@ for f in filenames:
         char_index = 1
         #translation
         for i, v in enumerate(tf["verses"]):
-            extract = extract_terms(copy.deepcopy(v))
+            verse = remove_nodes(copy.deepcopy(v), "add", NS_TI["ti"])
             #extracted_verse = get_tag_xml_content(v)
-            verse, terms = extract
+            verse, terms = extract_terms(verse)
             verse = clean_entities(verse)
             if len(verse.strip()) > 0:
                 #dossiers[f]["translation"].append("<l>{0}</l>".format(verse))
                 dossiers[f]["translation"].append(verse)
                 dossiers[f]["translation_notes"] += terms
 
-                verse_wo_notes = get_rid_of_notes(verse)
+                verse_wo_notes = get_rid_of_terms(verse)
+                verse_wo_notes = verse_wo_notes
+
                 dossiers[f]["alignment_translation_ptrs"].append(
                     (char_index, char_index+len(verse_wo_notes))
                 )
@@ -431,7 +435,7 @@ for f in filenames:
                 dossiers[f]["alignment_translation_ptrs"].append(
                     (char_index, char_index)
                 )
-                #cas des vereses auto fermants <l/>
+                #cas des verses auto fermants <l/>
                 #dossiers[f]["translation"].append("<lb/>")
                 pass
 
@@ -486,8 +490,8 @@ with open('{0}/update_document_stmts.sql'.format(DEST), 'w+') as f_document,\
     f_translation.write(get_delete_stmt("translation") + "\n")
     f_types.write(get_delete_stmt("note_type") + "\n")
     f_notes.write(get_delete_stmt("note") + "\n")
-
-
+    f_notes.write(get_delete_stmt("translation_has_note") + "\n")
+    f_notes.write(get_delete_stmt("transcription_has_note") + "\n")
 
     add_sql_comment(f_img, '#')
 
