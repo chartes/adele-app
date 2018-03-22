@@ -34,7 +34,7 @@ def admin():
 @app.route('/admin/documents')
 def admin_documents():
     doc = db.execute("select * from document").fetchall()
-    return render_template('admin/documents.html', title='Adele',  doc=doc)
+    return render_template('admin/documents.html', title='Documents - Adele',  doc=doc)
 
 #@app.route('/admin/login')
 #@app.route('/admin/logout')
