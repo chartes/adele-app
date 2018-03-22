@@ -12,25 +12,27 @@ TEST_DATA_DIR = "app/tests/data"
 
 class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
-    ALIGNMENT_STMT = lambda transcription_id : """
-    -- Transcription vs Translation
-    SELECT
-      transcription.transcription_id,
-      translation.translation_id,
-      substr(transcription.content, ptr_transcription_start, 
-        ptr_transcription_end - ptr_transcription_start) as transcription,
-      substr(translation.content, ptr_translation_start, 
-        ptr_translation_end - ptr_translation_start) as translation
-    FROM
-      transcription
-      LEFT JOIN alignment_translation
-        on transcription.transcription_id = alignment_translation.transcription_id
-      LEFT JOIN  translation
-        ON alignment_translation.translation_id = translation.translation_id
-    WHERE
-      transcription.transcription_id = {transcription_id}      
-    ;
-    """.format(transcription_id=transcription_id)
+    @classmethod
+    def get_alignment_stmt(cls, transcription_id) :
+        return """
+        -- Transcription vs Translation
+        SELECT
+          transcription.transcription_id,
+          translation.translation_id,
+          substr(transcription.content, ptr_transcription_start, 
+            ptr_transcription_end - ptr_transcription_start) as transcription,
+          substr(translation.content, ptr_translation_start, 
+            ptr_translation_end - ptr_translation_start) as translation
+        FROM
+          transcription
+          LEFT JOIN alignment_translation
+            on transcription.transcription_id = alignment_translation.transcription_id
+          LEFT JOIN  translation
+            ON alignment_translation.translation_id = translation.translation_id
+        WHERE
+          transcription.transcription_id = {transcription_id}      
+        ;
+        """.format(transcription_id=transcription_id)
 
     @classmethod
     def setUpClass(cls):
@@ -56,25 +58,29 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
     def test_both_ids_match(self):
         for doc in TestTranscriptionTranslationAlignment.doc_list:
-            stmt = TestTranscriptionTranslationAlignment.ALIGNMENT_STMT(doc)
+            stmt = TestTranscriptionTranslationAlignment.get_alignment_stmt(doc)
             res = self.engine.execute(stmt).fetchall()
-            # expect consistency between translation and traduction ids (shouldn't happen)
+            # expect consistency between translation and traduction ids (error shouldn't happen)
             transcription_ids = set()
             translation_ids = set()
             for (transcription_id, translation_id, a, b) in res:
-                if translation_id is not None:
+                if translation_id is not None: #sometime there's just no translation.
                     transcription_ids.add(transcription_id)
                     translation_ids.add(translation_id)
             self.assertSetEqual(transcription_ids, translation_ids, "Something is wrong with the IDs")
 
     def test_alignment_is_correct(self):
+        """
+        Test alignment between static txt files and rows fetched from the db
+        :return:
+        """
         for doc in TestTranscriptionTranslationAlignment.doc_list:
             with open(os.path.join(TEST_DATA_DIR, "transcription", "{0}.txt").format(doc), "r") as transcription_f, \
                  open(os.path.join(TEST_DATA_DIR, "translation", "{0}.txt").format(doc), "r") as translation_f:
                 transcription_lines = transcription_f.read().splitlines()
                 translation_lines = translation_f.read().splitlines()
 
-                stmt = TestTranscriptionTranslationAlignment.ALIGNMENT_STMT(doc)
+                stmt = TestTranscriptionTranslationAlignment.get_alignment_stmt(doc)
                 res = self.engine.execute(stmt).fetchall()
 
                 if len(translation_lines) == 0:
@@ -83,7 +89,6 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
                 else:
                     self.assertEqual(len([l for l in transcription_lines if len(l)>0]), len([l["transcription"] for l in res if len(l["transcription"])>0]), "Transcription lines count does not match for doc {0}".format(doc))
                     for i, transcription in enumerate(transcription_lines):
-                        print(res[i])
                         self.assertEqual(transcription, res[i]["transcription"] , "Transcription ptrs look wrong for doc {0}".format(doc))
 
                     self.assertEqual(len([l for l in translation_lines if len(l)>0]), len([l["translation"] for l in res if len(l["translation"])>0]), "Translation lines count does not match for doc {0}".format(doc))
