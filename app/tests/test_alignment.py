@@ -12,7 +12,7 @@ TEST_DATA_DIR = "app/tests/data"
 
 class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
-    ALIGNMENT_STMT = lambda doc_id, transcription_id : """
+    ALIGNMENT_STMT = lambda transcription_id : """
     -- Transcription vs Translation
     SELECT
       transcription.transcription_id,
@@ -23,18 +23,14 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         ptr_translation_end - ptr_translation_start) as translation
     FROM
       transcription
-      JOIN alignment_translation
+      LEFT JOIN alignment_translation
         on transcription.transcription_id = alignment_translation.transcription_id
-      JOIN  translation
+      LEFT JOIN  translation
         ON alignment_translation.translation_id = translation.translation_id
     WHERE
-      transcription.transcription_id = {transcription_id} 
-      and
-      transcription.doc_id = {doc_id} 
-      and 
-      translation.doc_id = {doc_id}
+      transcription.transcription_id = {transcription_id}      
     ;
-    """.format(doc_id=doc_id, transcription_id=transcription_id)
+    """.format(transcription_id=transcription_id)
 
     @classmethod
     def setUpClass(cls):
@@ -54,19 +50,21 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
                 if filename.endswith(".txt"):
                     cls.doc_list.append(filename.split(".")[0])
 
+        cls.doc_list.sort()
         print("Tested docs:", cls.doc_list)
 
 
     def test_both_ids_match(self):
         for doc in TestTranscriptionTranslationAlignment.doc_list:
-            stmt = TestTranscriptionTranslationAlignment.ALIGNMENT_STMT(doc, doc)
+            stmt = TestTranscriptionTranslationAlignment.ALIGNMENT_STMT(doc)
             res = self.engine.execute(stmt).fetchall()
             # expect consistency between translation and traduction ids (shouldn't happen)
             transcription_ids = set()
             translation_ids = set()
             for (transcription_id, translation_id, a, b) in res:
-                transcription_ids.add(transcription_id)
-                translation_ids.add(translation_id)
+                if translation_id is not None:
+                    transcription_ids.add(transcription_id)
+                    translation_ids.add(translation_id)
             self.assertSetEqual(transcription_ids, translation_ids, "Something is wrong with the IDs")
 
     def test_alignment_is_correct(self):
@@ -76,14 +74,23 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
                 transcription_lines = transcription_f.read().splitlines()
                 translation_lines = translation_f.read().splitlines()
 
-                stmt = TestTranscriptionTranslationAlignment.ALIGNMENT_STMT(doc, doc)
+                stmt = TestTranscriptionTranslationAlignment.ALIGNMENT_STMT(doc)
                 res = self.engine.execute(stmt).fetchall()
 
-                for i, transcription in enumerate(transcription_lines):
-                    self.assertEqual(res[i]["transcription"], transcription, "Transcription ptrs look wrong for doc {0}".format(doc))
+                if len(translation_lines) == 0:
+                    translation_ids = set([l["translation_id"] for l in res if l["translation_id"] != None])
+                    self.assertEqual(0, len(translation_ids), "There is no translation for doc {0}".format(doc))
+                else:
+                    self.assertEqual(len([l for l in transcription_lines if len(l)>0]), len([l["transcription"] for l in res if len(l["transcription"])>0]), "Transcription lines count does not match for doc {0}".format(doc))
+                    for i, transcription in enumerate(transcription_lines):
+                        print(res[i])
+                        self.assertEqual(transcription, res[i]["transcription"] , "Transcription ptrs look wrong for doc {0}".format(doc))
 
-                for i, translation in enumerate(translation_lines):
-                    self.assertEqual(res[i]["translation"], translation, "Translation ptrs look wrong for doc {0}".format(doc))
+                    self.assertEqual(len([l for l in translation_lines if len(l)>0]), len([l["translation"] for l in res if len(l["translation"])>0]), "Translation lines count does not match for doc {0}".format(doc))
+                    for i, translation in enumerate(translation_lines):
+                        self.assertEqual(translation, res[i]["translation"], "Translation ptrs look wrong for doc {0}".format(doc))
+
+            print("Alignment transcription/translation for doc {0} is OK".format(doc) )
 
 
 

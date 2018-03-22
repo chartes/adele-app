@@ -69,24 +69,28 @@ clean_entities = lambda s: s.replace("&amp;", "&").replace("&gt;", ">").replace(
 nullIfNone = lambda v, callback=None : "null" if v is None else callback(v) if callback is not None else v
 escapeQuotes = lambda s: s.replace('"', '\\"')
 
-def get_rid_of_notes(content):
-    while content.find("<term") > -1:
-        content = re.sub("<term[^>]*>", repl='', string=content, count=1)
-        content = re.sub("</term[^>]*>", repl='', string=content, count=1)
+def get_rid_of_terms(content):
+    while content.find('<term') > -1:
+        content = re.sub('<term[^>]*>', repl='', string=content, count=1)
+        content = re.sub('</term[^>]*>', repl='', string=content, count=1)
     return content
 
 
 def stringify_children(node):
-    import lxml.etree as ET
     from itertools import chain
     from lxml.etree import tounicode
+
+    if node.tail is not None and '\n' in node.tail:
+        node.tail = ""
+
     s = ''.join(
         chunk for chunk in chain(
             (node.text,),
             chain(*((tounicode(child, with_tail=False), child.tail) for child in node.getchildren())),
             (node.tail,)) if chunk)
     s = s.replace(' xmlns="http://www.tei-c.org/ns/1.0"', '')
-    return re.sub('\s+', ' ', s).rstrip()
+    s = s.replace(u'\xa0', ' ')
+    return re.sub('\n', '', s)#.rstrip()
 
 p = re.compile("<[^>]+>((.|\s)*)<\/[^>]+>")
 def get_tag_xml_content(node):
@@ -103,10 +107,11 @@ def get_text_format(div):
         "p": p, "has_p" : len(p) > 0
     }
 
-def remove_nodes(node, xpath_expr, ns=NS_TI):
-    for child in node.xpath(xpath_expr, namespaces=ns):
-        child.getparent().remove(child)
+
+def remove_nodes(node, tag, ns):
+    ET.strip_elements(node, "{"+ns+"}"+tag, with_tail=False)
     return node
+
 
 def extract_terms(e):
     global note_id
@@ -199,6 +204,7 @@ def insert_translation(dossier):
     return stmts
 
 def insert_note(note):
+    note["content"] = note["content"].replace("@", ">")
     stmts = [
         get_insert_stmt("note",
                         "note_id,note_type_id,user_ref,content",
@@ -327,12 +333,18 @@ for f in filenames:
         cnt_file_parsing_error += 1
         break
 
+    terms = doc.xpath("//ti:term", namespaces=NS_TI)
+    for t in terms:
+        if t.get("n") is not None:
+            if ">" in t.get("n"):
+                t.set("n", t.get("n").replace(">", "@"))
+                print(t.get("n"))
+
     """
     regeste
     """
     regeste = doc.xpath(XPATH_TI_ARGUMENT, namespaces=NS_TI)
     if len(regeste) == 0:
-        #raise ValueError("document {0} has no argument".format(f))
         pass
     else:
         dossiers[f]["argument"] = "<p>{0}</p>".format(stringify_children(regeste[0]))
@@ -340,8 +352,6 @@ for f in filenames:
     """
     For the time being we just skipp <add> tags 
     """
-    doc = remove_nodes(doc, "//ti:add", NS_TI)
-
     facsim_coord_tr = doc.xpath(XPATH_TI_FACSIM_COORDS_TRANSCRIPTION, namespaces=NS_TI)
     facsim_note_tr = doc.xpath(XPATH_TI_FACSIM_ANNO_TRANSCRIPTION, namespaces=NS_TI)
 
@@ -370,35 +380,27 @@ for f in filenames:
     transcriptions = doc.xpath(XPATH_TI_TRANSCRIPTION, namespaces=NS_TI)
     if len(transcriptions) > 0:
         tf =  get_text_format(transcriptions[0])
-        if tf["has_verses"]: cnt_trancription_has_verses += 1
-        if tf["has_head"]:  cnt_trancription_has_head += 1
-        if tf["has_p"]:  cnt_trancription_has_p += 1
-
         char_index = 1
         ##transcription
         for i, v in enumerate(tf["verses"]):
-            extract = extract_terms(copy.deepcopy(v))
-            #extracted_verse = get_tag_xml_content(v)
-            verse, terms = extract
-            verse = clean_entities(verse)
+            verse = remove_nodes(copy.deepcopy(v), "add", NS_TI["ti"])
+            verse, terms = extract_terms(verse)
+            #verse = clean_entities(verse)
             if len(verse.strip()) > 0:
-                #dossiers[f]["transcription"].append("<l>{0}</l>".format(verse))
-                dossiers[f]["transcription"].append(verse)
+                verse_wo_terms = clean_entities(get_rid_of_terms(verse))
+                verse_with_terms = clean_entities(verse)
+                dossiers[f]["transcription"].append(verse_with_terms)
                 dossiers[f]["transcription_notes"] += terms
-                #print(len(get_rid_of_notes(verse)))
-                verse_wo_notes = get_rid_of_notes(verse)
+
                 dossiers[f]["alignment_transcription_ptrs"].append(
-                    (char_index, char_index+len(verse_wo_notes))
+                    (char_index, char_index+len(verse_wo_terms))
                 )
-                char_index += len(verse_wo_notes)
+                char_index += len(verse_wo_terms)
             else:
                 #cas des verses auto fermants <l/>
                 dossiers[f]["alignment_transcription_ptrs"].append(
                     (char_index, char_index)
                 )
-                #dossiers[f]["transcription"].append("<lb/>")
-                pass
-
 
     """
     tables translation & note & translationHasNote
@@ -406,33 +408,28 @@ for f in filenames:
     translations = doc.xpath(XPATH_TI_TRANSLATION, namespaces=NS_TI)
     if len(translations) > 0:
         tf = get_text_format(translations[0])
-        if tf["has_verses"]: cnt_translation_has_verses += 1
-        if tf["has_head"]: cnt_translation_has_head += 1
-        if tf["has_p"]: cnt_translation_has_p += 1
 
         char_index = 1
         #translation
         for i, v in enumerate(tf["verses"]):
-            extract = extract_terms(copy.deepcopy(v))
-            #extracted_verse = get_tag_xml_content(v)
-            verse, terms = extract
-            verse = clean_entities(verse)
+            verse = remove_nodes(copy.deepcopy(v), "add", NS_TI["ti"])
+            verse, terms = extract_terms(verse)
+            #verse = clean_entities(verse)
             if len(verse.strip()) > 0:
-                #dossiers[f]["translation"].append("<l>{0}</l>".format(verse))
-                dossiers[f]["translation"].append(verse)
+                verse_wo_terms = clean_entities(get_rid_of_terms(verse))
+                verse_with_terms = clean_entities(verse)
+                dossiers[f]["translation"].append(verse_with_terms)
                 dossiers[f]["translation_notes"] += terms
 
-                verse_wo_notes = get_rid_of_notes(verse)
                 dossiers[f]["alignment_translation_ptrs"].append(
-                    (char_index, char_index+len(verse_wo_notes))
+                    (char_index, char_index+len(verse_wo_terms))
                 )
-                char_index += len(verse_wo_notes)
+                char_index += len(verse_wo_terms)
             else:
                 dossiers[f]["alignment_translation_ptrs"].append(
                     (char_index, char_index)
                 )
-                #cas des vereses auto fermants <l/>
-                #dossiers[f]["translation"].append("<lb/>")
+                #cas des verses auto fermants <l/>
                 pass
 
         # update the db with the alignment data
@@ -460,12 +457,12 @@ print("facsim coords error:")
 pprint.pprint(set(facsim_coords_error))
 print("file parsing error (nb files): {0}".format(cnt_file_parsing_error))
 print("=" * 80)
-print("Transcription with verses: {0}".format(cnt_trancription_has_verses))
-print("Transcription with head: {0}".format(cnt_trancription_has_head))
-print("Transcription with p: {0}".format(cnt_trancription_has_p))
-print("Translation with verses: {0}".format(cnt_translation_has_verses))
-print("Translation with head: {0}".format(cnt_translation_has_head))
-print("Translation with p: {0}".format(cnt_translation_has_p))
+#print("Transcription with verses: {0}".format(cnt_trancription_has_verses))
+#print("Transcription with head: {0}".format(cnt_trancription_has_head))
+#print("#Transcription with p: {0}".format(cnt_trancription_has_p))
+#print("Translation with verses: {0}".format(cnt_translation_has_verses))
+#print("Translation with head: {0}".format(cnt_translation_has_head))
+#print("Translation with p: {0}".format(cnt_translation_has_p))
 
 add_sql_comment = lambda f, c="=": f.write("--" + c * 40 + "\n")
 
@@ -486,8 +483,8 @@ with open('{0}/update_document_stmts.sql'.format(DEST), 'w+') as f_document,\
     f_translation.write(get_delete_stmt("translation") + "\n")
     f_types.write(get_delete_stmt("note_type") + "\n")
     f_notes.write(get_delete_stmt("note") + "\n")
-
-
+    f_notes.write(get_delete_stmt("translation_has_note") + "\n")
+    f_notes.write(get_delete_stmt("transcription_has_note") + "\n")
 
     add_sql_comment(f_img, '#')
 
