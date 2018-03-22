@@ -11,40 +11,27 @@
       </div>
     </section>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-info" role="alert">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
     <section class="section">
         <div class="container is-fullhd">
-            <div class="columns is-multiline">
-                {% for d in docs %}
-                <div class="column is-one-third">
-                    <div class="card">
+                <div class="card">
                         <div class="card-image">
                             <figure class="image is-4by3">
-                                <img src="http://193.48.42.68/loris/adele/dossiers/{{ d.doc_id }}.jpg/full/432,/0/default.jpg"
+                                <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.doc_id }}.jpg/full/432,/0/default.jpg"
                                      width="180px" height="180px"
                                 />
                             </figure>
                         </div>
                         <div class="card-content">
                             <div class="content">
-                                <p><span class="tag is-light">Dossier {{ d.doc_id }}</span></p>
-                                <p class="title is-6">{{ d.title }}</p>
-                                <p><small>{{ d.subtitle }}</small></p>
+                                <p><span class="tag is-light">Dossier {{ doc.doc_id }}</span></p>
+                                <p class="title is-6">{{ doc.title }}</p>
+                                <p><small>{{ doc.subtitle }}</small></p>
                             </div>
                         </div>
                         <footer class="card-footer">
-                            <a href="/admin/document/{{ d.doc_id }}" class="card-footer-item">Editer</a>
+                            <a href="#" class="card-footer-item">Editer</a>
                         </footer>
                     </div>
-                </div>
-                {% endfor %}
             </div>
         </div>
     </section>

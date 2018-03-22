@@ -1,5 +1,6 @@
-from flask import render_template
+from flask import render_template, flash, redirect, url_for
 from app import app, db
+from app.models import Document
 
 from app.database.alignment.alignment_translation import align_translation
 
@@ -33,8 +34,16 @@ def admin():
 
 @app.route('/admin/documents')
 def admin_documents():
-    doc = db.execute("select * from document").fetchall()
-    return render_template('admin/documents.html', title='Documents - Adele',  doc=doc)
+    docs = db.query(Document).all()
+    return render_template('admin/documents.html', title='Documents - Adele',  docs=docs)
+
+@app.route('/admin/document/<doc_id>')
+def admin_document(doc_id):
+    doc = db.query(Document).get(doc_id)
+    if doc is None:
+        #flash('Document %(doc_id) introuvable.', doc_id=doc_id)
+        return redirect(url_for('admin_documents'))
+    return render_template('admin/document.html', title='Documents - Adele',  doc=doc)
 
 #@app.route('/admin/login')
 #@app.route('/admin/logout')

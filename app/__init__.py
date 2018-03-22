@@ -19,7 +19,8 @@ def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
 
 try:
     engine = create_engine("sqlite:///{0}".format(Config.SQLALCHEMY_DATABASE_URI))
-    automap_base().prepare(engine, reflect=True,
+    Base = automap_base()
+    Base.prepare(engine, reflect=True,
                            name_for_collection_relationship=name_for_collection_relationship)
     db = create_session(bind=engine)
 except:
