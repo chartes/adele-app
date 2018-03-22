@@ -19,3 +19,22 @@ def r_align_translation(doc_id, transcription_id):
         #no result, should raise an error
         alignment = []
     return render_template('alignment.html', alignment=alignment)
+
+
+"""
+---------------------------------
+Admin Routes
+---------------------------------
+"""
+
+@app.route('/admin')
+def admin():
+    return render_template('admin/index.html')
+
+@app.route('/admin/documents')
+def admin_documents():
+    doc = db.execute("select * from document").fetchall()
+    return render_template('admin/documents.html', title='Adele',  doc=doc)
+
+#@app.route('/admin/login')
+#@app.route('/admin/logout')

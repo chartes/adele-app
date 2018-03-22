@@ -1,0 +1,43 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+
+    <section class="hero is-light">
+      <div class="hero-body">
+        <div class="container">
+          <h1 class="title">Adele</h1>
+          <h2 class="subtitle">Album de diplomatique en ligne</h2>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+        <div class="container is-fullhd">
+            <div class="columns is-multiline">
+                {% for d in doc %}
+                <div class="column is-one-third">
+                    <div class="card">
+                        <div class="card-image">
+                            <figure class="image is-4by3">
+                                <img src="http://193.48.42.68/loris/adele/dossiers/{{ d[0] }}.jpg/full/full/0/default.jpg"
+                                     width="180px" height="180px"
+                                />
+                            </figure>
+                        </div>
+                        <div class="card-content">
+                            <div class="content">
+                                <p><span class="tag is-light">Dossier {{ d[0] }}</span></p>
+                                <p class="title is-6">{{ d[1] }}</p>
+                                <p><small>{{ d[2] }}</small></p>
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <a href="#" class="card-footer-item">Editer</a>
+                        </footer>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endblock content %}
