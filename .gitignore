@@ -1,5 +1,11 @@
 __pycache__
 .DS_Store
 venv
+db
 adele.sqlite
 .idea
+
+# Frontend directories and files
+
+node_modules/
+npm-debug.log*

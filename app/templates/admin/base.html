@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1 maximum-scale=1, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow">
+    {% block title %}
+    {% if title %}<title>{{ title }}</title>{% endif %}
+    {% endblock %}
+    {% block head_scripts %}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+        <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+    {% endblock head_scripts %}
+</head>
+<body>
+    {% block navbar %}
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/">
+                    <img src="/static/images/logo-ecole-nationale-des-chartes-header.png" alt="École Nationale des Chartes - PSL" height="30">
+                </a>
+
+                <div class="navbar-burger">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                </div>
+              </div>
+
+            <div class="navbar-menu">
+                <a class="navbar-item" href="{{ url_for('admin_documents') }}">Documents</a>
+            </div>
+        </nav>
+    {% endblock %}
+
+    {% block content %}
+        {# application content needs to be provided in the app_content block #}
+        {% block app_content %}{% endblock %}
+    {% endblock %}
+
+</body>
+</html>
