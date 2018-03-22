@@ -157,10 +157,10 @@ def insert_image(dossier):
     ]
     return stmts
 
-def insert_transcription(dossier):
+def insert_text(dossier, text_name):
     stmts = []
-    if len(dossier["transcription"]) > 0:
-        content = "".join(dossier["transcription"])
+    if len(dossier[text_name]) > 0:
+        content = "".join(dossier[text_name])
         #create note ptrs
         idx=0
         while content.find("<term") > -1:
@@ -168,40 +168,23 @@ def insert_transcription(dossier):
             content = re.sub("<term[^>]*>", repl='', string=content, count=1)
             ptr_end = content.find("</term")
             content = re.sub("</term[^>]*>", repl='', string=content, count=1)
-            dossier["transcription_notes"][idx]["ptr_start"] = ptr_start
-            dossier["transcription_notes"][idx]["ptr_end"] = ptr_end
+            dossier[text_name+"_notes"][idx]["ptr_start"] = ptr_start
+            dossier[text_name+"_notes"][idx]["ptr_end"] = ptr_end
             idx += 1
 
         stmts = [
-            get_insert_stmt("transcription",
-                            "transcription_id,doc_id,user_ref,content",
+            get_insert_stmt(text_name,
+                            text_name+"_id,doc_id,user_ref,content",
                             "{0},{1},'{2}','{3}'".format(dossier["id"], dossier["id"],USERNAME,content)
                             )
         ]
     return stmts
 
 def insert_translation(dossier):
-    stmts = []
-    if len(dossier["translation"]) > 0:
-        content = "".join(dossier["translation"])
-        # create note ptrs
-        idx=0
-        while content.find("<term") > -1:
-            ptr_start = content.find("<term")
-            content = re.sub("<term[^>]*>", repl='', string=content, count=1)
-            ptr_end = content.find("</term")
-            content = re.sub("</term[^>]*>", repl='', string=content, count=1)
-            dossier["translation_notes"][idx]["ptr_start"] = ptr_start
-            dossier["translation_notes"][idx]["ptr_end"] = ptr_end
-            idx += 1
+    return insert_text(dossier, "translation")
 
-        stmts = [
-            get_insert_stmt("translation",
-                            "translation_id,doc_id,user_ref,content",
-                            "{0},{1},'{2}','{3}'".format(dossier["id"], dossier["id"],USERNAME,content)
-                            )
-        ]
-    return stmts
+def insert_transcription(dossier):
+    return insert_text(dossier, "transcription")
 
 def insert_note(note):
     note["content"] = note["content"].replace("@", ">")
@@ -373,80 +356,63 @@ for f in filenames:
         except ValueError:
             facsim_coords_error.append((f, coords_figdesc))
 
+    """
+        textes
+    """
+    def add_text_and_notes(f, txt_name, txt_array):
+        if len(txt_array) > 0:
+            tf =  get_text_format(txt_array[0])
+            char_index = 1
+            ##transcription
+            for i, v in enumerate(tf["verses"]):
+                verse = remove_nodes(copy.deepcopy(v), "add", NS_TI["ti"])
+                verse, terms = extract_terms(verse)
+                #verse = clean_entities(verse)
+                if len(verse.strip()) > 0:
+                    verse_wo_terms = clean_entities(get_rid_of_terms(verse))
+                    verse_with_terms = clean_entities(verse)
+                    dossiers[f][txt_name].append(verse_with_terms)
+                    dossiers[f][txt_name+"_notes"] += terms
+
+                    dossiers[f]["alignment_"+txt_name+"_ptrs"].append(
+                        (char_index, char_index+len(verse_wo_terms))
+                    )
+                    char_index += len(verse_wo_terms)
+                else:
+                    #cas des verses auto fermants <l/>
+                    dossiers[f]["alignment_"+txt_name+"_ptrs"].append(
+                        (char_index, char_index)
+                    )
+            return tf
+        return None
+
 
     """
     tables transcription & note & transcriptionHasNote
     """
     transcriptions = doc.xpath(XPATH_TI_TRANSCRIPTION, namespaces=NS_TI)
-    if len(transcriptions) > 0:
-        tf =  get_text_format(transcriptions[0])
-        char_index = 1
-        ##transcription
-        for i, v in enumerate(tf["verses"]):
-            verse = remove_nodes(copy.deepcopy(v), "add", NS_TI["ti"])
-            verse, terms = extract_terms(verse)
-            #verse = clean_entities(verse)
-            if len(verse.strip()) > 0:
-                verse_wo_terms = clean_entities(get_rid_of_terms(verse))
-                verse_with_terms = clean_entities(verse)
-                dossiers[f]["transcription"].append(verse_with_terms)
-                dossiers[f]["transcription_notes"] += terms
-
-                dossiers[f]["alignment_transcription_ptrs"].append(
-                    (char_index, char_index+len(verse_wo_terms))
-                )
-                char_index += len(verse_wo_terms)
-            else:
-                #cas des verses auto fermants <l/>
-                dossiers[f]["alignment_transcription_ptrs"].append(
-                    (char_index, char_index)
-                )
-
+    add_text_and_notes(f, "transcription", transcriptions)
     """
     tables translation & note & translationHasNote
     """
     translations = doc.xpath(XPATH_TI_TRANSLATION, namespaces=NS_TI)
-    if len(translations) > 0:
-        tf = get_text_format(translations[0])
+    tf = add_text_and_notes(f, "translation", translations)
 
-        char_index = 1
-        #translation
-        for i, v in enumerate(tf["verses"]):
-            verse = remove_nodes(copy.deepcopy(v), "add", NS_TI["ti"])
-            verse, terms = extract_terms(verse)
-            #verse = clean_entities(verse)
-            if len(verse.strip()) > 0:
-                verse_wo_terms = clean_entities(get_rid_of_terms(verse))
-                verse_with_terms = clean_entities(verse)
-                dossiers[f]["translation"].append(verse_with_terms)
-                dossiers[f]["translation_notes"] += terms
 
-                dossiers[f]["alignment_translation_ptrs"].append(
-                    (char_index, char_index+len(verse_wo_terms))
-                )
-                char_index += len(verse_wo_terms)
-            else:
-                dossiers[f]["alignment_translation_ptrs"].append(
-                    (char_index, char_index)
-                )
-                #cas des verses auto fermants <l/>
-                pass
+    # update the db with the alignment data
+    if tf is not None and tf["has_verses"]:
+        id1 = id
+        id2 = id
+        session.execute("DELETE FROM alignment_translation "
+                        "WHERE translation_id={0} and transcription_id={1};".format(id1, id2))
 
-        # update the db with the alignment data
-        if tf["has_verses"]:
+        for ((p1, p2), (p3, p4)) in itertools.zip_longest(
+                dossiers[f]["alignment_transcription_ptrs"],
+                dossiers[f]["alignment_translation_ptrs"],
+                fillvalue=("null", "null")):
+            insert_alignemnt_transcription_translation(session, id1, id2, p1, p2, p3, p4)
 
-            id1 = id
-            id2 = id
-            session.execute("DELETE FROM alignment_translation "
-                            "WHERE translation_id={0} and transcription_id={1};".format(id1, id2))
-
-            for ((p1, p2), (p3, p4)) in itertools.zip_longest(
-                    dossiers[f]["alignment_transcription_ptrs"],
-                    dossiers[f]["alignment_translation_ptrs"],
-                    fillvalue=("null", "null")):
-                insert_alignemnt_transcription_translation(session, id1, id2, p1, p2, p3, p4)
-
-            print("--- with verses ", f, id1, id2)
+        print("--- with verses ", f, id1, id2)
 
 
 """
