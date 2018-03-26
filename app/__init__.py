@@ -2,6 +2,7 @@ from flask import Flask
 from config import Config
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import create_session
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
@@ -19,9 +20,10 @@ def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
 
 try:
     engine = create_engine("sqlite:///{0}".format(Config.SQLALCHEMY_DATABASE_URI))
-    Base = automap_base()
-    Base.prepare(engine, reflect=True,
-                           name_for_collection_relationship=name_for_collection_relationship)
+    #Base = automap_base()
+    #Base.prepare(engine, reflect=True,
+    #             name_for_collection_relationship=name_for_collection_relationship)
+    Base = declarative_base()
     db = create_session(bind=engine)
 except:
     db = None

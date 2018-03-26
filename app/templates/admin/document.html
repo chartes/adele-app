@@ -13,25 +13,118 @@
 
     <section class="section">
         <div class="container is-fullhd">
-                <div class="card">
-                        <div class="card-image">
-                            <figure class="image is-4by3">
-                                <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.doc_id }}.jpg/full/432,/0/default.jpg"
-                                     width="180px" height="180px"
-                                />
-                            </figure>
-                        </div>
-                        <div class="card-content">
-                            <div class="content">
-                                <p><span class="tag is-light">Dossier {{ doc.doc_id }}</span></p>
-                                <p class="title is-6">{{ doc.title }}</p>
-                                <p><small>{{ doc.subtitle }}</small></p>
-                            </div>
-                        </div>
-                        <footer class="card-footer">
-                            <a href="#" class="card-footer-item">Editer</a>
-                        </footer>
+            <div class="columns">
+                <div class="column">
+                    <figure class="image">
+                        <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.doc_id }}.jpg/full/full/0/default.jpg" />
+                    </figure>
+                </div>
+                <div class="column">
+                    <div class="content">
+                        <p>
+                            <span class="tag is-light">Dossier {{ doc.doc_id }}</span>
+                            <span class="tag is-light">Créé le {{ doc.date_insert }}</span>
+                            <span class="tag is-light">Dern. modif. le {{ doc.date_update }}</span>
+                        </p>
+                        <p class="title is-3">{{ doc.title }}</p>
+                        <p>{{ doc.subtitle }}</p>
                     </div>
+
+                    <hr>
+
+                    <p class="title is-4">Métadonnées</p>
+                    {% if doc.creation %}
+                    <p><strong>creation : </strong>{{ doc.creation }}</p>
+                    {% endif %}
+                    {% if doc.creation_lab %}
+                    <p><strong>creation_lab : </strong>{{ doc.creation_lab }}</p>
+                    {% endif %}
+                    {% if doc.copy_year %}
+                    <p><strong>copy_year : </strong>{{ doc.copy_year }}</p>
+                    {% endif %}
+                    {% if doc.copy_cent %}
+                    <p><strong>copy_cent : </strong>{{ doc.copy_cent }}</p>
+                    {% endif %}
+                    {% if doc.institution %}
+                    <p><strong>Institution : </strong><a href="{{ doc.institution.instit_ref }}" target="_blank">{{ doc.institution.instit_name }}</a></p>
+                    {% endif %}
+                    {% if doc.pressmark %}
+                    <p><strong>pressmark : </strong>{{ doc.pressmark }}</p>
+                    {% endif %}
+                    {% if doc.argument %}
+                    <p><strong>argument : </strong>{{ doc.argument|safe }}</p>
+                    {% endif %}
+                    <p>&nbsp;</p>
+
+                    <p class="title is-6">Liaisons</p>
+
+                    <div>
+                        <p><strong>Type d'acte :</strong></p>
+                        <ul>
+                            {% for act_type in doc.act_types %}
+                            <li>{{ act_type.label }}</a> </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>Traditions :</strong></p>
+                        <ul>
+                            {% for tradition in doc.traditions %}
+                            <li>{{ tradition.tradition_label }}</a> </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>Pays :</strong></p>
+                        <ul>
+                            {% for country in doc.countries %}
+                            <li><a href="{{ country.country_ref }}" target="_blank">{{ country.country_label }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>District(s) :</strong></p>
+                        <ul>
+                            {% for district in doc.districts %}
+                            <li>{{ district.district_label }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>Langages :</strong></p>
+                        <ul>
+                            {% for lang in doc.languages %}
+                            <li>{{ lang.lang_label }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>Editeurs :</strong></p>
+                        <ul>
+                            {% for editor in doc.editors %}
+                            <li>{{ editor.editor_name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>Transcriptions :</strong> {{ doc.transcription_doc_id_collection|length }}</p>
+                        <p><strong>Traductions :</strong> {{ doc.translation_doc_id_collection|length }}</p>
+                        <p><strong>Commentaires :</strong> {{ doc.commentary_doc_id_collection|length }}</p>
+                    </div>
+                    <div>
+                        <p><strong>Documents liés :</strong></p>
+                        <ul>
+                            {% for linked_doc in doc.document_linked_doc_id_collection %}
+                            <li><a href="/admin/document/{{linked_doc.doc_id}}">{{ linked_doc.doc_id }} {{ linked_doc.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <p><a href="#" class="button is-light">Editer les métadonnées</a></p>
+
+                    <hr>
+
+                </div>
             </div>
         </div>
     </section>

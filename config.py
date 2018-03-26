@@ -8,6 +8,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
 
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+
     try:
         with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response,\
                 open(os.path.join('db', 'adele.sqlite'), 'wb') as out_file:
