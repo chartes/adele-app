@@ -48,5 +48,9 @@ def admin_document(doc_id):
         return redirect(url_for('admin_documents'))
     return render_template('admin/document.html', title='Documents - Adele',  doc=doc)
 
+#@app.route('/admin/document/<doc_id>/transcrption')
+#def admin_document_transcription(doc_id):
+
+
 #@app.route('/admin/login')
 #@app.route('/admin/logout')
