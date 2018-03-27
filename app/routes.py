@@ -40,13 +40,22 @@ def admin_documents():
 @app.route('/admin/document/<doc_id>')
 def admin_document(doc_id):
     query = db.query(Document)
-    doc = db.query(Document).get(doc_id)
+    doc = query.get(doc_id)
     #dump(query)
     #print(doc.document_linked_doc_id_collection[0])
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('admin_documents'))
     return render_template('admin/document.html', title='Documents - Adele',  doc=doc)
+
+@app.route('/admin/document/<doc_id>/edition')
+def admin_document_edit(doc_id):
+    query = db.query(Document)
+    doc = query.get(doc_id)
+    if doc is None:
+        flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
+        return redirect(url_for('admin_documents'))
+    return render_template('admin/document_edit.html', title='Document - Adele', doc=doc)
 
 #@app.route('/admin/document/<doc_id>/transcrption')
 #def admin_document_transcription(doc_id):

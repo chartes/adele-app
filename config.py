@@ -5,7 +5,6 @@ import shutil
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-
 class Config(object):
 
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
@@ -22,3 +21,6 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     TESTS_DB_URL=SQLALCHEMY_DATABASE_URI
+
+    SCSS_STATIC_DIR = os.path.join(basedir, "app/static/css")
+    SCSS_ASSET_DIR = os.path.join(basedir, "app/assets/scss")

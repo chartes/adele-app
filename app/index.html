@@ -1,27 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Adeel-front</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
+<head>
+  <meta charset="utf-8">
+  <title>Adeel-front</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.css">
-    <!--<link rel="stylesheet" href="https://cdn.rawgit.com/Leaflet/Leaflet.label/0.8/dist/leaflet.label.css" />-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css" />
+  <link rel="stylesheet" href="/static/css/styles.css">
 
-    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js"></script>
-    <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <!--<script src="https://rawgit.com/mejackreed/Leaflet-IIIF/master/leaflet-iiif.js"></script>
-    <!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.js"></script>
-    <!--<script type="text/javascript" src="http://193.48.42.68/Leaflet-IIIF/examples/Leaflet.Control.Custom.js"></script>
-    <!--<script src="https://cdn.rawgit.com/Leaflet/Leaflet.label/0.8/dist/leaflet.label.js"></script>-->
 
-  </head>
-  <body>
-    <h1>test</h1>
-    <div id="app"></div>
-    <script src="/static/js/build.js"></script>
-  </body>
+</head>
+<body>
+
+<div class="columns">
+  <div class="column is-one-third is-offset-one-third">
+    <article class="message is-warning" style="margin-top: 1em">
+      <div class="message-header">
+        <p>Attention</p>
+      </div>
+      <div class="message-body">
+        <h1>Mode développement.</h1>
+        <p><strong>Le numéro de document est codé en dur.</strong></p>
+        <p>Pour afficher un autre document éditez le fichier <em>/app/index.html</em> pour afficher un autre document</p>
+      </div>
+    </article>
+  </div>
+</div>
+
+<div id="app"></div>
+<script src="/static/js/build.js"></script>
+</body>
 </html>

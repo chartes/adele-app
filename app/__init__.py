@@ -4,9 +4,11 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import create_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
+from flask_scss import Scss
 
 app = Flask(__name__)
 app.config.from_object(Config)
+scss = Scss(app)
 
 """
 open the sqlite database
