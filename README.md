@@ -14,3 +14,11 @@ Starting the server in debug mode:
 ```
 python3 adele-app.py
 ```
+
+
+Building the front end:
+```
+cd app/client
+npm install
+npm run build
+```
