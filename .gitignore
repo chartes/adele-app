@@ -9,3 +9,5 @@ adele.sqlite
 
 node_modules/
 npm-debug.log*
+*.js.map
+report.html

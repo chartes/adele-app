@@ -1,0 +1,129 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+#app {
+  padding: 2em;
+}
+.wrapper { position: relative; }
+.quill-editor {
+  font-family: 'Open Sans', Helvetica, sans-serif;
+  font-size: 1em;
+  margin: 0 auto;
+  width: 100%;
+  border: 1px solid #eee;
+  padding: 1em;
+}
+.editor-controls {
+  /*padding: .125em;
+  border: #eee solid 1px;
+  border-bottom: none;
+*/
+  hr {
+    margin: .5em 0;
+  }
+
+  button {
+    font-weight: bold;
+    margin: .125em 0;
+    &:active, &:focus {
+      outline: none;
+    }
+  }
+}
+#editor-container {
+  .ql-editor {
+    min-height: 100%;
+    height: inherit;
+    overflow-y: inherit;
+
+    & > * {
+      margin-top: 1.5em;
+
+      &:last-child {
+        margin-bottom: 50px;
+      }
+    }
+  }
+}
+
+/* Contenu de la zone editable */
+
+.ql-editor {
+  &:focus {
+    outline: none;
+  }
+  p {
+    margin: 0.75em 0;
+  }
+  ul {
+    padding-left: 2em;
+  }
+  li {
+    list-style: disc outside;
+  }
+  blockquote {
+    padding-left: 1em;
+    border-left: #cccccc solid 1px;
+  }
+  section {
+    border: 1px dotted #cccccc;
+  }
+}
+.ql-clipboard { display: none; }
+
+abbr {
+  /*&:before { content: '('}
+  &:after { content: ')'}*/
+  color: #999;
+  &:hover {
+    color: #000;
+  }
+}
+smallcaps {
+  font-variant: small-caps;
+}
+speechpart {
+  border-bottom: 3px solid #ccc;
+}
+speechpart:nth-child(5n) {
+  border-color: cornflowerblue;
+}
+speechpart:nth-child(5n+1) {
+  border-color: coral;
+}
+speechpart:nth-child(5n+2) {
+  border-color: darkgoldenrod;
+}
+speechpart:nth-child(5n+3) {
+  border-color: lightseagreen;
+}
+speechpart:nth-child(5n+4) {
+  border-color: rebeccapurple;
+}
+
+.speechpart-actions {
+  position: absolute;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: .5em;
+  box-shadow: rgba(0,0,0,.3) 2px 3px 5px;
+}
+.speechpart-actions::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg) translateX(-50%);
+  background: #fff;
+  z-index: -1;
+}
