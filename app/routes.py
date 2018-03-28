@@ -61,6 +61,7 @@ def api_document(doc_id):
     #dump(query)
     #print(doc.document_linked_doc_id_collection[0])
     if doc is None:
+        # TOD0 : renvoyer une erreur 404 en json
         return jsonify({ 'error': 'Document introuvable'})
     return jsonify(doc.serialize())
 

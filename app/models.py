@@ -59,7 +59,7 @@ class District(db.Model):
     country_ref = db.Column(db.String, db.ForeignKey('country.ref'))
     def serialize(self):
         return {
-            'code': self.code,
+            'id': self.id,
             'label': self.label,
             'country_ref': self.country_ref
         }
@@ -79,6 +79,7 @@ class Document(db.Model):
     date_update = db.Column(db.String())
 
     # Relationships#
+    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document')
     institution = db.relationship("Institution", backref=db.backref('document', lazy=True))
     acte_types = db.relationship(ActeType,
                              secondary=association_document_has_acte_type,
@@ -111,9 +112,14 @@ class Document(db.Model):
             'date_insert': self.pressmark,
             'date_update': self.pressmark,
             'institution': self.institution.serialize(),
-            'acte_types': [at.serialize() for at in self.acte_types]
+            'images': [im.serialize() for im in self.images],
+            'acte_types': [at.serialize() for at in self.acte_types],
+            'countries': [co.serialize() for co in self.countries],
+            'districts': [di.serialize() for di in self.districts],
+            'editors': [ed.serialize() for ed in self.editors],
+            'languages': [lg.serialize() for lg in self.languages],
+            'traditions': [tr.serialize() for tr in self.traditions]
         }
-
 
 class Editor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -123,6 +129,17 @@ class Editor(db.Model):
         return {
             'ref': self.ref,
             'name': self.name
+        }
+
+class Image(db.Model):
+    manifest_url = db.Column(db.String, primary_key=True)
+    id = db.Column(db.String, primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'manifest_url': self.manifest_url
         }
 
 class Institution(db.Model):
@@ -149,7 +166,7 @@ class Tradition(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'label': self.name
+            'label': self.label
         }
 
 

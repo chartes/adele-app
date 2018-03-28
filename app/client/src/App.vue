@@ -1,21 +1,28 @@
 <template>
   <div id="app">
-    <IIIFMap manifest="http://193.48.42.68/adele/iiif/manifests/man95.json"></IIIFMap>
-    <editor></editor>
+    <p>Document : {{ doc_id }}</p>
+    <div v-if="document">
+      <IIIFMap :manifest="manifestURL"></IIIFMap>
+    </div>
+    <!--<editor></editor>-->
   </div>
 </template>
 
 <script>
 
-  import Editor from './components/Editor';
-  import IIIFMap from './components/IIIFMap';
+    import { mapGetters } from 'vuex'
+    import Editor from './components/Editor';
+    import IIIFMap from './components/IIIFMap';
 
-  export default {
+    export default {
 
-    name: 'app',
-    components: { Editor, IIIFMap },
-
-  }
+        name: 'app',
+        components: { Editor, IIIFMap },
+        props: ['doc_id'],
+        computed: {
+            ...mapGetters(['document', 'manifestURL'])
+    }
+    }
 </script>
 
 <style>

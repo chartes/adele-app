@@ -68,13 +68,13 @@ module.exports = {
     contentBase: path.join(__dirname, '..'),
     historyApiFallback: true,
     noInfo: true,
-    overlay: true/*,
+    overlay: true,
     proxy: {
       '/api': {
-        target: 'https://other-server.example.com',
-        secure: false
-      }
-    }*/
+        target: 'http://localhost:5000',
+        changeOrigin: true
+  }
+}
   },
   performance: {
     hints: false
