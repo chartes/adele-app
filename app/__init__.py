@@ -1,34 +1,43 @@
+import os
+import pprint
+
 from flask import Flask
 from config import Config
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import create_session
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine
 from flask_scss import Scss
+
+from flask_mail import Mail
+from flask_sqlalchemy import SQLAlchemy
+from flask_user import UserManager, SQLAlchemyAdapter
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# Initialize Flask extensions
+db = SQLAlchemy(app)  # Initialize Flask-SQLAlchemy
+mail = Mail(app)  # Initialize Flask-Mail
 scss = Scss(app)
 
-"""
-open the sqlite database
-"""
-#handle conflicts in name resolution
-def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-    disc = '_'.join(col.name for col in constraint.columns)
-    return referred_cls.__name__.lower() + '_' + disc + "_collection"
-
-
-
-try:
-    engine = create_engine("sqlite:///{0}".format(Config.SQLALCHEMY_DATABASE_URI))
-    #Base = automap_base()
-    #Base.prepare(engine, reflect=True,
-    #             name_for_collection_relationship=name_for_collection_relationship)
-    Base = declarative_base()
-    db = create_session(bind=engine)
-except:
-    db = None
 
 
 from app import routes, models
+
+
+# Create all database tables
+#db.create_all()
+
+# Setup Flask-User
+db_adapter = SQLAlchemyAdapter(db, models.User)  # Register the User model
+user_manager = UserManager(db_adapter, app)  # Initialize Flask-User
+
+
+#from sqlalchemy.engine import create_engine
+#engine = create_engine('sqlite://///Users/mrgecko/Documents/Dev/Projects/ENC/adele-app/db/adele.sqlite')
+#connection = engine.connect()
+#
+#result = connection.execute("select id from document")
+#names = []
+#for row in result:
+#    names.append(row[0])
+#
+#print(names)
+#
