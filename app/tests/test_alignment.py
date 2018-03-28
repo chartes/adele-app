@@ -12,6 +12,8 @@ TEST_DATA_DIR = "app/tests/data"
 
 class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
+    doc_list = []
+
     @classmethod
     def get_alignment_stmt(cls, transcription_id) :
         return """
@@ -36,6 +38,7 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        #init db connection
         cls.engine = create_engine("sqlite:///{url}".format(url=Config.TESTS_DB_URL))
 
         def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
@@ -45,7 +48,7 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
                                name_for_collection_relationship=name_for_collection_relationship)
 
         cls.session = create_session(bind=cls.engine)
-
+        #load the list of the fn of the tested documents
         cls.doc_list = []
         for root, directories, filenames in os.walk(os.path.join(TEST_DATA_DIR, 'transcription')):
             for filename in filenames:
@@ -55,8 +58,11 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         cls.doc_list.sort()
         print("Tested docs:", cls.doc_list)
 
-
     def test_both_ids_match(self):
+        """
+        Translation and corresponding transcription ids may be equal. If not mandatory, it is still wishable.
+        :return:
+        """
         for doc in TestTranscriptionTranslationAlignment.doc_list:
             stmt = TestTranscriptionTranslationAlignment.get_alignment_stmt(doc)
             res = self.engine.execute(stmt).fetchall()
@@ -96,7 +102,6 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
                         self.assertEqual(translation, res[i]["translation"], "Translation ptrs look wrong for doc {0}".format(doc))
 
             print("Alignment transcription/translation for doc {0} is OK".format(doc) )
-
 
 
 if __name__ == '__main__':

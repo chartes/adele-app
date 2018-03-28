@@ -36,20 +36,20 @@
                     <div class="card">
                         <div class="card-image">
                             <figure class="image is-4by3">
-                                <img src="http://193.48.42.68/loris/adele/dossiers/{{ d.doc_id }}.jpg/full/432,/0/default.jpg"
+                                <img src="http://193.48.42.68/loris/adele/dossiers/{{ d.id }}.jpg/full/432,/0/default.jpg"
                                      width="180px" height="180px"
                                 />
                             </figure>
                         </div>
                         <div class="card-content">
                             <div class="content">
-                                <p><span class="tag is-light">Dossier {{ d.doc_id }}</span></p>
+                                <p><span class="tag is-light">Dossier {{ d.id }}</span></p>
                                 <p class="title is-6">{{ d.title }}</p>
                                 <p><small>{{ d.subtitle }}</small></p>
                             </div>
                         </div>
                         <footer class="card-footer">
-                            <a href="/admin/document/{{ d.doc_id }}" class="card-footer-item">Editer</a>
+                            <a href="/admin/document/{{ d.id }}" class="card-footer-item">Editer</a>
                         </footer>
                     </div>
                 </div>

@@ -16,13 +16,13 @@
             <div class="columns">
                 <div class="column">
                     <figure class="image">
-                        <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.doc_id }}.jpg/full/full/0/default.jpg" />
+                        <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" />
                     </figure>
                 </div>
                 <div class="column">
                     <div class="content">
                         <p>
-                            <span class="tag is-light">Dossier {{ doc.doc_id }}</span>
+                            <span class="tag is-light">Dossier {{ doc.id }}</span>
                             <span class="tag is-light">Créé le {{ doc.date_insert }}</span>
                             <span class="tag is-light">Dern. modif. le {{ doc.date_update }}</span>
                         </p>
@@ -33,9 +33,6 @@
                     <hr>
 
                     <p class="title is-4">Métadonnées</p>
-                    {% if doc.creation %}
-                    <p><strong>creation : </strong>{{ doc.creation }}</p>
-                    {% endif %}
                     {% if doc.creation_lab %}
                     <p><strong>creation_lab : </strong>{{ doc.creation_lab }}</p>
                     {% endif %}
@@ -46,7 +43,7 @@
                     <p><strong>copy_cent : </strong>{{ doc.copy_cent }}</p>
                     {% endif %}
                     {% if doc.institution %}
-                    <p><strong>Institution : </strong><a href="{{ doc.institution.instit_ref }}" target="_blank">{{ doc.institution.instit_name }}</a></p>
+                    <p><strong>Institution : </strong><a href="{{ doc.institution.ref }}" target="_blank">{{ doc.institution.name }}</a></p>
                     {% endif %}
                     {% if doc.pressmark %}
                     <p><strong>pressmark : </strong>{{ doc.pressmark }}</p>
@@ -61,8 +58,8 @@
                     <div>
                         <p><strong>Type d'acte :</strong></p>
                         <ul>
-                            {% for act_type in doc.act_types %}
-                            <li>{{ act_type.label }}</a> </li>
+                            {% for acte_type in doc.acte_types %}
+                            <li>{{ acte_type.label }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -70,7 +67,7 @@
                         <p><strong>Traditions :</strong></p>
                         <ul>
                             {% for tradition in doc.traditions %}
-                            <li>{{ tradition.tradition_label }}</a> </li>
+                            <li>{{ tradition.label }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -78,7 +75,7 @@
                         <p><strong>Pays :</strong></p>
                         <ul>
                             {% for country in doc.countries %}
-                            <li><a href="{{ country.country_ref }}" target="_blank">{{ country.country_label }}</a></li>
+                            <li><a href="{{ country.ref }}" target="_blank">{{ country.label }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -86,7 +83,7 @@
                         <p><strong>District(s) :</strong></p>
                         <ul>
                             {% for district in doc.districts %}
-                            <li>{{ district.district_label }}</li>
+                            <li>{{ district.label }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -94,7 +91,7 @@
                         <p><strong>Langages :</strong></p>
                         <ul>
                             {% for lang in doc.languages %}
-                            <li>{{ lang.lang_label }}</a></li>
+                            <li>{{ lang.label }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -102,20 +99,20 @@
                         <p><strong>Editeurs :</strong></p>
                         <ul>
                             {% for editor in doc.editors %}
-                            <li>{{ editor.editor_name }}</a></li>
+                            <li>{{ editor.name }}</li>
                             {% endfor %}
                         </ul>
                     </div>
                     <div>
-                        <p><strong>Transcriptions :</strong> {{ doc.transcription_doc_id_collection|length }}</p>
-                        <p><strong>Traductions :</strong> {{ doc.translation_doc_id_collection|length }}</p>
-                        <p><strong>Commentaires :</strong> {{ doc.commentary_doc_id_collection|length }}</p>
+                        <p><strong>Transcriptions :</strong> {{ doc.transcription_id_collection|length }}</p>
+                        <p><strong>Traductions :</strong> {{ doc.translation_id_collection|length }}</p>
+                        <p><strong>Commentaires :</strong> {{ doc.commentary_id_collection|length }}</p>
                     </div>
                     <div>
                         <p><strong>Documents liés :</strong></p>
                         <ul>
-                            {% for linked_doc in doc.document_linked_doc_id_collection %}
-                            <li><a href="/admin/document/{{linked_doc.doc_id}}">{{ linked_doc.doc_id }} {{ linked_doc.title }}</a></li>
+                            {% for linked_doc in doc.document_linked_id_collection %}
+                            <li><a href="/admin/document/{{linked_doc.id}}">{{ linked_doc.id }} {{ linked_doc.title }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>
