@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, url_for
+from flask import render_template, flash, redirect, url_for, jsonify
 from app import app, db
 from app.models import Document
 
@@ -63,3 +63,16 @@ def admin_document_edit(doc_id):
 
 #@app.route('/admin/login')
 #@app.route('/admin/logout')
+
+@app.route('/api/document/<doc_id>')
+def api_document(doc_id):
+    doc = db.query(Document).get(doc_id)
+    #dump(query)
+    #print(doc.document_linked_doc_id_collection[0])
+    if doc is None:
+        return jsonify({ 'error': 'Document introuvable'})
+    return jsonify(doc.serialize())
+
+#@app.route('/api/document/<doc_id>/traduction')
+#@app.route('/api/document/<doc_id>/transcription')
+#@app.route('/api/user')
