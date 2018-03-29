@@ -1,10 +1,8 @@
-from flask import render_template, flash, redirect, url_for, jsonify
-from app import app, db
+from flask import render_template, flash, redirect, url_for, jsonify, render_template_string
+from flask_user import login_required
+
+from app import app
 from app.models import Document, User
-
-from app.database.alignment.alignment_translation import align_translation
-from flask_sqlalchemy import get_debug_queries
-
 
 #@app.route('/alignment/translation/<transcription_id>')
 #def r_align_translation(transcription_id):
@@ -15,6 +13,25 @@ from flask_sqlalchemy import get_debug_queries
 #        #no result, should raise an error
 #        alignment = []
 #    return render_template('alignment.html', alignment=alignment)
+
+
+"""
+---------------------------------
+User Managment Routes
+---------------------------------
+"""
+
+@app.route('/members')
+@login_required
+def members_page():
+    return render_template_string("""
+        {% extends "base.html" %}
+        {% block content %}
+            <h2>Members page</h2>
+            <p>This page can only be accessed by authenticated users.</p><br/>
+            <p><a href={{ url_for('user.logout') }}>logout</a></p>
+        {% endblock %}
+        """)
 
 
 """

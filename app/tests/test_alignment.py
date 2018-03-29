@@ -1,10 +1,7 @@
 import os
 import unittest
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import create_session
-from sqlalchemy import create_engine
 
-from config import Config
+from app import db
 
 NS_TI = {"ti": "http://www.tei-c.org/ns/1.0"}
 TEST_DATA_DIR = "app/tests/data"
@@ -19,8 +16,8 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         return """
         -- Transcription vs Translation
         SELECT
-          transcription.transcription_id,
-          translation.translation_id,
+          transcription.id as transcription_id,
+          translation.id as translation_id,
           substr(transcription.content, ptr_transcription_start, 
             ptr_transcription_end - ptr_transcription_start) as transcription,
           substr(translation.content, ptr_translation_start, 
@@ -28,31 +25,21 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         FROM
           transcription
           LEFT JOIN alignment_translation
-            on transcription.transcription_id = alignment_translation.transcription_id
+            on transcription.id = alignment_translation.transcription_id
           LEFT JOIN  translation
-            ON alignment_translation.translation_id = translation.translation_id
+            ON alignment_translation.translation_id = translation.id
         WHERE
-          transcription.transcription_id = {transcription_id}      
+          transcription.id = {transcription_id}      
         ;
         """.format(transcription_id=transcription_id)
 
     @classmethod
     def setUpClass(cls):
-        #init db connection
-        cls.engine = create_engine("sqlite:///{url}".format(url=Config.TESTS_DB_URL))
-
-        def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-            disc = '_'.join(col.name for col in constraint.columns)
-            return referred_cls.__name__.lower() + '_' + disc + "_collection"
-        automap_base().prepare(cls.engine, reflect=True,
-                               name_for_collection_relationship=name_for_collection_relationship)
-
-        cls.session = create_session(bind=cls.engine)
         #load the list of the fn of the tested documents
         cls.doc_list = []
         for root, directories, filenames in os.walk(os.path.join(TEST_DATA_DIR, 'transcription')):
             for filename in filenames:
-                if filename.endswith(".txt"):
+                if filename.endswith("19.txt"):
                     cls.doc_list.append(filename.split(".")[0])
 
         cls.doc_list.sort()
@@ -65,7 +52,9 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         """
         for doc in TestTranscriptionTranslationAlignment.doc_list:
             stmt = TestTranscriptionTranslationAlignment.get_alignment_stmt(doc)
-            res = self.engine.execute(stmt).fetchall()
+            res = db.engine.execute(stmt)
+            res = [r for r in res]
+
             # expect consistency between translation and traduction ids (error shouldn't happen)
             transcription_ids = set()
             translation_ids = set()
@@ -87,19 +76,24 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
                 translation_lines = translation_f.read().splitlines()
 
                 stmt = TestTranscriptionTranslationAlignment.get_alignment_stmt(doc)
-                res = self.engine.execute(stmt).fetchall()
+                res = db.engine.execute(stmt)
+                res = [r for r in res]
+
+
+                print(transcription_lines)
 
                 if len(translation_lines) == 0:
                     translation_ids = set([l["translation_id"] for l in res if l["translation_id"] != None])
                     self.assertEqual(0, len(translation_ids), "There is no translation for doc {0}".format(doc))
                 else:
-                    self.assertEqual(len([l for l in transcription_lines if len(l)>0]), len([l["transcription"] for l in res if len(l["transcription"])>0]), "Transcription lines count does not match for doc {0}".format(doc))
+                    self.assertEqual(len([l for l in transcription_lines]), len([l["transcription"] for l in res if l["transcription"] is not None]), "Transcription lines count does not match for doc {0}".format(doc))
                     for i, transcription in enumerate(transcription_lines):
-                        self.assertEqual(transcription, res[i]["transcription"] , "Transcription ptrs look wrong for doc {0}".format(doc))
+                        print(res)
+                        self.assertEqual(transcription, res[i]["transcription"] if res[i]["transcription"] is not None else '', "Transcription ptrs look wrong for doc {0}".format(doc))
 
-                    self.assertEqual(len([l for l in translation_lines if len(l)>0]), len([l["translation"] for l in res if len(l["translation"])>0]), "Translation lines count does not match for doc {0}".format(doc))
+                    self.assertEqual(len([l for l in translation_lines ]), len([l["translation"] for l in res if l["translation"] is not None]), "Translation lines count does not match for doc {0}".format(doc))
                     for i, translation in enumerate(translation_lines):
-                        self.assertEqual(translation, res[i]["translation"], "Translation ptrs look wrong for doc {0}".format(doc))
+                        self.assertEqual(translation, res[i]["translation"] if res[i]["translation"] is not None else '', "Translation ptrs look wrong for doc {0}".format(doc))
 
             print("Alignment transcription/translation for doc {0} is OK".format(doc) )
 

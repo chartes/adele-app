@@ -217,9 +217,3 @@ class Role(db.Model):
             'label': self.label
         }
 
-## Define the UserRoles DataModel
-#class UserHasRole(db.Model):
-#    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
-#    role_id = db.Column(db.Integer(), db.ForeignKey('role.id', ondelete='CASCADE'), primary_key=True)
-
-

@@ -12,7 +12,7 @@
     import { mapGetters } from 'vuex'
     import DocumentEdition from './components/DocumentEdition';
 
-    export default {
+  export default {
 
         name: 'app',
         components: { DocumentEdition },
