@@ -2,7 +2,6 @@ from flask_user import UserMixin
 
 from app import db
 
-
 association_document_has_acte_type = db.Table('document_has_acte_type',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('type_id', db.Text, db.ForeignKey('acte_type.id'), primary_key=True)
@@ -127,10 +126,4 @@ class User(db.Model, UserMixin):
 class Role(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(), unique=True)
-
-## Define the UserRoles DataModel
-#class UserHasRole(db.Model):
-#    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
-#    role_id = db.Column(db.Integer(), db.ForeignKey('role.id', ondelete='CASCADE'), primary_key=True)
-
 
