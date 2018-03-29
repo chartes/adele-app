@@ -37,15 +37,32 @@ class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
     description = db.Column(db.String)
+    def serialize(self):
+        return {
+            'id': self.id,
+            'label': self.label,
+            'description': self.label
+        }
 
 class Country(db.Model):
     ref = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
+    def serialize(self):
+        return {
+            'ref': self.ref,
+            'label': self.label
+        }
 
 class District(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
     country_ref = db.Column(db.String, db.ForeignKey('country.ref'))
+    def serialize(self):
+        return {
+            'id': self.id,
+            'label': self.label,
+            'country_ref': self.country_ref
+        }
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,6 +79,7 @@ class Document(db.Model):
     date_update = db.Column(db.String())
 
     # Relationships#
+    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document')
     institution = db.relationship("Institution", backref=db.backref('document', lazy=True))
     acte_types = db.relationship(ActeType,
                              secondary=association_document_has_acte_type,
@@ -81,24 +99,75 @@ class Document(db.Model):
     traditions = db.relationship("Tradition",
                              secondary=association_document_has_tradition,
                              backref=db.backref('documents'))
-
+    def serialize(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'creation': self.creation,
+            'creation_lab': self.creation_lab,
+            'copy_year': self.copy_year,
+            'copy_cent': self.copy_cent,
+            'pressmark': self.pressmark,
+            'argument': self.argument,
+            'date_insert': self.pressmark,
+            'date_update': self.pressmark,
+            'institution': self.institution.serialize(),
+            'images': [im.serialize() for im in self.images],
+            'acte_types': [at.serialize() for at in self.acte_types],
+            'countries': [co.serialize() for co in self.countries],
+            'districts': [di.serialize() for di in self.districts],
+            'editors': [ed.serialize() for ed in self.editors],
+            'languages': [lg.serialize() for lg in self.languages],
+            'traditions': [tr.serialize() for tr in self.traditions]
+        }
 
 class Editor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ref = db.Column(db.String)
     name = db.Column(db.String)
+    def serialize(self):
+        return {
+            'ref': self.ref,
+            'name': self.name
+        }
+
+class Image(db.Model):
+    manifest_url = db.Column(db.String, primary_key=True)
+    id = db.Column(db.String, primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'manifest_url': self.manifest_url
+        }
 
 class Institution(db.Model):
     ref = db.Column(db.String, primary_key=True)
     name = db.Column(db.String)
+    def serialize(self):
+        return {
+            'ref': self.ref,
+            'name': self.name
+        }
 
 class Language(db.Model):
     code = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
+    def serialize(self):
+        return {
+            'code': self.code,
+            'label': self.label
+        }
 
 class Tradition(db.Model):
     id = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
+    def serialize(self):
+        return {
+            'id': self.id,
+            'label': self.label
+        }
 
 
 # Define the User data model
