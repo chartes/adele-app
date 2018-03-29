@@ -1,4 +1,6 @@
 import os
+import shutil
+import urllib
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -6,12 +8,12 @@ class Config(object):
 
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
 
-    #try:
-    #    with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response,\
-    #            open(os.path.join('db', 'adele.sqlite'), 'wb') as out_file:
-    #        shutil.copyfileobj(response, out_file)
-    #except:
-    #    pass
+    try:
+        with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response,\
+                open(os.path.join('db', 'adele.sqlite'), 'wb') as out_file:
+            shutil.copyfileobj(response, out_file)
+    except:
+        pass
         #raise Exception("DEBUG: fichier adele.sqlite non récupéré")
         #local_filename="/Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite"
 
