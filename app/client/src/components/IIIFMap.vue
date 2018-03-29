@@ -1,7 +1,8 @@
 <template>
-  <div>
-    <div class="iiif-map" ref="map"></div>
-  </div>
+    <div>
+        <div v-if="!error" class="iiif-map" ref="map"></div>
+        <a-message v-if="error" :title="'Erreur'" :body="error" :type="'is-danger'"/>
+    </div>
 </template>
 
 <script>
@@ -11,150 +12,132 @@
   import '../modules/leaflet/Leaflet.Control.Custom';
   import axios from 'axios';
   import tileLayerIiif from '../modules/leaflet/leaflet-iiif';
+  import AMessage from './ui/AMessage'
 
-    export default {
-      name: "iiif-map",
-      props: ['manifest'],
+  export default {
+    components: {AMessage},
+    name: "iiif-map",
+    props: ['manifest','drawMode'],
+    componenst: { AMessage },
 
-      data() {
-        return {
-          map: null,
-          baseLayer: null
-        }
-      },
+    data() {
+      return {
+        map: null,
+        baseLayer: null,
+        editableLayers: null,
+        drawControls: null,
+        error: undefined
+      }
+    },
 
-      mounted() {
-        console.log('IIIFMap mounted', this.$refs.map, this.manifest);
+    mounted() {
+      axios.get(this.manifest)
+        .then( response => {
+          let page = response.data.sequences[0].canvases[0];
+          this.mapCreate(page);
+        })
+        .catch( error => {
+          this.error = "Impossible de charger le manifeste : <br>" +this.manifest;
+        });
+
+    },
+
+    methods: {
+      mapCreate (page) {
+        console.log('IIIFMap mapCreate')
+
         this.map = L.map(this.$refs.map, {
           center: [0, 0],
           crs: L.CRS.Simple,
-          zoom: 0
+          zoom: 0,
+          attributionControl: false
         });
 
-        axios.get(this.manifest)
-          .then( (response) => {
-            let page = response.data.sequences[0].canvases[0];
-            this.mapCreate(page);
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
+        this.baseLayer = tileLayerIiif(page.images[0].resource.service['@id'] + '/info.json')
+          .addTo(this.map);
+
+        this.editableLayers = new L.FeatureGroup();
+        this.map.addLayer(this.editableLayers);
+
+        this.toggleDrawControls();
 
       },
+      createDrawControls () {
 
-      methods: {
-        mapCreate (page) {
-          this.baseLayer = tileLayerIiif(page.images[0].resource.service['@id'] + '/info.json')
-            .addTo(this.map);
+        console.log("IIIFMap createDrawControls");
 
-          let editableLayers = new L.FeatureGroup();
-          this.map.addLayer(editableLayers);
-
-          const options = {
-            position: 'topright',
-            draw: {
-              polyline: false, /*{
-                shapeOptions: {
-                    color: '#f357a1',
-                    weight: 10
-                }
-            },*/
-              polygon: {
-                allowIntersection: false, // Restricts shapes to simple polygons
-                drawError: {
-                  color: '#e1e100', // Color the shape will turn when intersects
-                  message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
-                },
-                shapeOptions: {
-                  color: '#bada55'
-                }
+        const options = {
+          position: 'topright',
+          draw: {
+            polyline: false,
+            polygon: {
+              allowIntersection: false, // Restricts shapes to simple polygons
+              drawError: {
+                color: '#e1e100', // Color the shape will turn when intersects
+                message: '<strong>Oups !</strong> vous ne pouvez pas dessiner cette forme' // Message that will show when intersect
               },
-              circle: true, // Turns off this drawing tool
-              circlemarker: false,
-              rectangle: {
-                shapeOptions: {
-                  clickable: false
-                }
+              shapeOptions: {
+                color: '#bada55'
               }
             },
-            edit: {
-              featureGroup: editableLayers, //REQUIRED!!
-              remove: true
+            //circle: true, // Turns off this drawing tool
+            circlemarker: false,
+            rectangle: {
+              shapeOptions: {
+                clickable: false
+              }
             }
-          };
+          },
+          edit: {
+            featureGroup: this.editableLayers, //REQUIRED!!
+            remove: true
+          }
+        };
 
-          let drawControl = new L.Control.Draw(options);
-          this.map.addControl(drawControl);
+        this.drawControls = new L.Control.Draw(options);
+      },
+      addDrawControls () {
 
-          /*L.control.custom({
-            position: 'topright',
-            content : '<input type="text" id="anno-input" class="btn btn-default" value="Mon Annotation"/>',
-            classes : 'btn-group-vertical btn-group-sm',
-            style   :
-              {
-                margin: '10px',
-                padding: '0px 0 0 0',
-                cursor: 'pointer',
-              },
-            datas   :
-              {
-                'foo': 'bar',
-              },
-            events:
-              {
-                click: function(data)
-                {
-                  console.log('wrapper div element clicked');
-                  console.log(data);
-                },
-                dblclick: function(data)
-                {
-                  console.log('wrapper div element dblclicked');
-                  console.log(data);
-                },
-                contextmenu: function(data)
-                {
-                  console.log('wrapper div element contextmenu');
-                  console.log(data);
-                },
-              }
-          })
-            .addTo(this.map);
-          */
+        if (!this.drawControls) {
+          this.createDrawControls();
+        }
 
-          this.map.on(L.Draw.Event.CREATED, function (e) {
-            var type = e.layerType,
-              layer = e.layer;
-            console.log(e);
+        this.map.addControl(this.drawControls);
+        this.map.on(L.Draw.Event.CREATED, this.drawCreatedhandler);
 
-            /*if (layer._tooltip) {
-              $("#anno-input").attr("value", layer._tooltip.getContent());
-            } else {
-              $("#anno-input").attr("value", "");
-            }*/
+      },
+      removeDrawControls () {
 
-            /*layer.on('click', function(ev) {
-              annotations.selected = layer;
-              if (layer._tooltip) {
-                $("#anno-input").attr("value", layer._tooltip.getContent());
-              }
-            });
+        if (this.drawControls) this.map.removeControl(this.drawControls);
+        this.map.off(L.Draw.Event.CREATED, this.drawCreatedhandler);
 
-            annotations.selected = layer;*/
-
-
-            editableLayers.addLayer(layer);
-          });
+      },
+      toggleDrawControls () {
+        if (this.drawMode) {
+          this.addDrawControls();
+        } else {
+          this.removeDrawControls();
+        }
+      },
+      drawCreatedhandler (e) {
+        console.log("IIIFMap drawCreatedhandler", e, this);
+        var type = e.layerType,
+          layer = e.layer;
+        this.editableLayers.addLayer(layer);
+      }
+    },
+    watch: {
+      drawMode: function () {
+        if (this.drawMode) {
+          this.addDrawControls();
+        } else {
+          this.removeDrawControls();
         }
       }
-
     }
+
+  }
 </script>
 
 <style scoped>
-  #map {
-    background: #eee;
-    padding: 1em;
-    border: 1px solid #ccc;
-  }
 </style>

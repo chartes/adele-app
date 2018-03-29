@@ -1,5 +1,6 @@
 .iiif-map {
-  min-height: 500px; }
+  min-height: 500px;
+  background: #333; }
 
   * {
     box-sizing: border-box; }

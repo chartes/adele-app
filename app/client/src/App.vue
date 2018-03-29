@@ -2,26 +2,24 @@
   <div id="app">
     <p>Document : {{ doc_id }}</p>
     <div v-if="document">
-      <IIIFMap :manifest="manifestURL"></IIIFMap>
+      <document-edition></document-edition>
     </div>
-    <!--<editor></editor>-->
   </div>
 </template>
 
 <script>
 
     import { mapGetters } from 'vuex'
-    import Editor from './components/Editor';
-    import IIIFMap from './components/IIIFMap';
+    import DocumentEdition from './components/DocumentEdition';
 
     export default {
 
         name: 'app',
-        components: { Editor, IIIFMap },
+        components: { DocumentEdition },
         props: ['doc_id'],
         computed: {
-            ...mapGetters(['document', 'manifestURL'])
-    }
+            ...mapGetters(['document'])
+        }
     }
 </script>
 

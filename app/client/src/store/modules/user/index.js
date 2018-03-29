@@ -2,7 +2,20 @@ import axios from "axios/index";
 
 const state = {
 
-  currentUser: undefined,
+  currentUser: {
+      "active": true,
+      "confirmed_at": null,
+      "email": "julien.pilla@enc-sorbonne.fr",
+      "first_name": "Julien",
+      "id": 1,
+      "last_name": "Pilla",
+      "roles": [
+          "admin",
+          "student",
+          "teacher"
+      ],
+      "username": "jpilla"
+  },
 
 };
 
