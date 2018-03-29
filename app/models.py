@@ -191,10 +191,31 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=association_user_has_role,
             backref=db.backref('users', lazy='dynamic'))
 
+    def serialize(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'confirmed_at': self.confirmed_at,
+            'active': self.active,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'roles': [ro.name for ro in self.roles]
+        }
+
 # Define the Role DataModel
 class Role(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(), unique=True)
+    description = db.Column(db.String())
+    label = db.Column(db.String())
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'label': self.label
+        }
 
 ## Define the UserRoles DataModel
 #class UserHasRole(db.Model):

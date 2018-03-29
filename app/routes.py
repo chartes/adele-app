@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for, jsonify
 from app import app, db
-from app.models import Document
+from app.models import Document, User
 
 from app.database.alignment.alignment_translation import align_translation
 from flask_sqlalchemy import get_debug_queries
@@ -67,4 +67,13 @@ def api_document(doc_id):
 
 #@app.route('/api/document/<doc_id>/traduction')
 #@app.route('/api/document/<doc_id>/transcription')
-#@app.route('/api/user')
+
+@app.route('/api/user/<user_id>')
+def api_user(user_id):
+    user = User.query.filter(User.id == user_id).one()
+    #dump(query)
+    #print(doc.document_linked_doc_id_collection[0])
+    if user is None:
+        # TOD0 : renvoyer une erreur 404 en json
+        return jsonify({ 'error': 'Document introuvable'})
+    return jsonify(user.serialize())
