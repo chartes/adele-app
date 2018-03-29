@@ -30,8 +30,18 @@ association_user_has_role = db.Table('user_has_role',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('role.id'), primary_key=True)
 )
-
-
+association_transcription_has_note = db.Table('transcription_has_note',
+    db.Column('transcription_id', db.Integer, db.ForeignKey('transcription.id'), primary_key=True),
+    db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
+    db.Column('ptr_start', db.Integer),
+    db.Column('ptr_end', db.Integer),
+)
+association_translation_has_note = db.Table('translation_has_note',
+    db.Column('translation_id', db.Integer, db.ForeignKey('translation.id'), primary_key=True),
+    db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
+    db.Column('ptr_start', db.Integer),
+    db.Column('ptr_end', db.Integer),
+)
 
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -160,6 +170,29 @@ class Language(db.Model):
             'label': self.label
         }
 
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    type_id = db.Column(db.Integer, db.ForeignKey('note_type.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    content = db.Column(db.Text)
+    def serialize(self):
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'user_id': self.user_id,
+            'content': self.content
+        }
+
+
+class NoteType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String)
+    def serialize(self):
+        return {
+            'id': self.id,
+            'label': self.label
+        }
+
 class Tradition(db.Model):
     id = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
@@ -169,6 +202,43 @@ class Tradition(db.Model):
             'label': self.label
         }
 
+class Transcription(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    content = db.Column(db.Text)
+
+    notes = db.relationship("Note",
+                             secondary=association_transcription_has_note,
+                             backref=db.backref('transcription', ))
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'user_id': self.user_id,
+            'content': self.content,
+            'notes': [note.serialize() for note in self.notes]
+        }
+
+class Translation(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    content = db.Column(db.Text)
+
+    notes = db.relationship("Note",
+                             secondary=association_translation_has_note,
+                             backref=db.backref('translation', ))
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'user_id': self.user_id,
+            'content': self.content,
+            'notes': [note.serialize() for note in self.notes]
+        }
 
 # Define the User data model
 class User(db.Model, UserMixin):
