@@ -44,7 +44,7 @@ class CustomUserManager(UserManager):
 
 class MyRegisterForm(RegisterForm):
     first_name = StringField('First name', validators=[DataRequired('First name is required')])
-    last_name  = StringField('Last name',  validators=[DataRequired('Last name is required')])
+    last_name = StringField('Last name',  validators=[DataRequired('Last name is required')])
 
 
 # Initialize Flask-User
