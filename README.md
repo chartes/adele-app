@@ -1,4 +1,5 @@
-# adele-app
+# adele-app 
+[![Build Status](https://travis-ci.org/chartes/adele-app.png)](https://travis-ci.org/chartes/adele-app)
 
 
 ```
