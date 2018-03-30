@@ -27,8 +27,7 @@ class Config(object):
 
     CSRF_ENABLED = True
 
-    # Flask-USer settings
-    # USER_PASSWORD_HASH_MODE = 'Flask-Security'
+    # Flask-User settings
     USER_AFTER_LOGOUT_ENDPOINT = ''
 
     # Flask-Mail settings
