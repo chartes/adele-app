@@ -1,3 +1,6 @@
+import json
+from urllib.request import urlopen
+
 from flask import jsonify
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -35,15 +38,21 @@ def api_align_translation(api_version, transcription_id, translation_id):
 
 @app.route('/api/<api_version>/document/<doc_id>/manifest')
 def api_document_manifest(api_version, doc_id):
+    no_result = False
     try:
         img = Image.query.filter(Image.doc_id == doc_id).one()
-        response = APIResponseFactory.make_response(data={
-            "manifest_url": img.manifest_url
-        })
+        manifest_data = urlopen(img.manifest_url).read()
     except NoResultFound:
+        no_result = True
+
+    if no_result:
         response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Manifeste introuvable pour le document {0}".format(doc_id)
+            "details": "Impossible de récupérer le manifeste pour le document {0}".format(doc_id)
         })
+    else:
+        data = json.loads(manifest_data)
+        response = APIResponseFactory.make_response(data=data)
+
     return jsonify(response)
 
 @app.route('/api/<api_version>/document/<doc_id>')
