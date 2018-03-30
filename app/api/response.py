@@ -80,7 +80,11 @@ class APIResponseFactory:
         return response
 
     @classmethod
-    def add_meta(cls, response, data):
+    def add_meta(cls, response, meta):
+        raise NotImplementedError
+
+    @classmethod
+    def add_links(cls, response, links):
         raise NotImplementedError
 
     @classmethod

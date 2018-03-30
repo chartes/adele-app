@@ -8,11 +8,14 @@ from app.database.alignment.alignment_translation import align_translation
 from app.models import Document, User
 
 
-@app.route('/alignment/translation/<transcription_id>')
-def r_align_translation(transcription_id):
-    res = align_translation(transcription_id)
+"""
+Test routes
+"""
+@app.route('/test/alignment/translation/<transcription_id>/<translation_id>')
+def r_align_translation(transcription_id, translation_id):
+    res = align_translation(transcription_id, translation_id)
     if len(res) > 0:
-        alignment=[ {"transcription": t[2], "translation": t[3]} for t in res]
+        alignment=[ {"transcription": t[6], "translation": t[7]} for t in res]
     else:
         #no result, should raise an error
         alignment = []
@@ -76,10 +79,32 @@ API Routes
 ---------------------------------
 """
 
+@app.route('/api/<api_version>/alignment/translation/<transcription_id>/<translation_id>')
+def r_api_align_translation(api_version, transcription_id, translation_id):
+    alignment = align_translation(transcription_id, translation_id)
+    if len(alignment) > 0:
+        data = []
+        for al in alignment:
+            data.append({
+                "transcription_id": al[0],
+                "translation_id": al[1],
+                "ptr_transcription_start": al[2],
+                "ptr_transcription_end": al[3],
+                "ptr_translation_start": al[4],
+                "ptr_translation_end": al[5],
+                "transcription": al[6],
+                "translation": al[7],
+            })
+        response = APIResponseFactory.make_response(data=data)
+    else:
+        response = APIResponseFactory.make_response(errors={"status": 404, "title": "Alignement introuvable"})
+
+    return jsonify(response)
+
 
 
 @app.route('/api/<api_version>/document/<doc_id>')
-def api_document(api_version, doc_id):
+def r_api_document(api_version, doc_id):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
     except NoResultFound:
@@ -95,7 +120,7 @@ def api_document(api_version, doc_id):
 #@app.route('/api/document/<doc_id>/transcription')
 
 @app.route('/api/<api_version>/user/<user_id>')
-def api_user(api_version, user_id):
+def r_api_user(api_version, user_id):
     try:
         user = User.query.filter(User.id == user_id).one()
     except NoResultFound:
