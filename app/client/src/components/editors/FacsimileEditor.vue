@@ -1,7 +1,6 @@
 <template>
     <div class="columns">
         <div class="column is-half">
-            <h1>Image</h1>
             <IIIFMap :manifest="manifestURL" :draw-mode="false"></IIIFMap>
         </div>
         <div class="column is-half">

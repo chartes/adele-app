@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, jsonify, render_tem
 from flask_user import login_required
 
 from app import app
-from app.models import Document, User
+from app.models import Document, Transcription, User
 
 #@app.route('/alignment/translation/<transcription_id>')
 #def r_align_translation(transcription_id):
@@ -83,13 +83,31 @@ def api_document(doc_id):
     return jsonify(doc.serialize())
 
 #@app.route('/api/document/<doc_id>/traduction')
-#@app.route('/api/document/<doc_id>/transcription')
+
+@app.route('/api/document/<doc_id>/transcription/from/<user_id>')
+def document_transcription_from_user(doc_id, user_id):
+    transcription = Transcription.query.filter(Transcription.doc_id == doc_id).one()
+    #dump(query)
+    #print(doc.document_linked_doc_id_collection[0])
+    if transcription is None:
+        # TOD0 : renvoyer une erreur 404 en json
+        return jsonify({ 'error': 'Document introuvable'})
+    return jsonify(transcription.serialize())
 
 @app.route('/api/user/<user_id>')
 def api_user(user_id):
     user = User.query.filter(User.id == user_id).one()
     #dump(query)
     #print(doc.document_linked_doc_id_collection[0])
+    if user is None:
+        # TOD0 : renvoyer une erreur 404 en json
+        return jsonify({ 'error': 'Document introuvable'})
+    return jsonify(user.serialize())
+
+@app.route('/api/user')
+def api_current_user():
+    # TODO: change hard coded id
+    user = User.query.filter(User.id == 3).one()
     if user is None:
         # TOD0 : renvoyer une erreur 404 en json
         return jsonify({ 'error': 'Document introuvable'})

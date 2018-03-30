@@ -2,20 +2,7 @@ import axios from "axios/index";
 
 const state = {
 
-  currentUser: {
-      "active": true,
-      "confirmed_at": null,
-      "email": "julien.pilla@enc-sorbonne.fr",
-      "first_name": "Julien",
-      "id": 1,
-      "last_name": "Pilla",
-      "roles": [
-          "admin",
-          "student",
-          "teacher"
-      ],
-      "username": "jpilla"
-  },
+  currentUser: undefined,
 
 };
 
@@ -30,7 +17,7 @@ const mutations = {
 const actions = {
 
   getCurrentUser ({ commit }) {
-    axios.get('/api/user').then( (response) => {
+    return axios.get('/api/user').then( (response) => {
       commit('UPDATE_CURRENT_USER', response.data)
     })
   }

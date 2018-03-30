@@ -41,7 +41,7 @@ module.exports = {
         loader: 'ts-loader',
         options: {
           compilerOptions: {
-            declaration: false,
+            //declaration: false,
             target: 'es5',
             module: 'commonjs'
           },
@@ -49,19 +49,25 @@ module.exports = {
         }
       },
       {
-        test: /\.(png|jpg|gif|svg)$/,
+        test: /\.(png|jpg|gif)$/,
         loader: 'file-loader',
         options: {
           name: '[name].[ext]?[hash]'
         }
+      },
+      {
+        test: /\.svg$/,
+        loader: 'svg-inline-loader'
       }
     ]
   },
   resolve: {
     alias: {
-      'vue$': 'vue/dist/vue.esm.js'
+      'vue$': 'vue/dist/vue.esm.js',
+      'parchment': path.resolve(__dirname, 'node_modules/parchment/src/parchment.ts'),
+      'quill$': path.resolve(__dirname, 'node_modules/quill/quill.js'),
     },
-    extensions: ['*', '.js', '.vue', '.json']
+    extensions: ['*', '.js', '.vue', '.json', '.ts']
   },
   devServer: {
     index: './index.htm',

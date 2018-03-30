@@ -1,0 +1,10 @@
+<svg viewBox="0 0 18 18">
+<polyline class="ql-stroke" points="4.6,14 2.5,14 2.5,4 4.6,4 "/>
+<polyline class="ql-stroke" points="13.5,4 15.6,4 15.6,14 13.5,14 "/>
+<polyline class="ql-stroke" points="4.6,14 2.5,14 2.5,4 4.6,4 "/>
+<g>
+	<path class="ql-fill" d="M7.8,9H5.4v2.3h2.7v0.7H4.6V5.7h3.4v0.7H5.4v2h2.4V9z"/>
+	<path class="ql-fill" d="M12.6,11.9l-0.8-1.4C11.4,10,11.2,9.7,11,9.3h0c-0.2,0.4-0.4,0.7-0.7,1.2l-0.8,1.4H8.7l1.9-3.2L8.7,5.7h0.9l0.8,1.5
+		c0.2,0.4,0.4,0.7,0.6,1.1h0c0.2-0.4,0.3-0.7,0.6-1.1l0.9-1.5h0.9l-1.9,3l1.9,3.2H12.6z"/>
+</g>
+</svg>

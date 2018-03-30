@@ -44,7 +44,6 @@
 
     methods: {
       mapCreate (page) {
-        console.log('IIIFMap mapCreate')
 
         this.map = L.map(this.$refs.map, {
           center: [0, 0],

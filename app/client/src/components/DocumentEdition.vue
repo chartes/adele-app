@@ -26,6 +26,7 @@
       <tab name="Facsimilé">
 
         <h1 class="title">Facsimilé</h1>
+        <facsimile-editor></facsimile-editor>
 
       </tab>
 
@@ -45,16 +46,18 @@
 
 
     import Quill from 'quill';
-    import  '../modules/quill/Blots';
+    import '../modules/quill/AdeleQuill';
 
     import Tabs from './ui/tabs.vue'
     import Tab from './ui/tab.vue'
+    import FacsimileEditor from "./editors/FacsimileEditor";
     import TranscriptionEditor from "./editors/TranscriptionEditor";
 
     export default {
         name: "document-edition",
 
         components: {
+            FacsimileEditor,
             TranscriptionEditor,
             Tabs,
             Tab

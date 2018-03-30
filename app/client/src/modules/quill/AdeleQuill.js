@@ -48,7 +48,7 @@ Quill.register(LayoutCol, true);
 // other
 Quill.register(SpeechpartBlot, true);
 
-
+export default Quill;
 export {
 
   BoldBlot,

@@ -12,9 +12,6 @@ new Vue({
   beforeMount: function () {
     this.documentId = this.$el.dataset.documentId;
   },
-  mounted () {
-    this.$store.dispatch('getDocument', this.documentId)
-  },
   render (h) {
     return h(App, { props: {
         doc_id: this.documentId

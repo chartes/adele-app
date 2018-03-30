@@ -6,11 +6,11 @@ import document from './modules/document'
 import transcription from './modules/transcription'
 
 Vue.use(Vuex);
-console.log('STORE');
 
 export default new Vuex.Store({
     modules: {
       document,
+      transcription,
       user
     }
 });

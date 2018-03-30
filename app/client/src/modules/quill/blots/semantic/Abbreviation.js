@@ -12,6 +12,6 @@ let Inline = Quill.import('blots/inline');
 
 class Abbreviation extends Inline { }
 Abbreviation.blotName = 'expan';
-Abbreviation.tagName = 'abbr';
+Abbreviation.tagName = 'ex';
 
 export default Abbreviation;

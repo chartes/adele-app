@@ -165,7 +165,7 @@
 <script>
 
   import Quill from 'quill';
-  import  '../modules/quill/Blots';
+  import '../modules/quill/AdeleQuill';
 
   import tabs from './ui/tabs.vue'
   import tab from './ui/tab.vue'
@@ -186,7 +186,7 @@
     data () {
         return {
 
-          initialTranscription: '<section class="div">Om<abbr>n</abbr>ib<abbr>us</abbr> presentes litteras inspecturis, . . officialis Belvacensis, salutem in Domino.<br>Noverint universi quod in nostra constituti presentia Ricardus dictus de Gres de Sancto Felice et Aya ejus uxor et Eufemia eorum filia recognoverunt se imperpetuum vendidisse pro communi eorum utilitate ac necessitate abbati et conventui Sancti Geremari Flaviacensis quamdam peciam terre sementis quam habebant ex caduco Asceline de Amuchi, matertere dicti Ricardi, circiter sex minas continentem, sitam ante mesum de Amuchi, dictorum abbatis et conventus, quam ab eisdem abbate et conventu tenebant ad campipartem,</section>',
+          initialTranscription: '<p>Om<abbr>n</abbr>ib<abbr>us</abbr> presentes litteras inspecturis, . . officialis Belvacensis, salutem in Domino.<br>Noverint universi quod in nostra constituti presentia Ricardus dictus de Gres de Sancto Felice et Aya ejus uxor et Eufemia eorum filia recognoverunt se imperpetuum vendidisse pro communi eorum utilitate ac necessitate abbati et conventui Sancti Geremari Flaviacensis quamdam peciam terre sementis quam habebant ex caduco Asceline de Amuchi, matertere dicti Ricardi, circiter sex minas continentem, sitam ante mesum de Amuchi, dictorum abbatis et conventus, quam ab eisdem abbate et conventu tenebant ad campipartem,</p>',
           initialTranslation: '<p>A tous ceux qui verront les présentes lettres, . . l\'official de Beauvais, salut dans le Seigneur.</p> <p>Sachent tous que constitués en notre présence Richard dit de Grez, de Saint-Félix, Aye son épouse et Euphémie leur fille ont reconnu qu\'ils ont vendu à perpétuité pour leur commune utilité et leur commun besoin à l\'abbé et au convent de Saint-Germer de Fly une pièce de terre arable qu\'ils avaient de l\'héritage d\'Asceline d\'Amuchy, tante maternelle dudit Richard, d\'environ six éminées, sise devant le metz d\'Amuchy qui appartient auxdits abbé et convent, et qu\'ils tenaient à champart des mêmes abbé et convent,</p>',
           initialSpeechparts: '<p>Omnibus presentes litteras inspecturis, . . officialis Belvacensis, salutem in Domino.</p><p><speechpart id="1" type="adresse" note="super adresse">Noverint universi quod in nostra constituti presentia Ricardus dictus</speechpart> <speechpart id="2" type="autrepartie" note="una eutre partie assez notable en soi">de Gres de Sancto Felice et Aya ejus uxor et Eufemia eorum filia recognoverunt se imperpetuum vendidisse pro communi eorum utilitate ac necessitate abbati et conventui Sancti Geremari Flaviacensis</speechpart> quamdam peciam terre sementis quam <speechpart id="3" type="Que dire ? &quot;Rien, c\'est inutile&quot;" note="12">habebant ex caduco Asceline de Amuchi</speechpart>, matertere dicti Ricardi, circiter sex minas continentem, sitam ante mesum de Amuchi, dictorum abbatis et conventus, quam ab eisdem abbate et conventu tenebant ad campipartem,</p>',
 

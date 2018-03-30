@@ -1,0 +1,17 @@
+.editor-controls {
+
+    $off:  #000;
+    $on:  #209cee;
+
+    svg { height: 100% }
+    .ql-stroke { stroke: $off; stroke-width: 1.5; fill: none; }
+    .ql-path { stroke: $off; }
+    .ql-fill { fill: $off; }
+
+    .selected {
+        .ql-stroke { stroke: $on; }
+        .ql-path { stroke: $on; }
+        .ql-fill { fill: $on; }
+    }
+
+}
