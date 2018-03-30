@@ -7,8 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import app
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
-from app.models import Image, User, Document
-
+from app.models import Image, User, Document, Transcription, Translation
 
 """
 ---------------------------------
@@ -36,6 +35,17 @@ def api_align_translation(api_version, transcription_id, translation_id):
     return jsonify(response)
 
 
+@app.route('/api/<api_version>/document/<doc_id>')
+def api_document(api_version, doc_id):
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+        response = APIResponseFactory.make_response(data=doc.serialize())
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} introuvable".format(doc_id)
+        })
+    return jsonify(response)
+
 @app.route('/api/<api_version>/document/<doc_id>/manifest')
 def api_document_manifest(api_version, doc_id):
     no_result = False
@@ -44,9 +54,11 @@ def api_document_manifest(api_version, doc_id):
         manifest_data = urlopen(img.manifest_url).read()
     except NoResultFound:
         no_result = True
+        manifest_data = "{}"
 
     if no_result:
         response = APIResponseFactory.make_response(errors={
+            "status": 404,
             "details": "Impossible de récupérer le manifeste pour le document {0}".format(doc_id)
         })
     else:
@@ -55,11 +67,26 @@ def api_document_manifest(api_version, doc_id):
 
     return jsonify(response)
 
-@app.route('/api/<api_version>/document/<doc_id>')
-def api_document(api_version, doc_id):
+@app.route('/api/<api_version>/document/<doc_id>/transcriptions')
+def api_document_transcriptions(api_version, doc_id):
     try:
-        doc = Document.query.filter(Document.id == doc_id).one()
-        response = APIResponseFactory.make_response(data=doc.serialize())
+        transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
+        response = APIResponseFactory.make_response(
+            data=[tr.serialize() for tr in transcriptions]
+        )
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} introuvable".format(doc_id)
+        })
+    return jsonify(response)
+
+@app.route('/api/<api_version>/document/<doc_id>/translations')
+def api_document_translations(api_version, doc_id):
+    try:
+        translations = Translation.query.filter(Translation.doc_id == doc_id).all()
+        response = APIResponseFactory.make_response(
+            data=[tr.serialize() for tr in translations]
+        )
     except NoResultFound:
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Document {0} introuvable".format(doc_id)

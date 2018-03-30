@@ -31,11 +31,11 @@ class Config(object):
     USER_AFTER_LOGOUT_ENDPOINT = ''
 
     # Flask-Mail settings
-    MAIL_USERNAME =           os.getenv('MAIL_USERNAME',        '')
+    MAIL_USERNAME =           os.getenv('MAIL_USERNAME',        'adele@chartes.psl.eu')
     # if you use gmail for test purpose, you have to active 2step auth and get an application password
     # using https://security.google.com/settings/security/apppasswords
     MAIL_PASSWORD =           os.getenv('MAIL_PASSWORD',        '')
-    MAIL_DEFAULT_SENDER =     os.getenv('MAIL_DEFAULT_SENDER',  '')
-    MAIL_SERVER =             os.getenv('MAIL_SERVER',          'smtp.gmail.com')
-    MAIL_PORT =           int(os.getenv('MAIL_PORT',            '465'))
+    MAIL_DEFAULT_SENDER =     os.getenv('MAIL_DEFAULT_SENDER',  'Adele <adele@chartes.psl.eu>')
+    MAIL_SERVER =             os.getenv('MAIL_SERVER',          'smtp.chartes.psl.eu')
+    MAIL_PORT =           int(os.getenv('MAIL_PORT',            '587'))
     MAIL_USE_SSL =        int(os.getenv('MAIL_USE_SSL',         True))

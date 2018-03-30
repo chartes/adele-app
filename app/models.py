@@ -283,12 +283,16 @@ class Note(db.Model):
     type_id = db.Column(db.Integer, db.ForeignKey('note_type.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
+
+    note_type = db.relationship("NoteType")
+
     def serialize(self):
         return {
             'id': self.id,
             'type_id': self.type_id,
             'user_id': self.user_id,
-            'content': self.content
+            'content': self.content,
+            "note_type": self.note_type.serialize()
         }
 
 class NoteType(db.Model):

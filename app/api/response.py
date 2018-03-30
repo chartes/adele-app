@@ -13,6 +13,9 @@ class APIResponseFactory:
             raise ValueError("MUST have either data either errors. data: {0} errors: {1}".format(data, errors))
 
         if len(errors) == 0:
+            if cls.is_iterable(data):
+                if len(data) == 1:
+                    data = data[0]
             r["data"] = data
         else:
             r["errors"] = errors
@@ -57,7 +60,10 @@ class APIResponseFactory:
         d = response["errors"] if cls.is_iterable(response["errors"]) else [response["errors"]]
 
         if cls.is_iterable(errors):
-            d.extend(errors)
+            if len(errors) == 1:
+                d.append(errors[0])
+            else:
+                d.extend(errors)
         else:
             d.append(errors)
 
@@ -72,7 +78,10 @@ class APIResponseFactory:
         d = response["data"] if cls.is_iterable(response["data"]) else [response["data"]]
 
         if cls.is_iterable(data):
-            d.extend(data)
+            if len(data) == 1:
+                d.append(data[0])
+            else:
+                d.extend(data)
         else:
             d.append(data)
 
