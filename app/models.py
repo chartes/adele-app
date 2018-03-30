@@ -213,7 +213,7 @@ class Document(db.Model):
             'argument': self.argument,
             'date_insert': self.pressmark,
             'date_update': self.pressmark,
-            'institution': self.institution.serialize(),
+            'institution': self.institution.serialize() if self.institution is not None else None,
             'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
             'countries': [co.serialize() for co in self.countries],

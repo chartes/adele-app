@@ -1,7 +1,9 @@
 from flask import render_template, flash, redirect, url_for, jsonify, render_template_string
 from flask_user import login_required
+from sqlalchemy.orm.exc import NoResultFound
 
 from app import app
+from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import Document, User
 
@@ -74,25 +76,33 @@ API Routes
 ---------------------------------
 """
 
-@app.route('/api/document/<doc_id>')
-def api_document(doc_id):
-    doc = Document.query.filter(Document.id == doc_id).one()
-    #dump(query)
-    #print(doc.document_linked_doc_id_collection[0])
+
+
+@app.route('/api/<api_version>/document/<doc_id>')
+def api_document(api_version, doc_id):
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+    except NoResultFound:
+        doc = None
+
     if doc is None:
-        # TOD0 : renvoyer une erreur 404 en json
-        return jsonify({ 'error': 'Document introuvable'})
-    return jsonify(doc.serialize())
+        response = APIResponseFactory.make_response(errors={"status": 404, "title": "Document introuvable"})
+    else:
+        response = APIResponseFactory.make_response(data=doc.serialize())
+    return jsonify(response)
 
 #@app.route('/api/document/<doc_id>/traduction')
 #@app.route('/api/document/<doc_id>/transcription')
 
-@app.route('/api/user/<user_id>')
-def api_user(user_id):
-    user = User.query.filter(User.id == user_id).one()
-    #dump(query)
-    #print(doc.document_linked_doc_id_collection[0])
+@app.route('/api/<api_version>/user/<user_id>')
+def api_user(api_version, user_id):
+    try:
+        user = User.query.filter(User.id == user_id).one()
+    except NoResultFound:
+        user = None
+
     if user is None:
-        # TOD0 : renvoyer une erreur 404 en json
-        return jsonify({ 'error': 'Document introuvable'})
-    return jsonify(user.serialize())
+        response = APIResponseFactory.make_response(errors={"status": 404, "title": "Utilisateur introuvable"})
+    else:
+        response = APIResponseFactory.make_response(data=user.serialize())
+    return jsonify(response)
