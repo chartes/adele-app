@@ -86,8 +86,6 @@ def r_api_align_translation(api_version, transcription_id, translation_id):
         data = []
         for al in alignment:
             data.append({
-                "transcription_id": al[0],
-                "translation_id": al[1],
                 "ptr_transcription_start": al[2],
                 "ptr_transcription_end": al[3],
                 "ptr_translation_start": al[4],
