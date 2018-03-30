@@ -1,18 +1,25 @@
-from flask import render_template, flash, redirect, url_for, jsonify, render_template_string
+from flask import render_template, flash, redirect, url_for, render_template_string
 from flask_user import login_required
 
 from app import app
-from app.models import Document, Transcription, User
+from app.models import Document, Transcription, User, Image
+from app.database.alignment.alignment_translation import align_translation
+from app.models import Document, User, Image
 
-#@app.route('/alignment/translation/<transcription_id>')
-#def r_align_translation(transcription_id):
-#    res = align_translation(transcription_id)
-#    if len(res) > 0:
-#        alignment=[ {"transcription":t[2], "translation":t[3]} for t in res]
-#    else:
-#        #no result, should raise an error
-#        alignment = []
-#    return render_template('alignment.html', alignment=alignment)
+"""
+---------------------------------
+Test routes
+---------------------------------
+"""
+@app.route('/test/alignment/translation/<transcription_id>/<translation_id>')
+def r_align_translation(transcription_id, translation_id):
+    res = align_translation(transcription_id, translation_id)
+    if len(res) > 0:
+        alignment=[ {"transcription": t[6], "translation": t[7]} for t in res]
+    else:
+        #no result, should raise an error
+        alignment = []
+    return render_template('alignment.html', alignment=alignment)
 
 
 """
@@ -23,7 +30,7 @@ User Managment Routes
 
 @app.route('/members')
 @login_required
-def members_page():
+def r_members_page():
     return render_template_string("""
         {% extends "base.html" %}
         {% block content %}
@@ -72,43 +79,4 @@ API Routes
 ---------------------------------
 """
 
-@app.route('/api/document/<doc_id>')
-def api_document(doc_id):
-    doc = Document.query.filter(Document.id == doc_id).one()
-    #dump(query)
-    #print(doc.document_linked_doc_id_collection[0])
-    if doc is None:
-        # TOD0 : renvoyer une erreur 404 en json
-        return jsonify({ 'error': 'Document introuvable'})
-    return jsonify(doc.serialize())
-
-#@app.route('/api/document/<doc_id>/traduction')
-
-@app.route('/api/document/<doc_id>/transcription/from/<user_id>')
-def document_transcription_from_user(doc_id, user_id):
-    transcription = Transcription.query.filter(Transcription.doc_id == doc_id).one()
-    #dump(query)
-    #print(doc.document_linked_doc_id_collection[0])
-    if transcription is None:
-        # TOD0 : renvoyer une erreur 404 en json
-        return jsonify({ 'error': 'Document introuvable'})
-    return jsonify(transcription.serialize())
-
-@app.route('/api/user/<user_id>')
-def api_user(user_id):
-    user = User.query.filter(User.id == user_id).one()
-    #dump(query)
-    #print(doc.document_linked_doc_id_collection[0])
-    if user is None:
-        # TOD0 : renvoyer une erreur 404 en json
-        return jsonify({ 'error': 'Document introuvable'})
-    return jsonify(user.serialize())
-
-@app.route('/api/user')
-def api_current_user():
-    # TODO: change hard coded id
-    user = User.query.filter(User.id == 3).one()
-    if user is None:
-        # TOD0 : renvoyer une erreur 404 en json
-        return jsonify({ 'error': 'Document introuvable'})
-    return jsonify(user.serialize())
+from app.api.routes import *

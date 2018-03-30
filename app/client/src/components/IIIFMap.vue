@@ -36,9 +36,10 @@
           let page = response.data.sequences[0].canvases[0];
           this.mapCreate(page);
         })
-        .catch( error => {
+        /*.catch( error => {
+          console.log(error)
           this.error = "Impossible de charger le manifeste : <br>" +this.manifest;
-        });
+        });*/
 
     },
 

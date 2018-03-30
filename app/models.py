@@ -6,23 +6,23 @@ association_document_has_acte_type = db.Table('document_has_acte_type',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('type_id', db.Text, db.ForeignKey('acte_type.id'), primary_key=True)
 )
-association_document_has_editor = db.Table('document_has_editor', 
+association_document_has_editor = db.Table('document_has_editor',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('editor_id', db.Integer, db.ForeignKey('editor.id'), primary_key=True)
 )
-association_document_has_language = db.Table('document_has_language', 
+association_document_has_language = db.Table('document_has_language',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('lang_code', db.String, db.ForeignKey('language.code'), primary_key=True)
 )
-association_document_has_tradition = db.Table('document_has_tradition', 
+association_document_has_tradition = db.Table('document_has_tradition',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('tradition_id', db.String, db.ForeignKey('tradition.id'), primary_key=True)
 )
-association_document_from_country = db.Table('document_from_country', 
+association_document_from_country = db.Table('document_from_country',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('country_ref', db.String, db.ForeignKey('country.ref'), primary_key=True)
 )
-association_document_from_district = db.Table('document_from_district', 
+association_document_from_district = db.Table('document_from_district',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('district_id', db.Integer, db.ForeignKey('district.id'), primary_key=True)
 )
@@ -42,6 +42,18 @@ association_translation_has_note = db.Table('translation_has_note',
     db.Column('ptr_start', db.Integer),
     db.Column('ptr_end', db.Integer),
 )
+association_commentary_has_note = db.Table('commentary_has_note',
+    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
+    db.Column('type_id', db.Integer, db.ForeignKey('commentary_type.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
+    db.Column('ptr_start', db.Integer),
+    db.Column('ptr_end', db.Integer),
+)
+association_document_linked_to_document = db.Table('document_linked_to_document',
+    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
+    db.Column('linked_doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
+)
 
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -54,6 +66,51 @@ class ActeType(db.Model):
             'description': self.label
         }
 
+class AlignmentDiscours(db.Model):
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    ptr_start = db.Column(db.Integer, primary_key=True)
+    ptr_end = db.Column(db.Integer, primary_key=True)
+    speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"))
+    def serialize(self):
+        return {
+            'transcription_id': self.transcription_id,
+            'note_id': self.note_id,
+            'ptr_start': self.ptr_start,
+            'ptr_end': self.ptr_end,
+            'speech_part_type_id': self.speech_part_type_id,
+        }
+
+class AlignmentImage(db.Model):
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
+    manifest_url = db.Column(db.String, db.ForeignKey('image_zone.manifest_url'), primary_key=True)
+    img_id = db.Column(db.Integer, db.ForeignKey('image_zone.img_id'), primary_key=True)
+    zone_id = db.Column(db.Integer, db.ForeignKey('image_zone.zone_id'), primary_key=True)
+    def serialize(self):
+        return {
+            'transcription_id': self.transcription_id,
+            'manifest_url': self.manifest_url,
+            'img_id': self.img_id,
+            'zone_id': self.zone_id
+        }
+
+class AlignmentTranslation(db.Model):
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
+    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id'), primary_key=True)
+    ptr_transcription_start = db.Column(db.Integer, primary_key=True)
+    ptr_transcription_end = db.Column(db.Integer, primary_key=True)
+    ptr_translation_start = db.Column(db.Integer, primary_key=True)
+    ptr_translation_end = db.Column(db.Integer, primary_key=True)
+    def serialize(self):
+        return {
+            'transcription_id': self.transcription_id,
+            'translation_id': self.translation_id,
+            'ptr_transcription_start': self.ptr_transcription_start,
+            'ptr_transcription_end': self.ptr_transcription_end,
+            'ptr_translation_start': self.ptr_translation_start,
+            'ptr_translation_end': self.ptr_translation_end
+        }
+
 class Country(db.Model):
     ref = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
@@ -61,6 +118,37 @@ class Country(db.Model):
         return {
             'ref': self.ref,
             'label': self.label
+        }
+
+class CommentaryType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String)
+    def serialize(self):
+        return {
+            'id': self.ref,
+            'label': self.label
+        }
+
+class Commentary(db.Model):
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'), primary_key=True)
+    type_id = db.Column(db.Integer, db.ForeignKey('commentary_type.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    content = db.Column(db.Text)
+
+    notes = db.relationship("Note", secondary=association_commentary_has_note,
+                             primaryjoin=(association_commentary_has_note.c.doc_id == doc_id and
+                                          association_commentary_has_note.c.type_id == type_id and
+                                          association_commentary_has_note.c.user_id == user_id),
+                             backref=db.backref('commentary'))
+
+
+    def serialize(self):
+        return {
+            'doc_id': self.doc_id,
+            'type_id': self.type_id,
+            'user_id': self.user_id,
+            'content': self.content,
+            'notes': [n.serialize() for n in self.notes]
         }
 
 class District(db.Model):
@@ -109,6 +197,10 @@ class Document(db.Model):
     traditions = db.relationship("Tradition",
                              secondary=association_document_has_tradition,
                              backref=db.backref('documents'))
+    linked_documents = db.relationship("Document",
+                                       secondary=association_document_linked_to_document,
+                                       primaryjoin=(association_document_linked_to_document.c.doc_id==id),
+                                       secondaryjoin=(association_document_linked_to_document.c.linked_doc_id==id))
     def serialize(self):
         return {
             'id': self.id,
@@ -121,7 +213,7 @@ class Document(db.Model):
             'argument': self.argument,
             'date_insert': self.pressmark,
             'date_update': self.pressmark,
-            'institution': self.institution.serialize(),
+            'institution': self.institution.serialize() if self.institution is not None else None,
             'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
             'countries': [co.serialize() for co in self.countries],
@@ -152,6 +244,22 @@ class Image(db.Model):
             'manifest_url': self.manifest_url
         }
 
+class ImageZone(db.Model):
+    manifest_url = db.Column(db.String, db.ForeignKey('image.zone'), primary_key=True)
+    img_id = db.Column(db.String, db.ForeignKey('image.id'), primary_key=True)
+    zone_id = db.Column(db.Integer, primary_key=True)
+    coords = db.Column(db.String)
+    note = db.Column(db.String)
+
+    def serialize(self):
+        return {
+            'manifest_url': self.manifest_url,
+            'img_id' : self.img_id,
+            'zone_id' : self.zone_id,
+            'coords' : self.coords,
+            'note' : self.note
+        }
+
 class Institution(db.Model):
     ref = db.Column(db.String, primary_key=True)
     name = db.Column(db.String)
@@ -175,14 +283,17 @@ class Note(db.Model):
     type_id = db.Column(db.Integer, db.ForeignKey('note_type.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
+
+    note_type = db.relationship("NoteType")
+
     def serialize(self):
         return {
             'id': self.id,
             'type_id': self.type_id,
             'user_id': self.user_id,
-            'content': self.content
+            'content': self.content,
+            "note_type": self.note_type.serialize()
         }
-
 
 class NoteType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -192,6 +303,26 @@ class NoteType(db.Model):
             'id': self.id,
             'label': self.label
         }
+
+# Define the Role DataModel
+class Role(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(), unique=True)
+    description = db.Column(db.String())
+    label = db.Column(db.String())
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'label': self.label
+        }
+
+class SpeechPartType(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    lang_code = db.Column(db.String, db.ForeignKey("language.code"), primary_key=True)
+    label = db.Column(db.String)
+    definition = db.Column(db.Text)
 
 class Tradition(db.Model):
     id = db.Column(db.String, primary_key=True)
@@ -273,17 +404,4 @@ class User(db.Model, UserMixin):
             'roles': [ro.name for ro in self.roles]
         }
 
-# Define the Role DataModel
-class Role(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(), unique=True)
-    description = db.Column(db.String())
-    label = db.Column(db.String())
-    def serialize(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'label': self.label
-        }
 
