@@ -2,17 +2,19 @@ from flask import render_template, flash, redirect, url_for, jsonify, render_tem
 from flask_user import login_required
 
 from app import app
+from app.database.alignment.alignment_translation import align_translation
 from app.models import Document, User
 
-#@app.route('/alignment/translation/<transcription_id>')
-#def r_align_translation(transcription_id):
-#    res = align_translation(transcription_id)
-#    if len(res) > 0:
-#        alignment=[ {"transcription":t[2], "translation":t[3]} for t in res]
-#    else:
-#        #no result, should raise an error
-#        alignment = []
-#    return render_template('alignment.html', alignment=alignment)
+
+@app.route('/alignment/translation/<transcription_id>')
+def r_align_translation(transcription_id):
+    res = align_translation(transcription_id)
+    if len(res) > 0:
+        alignment=[ {"transcription": t[2], "translation": t[3]} for t in res]
+    else:
+        #no result, should raise an error
+        alignment = []
+    return render_template('alignment.html', alignment=alignment)
 
 
 """

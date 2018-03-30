@@ -1,7 +1,10 @@
 import os
 import unittest
 
+from sqlalchemy.sql.elements import and_
+
 from app import db
+from app.models import AlignmentTranslation
 
 NS_TI = {"ti": "http://www.tei-c.org/ns/1.0"}
 TEST_DATA_DIR = "app/tests/data"
@@ -14,14 +17,13 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
     @classmethod
     def get_alignment_stmt(cls, transcription_id) :
         return """
-        -- Transcription vs Translation
         SELECT
           transcription.id as transcription_id,
           translation.id as translation_id,
-          substr(transcription.content, ptr_transcription_start, 
-            ptr_transcription_end - ptr_transcription_start) as transcription,
-          substr(translation.content, ptr_translation_start, 
-            ptr_translation_end - ptr_translation_start) as translation
+          COALESCE(substr(transcription.content, ptr_transcription_start, 
+            ptr_transcription_end - ptr_transcription_start), '') as transcription,
+          COALESCE(substr(translation.content, ptr_translation_start, 
+            ptr_translation_end - ptr_translation_start), '') as translation
         FROM
           transcription
           LEFT JOIN alignment_translation
@@ -29,8 +31,20 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
           LEFT JOIN  translation
             ON alignment_translation.translation_id = translation.id
         WHERE
-          transcription.id = {transcription_id}      
-        ;
+          transcription.id = {transcription_id}     
+        ORDER BY
+   CASE WHEN NOT EXISTS(SELECT * FROM alignment_translation where transcription_id={transcription_id}  AND ptr_transcription_end IS NULL)
+  THEN
+    ptr_transcription_start
+  ELSE
+    ptr_translation_start
+  END,
+    CASE WHEN NOT EXISTS(SELECT * FROM alignment_translation where transcription_id={transcription_id}  AND ptr_transcription_end IS NULL)
+  THEN
+    ptr_transcription_end
+  ELSE
+    ptr_translation_end
+  END
         """.format(transcription_id=transcription_id)
 
     @classmethod
@@ -39,7 +53,7 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
         cls.doc_list = []
         for root, directories, filenames in os.walk(os.path.join(TEST_DATA_DIR, 'transcription')):
             for filename in filenames:
-                if filename.endswith("19.txt"):
+                if filename.endswith(".txt"):
                     cls.doc_list.append(filename.split(".")[0])
 
         cls.doc_list.sort()
@@ -79,19 +93,26 @@ class TestTranscriptionTranslationAlignment(unittest.TestCase):
                 res = db.engine.execute(stmt)
                 res = [r for r in res]
 
-
-                print(transcription_lines)
-
                 if len(translation_lines) == 0:
                     translation_ids = set([l["translation_id"] for l in res if l["translation_id"] != None])
                     self.assertEqual(0, len(translation_ids), "There is no translation for doc {0}".format(doc))
                 else:
-                    self.assertEqual(len([l for l in transcription_lines]), len([l["transcription"] for l in res if l["transcription"] is not None]), "Transcription lines count does not match for doc {0}".format(doc))
+                    """
+                    Test line count
+                    """
+                    line_cnt_file = len(transcription_lines)
+                    line_cnt_db = len(AlignmentTranslation.query.filter(and_(AlignmentTranslation.transcription_id==doc,AlignmentTranslation.ptr_transcription_start!=None)).all())
+                    self.assertEqual(line_cnt_file, line_cnt_db, "Transcription lines count does not match for doc {0}".format(doc))
+
+                    line_cnt_file = len(translation_lines)
+                    line_cnt_db = len(AlignmentTranslation.query.filter(and_(AlignmentTranslation.transcription_id==doc,AlignmentTranslation.ptr_translation_start!=None)).all())
+                    self.assertEqual(line_cnt_file, line_cnt_db, "Translation lines count does not match for doc {0}".format(doc))
+                    """
+                    Test alignment database vs test file
+                    """
                     for i, transcription in enumerate(transcription_lines):
-                        print(res)
                         self.assertEqual(transcription, res[i]["transcription"] if res[i]["transcription"] is not None else '', "Transcription ptrs look wrong for doc {0}".format(doc))
 
-                    self.assertEqual(len([l for l in translation_lines ]), len([l["translation"] for l in res if l["translation"] is not None]), "Translation lines count does not match for doc {0}".format(doc))
                     for i, translation in enumerate(translation_lines):
                         self.assertEqual(translation, res[i]["translation"] if res[i]["translation"] is not None else '', "Translation ptrs look wrong for doc {0}".format(doc))
 
