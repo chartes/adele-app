@@ -1,4 +1,5 @@
 import json
+import sys
 from urllib.request import urlopen
 
 from flask import jsonify
@@ -8,6 +9,12 @@ from app import app
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import Image, User, Document, Transcription, Translation
+
+if sys.version_info < (3, 6):
+    json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
+else:
+    json_loads = json.loads
+
 
 """
 ---------------------------------
