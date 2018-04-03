@@ -2,9 +2,6 @@ from flask import render_template, flash, redirect, url_for, render_template_str
 from flask_user import login_required
 
 from app import app
-from app.models import Document, Transcription, User, Image
-from app.database.alignment.alignment_translation import align_translation
-from app.models import Document, User, Image
 
 """
 ---------------------------------
@@ -12,7 +9,7 @@ Test routes
 ---------------------------------
 """
 @app.route('/test/alignment/translation/<transcription_id>/<translation_id>')
-def r_align_translation(transcription_id, translation_id):
+def align_translation(transcription_id, translation_id):
     res = align_translation(transcription_id, translation_id)
     if len(res) > 0:
         alignment=[ {"transcription": t[6], "translation": t[7]} for t in res]
@@ -30,7 +27,7 @@ User Managment Routes
 
 @app.route('/members')
 @login_required
-def r_members_page():
+def members_page():
     return render_template_string("""
         {% extends "base.html" %}
         {% block content %}

@@ -1,4 +1,5 @@
 import json
+import sys
 from urllib.request import urlopen
 
 from flask import jsonify
@@ -8,6 +9,12 @@ from app import app
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import Image, User, Document, Transcription, Translation
+
+if sys.version_info < (3, 6):
+    json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
+else:
+    json_loads = json.loads
+
 
 """
 ---------------------------------
@@ -62,7 +69,7 @@ def api_document_manifest(api_version, doc_id):
             "details": "Impossible de récupérer le manifeste pour le document {0}".format(doc_id)
         })
     else:
-        data = json.loads(manifest_data)
+        data = json_loads(manifest_data)
         response = APIResponseFactory.make_response(data=data)
 
     return jsonify(response)
@@ -70,6 +77,8 @@ def api_document_manifest(api_version, doc_id):
 @app.route('/api/<api_version>/document/<doc_id>/transcriptions')
 def api_document_transcriptions(api_version, doc_id):
     try:
+        # Check if document exist first
+        doc = Document.query.filter(Document.id == doc_id).one()
         transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
         response = APIResponseFactory.make_response(
             data=[tr.serialize() for tr in transcriptions]
@@ -97,6 +106,8 @@ def document_transcription_from_user(api_version, doc_id, user_id):
 @app.route('/api/<api_version>/document/<doc_id>/translations')
 def api_document_translations(api_version, doc_id):
     try:
+        # Check if document exist first
+        doc = Document.query.filter(Document.id == doc_id).one()
         translations = Translation.query.filter(Translation.doc_id == doc_id).all()
         response = APIResponseFactory.make_response(
             data=[tr.serialize() for tr in translations]

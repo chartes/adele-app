@@ -34,7 +34,7 @@ class Config(object):
     MAIL_USERNAME =           os.getenv('MAIL_USERNAME',        'adele@chartes.psl.eu')
     # if you use gmail for test purpose, you have to active 2step auth and get an application password
     # using https://security.google.com/settings/security/apppasswords
-    MAIL_PASSWORD =           os.getenv('MAIL_PASSWORD',        '')
+    MAIL_PASSWORD =           os.getenv('MAIL_PASSWORD',        os.environ.get('ADELE_MAIL_PWD') or '')
     MAIL_DEFAULT_SENDER =     os.getenv('MAIL_DEFAULT_SENDER',  'Adele <adele@chartes.psl.eu>')
     MAIL_SERVER =             os.getenv('MAIL_SERVER',          'smtp.chartes.psl.eu')
     MAIL_PORT =           int(os.getenv('MAIL_PORT',            '587'))

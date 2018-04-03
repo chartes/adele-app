@@ -211,8 +211,8 @@ class Document(db.Model):
             'copy_cent': self.copy_cent,
             'pressmark': self.pressmark,
             'argument': self.argument,
-            'date_insert': self.pressmark,
-            'date_update': self.pressmark,
+            'date_insert': self.date_insert,
+            'date_update': self.date_update,
             'institution': self.institution.serialize() if self.institution is not None else None,
             'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
@@ -334,7 +334,7 @@ class Tradition(db.Model):
         }
 
 class Transcription(db.Model):
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
