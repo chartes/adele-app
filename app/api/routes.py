@@ -69,7 +69,7 @@ def api_document_manifest(api_version, doc_id):
             "details": "Impossible de récupérer le manifeste pour le document {0}".format(doc_id)
         })
     else:
-        data = json.loads(manifest_data)
+        data = json_loads(manifest_data)
         response = APIResponseFactory.make_response(data=data)
 
     return jsonify(response)
