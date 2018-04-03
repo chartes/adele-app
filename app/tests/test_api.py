@@ -7,7 +7,7 @@ import json
 from app import app as flask_app
 
 if sys.version_info < (3, 6):
-    json_loads = lambda s: json_loads(s.decode("utf-8"))
+    json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
 else:
     json_loads = json.loads
 
