@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 import pprint
 import unittest
@@ -5,6 +6,10 @@ import json
 
 from app import app as flask_app
 
+if sys.version_info < (3, 6):
+    json_loads = lambda s: json_loads(s.decode("utf-8"))
+else:
+    json_loads = json.loads
 
 class TestAPIEndPoints(unittest.TestCase):
 
@@ -14,7 +19,7 @@ class TestAPIEndPoints(unittest.TestCase):
     def test_api_align_translation_ok(self):
         resp = self.app.get("/api/v1/alignment/translation/33/33")
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertIn("data", r)
         self.assertNotIn("errors", r)
@@ -40,7 +45,7 @@ class TestAPIEndPoints(unittest.TestCase):
     def test_api_align_translation_not_found(self):
         resp = self.app.get("/api/v1/alignment/translation/1/2")
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertNotIn("data", r)
         self.assertIn("errors", r)
@@ -50,7 +55,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 95
         resp = self.app.get("/api/v1/document/{0}".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertIn("data", r)
         self.assertNotIn("errors", r)
@@ -81,7 +86,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 10000
         resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertNotIn("data", r)
         self.assertIn("errors", r)
@@ -91,7 +96,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 20
         resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertIn("data", r)
         self.assertNotIn("errors", r)
@@ -102,7 +107,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 10000
         resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertNotIn("data", r)
         self.assertIn("errors", r)
@@ -113,7 +118,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 20
         resp = self.app.get("/api/v1/document/{0}/transcriptions".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertIn("data", r)
         self.assertNotIn("errors", r)
@@ -130,7 +135,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 10000
         resp = self.app.get("/api/v1/document/{0}/transcriptions".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertNotIn("data", r)
         self.assertIn("errors", r)
@@ -141,7 +146,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 20
         resp = self.app.get("/api/v1/document/{0}/translations".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertIn("data", r)
         self.assertNotIn("errors", r)
@@ -157,7 +162,7 @@ class TestAPIEndPoints(unittest.TestCase):
         DOC_ID = 10000
         resp = self.app.get("/api/v1/document/{0}/translations".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
-        r = json.loads(resp.data)
+        r = json_loads(resp.data)
 
         self.assertNotIn("data", r)
         self.assertIn("errors", r)
