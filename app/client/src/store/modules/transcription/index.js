@@ -15,6 +15,9 @@ const mutations = {
   UPDATE_TRANSCRIPTION (state, payload) {
     state.transcription = payload;
     state.transcriptionSaved = true;
+  },
+  TRANSCRIPTION_CHANGED (state) {
+    state.transcriptionSaved = false;
   }
 
 };
@@ -36,6 +39,12 @@ const actions = {
 
 
     });
+  },
+  transcriptionChanged ({ commit }) {
+    commit('TRANSCRIPTION_CHANGED', false)
+  },
+  saveTranscription ({ commit }, newTranscription) {
+    commit('UPDATE_TRANSCRIPTION', newTranscription)
   }
 
 };
