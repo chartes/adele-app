@@ -70,6 +70,7 @@ def api_document_manifest(api_version, doc_id):
 @app.route('/api/<api_version>/document/<doc_id>/transcriptions')
 def api_document_transcriptions(api_version, doc_id):
     try:
+        # TODO check if document exist first
         transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
         response = APIResponseFactory.make_response(
             data=[tr.serialize() for tr in transcriptions]
@@ -97,6 +98,7 @@ def document_transcription_from_user(api_version, doc_id, user_id):
 @app.route('/api/<api_version>/document/<doc_id>/translations')
 def api_document_translations(api_version, doc_id):
     try:
+        #TODO check if document exist first
         translations = Translation.query.filter(Translation.doc_id == doc_id).all()
         response = APIResponseFactory.make_response(
             data=[tr.serialize() for tr in translations]

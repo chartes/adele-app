@@ -1,7 +1,6 @@
 from datetime import datetime
 import pprint
 import unittest
-import urllib
 import json
 
 from app import app as flask_app
@@ -72,7 +71,7 @@ class TestAPIEndPoints(unittest.TestCase):
         self.assertIsInstance(r["data"]["institution"], (dict, type(None)))
         self.assertIsInstance(r["data"]["pressmark"], (str, type(None)))
         self.assertIsInstance(r["data"]["title"], str)
-
+        # Test if the right doc is fetched
         self.assertEqual(r["data"]["id"], DOC_ID)
         # Test date format
         date_time_object = datetime.strptime(r["data"]["date_insert"], '%Y-%m-%d %H:%M:%S')
@@ -80,7 +79,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
     def test_api_document_not_found(self):
         DOC_ID = 10000
-        resp = self.app.get("/api/v1/document/{0}".format(DOC_ID))
+        resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json.loads(resp.data)
 
@@ -88,11 +87,78 @@ class TestAPIEndPoints(unittest.TestCase):
         self.assertIn("errors", r)
         self.assertEqual(r["errors"]["status"], 404)
 
-    #def test_api_document_manifest(self):
-    #    raise NotImplementedError
-    #
-    #def test_api_document_transcriptions(self):
-    #    raise NotImplementedError
-    #
-    #def test_api_document_translations(self):
-    #    raise NotImplementedError
+    def test_api_document_manifest_ok(self):
+        DOC_ID = 20
+        resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
+        self.assertEqual(resp.status_code, 200)
+        r = json.loads(resp.data)
+
+        self.assertIn("data", r)
+        self.assertNotIn("errors", r)
+        # Test if the right manifest is fetched
+        self.assertTrue(r["data"]["@id"].endswith('{0}.json'.format(DOC_ID)))
+
+    def test_api_document_manifest_not_found(self):
+        DOC_ID = 10000
+        resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
+        self.assertEqual(resp.status_code, 200)
+        r = json.loads(resp.data)
+
+        self.assertNotIn("data", r)
+        self.assertIn("errors", r)
+        self.assertEqual(r["errors"]["status"], 404)
+
+    def test_api_document_transcriptions_ok(self):
+        #TODO: test response with only one transcription and response with a list of transcriptions
+        DOC_ID = 20
+        resp = self.app.get("/api/v1/document/{0}/transcriptions".format(DOC_ID))
+        self.assertEqual(resp.status_code, 200)
+        r = json.loads(resp.data)
+
+        self.assertIn("data", r)
+        self.assertNotIn("errors", r)
+
+        self.assertIsInstance(r["data"]["content"], str)
+        self.assertIsInstance(r["data"]["doc_id"], int)
+        self.assertIsInstance(r["data"]["id"], int)
+        self.assertIsInstance(r["data"]["user_id"], int)
+        self.assertIsInstance(r["data"]["notes"], list)
+
+        self.assertEqual(r["data"]["doc_id"], DOC_ID)
+
+    def test_api_document_transcriptions_not_found(self):
+        DOC_ID = 10000
+        resp = self.app.get("/api/v1/document/{0}/transcriptions".format(DOC_ID))
+        self.assertEqual(resp.status_code, 200)
+        r = json.loads(resp.data)
+
+        self.assertNotIn("data", r)
+        self.assertIn("errors", r)
+        self.assertEqual(r["errors"]["status"], 404)
+
+    def test_api_document_tranlations_ok(self):
+        #TODO: test response with only one translation and response with a list of translations
+        DOC_ID = 20
+        resp = self.app.get("/api/v1/document/{0}/translations".format(DOC_ID))
+        self.assertEqual(resp.status_code, 200)
+        r = json.loads(resp.data)
+
+        self.assertIn("data", r)
+        self.assertNotIn("errors", r)
+
+        self.assertIsInstance(r["data"]["content"], str)
+        self.assertIsInstance(r["data"]["doc_id"], int)
+        self.assertIsInstance(r["data"]["id"], int)
+        self.assertIsInstance(r["data"]["user_id"], int)
+
+        self.assertEqual(r["data"]["doc_id"], DOC_ID)
+
+    def test_api_document_translations_not_found(self):
+        DOC_ID = 10000
+        resp = self.app.get("/api/v1/document/{0}/translations".format(DOC_ID))
+        self.assertEqual(resp.status_code, 200)
+        r = json.loads(resp.data)
+
+        self.assertNotIn("data", r)
+        self.assertIn("errors", r)
+        self.assertEqual(r["errors"]["status"], 404)

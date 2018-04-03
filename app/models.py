@@ -334,7 +334,7 @@ class Tradition(db.Model):
         }
 
 class Transcription(db.Model):
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)

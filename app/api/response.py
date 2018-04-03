@@ -9,8 +9,8 @@ class APIResponseFactory:
         r = {}
 
         # MUST have either data either errors
-        if len(data) == 0 and len(errors) == 0:
-            raise ValueError("MUST have either data either errors. data: {0} errors: {1}".format(data, errors))
+        #if len(data) == 0 and len(errors) == 0:
+        #    raise ValueError("MUST have either data either errors. data: {0} errors: {1}".format(data, errors))
 
         if len(errors) == 0:
             if cls.is_iterable(data):
