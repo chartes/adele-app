@@ -8,10 +8,14 @@ class Config(object):
 
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
 
+    DB_COPIED = False
+
     try:
-        with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response,\
+        if DB_COPIED is False:
+            with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response,\
                 open(os.path.join('db', 'adele.sqlite'), 'wb') as out_file:
-            shutil.copyfileobj(response, out_file)
+                shutil.copyfileobj(response, out_file)
+                DB_COPIED = True
     except:
         pass
         #raise Exception("DEBUG: fichier adele.sqlite non récupéré")

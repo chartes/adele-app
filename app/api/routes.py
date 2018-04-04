@@ -1,8 +1,9 @@
 import json
+import pprint
 import sys
-from urllib.request import urlopen
+from urllib.request import urlopen, build_opener
 
-from flask import jsonify
+from flask import jsonify, request, url_for
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import app
@@ -141,3 +142,18 @@ def api_user(api_version, user_id):
             "status": 404, "title": "Utilisateur {0} introuvable".format(user_id)
         })
     return jsonify(response)
+
+
+@app.route("/api/<api_version>/document/<doc_id>/annotations")
+def api_document_manifest_annotations(api_version, doc_id):
+
+    #request the manifest endpoint
+    op = build_opener()
+    op.addheaders = [("Content-type", "text/json")]
+    manifest_url = url_for('api_document_manifest', api_version=api_version, doc_id=doc_id)
+    data = op.open(f"{request.url_root}{manifest_url}", timeout=10, ).read()
+
+    json_obj = json_loads(data)  #TODO: use json_loads to handle python3.5
+    #recuperation de l'url de la liste d'anno depuis le manifest
+
+    return jsonify(json_obj)
