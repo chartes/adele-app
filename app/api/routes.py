@@ -21,7 +21,7 @@ else:
 def query_json_endpoint(request_obj, endpoint_url):
     op = build_opener()
     op.addheaders = [("Content-type", "text/json")]
-    data = op.open(f"{request_obj.url_root}{endpoint_url}", timeout=10, ).read()
+    data = op.open("{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url), timeout=10, ).read()
     return json_loads(data)
 
 """
