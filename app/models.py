@@ -222,19 +222,8 @@ class Editor(db.Model):
             'name': self.name
         }
 
-class Image(db.Model):
-    manifest_url = db.Column(db.String, primary_key=True)
-    id = db.Column(db.String, primary_key=True)
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
-    def serialize(self):
-        return {
-            'id': self.id,
-            'doc_id': self.doc_id,
-            'manifest_url': self.manifest_url
-        }
-
 class ImageZone(db.Model):
-    manifest_url = db.Column(db.String, db.ForeignKey('image.zone'), primary_key=True)
+    manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
     img_id = db.Column(db.String, db.ForeignKey('image.id'), primary_key=True)
     zone_id = db.Column(db.Integer, primary_key=True)
     coords = db.Column(db.String)
@@ -248,6 +237,30 @@ class ImageZone(db.Model):
             'coords' : self.coords,
             'note' : self.note
         }
+
+class Image(db.Model):
+    manifest_url = db.Column(db.String, primary_key=True)
+    id = db.Column(db.String, primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+
+    zones = db.relationship("ImageZone",
+                            primaryjoin=(ImageZone.img_id==id and ImageZone.manifest_url==manifest_url))
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'manifest_url': self.manifest_url,
+            'zones': [
+                {
+                    "zone_id" : z.zone_id,
+                    "coords" : z.coords,
+                    "note" : z.note
+
+                } for z in self.zones
+            ]
+        }
+
 
 class Institution(db.Model):
     ref = db.Column(db.String, primary_key=True)

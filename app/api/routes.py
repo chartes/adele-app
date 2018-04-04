@@ -7,6 +7,7 @@ from flask import jsonify, request, url_for
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import app
+from app.api.open_annotation import make_annotation_list, add_annotation
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import Image, User, Document, Transcription, Translation
@@ -16,6 +17,12 @@ if sys.version_info < (3, 6):
 else:
     json_loads = json.loads
 
+
+def query_json_endpoint(request_obj, endpoint_url):
+    op = build_opener()
+    op.addheaders = [("Content-type", "text/json")]
+    data = op.open(f"{request_obj.url_root}{endpoint_url}", timeout=10, ).read()
+    return json_loads(data)
 
 """
 ---------------------------------
@@ -148,12 +155,50 @@ def api_user(api_version, user_id):
 def api_document_manifest_annotations(api_version, doc_id):
 
     #request the manifest endpoint
-    op = build_opener()
-    op.addheaders = [("Content-type", "text/json")]
-    manifest_url = url_for('api_document_manifest', api_version=api_version, doc_id=doc_id)
-    data = op.open(f"{request.url_root}{manifest_url}", timeout=10, ).read()
+    json_obj = query_json_endpoint(request, url_for('api_document_manifest', api_version=api_version, doc_id=doc_id))
 
-    json_obj = json_loads(data)  #TODO: use json_loads to handle python3.5
     #recuperation de l'url de la liste d'anno depuis le manifest
+    canvas = json_obj["data"]["sequences"][0]["canvases"][0]
+    annotation_lists = []
 
-    return jsonify(json_obj)
+    for oc in canvas["otherContent"]:
+        if oc["@type"].endswith("AnnotationList"):
+            anno_list = query_json_endpoint(request, url_for('api_document_manifest_annotation_list',
+                                                             api_version=api_version, doc_id=doc_id))
+            #add canvas target
+            anno_list = anno_list["data"]
+            #TODO if anno_list est une list()
+            for anno in anno_list["resources"]:
+                anno["on"] = canvas["@id"]
+
+            annotation_lists.append(anno_list)
+
+    response = APIResponseFactory.make_response(data=annotation_lists)
+
+    return jsonify(response)
+
+@app.route("/api/<api_version>/document/<doc_id>/annotations/list")
+def api_document_manifest_annotation_list(api_version, doc_id):
+    img = Image.query.filter(Image.doc_id == doc_id).one()
+    img_d = img.serialize()
+
+    anno_list = make_annotation_list(doc_id)
+    for zone in img_d["zones"]:
+        anno_list = add_annotation(anno_list, "http://get/ano/{0}".format(zone["zone_id"]))
+
+    response = APIResponseFactory.make_response(data=anno_list)
+
+    return jsonify(response)
+
+
+#@app.route("/api/<api_version>/document/<doc_id>/annotation/<zone_id>")
+#def api_document_manifest_annotation(api_version, doc_id):
+#    img = Image.query.filter(Image.doc_id == doc_id).one()
+#
+#    anno_list = make_annotation_list(doc_id)
+#    anno_list = add_annotation(anno_list, "http://get/ano/1")
+#    #TODO:make annotation list
+#
+#    response = APIResponseFactory.make_response(data=anno_list)
+#
+#    return jsonify(response)
