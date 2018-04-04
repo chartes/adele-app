@@ -17,6 +17,7 @@ Flask-SQLAlchemy==2.3.2
 Flask-User==0.6.9
 Flask-WTF==0.14.2
 fuzzywuzzy==0.16.0
+gunicorn==19.7.1
 idna==2.6
 itsdangerous==0.24
 Jinja2==2.10
