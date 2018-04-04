@@ -23,7 +23,7 @@ d = {
 def make_annotation_list(doc_id) :
   return {
       "@context":"http://iiif.io/api/presentation/2/context.json",
-      "@id": f"http://adele.chartes.psl.eu/dossiers/{doc_id}/list/f1",
+      "@id": "http://adele.chartes.psl.eu/dossiers/{0}/list/f1".format(doc_id),
       "@type": "sc:AnnotationList",
       "resources": [
       ]
