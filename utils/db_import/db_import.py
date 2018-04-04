@@ -34,10 +34,10 @@ note_id = 0
 translation_id = 0
 transcription_id = 0
 
-Base = automap_base()
-engine = create_engine("sqlite:////Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite")
-Base.prepare(engine, reflect=True, name_for_collection_relationship=name_for_collection_relationship)
-session = create_session(bind=engine)
+##Base = automap_base()
+##engine = create_engine("sqlite:////Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite")
+##Base##.prepare(engine, reflect=True, name_for_collection_relationship=name_for_collection_relationship)
+##session = create_session(bind=engine)
 
 """
 XPATH
@@ -168,14 +168,14 @@ def insert_text(dossier, text_name):
             content = re.sub("<term[^>]*>", repl='', string=content, count=1)
             ptr_end = content.find("</term")
             content = re.sub("</term[^>]*>", repl='', string=content, count=1)
-            dossier[text_name+"_notes"][idx]["ptr_start"] = ptr_start
+            dossier[text_name+"_notes"][idx]["ptr_start"] = ptr_start + 1
             dossier[text_name+"_notes"][idx]["ptr_end"] = ptr_end
             idx += 1
 
         stmts = [
             get_insert_stmt(text_name,
                             text_name+"_id,doc_id,user_ref,content",
-                            "{0},{1},'{2}','{3}'".format(dossier["id"], dossier["id"],USERNAME,content)
+                            "{0},{1},'{2}','{3}'".format(dossier["id"], dossier["id"], USERNAME,content)
                             )
         ]
     return stmts
@@ -190,7 +190,7 @@ def insert_note(note):
     note["content"] = note["content"].replace("@", ">")
     stmts = [
         get_insert_stmt("note",
-                        "note_id,note_type_id,user_ref,content",
+                        "id,type_id,user_id,content",
                         "{0},{1},'{2}','{3}'".format(note["id"], note["type_id"], USERNAME, note["content"]))
     ]
     return stmts
@@ -214,10 +214,14 @@ def insert_transcription_has_note(dossier):
                         )
         for note in dossier["transcription_notes"]
     ]
+
+    #if dossier["id"] == '20':
+    #    pprint.pprint(dossier)
+    #    print(stmts)
+
     return stmts
 
 def insert_translation_has_note(dossier):
-
     #ids  = [d["id"] for d in dossier["transcription_notes"]]
     #for i, id in enumerate(ids):
     #    dossier["translation_notes"][i]["id"] = id
@@ -244,16 +248,17 @@ def update_argument(dossier):
 
 def insert_alignemnt_transcription_translation(session, id1, id2, p1, p2, p3, p4):
     #print(id1, id2, p1, p2, p3, p4)
-    altr = Base.metadata.tables["alignment_translation"].insert()
-    ins = altr.values(translation_id=id1,
-                      transcription_id=id2,
-                      ptr_transcription_start=p1,
-                      ptr_transcription_end=p2,
-                      ptr_translation_start=p3,
-                      ptr_translation_end=p4,
-    )
-    ins.compile()
-    res = session.execute(ins)
+    #altr = Base.metadata.tables["alignment_translation"].insert()
+    #ins = altr.values(translation_id=id1,
+    #                  transcription_id=id2,
+    #                  ptr_transcription_start=p1,
+    #                  ptr_transcription_end=p2,
+    #                  ptr_translation_start=p3,
+    #                  ptr_translation_end=p4,
+    #)
+    #ins.compile()
+    #res = session.execute(ins)
+    res = None
     return res
 
 """
@@ -296,15 +301,15 @@ for f in filenames:
         "transcription_notes" : [],
         "translation_notes": [],
         "transcription" : [],
-        "transcription_id": transcription_id,
+        "transcription_id": id,
         "translation" : [],
-        "translation_id": translation_id,
+        "translation_id": id,
         "alignment_transcription_ptrs" : [],
         "alignment_translation_ptrs": [],
     }
 
-    transcription_id += 1
-    translation_id += 1
+    #transcription_id += 1
+    #translation_id += 1
 
 
     """
@@ -400,19 +405,19 @@ for f in filenames:
 
 
     # update the db with the alignment data
-    if tf is not None and tf["has_verses"]:
-        id1 = id
-        id2 = id
-        session.execute("DELETE FROM alignment_translation "
-                        "WHERE translation_id={0} and transcription_id={1};".format(id1, id2))
-
-        for ((p1, p2), (p3, p4)) in itertools.zip_longest(
-                dossiers[f]["alignment_transcription_ptrs"],
-                dossiers[f]["alignment_translation_ptrs"],
-                fillvalue=("null", "null")):
-            insert_alignemnt_transcription_translation(session, id1, id2, p1, p2, p3, p4)
-
-        print("--- with verses ", f, id1, id2)
+    #if tf is not None and tf["has_verses"]:
+    #    id1 = id
+    #    id2 = id
+    #    session.execute("DELETE FROM alignment_translation "
+    #                    "WHERE translation_id={0} and transcription_id={1};".format(id1, id2))
+    #
+    #    for ((p1, p2), (p3, p4)) in itertools.zip_longest(
+    #            dossiers[f]["alignment_transcription_ptrs"],
+    #            dossiers[f]["alignment_translation_ptrs"],
+    #            fillvalue=("null", "null")):
+    #        insert_alignemnt_transcription_translation(session, id1, id2, p1, p2, p3, p4)
+    #
+    #    print("--- with verses ", f, id1, id2)
 
 
 """

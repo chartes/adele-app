@@ -30,18 +30,7 @@ association_user_has_role = db.Table('user_has_role',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('role.id'), primary_key=True)
 )
-association_transcription_has_note = db.Table('transcription_has_note',
-    db.Column('transcription_id', db.Integer, db.ForeignKey('transcription.id'), primary_key=True),
-    db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
-    db.Column('ptr_start', db.Integer),
-    db.Column('ptr_end', db.Integer),
-)
-association_translation_has_note = db.Table('translation_has_note',
-    db.Column('translation_id', db.Integer, db.ForeignKey('translation.id'), primary_key=True),
-    db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
-    db.Column('ptr_start', db.Integer),
-    db.Column('ptr_end', db.Integer),
-)
+
 association_commentary_has_note = db.Table('commentary_has_note',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('type_id', db.Integer, db.ForeignKey('commentary_type.id'), primary_key=True),
@@ -233,19 +222,8 @@ class Editor(db.Model):
             'name': self.name
         }
 
-class Image(db.Model):
-    manifest_url = db.Column(db.String, primary_key=True)
-    id = db.Column(db.String, primary_key=True)
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
-    def serialize(self):
-        return {
-            'id': self.id,
-            'doc_id': self.doc_id,
-            'manifest_url': self.manifest_url
-        }
-
 class ImageZone(db.Model):
-    manifest_url = db.Column(db.String, db.ForeignKey('image.zone'), primary_key=True)
+    manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
     img_id = db.Column(db.String, db.ForeignKey('image.id'), primary_key=True)
     zone_id = db.Column(db.Integer, primary_key=True)
     coords = db.Column(db.String)
@@ -259,6 +237,30 @@ class ImageZone(db.Model):
             'coords' : self.coords,
             'note' : self.note
         }
+
+class Image(db.Model):
+    manifest_url = db.Column(db.String, primary_key=True)
+    id = db.Column(db.String, primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+
+    zones = db.relationship("ImageZone",
+                            primaryjoin=(ImageZone.img_id==id and ImageZone.manifest_url==manifest_url))
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'manifest_url': self.manifest_url,
+            'zones': [
+                {
+                    "zone_id" : z.zone_id,
+                    "coords" : z.coords,
+                    "note" : z.note
+
+                } for z in self.zones
+            ]
+        }
+
 
 class Institution(db.Model):
     ref = db.Column(db.String, primary_key=True)
@@ -286,10 +288,12 @@ class Note(db.Model):
 
     note_type = db.relationship("NoteType")
 
+    transcriptions = db.relationship("TranscriptionHasNote", back_populates="note")
+    translations = db.relationship("TranslationHasNote", back_populates="note")
+
     def serialize(self):
         return {
             'id': self.id,
-            'type_id': self.type_id,
             'user_id': self.user_id,
             'content': self.content,
             "note_type": self.note_type.serialize()
@@ -333,24 +337,45 @@ class Tradition(db.Model):
             'label': self.label
         }
 
+class TranscriptionHasNote(db.Model):
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    ptr_start = db.Column(db.Integer)
+    ptr_end = db.Column(db.Integer)
+    note = db.relationship("Note", back_populates="transcriptions")
+    transcription = db.relationship("Transcription", back_populates="notes")
+
+
 class Transcription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("Note",
-                             secondary=association_transcription_has_note,
-                             backref=db.backref('transcription', ))
+    notes = db.relationship("TranscriptionHasNote", back_populates="transcription")
 
     def serialize(self):
+
         return {
             'id': self.id,
             'doc_id': self.doc_id,
             'user_id': self.user_id,
             'content': self.content,
-            'notes': [note.serialize() for note in self.notes]
+            'notes': [
+                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
+                for n in self.notes
+            ]
         }
+
+
+class TranslationHasNote(db.Model):
+    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    ptr_start = db.Column(db.Integer)
+    ptr_end = db.Column(db.Integer)
+    note = db.relationship("Note", back_populates="translations")
+    translation = db.relationship("Translation", back_populates="notes")
+
 
 class Translation(db.Model):
     id = db.Column(db.String, primary_key=True)
@@ -358,9 +383,7 @@ class Translation(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("Note",
-                             secondary=association_translation_has_note,
-                             backref=db.backref('translation', ))
+    notes = db.relationship("TranslationHasNote", back_populates="translation")
 
     def serialize(self):
         return {
@@ -368,7 +391,10 @@ class Translation(db.Model):
             'doc_id': self.doc_id,
             'user_id': self.user_id,
             'content': self.content,
-            'notes': [note.serialize() for note in self.notes]
+            'notes': [
+                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
+                for n in self.notes
+            ]
         }
 
 # Define the User data model

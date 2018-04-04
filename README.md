@@ -13,7 +13,7 @@ The database will be fetched from https://github.com/chartes/adele each time the
 
 Starting the server in debug mode:
 ```
-python3 adele-app.py
+gunicorn flask_app:flask_app -c gunicorn.conf.py
 ```
 
 
