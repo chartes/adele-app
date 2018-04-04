@@ -10,7 +10,7 @@ from app import app
 from app.api.open_annotation import make_annotation_list, add_annotation
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
-from app.models import Image, User, Document, Transcription, Translation
+from app.models import Image, User, Document, Transcription, Translation, ImageZone
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
@@ -151,7 +151,9 @@ def api_user(api_version, user_id):
     return jsonify(response)
 
 
-@app.route("/api/<api_version>/document/<doc_id>/annotations")
+#TODO : gerer les erreurs
+
+@app.route("/api/<api_version>/document/<doc_id>/annotations/list")
 def api_document_manifest_annotations(api_version, doc_id):
 
     #request the manifest endpoint
@@ -177,28 +179,37 @@ def api_document_manifest_annotations(api_version, doc_id):
 
     return jsonify(response)
 
-@app.route("/api/<api_version>/document/<doc_id>/annotations/list")
+@app.route("/api/<api_version>/document/<doc_id>/annotations")
 def api_document_manifest_annotation_list(api_version, doc_id):
     img = Image.query.filter(Image.doc_id == doc_id).one()
     img_d = img.serialize()
 
     anno_list = make_annotation_list(doc_id)
     for zone in img_d["zones"]:
-        anno_list = add_annotation(anno_list, "http://get/ano/{0}".format(zone["zone_id"]))
+        anno_list = add_annotation(
+            anno_list,
+            request.url_root[0:-1] + url_for(
+                "api_document_manifest_annotation",
+                api_version=api_version,
+                doc_id=doc_id,
+                zone_id=zone["zone_id"]
+            )
+        )
 
     response = APIResponseFactory.make_response(data=anno_list)
 
     return jsonify(response)
 
 
-#@app.route("/api/<api_version>/document/<doc_id>/annotation/<zone_id>")
-#def api_document_manifest_annotation(api_version, doc_id):
-#    img = Image.query.filter(Image.doc_id == doc_id).one()
-#
-#    anno_list = make_annotation_list(doc_id)
-#    anno_list = add_annotation(anno_list, "http://get/ano/1")
-#    #TODO:make annotation list
-#
-#    response = APIResponseFactory.make_response(data=anno_list)
-#
-#    return jsonify(response)
+@app.route("/api/<api_version>/document/<doc_id>/annotation/<zone_id>")
+def api_document_manifest_annotation(api_version, doc_id, zone_id):
+    img = Image.query.filter(Image.doc_id == doc_id).one()
+    zone = ImageZone.query.filter(
+        ImageZone.img_id == img.id,
+        ImageZone.zone_id == zone_id,
+        ImageZone.manifest_url == img.manifest_url
+    ).one()
+
+    response = APIResponseFactory.make_response(data=zone.serialize())
+
+    return jsonify(response)
