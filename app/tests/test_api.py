@@ -94,7 +94,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
     def test_api_document_manifest_ok(self):
         DOC_ID = 20
-        resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}/manifest".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
