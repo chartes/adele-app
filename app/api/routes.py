@@ -1,16 +1,17 @@
 import json
 import pprint
 import sys
+from urllib.error import HTTPError
 from urllib.request import urlopen, build_opener
 
 from flask import jsonify, request, url_for
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from app import app
 from app.api.open_annotation import make_annotation_list, make_annotation
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
-from app.models import Image, User, Document, Transcription, Translation, ImageZone
+from app.models import Image, User, Document, Transcription, Translation, ImageZone, AlignmentImage
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
@@ -99,9 +100,10 @@ def api_document_transcriptions(api_version, doc_id):
 
 @app.route('/api/<api_version>/documents/<doc_id>/transcriptions/from/<user_id>')
 def document_transcription_from_user(api_version, doc_id, user_id):
-    # TODO : changer la requête qui n'est pas bonne
     try:
-        transcription = Transcription.query.filter(Transcription.doc_id == doc_id).one()
+        transcription = Transcription.query.filter(
+            Transcription.doc_id == doc_id, Transcription.user_id == user_id
+        ).one()
         response = APIResponseFactory.make_response(
             data=transcription.serialize()
         )
@@ -150,28 +152,80 @@ def api_user(api_version, user_id):
         })
     return jsonify(response)
 
-
-#TODO : gerer les erreurs
-#TODO : ajouter les coords
-#TODO: ajouter aussi les annotations de la table alignement image dans une seconde AnnotationList ?
-
-@app.route("/api/<api_version>/documents/<doc_id>/annotations/list")
-def api_documents_annotations_list(api_version, doc_id):
+@app.route("/api/<api_version>/documents/<doc_id>/first-canvas")
+def api_document_first_canvas(api_version, doc_id):
 
     json_obj = query_json_endpoint(request, url_for('api_document_manifest', api_version=api_version, doc_id=doc_id))
 
     if "errors" in json_obj:
+        response = APIResponseFactory.make_response(errors=[
+            json_obj["errors"],
+            {"title" : "Cannot fetch manifest for the document {0}".format(doc_id)}
+        ])
+    else:
+        try:
+            canvas = json_obj["data"]["sequences"][0]["canvases"][0]
+            response = APIResponseFactory.make_response(data=canvas)
+        except (IndexError, KeyError):
+            response = APIResponseFactory.make_response(errors={
+                    "title": "Canvas not found in manifest for document {0}".format(doc_id)
+                })
+
+    return jsonify(response)
+
+#TODO : ajouter les coords
+#TODO: ajouter aussi les annotations de la table alignement image dans une seconde AnnotationList ?
+@app.route("/api/<api_version>/documents/<doc_id>/annotations")
+def api_documents_annotations(api_version, doc_id):
+    json_obj = query_json_endpoint(request, url_for('api_document_first_canvas', api_version=api_version, doc_id=doc_id))
+
+    if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=json_obj["errors"])
     else:
-        canvas = json_obj["data"]["sequences"][0]["canvases"][0]
+        canvas = json_obj["data"]
+        new_annotation_list = []
 
+        if "otherContent" in canvas:
+            op = build_opener()
+            op.addheaders = [("Content-type", "text/json")]
+            # for each annotation list reference in the manifest, make a new annotation list
+            for oc in [oc for oc in canvas["otherContent"] if oc["@type"] == "sc:AnnotationList"]:
+                # make a call to api_document_manifest_annotations_list
+                try:
+                    resp = op.open(oc["@id"], timeout=10).read()
+                except HTTPError as e:
+                    response = APIResponseFactory.make_response(
+                        errors={"details": e.msg, "title": "The annotation list {0} cannot be reached".format(oc["@id"]), "status": e.code}
+                    )
+                    return jsonify(response)
+
+                resp = json_loads(resp)
+                if "errors" in resp:
+                    return jsonify(resp)
+                else:
+                    annotation_list = resp["data"]
+                    new_annotation_list.append(annotation_list)
+
+        response = APIResponseFactory.make_response(data=new_annotation_list)
+
+    return jsonify(response)
+
+@app.route("/api/<api_version>/documents/<doc_id>/annotations/list")
+def api_documents_annotations_list(api_version, doc_id):
+
+    json_obj = query_json_endpoint(request, url_for('api_document_first_canvas', api_version=api_version, doc_id=doc_id))
+
+    if "errors" in json_obj:
+        response = APIResponseFactory.make_response(errors=json_obj["errors"])
+    else:
+        canvas = json_obj["data"]
         img = Image.query.filter(Image.doc_id == doc_id).one()
-
         canvas_uri = canvas["@id"]
         annotations = []
+
         for img_zone in [z for z in img.zones if z.note is not None]:
             res_uri = request.url_root[0:-1] + url_for(
-                "api_documents_annotations",
+                "api_documents_annotations_zone",
                 api_version=api_version,
                 doc_id=doc_id,
                 zone_id=img_zone.zone_id
@@ -180,40 +234,77 @@ def api_documents_annotations_list(api_version, doc_id):
             annotations.append(new_annotation)
 
         annotation_list = make_annotation_list("f1", doc_id, annotations)
-
         response = APIResponseFactory.make_response(data=annotation_list)
 
     return jsonify(response)
 
+
+@app.route('/api/<api_version>/documents/<doc_id>/transcriptions/list')
+def api_document_transcriptions_list(api_version, doc_id):
+    """
+    Fetch transcription segments formated as a sc:AnnotationList
+    Only the teacher's transcription segments are returned
+    :param api_version: API version
+    :param doc_id: Document id
+    :return: a json object Obj with a sc:AnnotationList inside Obj["data"]. Return errors in Obj["errors"]
+    """
+    #TODO : wip
+    try:
+        # Check if document exist first
+        doc = Document.query.filter(Document.id == doc_id).one()
+        try:
+            transc = AlignmentImage.query.join("transcription").\
+                filter(AlignmentImage.transcription_id == Transcription.id).\
+                filter(doc.id == Transcription.doc_id).all()
+            img_al = AlignmentImage.query.filter().one()
+
+        except MultipleResultsFound as e:
+            response = APIResponseFactory.make_response(errors={
+                "title": "Multiple transcriptions found. A unique transcription must be validated first".format(doc_id)
+            })
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} introuvable".format(doc_id)
+        })
+    return jsonify(response)
+
+
 #TODO: ajouter aussi les annotations de la table alignement image
 @app.route("/api/<api_version>/documents/<doc_id>/annotations/<zone_id>")
-def api_documents_annotations(api_version, doc_id, zone_id):
+def api_documents_annotations_zone(api_version, doc_id, zone_id):
 
-    json_obj = query_json_endpoint(request, url_for('api_document_manifest', api_version=api_version, doc_id=doc_id))
+    json_obj = query_json_endpoint(request, url_for('api_document_first_canvas', api_version=api_version, doc_id=doc_id))
 
     if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=json_obj["errors"])
     else:
-        canvas = json_obj["data"]["sequences"][0]["canvases"][0]
+        canvas = json_obj["data"]
+        response = {}
 
-        img = Image.query.filter(Image.doc_id == doc_id).one()
+        try:
+            img = Image.query.filter(Image.doc_id == doc_id).one()
+            # select annotations zones
+            img_zone = ImageZone.query.filter(
+                ImageZone.img_id == img.id,
+                ImageZone.zone_id == zone_id,
+                ImageZone.manifest_url == img.manifest_url
+                #ImageZone.note != None
+            ).one()
+        except NoResultFound:
+            img_zone = None
+            response = APIResponseFactory.make_response(
+                errors={"title" : "There is no annotation {0} for the document {1}".format(zone_id, doc_id)}
+            )
 
-        img_zone = ImageZone.query.filter(
-            ImageZone.img_id == img.id,
-            ImageZone.zone_id == zone_id,
-            ImageZone.manifest_url == img.manifest_url,
-            ImageZone.note != None
-        ).one()
-
-        canvas_uri = canvas["@id"]
-        res_uri = request.url_root[0:-1] + url_for(
-            "api_documents_annotations",
-            api_version=api_version,
-            doc_id=doc_id,
-            zone_id=img_zone.zone_id
-        )
-        new_annotation = make_annotation(canvas_uri, res_uri, img_zone.note, format="text/plain")
-
-        response = APIResponseFactory.make_response(data=new_annotation)
+        if img_zone is not None:
+            canvas_uri = canvas["@id"]
+            res_uri = request.url_root[0:-1] + url_for(
+                "api_documents_annotations_zone",
+                api_version=api_version,
+                doc_id=doc_id,
+                zone_id=img_zone.zone_id
+            )
+            new_annotation = make_annotation(canvas_uri, res_uri, img_zone.note, format="text/plain")
+            response = APIResponseFactory.make_response(data=new_annotation)
 
     return jsonify(response)
