@@ -8,7 +8,7 @@ from app import app
 Test routes
 ---------------------------------
 """
-@app.route('/test/alignment/translation/<transcription_id>/<translation_id>')
+@app.route('/test/alignments/translations/<transcription_id>/<translation_id>')
 def align_translation(transcription_id, translation_id):
     res = align_translation(transcription_id, translation_id)
     if len(res) > 0:
@@ -54,7 +54,7 @@ def admin_documents():
     docs = Document.query.all()
     return render_template('admin/documents.html', title='Documents - Adele',  docs=docs)
 
-@app.route('/admin/document/<doc_id>')
+@app.route('/admin/documents/<doc_id>')
 def admin_document(doc_id):
     doc = Document.query.filter(Document.id == doc_id).one()
     if doc is None:
@@ -62,7 +62,7 @@ def admin_document(doc_id):
         return redirect(url_for('admin_documents'))
     return render_template('admin/document.html', title='Documents - Adele',  doc=doc)
 
-@app.route('/admin/document/<doc_id>/edition')
+@app.route('/admin/documents/<doc_id>/edition')
 def admin_document_edit(doc_id):
     doc = Document.query.filter(Document.id == doc_id).one()
     if doc is None:
