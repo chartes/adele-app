@@ -58,12 +58,14 @@ class ActeType(db.Model):
 class AlignmentDiscours(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     ptr_start = db.Column(db.Integer, primary_key=True)
     ptr_end = db.Column(db.Integer, primary_key=True)
     speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"))
     def serialize(self):
         return {
             'transcription_id': self.transcription_id,
+            'user_id': self.user_id,
             'note_id': self.note_id,
             'ptr_start': self.ptr_start,
             'ptr_end': self.ptr_end,
@@ -73,14 +75,21 @@ class AlignmentDiscours(db.Model):
 class AlignmentImage(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
     manifest_url = db.Column(db.String, db.ForeignKey('image_zone.manifest_url'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     img_id = db.Column(db.Integer, db.ForeignKey('image_zone.img_id'), primary_key=True)
     zone_id = db.Column(db.Integer, db.ForeignKey('image_zone.zone_id'), primary_key=True)
+    ptr_transcription_start = db.Column(db.Integer)
+    ptr_transcription_end = db.Column(db.Integer)
+
     def serialize(self):
         return {
             'transcription_id': self.transcription_id,
             'manifest_url': self.manifest_url,
+            'user_id': self.user_id,
             'img_id': self.img_id,
-            'zone_id': self.zone_id
+            'zone_id': self.zone_id,
+            'ptr_start': self.ptr_transcription_start,
+            'ptr_end': self.ptr_transcription_end
         }
 
 class AlignmentTranslation(db.Model):
