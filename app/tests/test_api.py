@@ -17,7 +17,7 @@ class TestAPIEndPoints(unittest.TestCase):
         self.app = flask_app.test_client()
 
     def test_api_align_translation_ok(self):
-        resp = self.app.get("/api/v1/alignment/translation/33/33")
+        resp = self.app.get("/api/v1/alignments/translations/33/33")
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -43,7 +43,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
 
     def test_api_align_translation_not_found(self):
-        resp = self.app.get("/api/v1/alignment/translation/1/2")
+        resp = self.app.get("/api/v1/alignments/translations/1/2")
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -53,7 +53,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
     def test_api_document_ok(self):
         DOC_ID = 95
-        resp = self.app.get("/api/v1/document/{0}".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -84,7 +84,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
     def test_api_document_not_found(self):
         DOC_ID = 10000
-        resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}/manifest".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -105,7 +105,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
     def test_api_document_manifest_not_found(self):
         DOC_ID = 10000
-        resp = self.app.get("/api/v1/document/{0}/manifest".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}/manifest".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -116,7 +116,7 @@ class TestAPIEndPoints(unittest.TestCase):
     def test_api_document_transcriptions_ok(self):
         #TODO: test response with only one transcription and response with a list of transcriptions
         DOC_ID = 20
-        resp = self.app.get("/api/v1/document/{0}/transcriptions".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}/transcriptions".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -133,7 +133,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
     def test_api_document_transcriptions_not_found(self):
         DOC_ID = 10000
-        resp = self.app.get("/api/v1/document/{0}/transcriptions".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}/transcriptions".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -144,7 +144,7 @@ class TestAPIEndPoints(unittest.TestCase):
     def test_api_document_tranlations_ok(self):
         #TODO: test response with only one translation and response with a list of translations
         DOC_ID = 20
-        resp = self.app.get("/api/v1/document/{0}/translations".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}/translations".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
@@ -160,7 +160,7 @@ class TestAPIEndPoints(unittest.TestCase):
 
     def test_api_document_translations_not_found(self):
         DOC_ID = 10000
-        resp = self.app.get("/api/v1/document/{0}/translations".format(DOC_ID))
+        resp = self.app.get("/api/v1/documents/{0}/translations".format(DOC_ID))
         self.assertEqual(resp.status_code, 200)
         r = json_loads(resp.data)
 
