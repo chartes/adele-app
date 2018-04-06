@@ -432,7 +432,7 @@ class User(db.Model, UserMixin):
             'id': self.id,
             'username': self.username,
             'email': self.email,
-            'confirmed_at': self.confirmed_at,
+            'confirmed_at': str(self.confirmed_at).split('.')[0],
             'active': self.active,
             'first_name': self.first_name,
             'last_name': self.last_name,

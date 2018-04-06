@@ -22,8 +22,12 @@ else:
 def query_json_endpoint(request_obj, endpoint_url):
     op = build_opener()
     op.addheaders = [("Content-type", "text/json")]
-    data = op.open("{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url), timeout=10, ).read()
-    return json_loads(data)
+    try:
+        data = op.open("{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url), timeout=10, ).read()
+        response = json_loads(data)
+    except:
+        response = APIResponseFactory.make_response(errors={"title":"Error : cannot fetch {0}".format(endpoint_url)})
+    return response
 
 """
 ---------------------------------

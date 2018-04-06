@@ -140,26 +140,23 @@ def make_annotation(manifest_url, img, fragment_coords, res_uri, content, format
 
 
 if __name__ == "__main__":
-    pass
-    #rect = make_specific_rectangular_resource(
-    #    "http://193.48.42.68/adele/iiif/manifests/man20.json",
-    #    "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-    #    "92,45,820,67"
-    #)
-    #pprint.pprint(rect)
-#
-    #svg = make_specific_svg_resource(
-    #    "http://193.48.42.68/adele/iiif/manifests/man20.json",
-    #    "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-    #    "92,45,820,67,24,25,23,250"
-    #)
-    #pprint.pprint(svg)
-#
-    #svg = make_specific_svg_resource(
-    #    "http://193.48.42.68/adele/iiif/manifests/man20.json",
-    #    "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-    #    "92,45,820"
-    #)
-    #pprint.pprint(svg)
-#
-
+    img = {
+        "@context": "http://iiif.io/api/presentation/2/context.json",
+        "@id": "http://193.48.42.68/loris/adele/dossiers/20/annotation/a1",
+        "@type": "oa:Annotation",
+        "motivation": "sc:painting",
+        "resource": {
+            "@id": "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+            "@type": "dctypes:Image",
+            "height": 1184,
+            "width": 900,
+            "format": "image/jpeg",
+            "service": {
+                "@context": "http://iiif.io/api/image/2/context.json",
+                "@id": "http://193.48.42.68/loris/adele/dossiers/20.jpg",
+                "profile": "http://iiif.io/api/image/2/level2.json"
+            }
+        }
+        }
+    anno = make_annotation("dummy_manifest_url", img, "10,80,800,67", "my-res-uri", "My note")
+    pprint.pprint(anno)
