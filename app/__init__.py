@@ -36,7 +36,6 @@ class CustomUserManager(UserManager):
         return generate_password_hash(password.encode('utf-8'))
 
     def verify_password(self, password, user):
-        print(self.hash_password(password), self.get_password(user))
         return check_password_hash(self.get_password(user), password)
 
 
