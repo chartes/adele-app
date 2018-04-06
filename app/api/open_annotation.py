@@ -71,17 +71,22 @@ def make_specific_svg_resource(manifest_url, img, fragment_coords):
     img_service_id = img["resource"]["service"]["@id"]
 
     coords = fragment_coords.split(",")
-    # move to coords
-    M = "M {0} {1}".format(*coords)
-    # line to coords
-    Ls = ""
-    for i, c in enumerate(coords[2:]):
-        if i % 2 == 0:
-            Ls += "L "
-        Ls += c + " "
-    Ls = Ls.rstrip()
 
-    svg_data = "<svg xmlns='http://www.w3.org/2000/svg'><path xmlns='http://www.w3.org/2000/svg' d='{0} {1} z'/></svg>"\
+    if len(coords) == 3:
+        fig_path = "<circle cx='{0}' cy='{1}' r='{2}'/>".format(*coords)
+    else:
+        # move to coords
+        M = "M {0} {1}".format(*coords)
+        # line to coords
+        Ls = ""
+        for i, c in enumerate(coords[2:]):
+            if i % 2 == 0:
+                Ls += "L "
+            Ls += c + " "
+        Ls = Ls.rstrip()
+        fig_path = "<path xmlns='http://www.w3.org/2000/svg' d='{0} {1} z'/>".format(M, Ls)
+
+    svg_data = "<svg xmlns='http://www.w3.org/2000/svg'>{0}</svg>".format(fig_path)
 
     res = {
         "@type": "oa:SpecificResource",
@@ -95,7 +100,7 @@ def make_specific_svg_resource(manifest_url, img, fragment_coords):
         },
         "selector": {
           "@type":["oa:SvgSelector","cnt:ContentAsText"],
-          "chars": svg_data.format(M, Ls)
+          "chars": svg_data
         }
     }
 
