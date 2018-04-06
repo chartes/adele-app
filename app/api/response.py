@@ -1,4 +1,7 @@
+import json
 import pprint
+
+from flask import Response
 
 
 class APIResponseFactory:
@@ -27,6 +30,11 @@ class APIResponseFactory:
             r["meta"] = meta
 
         return r
+
+    @classmethod
+    def jsonify(cls, res):
+        j = json.dumps(res, indent=2, ensure_ascii=False)
+        return Response(j, content_type="application/json; charset=utf-8")
 
     @classmethod
     def is_iterable(cls, res):
@@ -103,7 +111,7 @@ class APIResponseFactory:
 
 if __name__ == "__main__":
 
-    r = APIResponseFactory.make_response(data={"id": 1, "name": "Paul"})
+    r = APIResponseFactory.make_response(data={"id": 1, "name": "Deux points juxtapos\u00e9s"})
     pprint.pprint(r)
     r = APIResponseFactory.add_data(r, [{"id": 2, "name": "Brian"}, {"id": 3, "name": "John"}])
     pprint.pprint(r)

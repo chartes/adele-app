@@ -4,7 +4,7 @@ import sys
 from urllib.error import HTTPError
 from urllib.request import urlopen, build_opener
 
-from flask import jsonify, request, url_for
+from flask import request, url_for, Response
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from app import app
@@ -48,7 +48,7 @@ def api_align_translation(api_version, transcription_id, translation_id):
         response = APIResponseFactory.make_response(data=data)
     else:
         response = APIResponseFactory.make_response(errors={"status": 404, "title": "Alignement introuvable"})
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 
 @app.route('/api/<api_version>/documents/<doc_id>')
@@ -60,7 +60,7 @@ def api_documents(api_version, doc_id):
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Document {0} introuvable".format(doc_id)
         })
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 @app.route('/api/<api_version>/documents/<doc_id>/manifest')
 def api_documents_manifest(api_version, doc_id):
@@ -81,7 +81,7 @@ def api_documents_manifest(api_version, doc_id):
         data = json_loads(manifest_data)
         response = APIResponseFactory.make_response(data=data)
 
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 @app.route('/api/<api_version>/documents/<doc_id>/transcriptions')
 def api_documents_transcriptions(api_version, doc_id):
@@ -96,7 +96,8 @@ def api_documents_transcriptions(api_version, doc_id):
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Document {0} introuvable".format(doc_id)
         })
-    return jsonify(response)
+
+    return APIResponseFactory.jsonify(response)
 
 @app.route('/api/<api_version>/documents/<doc_id>/transcriptions/<seg_id>')
 def api_documents_transcriptions_segments(api_version, doc_id, seg_id):
@@ -115,7 +116,7 @@ def document_transcription_from_user(api_version, doc_id, user_id):
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Transcription {0} introuvable".format(doc_id)
         })
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 @app.route('/api/<api_version>/documents/<doc_id>/translations')
 def api_documents_translations(api_version, doc_id):
@@ -130,7 +131,7 @@ def api_documents_translations(api_version, doc_id):
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Document {0} introuvable".format(doc_id)
         })
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 @app.route('/api/<api_version>/user')
 def api_current_user(api_version):
@@ -142,7 +143,7 @@ def api_current_user(api_version):
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Utilisateur introuvable"
         })
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 
 @app.route('/api/<api_version>/users/<user_id>')
@@ -154,7 +155,7 @@ def api_users(api_version, user_id):
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Utilisateur {0} introuvable".format(user_id)
         })
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 @app.route("/api/<api_version>/documents/<doc_id>/first-canvas")
 def api_documents_first_canvas(api_version, doc_id):
@@ -175,12 +176,17 @@ def api_documents_first_canvas(api_version, doc_id):
                     "title": "Canvas not found in manifest for document {0}".format(doc_id)
             })
 
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 #TODO : ajouter les coords
-#TODO: ajouter aussi les annotations de la table alignement image dans une seconde AnnotationList ?
 @app.route("/api/<api_version>/documents/<doc_id>/annotations")
 def api_documents_annotations(api_version, doc_id):
+    """
+
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
     json_obj = query_json_endpoint(request, url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id))
 
     if "errors" in json_obj:
@@ -201,21 +207,27 @@ def api_documents_annotations(api_version, doc_id):
                     response = APIResponseFactory.make_response(
                         errors={"details": e.msg, "title": "The annotation list {0} cannot be reached".format(oc["@id"]), "status": e.code}
                     )
-                    return jsonify(response)
+                    return APIResponseFactory.jsonify(response)
 
                 resp = json_loads(resp)
                 if "errors" in resp:
-                    return jsonify(resp)
+                    return resp
                 else:
                     annotation_list = resp["data"]
                     new_annotation_list.append(annotation_list)
 
         response = APIResponseFactory.make_response(data=new_annotation_list)
 
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 @app.route("/api/<api_version>/documents/<doc_id>/annotations/list")
 def api_documents_annotations_list(api_version, doc_id):
+    """
+
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
 
     json_obj = query_json_endpoint(request, url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id))
 
@@ -240,8 +252,29 @@ def api_documents_annotations_list(api_version, doc_id):
         annotation_list = make_annotation_list("f1", doc_id, annotations)
         response = APIResponseFactory.make_response(data=annotation_list)
 
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
+def get_validated_transcription(doc_id):
+    """
+
+    :param doc_id:
+    :return:
+    """
+    # TODO : put a filter on the user role to get only the teacher's transcriptions
+    tr = None
+    try:
+        tr = Transcription.query.filter(doc_id == Transcription.doc_id).one()
+        response = None
+    except MultipleResultsFound as e:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404,
+            "title": "Multiple transcriptions found. A unique transcription must be validated first".format(doc_id)
+        })
+    except NoResultFound as e:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Transcription of document {0} cannot be found".format(doc_id)
+        })
+    return (tr, response)
 
 @app.route('/api/<api_version>/documents/<doc_id>/transcriptions/list')
 def api_documents_transcriptions_list(api_version, doc_id):
@@ -257,19 +290,9 @@ def api_documents_transcriptions_list(api_version, doc_id):
     try:
         # Check if document exist first
         doc = Document.query.filter(Document.id == doc_id).one()
-        tr = None
-        response = ""
         # find the good transcription
-        try:
-            tr = Transcription.query.filter(doc.id == Transcription.doc_id).one()
-        except MultipleResultsFound as e:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Multiple transcriptions found. A unique transcription must be validated first".format(doc_id)
-            })
-        except NoResultFound as e:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Transcription of document {0} cannot be found".format(doc_id)
-            })
+        # TODO : put a filter on the user role to get only the teacher's transcriptions
+        tr, response = get_validated_transcription(doc_id)
 
         # let's go finding the alignment segments
         if tr is not None:
@@ -289,13 +312,16 @@ def api_documents_transcriptions_list(api_version, doc_id):
                     for img_al in img_als:
 
                         tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
-                        #print(doc_id, img_al.ptr_transcription_start, img_al.ptr_transcription_end, tr_seg)
-                        #TODO: avoir une URI joignable
-                        res_uri = "http://my.uri.to.the.endpoint"
+
+                        res_uri = request.url_root[0:-1] + url_for(
+                            "api_documents_annotations_zone",
+                            api_version=api_version,
+                            doc_id=doc_id,
+                            zone_id=img_al.zone_id
+                        )
                         annotations.append(
                             make_annotation(canvas_uri, res_uri, tr_seg, "text/plain")
                         )
-                    #TODO: res_uri
                     annotation_list = make_annotation_list("f2", doc_id, annotations)
                     response = APIResponseFactory.make_response(  data=annotation_list)
 
@@ -307,20 +333,25 @@ def api_documents_transcriptions_list(api_version, doc_id):
             "status": 404, "title": "Document {0} cannot be found".format(doc_id)
         })
 
-    return jsonify(response)
+    return APIResponseFactory.jsonify(response)
 
 
-#TODO: ajouter aussi les annotations de la table alignement image
 @app.route("/api/<api_version>/documents/<doc_id>/annotations/<zone_id>")
 def api_documents_annotations_zone(api_version, doc_id, zone_id):
+    """
 
+    :param api_version:
+    :param doc_id:
+    :param zone_id:
+    :return:
+    """
     json_obj = query_json_endpoint(request, url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id))
 
     if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=json_obj["errors"])
     else:
         canvas = json_obj["data"]
-        response = {}
+        response = None
 
         try:
             img = Image.query.filter(Image.doc_id == doc_id).one()
@@ -345,7 +376,24 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
                 doc_id=doc_id,
                 zone_id=img_zone.zone_id
             )
-            new_annotation = make_annotation(canvas_uri, res_uri, img_zone.note, format="text/plain")
-            response = APIResponseFactory.make_response(data=new_annotation)
 
-    return jsonify(response)
+            # if the note content is empty, then you need to fetch a transcription segment
+            # else it is a mere image note
+            if img_zone.note is None:
+                tr, response = get_validated_transcription(doc_id)
+                img_al = AlignmentImage.query.filter(
+                    AlignmentImage.transcription_id == tr.id,
+                    AlignmentImage.zone_id == img_zone.zone_id,
+                    AlignmentImage.user_id == tr.user_id,
+                    AlignmentImage.manifest_url == img.manifest_url
+                ).one()
+                note_content = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+            else:
+                note_content = img_zone.note
+
+            if response is None:
+                new_annotation = make_annotation(canvas_uri, res_uri, note_content, format="text/plain")
+                response = APIResponseFactory.make_response(data=new_annotation)
+
+    return APIResponseFactory.jsonify(response)
+
