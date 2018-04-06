@@ -213,8 +213,7 @@ def api_documents_annotations(api_version, doc_id):
                 if "errors" in resp:
                     return resp
                 else:
-                    annotation_list = resp["data"]
-                    new_annotation_list.append(annotation_list)
+                    new_annotation_list.append(resp)
 
         response = APIResponseFactory.make_response(data=new_annotation_list)
 
@@ -236,7 +235,8 @@ def api_documents_annotations_list(api_version, doc_id):
     else:
         canvas = json_obj["data"]
         img = Image.query.filter(Image.doc_id == doc_id).one()
-        canvas_uri = canvas["@id"]
+        #TODO s'il n'y a pas d'image dans le manifest
+        img_json = canvas["images"][0]
         annotations = []
 
         for img_zone in [z for z in img.zones if z.note is not None]:
@@ -246,11 +246,14 @@ def api_documents_annotations_list(api_version, doc_id):
                 doc_id=doc_id,
                 zone_id=img_zone.zone_id
             )
-            new_annotation = make_annotation(canvas_uri, res_uri, img_zone.note, format="text/plain")
+            fragment_coords = img_zone.coords
+            new_annotation = make_annotation(
+                img_zone.manifest_url, img_json, fragment_coords, res_uri, img_zone.note, format="text/json"
+            )
             annotations.append(new_annotation)
 
         annotation_list = make_annotation_list("f1", doc_id, annotations)
-        response = APIResponseFactory.make_response(data=annotation_list)
+        response = annotation_list
 
     return APIResponseFactory.jsonify(response)
 
@@ -306,7 +309,8 @@ def api_documents_transcriptions_list(api_version, doc_id):
                     response = APIResponseFactory.make_response(errors=json_obj["errors"])
                 else:
                     canvas = json_obj["data"]
-                    canvas_uri = canvas["@id"]
+                    img_json = canvas["images"][0]
+
                     annotations = []
                     img_als = AlignmentImage.query.filter(AlignmentImage.transcription_id == tr.id).all()
                     for img_al in img_als:
@@ -319,11 +323,19 @@ def api_documents_transcriptions_list(api_version, doc_id):
                             doc_id=doc_id,
                             zone_id=img_al.zone_id
                         )
+                        #TODO: gerer erreur
+                        img_zone = ImageZone.query.filter(
+                            ImageZone.manifest_url==img_al.manifest_url,
+                            ImageZone.img_id==img_al.img_id,
+                            ImageZone.zone_id==img_al.zone_id
+                        ).one()
+
+                        fragment_coords = img_zone.coords
                         annotations.append(
-                            make_annotation(canvas_uri, res_uri, tr_seg, "text/plain")
+                            make_annotation(img_al.manifest_url, img_json, fragment_coords, res_uri, tr_seg, "text/json")
                         )
                     annotation_list = make_annotation_list("f2", doc_id, annotations)
-                    response = APIResponseFactory.make_response(  data=annotation_list)
+                    response = annotation_list
 
             except NoResultFound:
                 response = APIResponseFactory.make_response()
@@ -369,7 +381,6 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
             )
 
         if img_zone is not None:
-            canvas_uri = canvas["@id"]
             res_uri = request.url_root[0:-1] + url_for(
                 "api_documents_annotations_zone",
                 api_version=api_version,
@@ -392,8 +403,12 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
                 note_content = img_zone.note
 
             if response is None:
-                new_annotation = make_annotation(canvas_uri, res_uri, note_content, format="text/plain")
-                response = APIResponseFactory.make_response(data=new_annotation)
+                # TODO: gerer erreur si pas d'image dans le canvas
+                img_json = canvas["images"][0]
+                fragment_coords = img_zone.coords
+
+                new_annotation = make_annotation(img.manifest_url, img_json, fragment_coords, res_uri, note_content, format="text/json")
+                response = new_annotation
 
     return APIResponseFactory.jsonify(response)
 
