@@ -137,7 +137,7 @@ def api_documents_translations(api_version, doc_id):
 def api_current_user(api_version):
     # TODO: change hard coded id
     try:
-        user = User.query.filter(User.id == 3).one()
+        user = User.query.filter(User.id == 1).one()
         response = APIResponseFactory.make_response(data=user.serialize())
     except NoResultFound:
         response = APIResponseFactory.make_response(errors={

@@ -12,11 +12,13 @@ const state = {
 const mutations = {
 
   UPDATE_TRANSCRIPTION (state, payload) {
+    cosnole.log("UPDATE_TRANSCRIPTION")
     state.transcription = payload.raw;
     state.transcriptionFormatted = payload.formatted;
     state.transcriptionSaved = true;
   },
   TRANSCRIPTION_CHANGED (state) {
+    cosnole.log("TRANSCRIPTION_CHANGED")
     state.transcriptionSaved = false;
   }
 
@@ -27,8 +29,9 @@ const actions = {
   getTranscription ({ commit, getters }) {
     console.log('getTranscription', getters.document, getters.currentUser)
     const doc_id = getters.document.id;
-    const user_id = getters.currentUser.id;
-    axios.get(`/api/1.0/document/${doc_id}/transcription/from/${user_id}`).then( response => {
+    const user_id = 1; //getters.currentUser.id;
+    // `/api/1.0/documents/${doc_id}/transcriptions/from/${user_id}`
+    axios.get(`/api/1.0/documents/${doc_id}/transcriptions`).then( response => {
 
       /*const data = {
         "data": {
@@ -52,7 +55,7 @@ const actions = {
       }
       const transcription = data.data;
       */
-      const transcription = response.data.data;
+      const transcription = response.data.data[0];
 
       const notes = transcription.notes;
       const formatted = insertNotes(transcription.content, notes);
@@ -74,8 +77,8 @@ const actions = {
 
 const getters = {
 
-  transcription: state => state.transcription,
-  transcriptionFormatted: state => state.transcriptionFormatted,
+  transcription: state => {console.log("transcription"); return state.transcription},
+  transcriptionFormatted: state => {console.log("transcription"); return state.transcriptionFormatted},
   transcriptionContent: state => state.transcription.content,
   transcriptionIsSaved: state => state.transcriptionSaved
 };
