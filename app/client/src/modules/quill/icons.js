@@ -8,6 +8,7 @@ module.exports = {
   'link'        : require('../../assets/icons/link.svg'),
   'list'        : require('../../assets/icons/list-bullet.svg'),
   'location'    : require('../../assets/icons/location.svg'),
+  'note'        : require('../../assets/icons/note.svg'),
   'person'      : require('../../assets/icons/person.svg'),
   'subscript'   : require('../../assets/icons/subscript.svg'),
   'superscript' : require('../../assets/icons/superscript.svg'),

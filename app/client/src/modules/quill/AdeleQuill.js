@@ -12,8 +12,8 @@ import LinkBlot from './blots/semantic/Link';
 import BlockquoteBlot from './blots/semantic/Blockquote';
 import InlinequoteBlot from './blots/semantic/Inlinequote';
 
-import DivisionBlot from './blots/editorial/Division';
-import { LayoutCol } from './blots/editorial/Division';
+import NoteBlot from './blots/editorial/Note';
+//import { LayoutCol } from './blots/editorial/Division';
 import List from 'quill/formats/list';
 
 import SpeechpartBlot from './blots/SpeechpartBlot';
@@ -40,8 +40,7 @@ Quill.register(BlockquoteBlot, true);
 Quill.register(InlinequoteBlot, true);
 
 // editorial
-Quill.register(DivisionBlot, true);
-Quill.register(LayoutCol, true);
+Quill.register(NoteBlot, true);
 //Quill.register(List, true);
 //Quill.register(ListItem, true);
 

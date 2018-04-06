@@ -1,13 +1,37 @@
 import Quill from 'quill';
 
-let Block = Quill.import('blots/block');
+let Inline = Quill.import('blots/inline');
 
-class DivisionBlot extends Block { }
-DivisionBlot.blotName = 'division';
-DivisionBlot.tagName = 'div';
+class NoteBlot extends Inline {
 
-export default DivisionBlot;
+  static create(data) {
+    let node = super.create();
+    node.setAttribute('id', data);
+    return node;
+  }
+
+  static formats(domNode) {
+    let id = domNode.getAttribute('id');
+    return id || true;
+  }
 
 
-// TODO check TEI ou html5
-// TODO garder ou supprimer
+
+  format(name, data) {
+    if (name === 'note' && data) {
+      this.domNode.setAttribute('id', data.id);
+    } else {
+      super.format(name, data);
+    }
+  }
+
+  formats() {
+    let formats = super.formats();
+    formats['note'] = NoteBlot.formats(this.domNode);
+    return formats;
+  }
+}
+NoteBlot.blotName = 'note';
+NoteBlot.tagName = 'note';
+
+export default NoteBlot;

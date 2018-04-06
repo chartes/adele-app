@@ -58,4 +58,28 @@ function recurChange (node) {
   return newNode;
 }
 
+String.prototype.insert = function (index, string) {
+  if (index > 0)
+    return this.substring(0, index) + string + this.substring(index, this.length);
+  else
+    return string + this;
+};
+
+const insertNotes = (text, notes) => {
+  let result = text;
+  let indexCorrection = 0;
+  notes.forEach(note => {
+    let opening = `<note id="${note.id}">`;
+    let closing = '</note>'
+    result = result.insert(note.ptr_start + indexCorrection, opening);
+    indexCorrection += opening.length;
+    result = result.insert(note.ptr_end + indexCorrection, closing);
+    indexCorrection += closing.length;
+  })
+  return result;
+};
+
 export default teiToQuill;
+export {
+  insertNotes
+};

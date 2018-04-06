@@ -22,10 +22,7 @@ html, body {
 
 }
 .editor-controls {
-  /*padding: .125em;
-  border: #eee solid 1px;
-  border-bottom: none;
-*/
+
   hr {
     margin: .5em 0;
   }
@@ -95,22 +92,24 @@ smallcaps {
 }
 speechpart {
   border-bottom: 3px solid #ccc;
+
+  &:nth-child(5n) {
+    border-color: cornflowerblue;
+  }
+  &:nth-child(5n+1) {
+     border-color: coral;
+  }
+  &:nth-child(5n+2) {
+    border-color: darkgoldenrod;
+  }
+  &:nth-child(5n+3) {
+    border-color: lightseagreen;
+  }
+  &:nth-child(5n+4) {
+    border-color: rebeccapurple;
+  }
 }
-speechpart:nth-child(5n) {
-  border-color: cornflowerblue;
-}
-speechpart:nth-child(5n+1) {
-  border-color: coral;
-}
-speechpart:nth-child(5n+2) {
-  border-color: darkgoldenrod;
-}
-speechpart:nth-child(5n+3) {
-  border-color: lightseagreen;
-}
-speechpart:nth-child(5n+4) {
-  border-color: rebeccapurple;
-}
+
 
 .speechpart-actions {
   position: absolute;
@@ -118,15 +117,21 @@ speechpart:nth-child(5n+4) {
   background: #fff;
   padding: .5em;
   box-shadow: rgba(0,0,0,.3) 2px 3px 5px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    transform: rotate(45deg) translateX(-50%);
+    background: #fff;
+    z-index: -1;
+  }
+
 }
-.speechpart-actions::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  transform: rotate(45deg) translateX(-50%);
-  background: #fff;
-  z-index: -1;
+
+note {
+    text-decoration: underline;
 }

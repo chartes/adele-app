@@ -1,11 +1,10 @@
 import axios from 'axios';
-import TEItoQuill from '../../../modules/quill/TEIConversion'
+import TEItoQuill,{insertNotes} from '../../../modules/quill/TEIConversion'
 
 const state = {
 
-  transcription: undefined, /*{
-    content: '<p>Om<abbr>n</abbr>ib<abbr>us</abbr> presentes litteras inspecturis, . . officialis Belvacensis, salutem in Domino.<br>Noverint universi quod in nostra constituti presentia Ricardus dictus de Gres de Sancto Felice et Aya ejus uxor et Eufemia eorum filia recognoverunt se imperpetuum vendidisse pro communi eorum utilitate ac necessitate abbati et conventui Sancti Geremari Flaviacensis quamdam peciam terre sementis quam habebant ex caduco Asceline de Amuchi, matertere dicti Ricardi, circiter sex minas continentem, sitam ante mesum de Amuchi, dictorum abbatis et conventus, quam ab eisdem abbate et conventu tenebant ad campipartem,'
-  },*/
+  transcription: undefined,
+  transcriptionFormatted: undefined,
   transcriptionSaved: false
 
 };
@@ -13,7 +12,8 @@ const state = {
 const mutations = {
 
   UPDATE_TRANSCRIPTION (state, payload) {
-    state.transcription = payload;
+    state.transcription = payload.raw;
+    state.transcriptionFormatted = payload.formatted;
     state.transcriptionSaved = true;
   },
   TRANSCRIPTION_CHANGED (state) {
@@ -28,14 +28,37 @@ const actions = {
     console.log('getTranscription', getters.document, getters.currentUser)
     const doc_id = getters.document.id;
     const user_id = getters.currentUser.id;
-    axios.get(`/api/1.0/document/${doc_id}/transcription/from/${user_id}`).then( (response) => {
+    axios.get(`/api/1.0/document/${doc_id}/transcription/from/${user_id}`).then( response => {
 
-      /*response.data = {
-      content: '<p>Om<ex>n</ex>ib<abbr>us</abbr> presentes <strong>litteras inspecturis</strong>, . . officialis Belvacensis, salutem in Domino.<br>Noverint universi quod in nostra constituti presentia Ricardus dictus de Gres de Sancto Felice et Aya ejus uxor et Eufemia eorum filia recognoverunt se imperpetuum vendidisse pro communi eorum utilitate ac necessitate abbati et conventui Sancti Geremari Flaviacensis quamdam peciam terre sementis quam habebant ex caduco Asceline de Amuchi, matertere dicti Ricardi, circiter sex minas continentem, sitam ante mesum de Amuchi, dictorum abbatis et conventus, quam ab eisdem abbate et conventu tenebant ad campipartem,'
-      }*/
+      /*const data = {
+        "data": {
+          "content": "Om<ex>n</ex>ib<ex>us</ex> p<ex>re</ex>sentes litt<ex>er</ex>as insp<ex>e</ex>cturis,. . offic<ex>ialis</ex> Belvacen<ex>sis</ex>, sal<ex>u</ex>t<ex>em</ex> in D<ex>om</ex>in<ex>o</ex>.Nov<ex>er</ex>int univ<ex>er</ex>si q<ex>uo</ex>d i<ex>n</ex> n<ex>ost</ex>ra constituti p<ex>re</ex>sentia.",
+          "doc_id": 20,
+          "id": 20,
+          "notes": [
+            {
+              "content": "Juge en mati\u00e8re contentieuse et gracieuse, d\u00e9l\u00e9gu\u00e9 de l\u2019\u00e9v\u00eaque.",
+              "id": 33,
+              "note_type": {
+                "id": 0,
+                "label": "TERM"
+              },
+              "ptr_end": 107,
+              "ptr_start": 88,
+              "user_id": "jpilla"
+            }
+          ]
+        }
+      }
+      const transcription = data.data;
+      */
+      const transcription = response.data.data;
 
+      const notes = transcription.notes;
+      const formatted = insertNotes(transcription.content, notes);
+      console.log('formatted', formatted)
 
-      commit('UPDATE_TRANSCRIPTION', response.data.data)
+      commit('UPDATE_TRANSCRIPTION', { raw: transcription, formatted: formatted })
 
 
     });
@@ -52,6 +75,7 @@ const actions = {
 const getters = {
 
   transcription: state => state.transcription,
+  transcriptionFormatted: state => state.transcriptionFormatted,
   transcriptionContent: state => state.transcription.content,
   transcriptionIsSaved: state => state.transcriptionSaved
 };
