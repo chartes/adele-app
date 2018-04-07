@@ -33,8 +33,16 @@ class APIResponseFactory:
 
     @classmethod
     def jsonify(cls, res):
-        j = json.dumps(res, indent=2, ensure_ascii=False)
-        return Response(j, content_type="application/json; charset=utf-8")
+        """
+
+        :param res:
+        :return:
+        """
+        return Response(
+            json.dumps(res, indent=2, ensure_ascii=False),
+            content_type="application/json; charset=utf-8",
+            headers={"Access-Control-Allow-Origin" : "*"}
+        )
 
     @classmethod
     def is_iterable(cls, res):
