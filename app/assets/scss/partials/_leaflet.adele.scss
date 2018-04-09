@@ -1,0 +1,11 @@
+
+.leaflet-tooltip.facsimileToolTip {
+  top: 32px;
+  min-width: 500px;
+}
+.leaflet-tooltip-left.facsimileToolTip::before {
+  border-left-color: transparent;
+}
+.leaflet-tooltip-right.facsimileToolTip::before {
+  border-right-color: transparent;
+}

@@ -21,7 +21,7 @@ else:
 
 def query_json_endpoint(request_obj, endpoint_url):
     op = build_opener()
-    op.addheaders = [("Content-type", "text/json")]
+    op.addheaders = [("Content-type", "text/plain")]
     try:
         data = op.open("{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url), timeout=10, ).read()
         response = json_loads(data)
@@ -201,7 +201,7 @@ def api_documents_annotations(api_version, doc_id):
 
         if "otherContent" in canvas:
             op = build_opener()
-            op.addheaders = [("Content-type", "text/json")]
+            op.addheaders = [("Content-type", "text/plain")]
             # for each annotation list reference in the manifest, make a new annotation list
             for oc in [oc for oc in canvas["otherContent"] if oc["@type"] == "sc:AnnotationList"]:
                 # make a call to api_documents_manifest_annotations_list
@@ -252,7 +252,7 @@ def api_documents_annotations_list(api_version, doc_id):
             )
             fragment_coords = img_zone.coords
             new_annotation = make_annotation(
-                img_zone.manifest_url, img_json, fragment_coords, res_uri, img_zone.note, format="text/json"
+                img_zone.manifest_url, img_json, fragment_coords, res_uri, img_zone.note, format="text/plain"
             )
             annotations.append(new_annotation)
 
@@ -336,7 +336,7 @@ def api_documents_transcriptions_list(api_version, doc_id):
 
                         fragment_coords = img_zone.coords
                         annotations.append(
-                            make_annotation(img_al.manifest_url, img_json, fragment_coords, res_uri, tr_seg, "text/json")
+                            make_annotation(img_al.manifest_url, img_json, fragment_coords, res_uri, tr_seg, "text/plain")
                         )
                     annotation_list = make_annotation_list("f2", doc_id, annotations)
                     response = annotation_list
@@ -411,7 +411,7 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
                 img_json = canvas["images"][0]
                 fragment_coords = img_zone.coords
 
-                new_annotation = make_annotation(img.manifest_url, img_json, fragment_coords, res_uri, note_content, format="text/json")
+                new_annotation = make_annotation(img.manifest_url, img_json, fragment_coords, res_uri, note_content, format="text/plain")
                 response = new_annotation
 
     return APIResponseFactory.jsonify(response)

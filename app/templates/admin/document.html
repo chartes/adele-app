@@ -112,7 +112,7 @@
                         <p><strong>Documents liés :</strong></p>
                         <ul>
                             {% for linked_doc in doc.document_linked_id_collection %}
-                            <li><a href="/admin/document/{{linked_doc.id}}">{{ linked_doc.id }} {{ linked_doc.title }}</a></li>
+                            <li><a href="{{ url_for("admin_document", doc_id=d.id) }}">{{ linked_doc.id }} {{ linked_doc.title }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>
