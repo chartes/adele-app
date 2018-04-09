@@ -262,9 +262,9 @@ class Image(db.Model):
             'manifest_url': self.manifest_url,
             'zones': [
                 {
-                    "zone_id" : z.zone_id,
-                    "coords" : z.coords,
-                    "note" : z.note
+                    "zone_id": z.zone_id,
+                    "coords": z.coords,
+                    "note": z.note
 
                 } for z in self.zones
             ]

@@ -12,7 +12,7 @@ const state = {
 const mutations = {
 
   UPDATE_TRANSCRIPTION (state, payload) {
-    cosnole.log("UPDATE_TRANSCRIPTION")
+    console.log("UPDATE_TRANSCRIPTION")
     state.transcription = payload.raw;
     state.transcriptionFormatted = payload.formatted;
     state.transcriptionSaved = true;
@@ -55,7 +55,7 @@ const actions = {
       }
       const transcription = data.data;
       */
-      const transcription = response.data.data[0];
+      const transcription = response.data.data;
 
       const notes = transcription.notes;
       const formatted = insertNotes(transcription.content, notes);
