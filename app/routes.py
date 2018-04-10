@@ -5,7 +5,7 @@ import config
 from app import app
 
 
-app_bp = Blueprint('app_bp', __name__, template_folder='templates')
+app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
 
 
 """
