@@ -1204,32 +1204,38 @@
     #app {
       padding: 2em; }
 
-      .wrapper {
-        position: relative; }
+      .modal {
+        z-index: 1000; }
 
-        .quill-editor {
-          font-family: 'Open Sans', Helvetica, sans-serif;
-          font-size: 1em;
-          margin: 0 auto;
-          width: 100%;
-          border: 1px solid #eee; }
+        .wrapper {
+          position: relative; }
 
-          .editor-controls hr {
-            margin: 0.5em 0; }
-            .editor-controls button {
-              font-weight: bold;
-              margin: 0.125em 0; }
-              .editor-controls button:active, .editor-controls button:focus {
-                outline: none; }
+          .quill-editor {
+            font-family: 'Open Sans', Helvetica, sans-serif;
+            font-size: 1em;
+            margin: 0 auto;
+            width: 100%;
+            border: 1px solid #eee; }
 
-#editor-container .ql-editor {
-  min-height: 100%;
-  height: inherit;
-  overflow-y: inherit; }
-  #editor-container .ql-editor > * {
-    margin-top: 1.5em; }
-    #editor-container .ql-editor > *:last-child {
-      margin-bottom: 50px; }
+            .editor-controls hr {
+              margin: 0.5em 0; }
+              .editor-controls button {
+                font-weight: bold;
+                margin: 0.125em 0; }
+                .editor-controls button:active, .editor-controls button:focus {
+                  outline: none; }
+
+.editor-container {
+  position: relative; }
+
+  #editor-container .ql-editor {
+    min-height: 100%;
+    height: inherit;
+    overflow-y: inherit; }
+    #editor-container .ql-editor > * {
+      margin-top: 1.5em; }
+      #editor-container .ql-editor > *:last-child {
+        margin-bottom: 50px; }
 
 .ql-editor {
   line-height: 1.6; }
@@ -1271,13 +1277,13 @@ smallcaps {
             speechpart:nth-child(5n+4) {
               border-color: rebeccapurple; }
 
-.speechpart-actions {
+.in-editor-actions, .note-actions {
   position: absolute;
   transform: translateX(-50%);
   background: #fff;
   padding: 0.5em;
   box-shadow: rgba(0, 0, 0, 0.3) 2px 3px 5px; }
-  .speechpart-actions::before {
+  .in-editor-actions::before, .note-actions::before {
     content: '';
     position: absolute;
     top: 0;
@@ -1288,5 +1294,24 @@ smallcaps {
     background: #fff;
     z-index: -1; }
 
+.note-actions .button, .new-note-actions .button {
+  width: 100%; }
+
 note {
   text-decoration: underline; }
+
+  .notes-list-item {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1);
+    color: #4a4a4a;
+    display: block;
+    padding: 0.75rem;
+    border: 1px solid transparent; }
+    .notes-list-item .content {
+      font-size: 60%; }
+      .notes-list-item.selected, .notes-list-item:hover, .notes-list-item:focus {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px #23d160;
+        border-color: #23d160; }
+        .notes-list-item:not(:last-child) {
+          margin-bottom: 0.75rem; }

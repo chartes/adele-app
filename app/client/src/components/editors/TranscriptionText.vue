@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="editor-area">
         <div class="editor-controls" ref="controls">
 
             <editor-button :selected="buttons.bold" :active="editorHasFocus" :callback="simpleFormat" :format="'bold'"/>
@@ -11,11 +11,47 @@
             <editor-button :selected="buttons.expan" :active="editorHasFocus" :callback="simpleFormat" :format="'expan'"/>
             <editor-button :selected="buttons.perso" :active="editorHasFocus" :callback="simpleFormat" :format="'person'"/>
             <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="simpleFormat" :format="'location'"/>
-            <editor-button :selected="buttons.note" :active="editorHasFocus" :callback="null" :format="'note'"/>
-
+            <editor-button :active="isNoteButtonActive" :callback="newNoteChoiceOpen" :format="'note'"/>
         </div>
-        <div class="quill-editor" ref="editor" spellcheck="false"></div>
-        <small><pre>{{ delta }}</pre></small>
+        <div class="editor-container">
+            <div class="quill-editor" ref="editor" spellcheck="false"></div>
+            <note-actions
+                v-show="selectedNoteId"
+                refs="noteActions"
+                :style="actionsPosition"
+                :newNote="setNoteEditModeNew"
+                :edit="setNoteEditModeEdit"
+                :updateLink="setNoteEditModeList"
+                :unlink="unlinkNote"
+                :delete="setNoteEditModeDelete"/>
+            <new-note-actions
+                v-show="defineNewNote"
+                :modeNew="setNoteEditModeNew"
+                :modeLink="setNoteEditModeList"
+                :cancel="newNoteChoiceClose"
+
+            />
+        </div>
+
+        <notes-list-form
+            v-if="noteEditMode == 'list'"
+            :noteId="selectedNoteId"
+            :submit="updateNote"
+            :cancel="closeNoteEdit"
+        />
+        <note-form
+                v-if="noteEditMode == 'new' || noteEditMode == 'edit'"
+                :note="currentNote"
+                :noteId="selectedNoteId"
+                :submit="updateNote"
+                :cancel="closeNoteEdit"
+        />
+        <modal-confirm-note-delete
+                v-if="noteEditMode == 'delete'"
+                :cancel="closeNoteEdit"
+                :submit="deleteNote"
+        />
+        <!--<small><pre>{{ delta }}</pre></small>-->
 
     </div>
 </template>
@@ -25,12 +61,26 @@
   import Quill from '../../modules/quill/AdeleQuill';
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
+  import InEditorActions from './InEditorActions';
+  import NoteActions from './NoteActions';
+  import NewNoteActions from './NewNoteActions';
+  import NoteForm from '../forms/NoteForm';
+  import NotesListForm from '../forms/NotesListForm';
+  import ModalConfirmNoteDelete from '../forms/ModalConfirmNoteDelete';
 
   export default {
     name: "transcription-text",
     props: ['initialContent'],
     mixins: [EditorMixins],
-    components: { EditorButton },
+    components: {
+      NewNoteActions,
+      InEditorActions,
+      EditorButton,
+      ModalConfirmNoteDelete,
+      NoteActions,
+      NotesListForm,
+      NoteForm,
+    },
     data() {
       return {
         editor: null,
@@ -38,6 +88,10 @@
         delta: null,
         lastOperations: null,
         hasNote: null,
+        selectedNoteId: null,
+        currentNote: null,
+        noteEditMode: null,
+        defineNewNote: false,
         buttons: {
           bold: false,
           italic: false,
@@ -50,6 +104,9 @@
           location: false,
           note: false,
 
+        },
+        actionsPositions: {
+          top: 0, left: 0, right: 0, bottom: 0
         }
       }
     },
@@ -63,7 +120,6 @@
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);
 
-
       this.updateContent();
 
     },
@@ -74,23 +130,31 @@
         this.lastOperations = delta;
         this.updateContent();
       },
-      onSelection (range, oldRange, source) {
+      onSelection (range) {
         if (range) {
+          this.setRangeBound(range);
           let formats = this.editor.getFormat(range.index, range.length);
           this.updateButtons(formats);
-          if (!!formats.note) this.onNoteSelected(formats.note, range);
+          if (!!formats.note) {
+            this.onNoteSelected(formats.note, range);
+            this.buttons.note = false;
+          } else {
+            this.selectedNoteId = null;
+            this.buttons.note = true;
+          }
         }
-      },
-      onFocus () {
-        console.log('onFocus', this.editor.hasFocus())
-        this.editorHasFocus = this.editor.hasFocus();
       },
 
       onNoteSelected (note, range) {
         console.log("onNoteSelected", note, range.index, range.length)
+
+        if (!range.length) return;
+        this.selectedNoteId = note;
+
         var deltas = this.editor.getContents().ops;
         var length = deltas.length;
 
+        /*
         const findDeltaAtIndex  = index => {
           let [leafStart, offsetStart] = this.editor.getLeaf(index);
           let searchStartIndex = this.editor.getIndex(leafStart);
@@ -128,6 +192,7 @@
         let deltaIndexAtStart = findDeltaAtIndex(range.index+1);
         findFirstDelta(deltaIndexAtStart);
         findLastDelta(deltaIndexAtStart);
+        */
 
       },
 
@@ -136,10 +201,74 @@
 
       },
 
+      /** get and set the range bound of the selection to locate the actions bar **/
+      setRangeBound (range) {
+        console.log("setRangeBound", range);
+        let rangeBounds = this.editor.getBounds(range);
+        this.actionsPositions.left = rangeBounds.left;
+        this.actionsPositions.right = rangeBounds.right;
+        this.actionsPositions.bottom = rangeBounds.bottom;
+      },
+
+      updateNote(newId) {
+        console.log('updateNote', newId)
+        this.editor.format('note', newId);
+        this.selectedNoteId = newId;
+        this.closeNoteEdit();
+      },
+      unlinkNote() {
+        console.log('unlinkNote')
+        this.editor.format('note', false);
+        this.selectedNoteId = null;
+      },
+      deleteNote() {
+        console.log('deleteNote')
+        // TODO delete note
+        this.editor.format('note', false);
+        this.selectedNoteId = null;
+        this.closeNoteEdit();
+      },
+
+      setNoteEditModeList() {
+        this.noteEditMode = 'list';
+        this.newNoteChoiceClose();
+      },
+      setNoteEditModeDelete() {
+        this.noteEditMode = 'delete';
+      },
+      setNoteEditModeNew() {
+        this.noteEditMode = 'new';
+        this.newNoteChoiceClose();
+      },
+      setNoteEditModeEdit() {
+        this.noteEditMode = 'edit';
+        this.currentNote = this.$store.getters.getNoteById(this.selectedNoteId)
+      },
+      closeNoteEdit() {
+        console.log("closeNoteEdit")
+        this.noteEditMode = null;
+        this.currentNote = null;
+      },
+      newNoteChoiceOpen() {
+        this.defineNewNote = true;
+      },
+      newNoteChoiceClose() {
+        this.defineNewNote = false;
+      },
+
+    },
+
+    computed: {
+      /** get the actions bar position **/
+      actionsPosition () {
+        let top = this.actionsPositions.bottom + 5;
+        let left = (this.actionsPositions.left+this.actionsPositions.right)/2;
+        return `top:${top}px;left:${left}px`;
+      },
+      isNoteButtonActive () {
+        const cond = this.editorHasFocus && this.buttons.note;
+        return cond;
+      }
     }
   }
 </script>
-
-<style scoped>
-
-</style>

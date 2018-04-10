@@ -19,7 +19,7 @@ class NoteBlot extends Inline {
 
   format(name, data) {
     if (name === 'note' && data) {
-      this.domNode.setAttribute('id', data.id);
+      this.domNode.setAttribute('id', data);
     } else {
       super.format(name, data);
     }

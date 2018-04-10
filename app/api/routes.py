@@ -11,7 +11,7 @@ from app import app
 from app.api.open_annotation import make_annotation_list, make_annotation
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
-from app.models import Image, User, Document, NoteType, Transcription, Translation, ImageZone, AlignmentImage
+from app.models import Commentary, Image, User, Document, Note, NoteType, Transcription, Translation, ImageZone, AlignmentImage
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
@@ -414,6 +414,47 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
                 new_annotation = make_annotation(img.manifest_url, img_json, fragment_coords, res_uri, note_content, format="text/plain")
                 response = new_annotation
 
+    return APIResponseFactory.jsonify(response)
+
+@app.route("/api/<api_version>/documents/<doc_id>/annotations/from/<user_id>")
+def api_documents_annotations_from_user(api_version, doc_id, user_id):
+
+    # sélectionner la liste des notes d'un utilisateur pour un doc
+    # cad ses notes de transcrition, traduction, commentaire
+    # TODO refactor
+    """
+
+    :param api_version:
+    :param doc_id:
+    :param user_id:
+    :return:
+    """
+    try:
+        transcription = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user_id).first()
+        translation = Translation.query.filter(Translation.doc_id == doc_id, Translation.user_id == user_id).first()
+        commentaries = Commentary.query.filter(Commentary.doc_id == doc_id, Commentary.user_id == user_id).all()
+
+        notes = []
+
+        for it in transcription.notes:
+            notes.append(it.note_id)
+
+        for it in translation.notes:
+            notes.append(it.note_id)
+
+        for c in commentaries:
+            for it in c.notes:
+                notes.append(it.note_id)
+
+        notes = Note.query.filter(Note.id.in_(notes))
+
+        response = APIResponseFactory.make_response(data={
+            'notes': [it.serialize() for it in notes]
+        })
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Types de note introuvables"
+        })
     return APIResponseFactory.jsonify(response)
 
 

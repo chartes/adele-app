@@ -1,72 +1,103 @@
 <template>
 
-    <div class="modal is-active">
-        <div class="modal-background" @click="cancelAction"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Editer {{form.type}}</p>
-                <button class="delete" aria-label="close" @click="cancelAction"></button>
-            </header>
-            <section class="modal-card-body">
-                <div class="NoteForm">
-                    <form @submit.prevent="">
-                        <div class="field">
-                            <label class="label">ID</label>
-                            <div class="control">
-                                <input class="input" type="text" placeholder="ID" name="id" v-model="form.id">
+    <modal-form
+            :title="title"
+            :cancel="cancelAction"
+            :submit="submitAction"
+            :valid="textLength > 1"
+    >
+        <div class="NoteForm">
+            <form @submit.prevent="">
+                <field-select :label="'Type'" :options="noteTypes" :onChange="onSelectChange"/>
+                <div class="field">
+                    <p class="control">
+                        <label class="label">Contenu</label>
+                        <div class="editor-area">
+                            <div class="editor-controls" ref="controls">
+                                <editor-button :selected="buttons.bold" :active="editorHasFocus" :callback="simpleFormat" :format="'bold'"/>
+                                <editor-button :selected="buttons.italic" :active="editorHasFocus" :callback="simpleFormat" :format="'italic'"/>
+                                <editor-button :selected="buttons.superscript" :active="editorHasFocus" :callback="simpleFormat" :format="'superscript'"/>
+                                <editor-button :selected="buttons.smallcaps" :active="editorHasFocus" :callback="simpleFormat" :format="'smallcaps'"/>
+                                <editor-button :selected="buttons.underline" :active="editorHasFocus" :callback="simpleFormat" :format="'underline'"/>
+                                <editor-button :selected="buttons.del" :active="editorHasFocus" :callback="simpleFormat" :format="'del'"/>
                             </div>
+                            <div class="quill-editor" ref="editor" spellcheck="false"></div>
                         </div>
-                        <div class="field">
-                            <label class="label">Type</label>
-                            <div class="control">
-                                <input class="input" type="text" placeholder="Type" name="type" v-model="form.type">
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label class="label">Note</label>
-                            <div class="control">
-                                <input class="input" type="text" placeholder="Note" name="comment" v-model="form.note">
-                            </div>
-                        </div>
-                    </form>
+                    </p>
                 </div>
-            </section>
-            <footer class="modal-card-foot">
-                <button class="button is-success" @click="saveAction">Valider</button>
-                <button class="button" @click="cancelAction">Annuler</button>
-            </footer>
+            </form>
         </div>
-    </div>
-
-
+    </modal-form>
 
 </template>
 
 <script>
+
+  import Quill from '../../modules/quill/AdeleQuill';
+  import EditorMixins from '../../mixins/EditorMixins'
+  import { mapGetters } from 'vuex';
+  import ModalForm from './ModalForm';
+  import FieldSelect from './FieldSelect';
+  import EditorButton from '../editors/EditorButton.vue';
+
   export default {
     name: "note-form",
-    props: ['noteId', 'cancel', 'save'],
+    mixins: [EditorMixins],
+    components: {
+      EditorButton,
+      FieldSelect,
+      ModalForm
+    },
+    props: ['title', 'noteId', 'note', 'cancel', 'submit'],
     data() {
       console.log('NoteForm data');
       return {
-        form: Object.assign({}, this.speechpart),
+        form: Object.assign({}, this.note),
+        textLength: 0,
+        editor: null,
+        buttons: {
+          bold: false,
+          italic: false,
+          superscript: false,
+          smallcaps: false,
+          underline: false,
+          del: false,
+        },
       }
     },
     mounted () {
-      console.log('NoteForm mounted', this.speechpart)
-    },
-    watch: {
-      speechpart: function (newSpeechpart) {
-        //this.form = Object.assign({}, newSpeechpart)
-      }
+      console.log('NoteForm mounted', this.note)
+      this.$refs.editor.innerHTML = !!this.$props.note ? this.$props.note.content : '';
+      this.editor = new Quill(this.$refs.editor);
+      this.editor.on('selection-change', this.onSelection);
+      this.editor.on('selection-change', this.onFocus);
+      this.editor.on('text-change', this.onTextChange);
+      this.textLength = this.editor.getLength();
     },
     methods: {
-      saveAction () {
-        this.$props.save(this.form);
+
+      onSelectChange (evt) {
+        console.log("change", evt.target.value)
+      },
+      onTextChange (delta, oldDelta, source) {
+        this.textLength = this.editor.getLength();
+      },
+      onSelection (range) {
+        if (range) {
+          let formats = this.editor.getFormat(range.index, range.length);
+          this.updateButtons(formats);
+        }
+      },
+
+      submitAction () {
+        this.$props.submit(this.form);
       },
       cancelAction () {
         this.$props.cancel();
       }
+    },
+    computed: {
+      ...mapGetters(['noteTypes'])
     }
   }
 </script>

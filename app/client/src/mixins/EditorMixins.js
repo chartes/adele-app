@@ -2,7 +2,8 @@ var SimpleFormatMixin = {
 
   data() {
     return {
-      editorHasFocus: false
+      editorHasFocus: false,
+      currentSelection: null
     }
   },
 
@@ -17,12 +18,14 @@ var SimpleFormatMixin = {
     },
 
     updateButtons (formats) {
-      console.group("Selected formats", formats);
       for (let key in this.buttons) {
-        console.log(key, formats[key], !!formats[key])
         this.buttons[key] = !!formats[key];
       }
-      console.groupEnd();
+    },
+
+    onFocus () {
+      console.log('onFocus', this.editor.hasFocus())
+      this.editorHasFocus = this.editor.hasFocus();
     },
 
   }

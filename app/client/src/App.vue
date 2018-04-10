@@ -22,7 +22,7 @@
         props: ['doc_id'],
         created () {
           this.$store.dispatch('getCurrentUser').then(() => {
-            this.$store.dispatch('getDocument', this.doc_id)
+            return this.$store.dispatch('getDocument', this.doc_id)
           });
         },
         computed: {

@@ -9,6 +9,7 @@ const state = {
 const mutations = {
 
   UPDATE_CURRENT_USER (state, payload) {
+    console.log("UPDATE_CURRENT_USER", payload)
     state.currentUser = payload;
   }
 

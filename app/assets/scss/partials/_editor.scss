@@ -12,6 +12,11 @@ html, body {
 #app {
   padding: 2em;
 }
+
+.modal {
+    z-index: 1000;
+}
+
 .wrapper { position: relative; }
 .quill-editor {
   font-family: 'Open Sans', Helvetica, sans-serif;
@@ -34,6 +39,9 @@ html, body {
       outline: none;
     }
   }
+}
+.editor-container {
+    position: relative;
 }
 #editor-container {
   .ql-editor {
@@ -111,7 +119,7 @@ speechpart {
 }
 
 
-.speechpart-actions {
+.in-editor-actions, .note-actions {
   position: absolute;
   transform: translateX(-50%);
   background: #fff;
@@ -131,7 +139,29 @@ speechpart {
   }
 
 }
+.note-actions, .new-note-actions {
+    .button { width: 100%; }
+}
 
 note {
     text-decoration: underline;
+}
+.notes-list-item {
+
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 3px rgba(10,10,10,.1), 0 0 0 1px rgba(10,10,10,.1);
+    color: #4a4a4a;
+    display: block;
+    padding: .75rem;
+    border: 1px solid transparent;
+
+    .content { font-size: 60% }
+    &.selected, &:hover, &:focus {
+        box-shadow: 0 2px 3px rgba(10,10,10,.1), 0 0 0 1px #23d160;
+        border-color: #23d160;
+    }
+    &:not(:last-child) {
+        margin-bottom: .75rem;
+    }
 }
