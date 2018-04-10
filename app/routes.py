@@ -1,14 +1,19 @@
-from flask import render_template, flash, redirect, url_for, render_template_string
+from flask import render_template, flash, redirect, url_for, render_template_string, Blueprint
 from flask_user import login_required
 
+import config
 from app import app
+
+
+app_bp = Blueprint('app_bp', __name__, template_folder='templates')
+
 
 """
 ---------------------------------
 Test routes
 ---------------------------------
 """
-@app.route('/test/alignments/translations/<transcription_id>/<translation_id>')
+@app_bp.route('/test/alignments/translations/<transcription_id>/<translation_id>')
 def align_translation(transcription_id, translation_id):
     res = align_translation(transcription_id, translation_id)
     if len(res) > 0:
@@ -25,7 +30,7 @@ User Managment Routes
 ---------------------------------
 """
 
-@app.route('/members')
+@app_bp.route('/members')
 @login_required
 def members_page():
     return render_template_string("""
@@ -44,31 +49,34 @@ Admin Routes
 ---------------------------------
 """
 
-@app.route('/')
-@app.route('/admin')
+@app_bp.route('/')
+@app_bp.route('/admin')
 def admin():
     return render_template('admin/index.html')#
 
-@app.route('/admin/documents')
+@app_bp.route('/admin/documents')
 def admin_documents():
     docs = Document.query.all()
     return render_template('admin/documents.html', title='Documents - Adele',  docs=docs)
 
-@app.route('/admin/documents/<doc_id>')
+@app_bp.route('/admin/documents/<doc_id>')
 def admin_document(doc_id):
     doc = Document.query.filter(Document.id == doc_id).one()
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
-        return redirect(url_for('admin_documents'))
+        return redirect(url_for('app_bp.admin_documents'))
     return render_template('admin/document.html', title='Documents - Adele',  doc=doc)
 
-@app.route('/admin/documents/<doc_id>/edition')
+@app_bp.route('/admin/documents/<doc_id>/edition')
 def admin_document_edit(doc_id):
     doc = Document.query.filter(Document.id == doc_id).one()
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
-        return redirect(url_for('admin_documents'))
+        return redirect(url_for('app_bp.admin_documents'))
     return render_template('admin/document_edit.html', title='Document - Adele', doc=doc)
+
+
+app.register_blueprint(app_bp, url_prefix=config.Config.APP_PREFIX)
 
 """
 ---------------------------------

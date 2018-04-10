@@ -4,9 +4,10 @@ import sys
 from urllib.error import HTTPError
 from urllib.request import urlopen, build_opener
 
-from flask import request, url_for, Response
+from flask import request, url_for, Response, Blueprint
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
+import config
 from app import app
 from app.api.open_annotation import make_annotation_list, make_annotation
 from app.api.response import APIResponseFactory
@@ -14,18 +15,20 @@ from app.database.alignment.alignment_translation import align_translation
 from app.models import Image, User, Document, NoteType, Transcription, Translation, ImageZone, AlignmentImage
 from config import Config
 
+
+api_bp = Blueprint('api_bp', __name__, template_folder='templates')
+
+
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
 else:
     json_loads = json.loads
 
 
-def query_json_endpoint(request_obj, endpoint_url, prefix=''):
+def query_json_endpoint(request_obj, endpoint_url):
     op = build_opener()
     op.addheaders = [("Content-type", "text/plain")]
     try:
-        if (len(prefix) > 0):
-            endpoint_url = "{0}/{1}".format(prefix, endpoint_url)
         data = op.open("{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url), timeout=10, ).read()
         response = json_loads(data)
     except:
@@ -38,7 +41,7 @@ API Routes
 ---------------------------------
 """
 
-@app.route('/api/<api_version>/alignments/translations/<transcription_id>/<translation_id>')
+@api_bp.route('/api/<api_version>/alignments/translations/<transcription_id>/<translation_id>')
 def api_align_translation(api_version, transcription_id, translation_id):
     alignment = align_translation(transcription_id, translation_id)
     if len(alignment) > 0:
@@ -58,7 +61,7 @@ def api_align_translation(api_version, transcription_id, translation_id):
     return APIResponseFactory.jsonify(response)
 
 
-@app.route('/api/<api_version>/documents/<doc_id>')
+@api_bp.route('/api/<api_version>/documents/<doc_id>')
 def api_documents(api_version, doc_id):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
@@ -69,7 +72,7 @@ def api_documents(api_version, doc_id):
         })
     return APIResponseFactory.jsonify(response)
 
-@app.route('/api/<api_version>/documents/<doc_id>/manifest')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest')
 def api_documents_manifest(api_version, doc_id):
     no_result = False
     try:
@@ -90,7 +93,7 @@ def api_documents_manifest(api_version, doc_id):
 
     return APIResponseFactory.jsonify(response)
 
-@app.route('/api/<api_version>/documents/<doc_id>/transcriptions')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions')
 def api_documents_transcriptions(api_version, doc_id):
     try:
         # Check if document exist first
@@ -106,11 +109,11 @@ def api_documents_transcriptions(api_version, doc_id):
 
     return APIResponseFactory.jsonify(response)
 
-@app.route('/api/<api_version>/documents/<doc_id>/transcriptions/<seg_id>')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/<seg_id>')
 def api_documents_transcriptions_segments(api_version, doc_id, seg_id):
     raise NotImplementedError
 
-@app.route('/api/<api_version>/documents/<doc_id>/transcriptions/from/<user_id>')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from/<user_id>')
 def document_transcription_from_user(api_version, doc_id, user_id):
     try:
         transcription = Transcription.query.filter(
@@ -125,7 +128,7 @@ def document_transcription_from_user(api_version, doc_id, user_id):
         })
     return APIResponseFactory.jsonify(response)
 
-@app.route('/api/<api_version>/documents/<doc_id>/translations')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations')
 def api_documents_translations(api_version, doc_id):
     try:
         # Check if document exist first
@@ -140,7 +143,7 @@ def api_documents_translations(api_version, doc_id):
         })
     return APIResponseFactory.jsonify(response)
 
-@app.route('/api/<api_version>/user')
+@api_bp.route('/api/<api_version>/user')
 def api_current_user(api_version):
     # TODO: change hard coded id
     try:
@@ -153,7 +156,7 @@ def api_current_user(api_version):
     return APIResponseFactory.jsonify(response)
 
 
-@app.route('/api/<api_version>/users/<user_id>')
+@api_bp.route('/api/<api_version>/users/<user_id>')
 def api_users(api_version, user_id):
     try:
         user = User.query.filter(User.id == user_id).one()
@@ -164,13 +167,12 @@ def api_users(api_version, user_id):
         })
     return APIResponseFactory.jsonify(response)
 
-@app.route("/api/<api_version>/documents/<doc_id>/first-canvas")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/first-canvas")
 def api_documents_first_canvas(api_version, doc_id):
 
     json_obj = query_json_endpoint(
         request,
-        url_for('api_documents_manifest', api_version=api_version, doc_id=doc_id),
-        prefix=Config.APP_PREFIX
+        url_for('api_bp.api_documents_manifest', api_version=api_version, doc_id=doc_id)
     )
 
     if "errors" in json_obj:
@@ -190,7 +192,7 @@ def api_documents_first_canvas(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 #TODO : ajouter les coords
-@app.route("/api/<api_version>/documents/<doc_id>/annotations")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations")
 def api_documents_annotations(api_version, doc_id):
     """
 
@@ -200,8 +202,7 @@ def api_documents_annotations(api_version, doc_id):
     """
     json_obj = query_json_endpoint(
         request,
-        url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
-        prefix=Config.APP_PREFIX
+        url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
     )
 
     if "errors" in json_obj:
@@ -234,7 +235,7 @@ def api_documents_annotations(api_version, doc_id):
 
     return APIResponseFactory.jsonify(response)
 
-@app.route("/api/<api_version>/documents/<doc_id>/annotations/list")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list")
 def api_documents_annotations_list(api_version, doc_id):
     """
 
@@ -245,8 +246,7 @@ def api_documents_annotations_list(api_version, doc_id):
 
     json_obj = query_json_endpoint(
         request,
-        url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
-        prefix=Config.APP_PREFIX
+        url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
     )
 
     if "errors" in json_obj:
@@ -260,7 +260,7 @@ def api_documents_annotations_list(api_version, doc_id):
 
         for img_zone in [z for z in img.zones if z.note is not None]:
             res_uri = request.url_root[0:-1] + url_for(
-                "api_documents_annotations_zone",
+                "api_bp.api_documents_annotations_zone",
                 api_version=api_version,
                 doc_id=doc_id,
                 zone_id=img_zone.zone_id
@@ -298,7 +298,7 @@ def get_validated_transcription(doc_id):
         })
     return (tr, response)
 
-@app.route('/api/<api_version>/documents/<doc_id>/transcriptions/list')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/list')
 def api_documents_transcriptions_list(api_version, doc_id):
     """
     Fetch transcription segments formated as a sc:AnnotationList
@@ -321,8 +321,7 @@ def api_documents_transcriptions_list(api_version, doc_id):
             try:
                 json_obj = query_json_endpoint(
                     request,
-                    url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
-                    prefix=Config.APP_PREFIX
+                    url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
                 )
 
                 if "errors" in json_obj:
@@ -338,7 +337,7 @@ def api_documents_transcriptions_list(api_version, doc_id):
                         tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
 
                         res_uri = request.url_root[0:-1] + url_for(
-                            "api_documents_annotations_zone",
+                            "api_bp.api_documents_annotations_zone",
                             api_version=api_version,
                             doc_id=doc_id,
                             zone_id=img_al.zone_id
@@ -368,7 +367,7 @@ def api_documents_transcriptions_list(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-@app.route("/api/<api_version>/documents/<doc_id>/annotations/<zone_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<zone_id>")
 def api_documents_annotations_zone(api_version, doc_id, zone_id):
     """
 
@@ -379,8 +378,7 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
     """
     json_obj = query_json_endpoint(
         request,
-        url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
-        prefix=Config.APP_PREFIX
+        url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
     )
 
     if "errors" in json_obj:
@@ -437,7 +435,7 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
     return APIResponseFactory.jsonify(response)
 
 
-@app.route("/api/<api_version>/note-types")
+@api_bp.route("/api/<api_version>/note-types")
 def api_note_types(api_version):
     """
 
@@ -452,4 +450,8 @@ def api_note_types(api_version):
             "status": 404, "title": "Types de note introuvables"
         })
     return APIResponseFactory.jsonify(response)
+
+
+app.register_blueprint(api_bp, url_prefix=config.Config.APP_PREFIX)
+
 
