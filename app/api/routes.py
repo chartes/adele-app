@@ -452,6 +452,6 @@ def api_note_types(api_version):
     return APIResponseFactory.jsonify(response)
 
 
-app.register_blueprint(api_bp, url_prefix=config.Config.APP_PREFIX)
+app.register_blueprint(api_bp)
 
 
