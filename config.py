@@ -18,8 +18,6 @@ class Config(object):
                 DB_COPIED = True
     except:
         pass
-        #raise Exception("DEBUG: fichier adele.sqlite non récupéré")
-        #local_filename="/Users/mrgecko/Documents/Dev/Data/adele/adele.sqlite"
 
     #pb avec le chemin relatif ?
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), 'db', 'adele.sqlite')
@@ -45,3 +43,6 @@ class Config(object):
     MAIL_USE_SSL =        int(os.getenv('MAIL_USE_SSL',         True))
 
     APP_DOMAIN_NAME = "adele.chartes.psl.eu"
+
+    APP_PREFIX = ''
+    #APP_PREFIX = 'adele'

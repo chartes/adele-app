@@ -12,6 +12,7 @@ from app.api.open_annotation import make_annotation_list, make_annotation
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import Image, User, Document, NoteType, Transcription, Translation, ImageZone, AlignmentImage
+from config import Config
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
@@ -19,10 +20,12 @@ else:
     json_loads = json.loads
 
 
-def query_json_endpoint(request_obj, endpoint_url):
+def query_json_endpoint(request_obj, endpoint_url, prefix=''):
     op = build_opener()
     op.addheaders = [("Content-type", "text/plain")]
     try:
+        if (len(prefix) > 0):
+            endpoint_url = "{0}/{1}".format(prefix, endpoint_url)
         data = op.open("{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url), timeout=10, ).read()
         response = json_loads(data)
     except:
@@ -164,7 +167,11 @@ def api_users(api_version, user_id):
 @app.route("/api/<api_version>/documents/<doc_id>/first-canvas")
 def api_documents_first_canvas(api_version, doc_id):
 
-    json_obj = query_json_endpoint(request, url_for('api_documents_manifest', api_version=api_version, doc_id=doc_id))
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_documents_manifest', api_version=api_version, doc_id=doc_id),
+        prefix=Config.APP_PREFIX
+    )
 
     if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=[
@@ -191,7 +198,11 @@ def api_documents_annotations(api_version, doc_id):
     :param doc_id:
     :return:
     """
-    json_obj = query_json_endpoint(request, url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id))
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
+        prefix=Config.APP_PREFIX
+    )
 
     if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=json_obj["errors"])
@@ -232,7 +243,11 @@ def api_documents_annotations_list(api_version, doc_id):
     :return:
     """
 
-    json_obj = query_json_endpoint(request, url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id))
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
+        prefix=Config.APP_PREFIX
+    )
 
     if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=json_obj["errors"])
@@ -306,7 +321,8 @@ def api_documents_transcriptions_list(api_version, doc_id):
             try:
                 json_obj = query_json_endpoint(
                     request,
-                    url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+                    url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
+                    prefix=Config.APP_PREFIX
                 )
 
                 if "errors" in json_obj:
@@ -361,7 +377,11 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
     :param zone_id:
     :return:
     """
-    json_obj = query_json_endpoint(request, url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id))
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_documents_first_canvas', api_version=api_version, doc_id=doc_id),
+        prefix=Config.APP_PREFIX
+    )
 
     if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=json_obj["errors"])
