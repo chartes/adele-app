@@ -1,7 +1,7 @@
 <template>
     <div class="columns">
         <div class="column is-half">
-            <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="true" ></IIIFMap>
+            <IIIFMap :manifest="manifestURL" :draw-mode="true" :display-annotations-mode="true" ></IIIFMap>
         </div>
         <div class="column is-half">
             <h1>Transcription</h1>

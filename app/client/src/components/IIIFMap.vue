@@ -145,9 +145,10 @@
       },
       drawCreatedhandler (e) {
         console.log("IIIFMap drawCreatedhandler", e, this);
-        var type = e.layerType,
+        let type = e.layerType,
           layer = e.layer;
         this.editableLayers.addLayer(layer);
+        LeafletIIIFAnnotation.resetMouseOverStyle();
       }
     },
     watch: {

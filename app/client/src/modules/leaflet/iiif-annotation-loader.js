@@ -29,9 +29,11 @@ const IIIFAnnotationLoader = {
         let canvas = this.getFirstCanvas();
         // get annotation lists urls
         let axiosPromises = [];
-        for (let oc of canvas.otherContent) {
-            if (oc["@type"] === "sc:AnnotationList") {
-                axiosPromises.push(this.loadAnnotationList(oc["@id"]));
+        if (canvas.otherContent) {
+            for (let oc of canvas.otherContent) {
+                if (oc["@type"] === "sc:AnnotationList") {
+                    axiosPromises.push(this.loadAnnotationList(oc["@id"]));
+                }
             }
         }
         return axios.all(axiosPromises);
