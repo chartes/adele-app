@@ -16,7 +16,9 @@
  * author : Julien Pilla
  */
 
-let IIIFAnnotationLoader = {
+import axios from 'axios';
+
+const IIIFAnnotationLoader = {
     options: {},
 
     initialize: function (manifest_data, options = {}) {
@@ -160,3 +162,5 @@ let IIIFAnnotationLoader = {
             });
     }
 };
+
+export default IIIFAnnotationLoader;

@@ -2,7 +2,7 @@
     <div class="columns">
         <div class="column is-half">
 
-            <IIIFMap :manifest="manifestURL" :draw-mode="false"></IIIFMap>
+            <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
 
         </div>
         <div class="column is-half">
