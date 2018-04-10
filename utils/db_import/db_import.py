@@ -160,7 +160,7 @@ def insert_image(dossier):
 def insert_text(dossier, text_name):
     stmts = []
     if len(dossier[text_name]) > 0:
-        content = "".join(dossier[text_name])
+        content = " ".join(dossier[text_name])
         #create note ptrs
         idx=0
         while content.find("<term") > -1:
@@ -168,14 +168,14 @@ def insert_text(dossier, text_name):
             content = re.sub("<term[^>]*>", repl='', string=content, count=1)
             ptr_end = content.find("</term")
             content = re.sub("</term[^>]*>", repl='', string=content, count=1)
-            dossier[text_name+"_notes"][idx]["ptr_start"] = ptr_start + 1
+            dossier[text_name+"_notes"][idx]["ptr_start"] = ptr_start
             dossier[text_name+"_notes"][idx]["ptr_end"] = ptr_end
             idx += 1
 
         stmts = [
             get_insert_stmt(text_name,
-                            text_name+"_id,doc_id,user_ref,content",
-                            "{0},{1},'{2}','{3}'".format(dossier["id"], dossier["id"], USERNAME,content)
+                            "id,doc_id,user_id,content",
+                            "{0},{1},'{2}','{3}'".format(dossier["id"], dossier["id"], 1, content)
                             )
         ]
     return stmts

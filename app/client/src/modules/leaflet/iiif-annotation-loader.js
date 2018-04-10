@@ -16,7 +16,9 @@
  * author : Julien Pilla
  */
 
-let IIIFAnnotationLoader = {
+import axios from 'axios';
+
+const IIIFAnnotationLoader = {
     options: {},
 
     initialize: function (manifest_data, options = {}) {
@@ -27,9 +29,11 @@ let IIIFAnnotationLoader = {
         let canvas = this.getFirstCanvas();
         // get annotation lists urls
         let axiosPromises = [];
-        for (let oc of canvas.otherContent) {
-            if (oc["@type"] === "sc:AnnotationList") {
-                axiosPromises.push(this.loadAnnotationList(oc["@id"]));
+        if (canvas.otherContent) {
+            for (let oc of canvas.otherContent) {
+                if (oc["@type"] === "sc:AnnotationList") {
+                    axiosPromises.push(this.loadAnnotationList(oc["@id"]));
+                }
             }
         }
         return axios.all(axiosPromises);
@@ -160,3 +164,5 @@ let IIIFAnnotationLoader = {
             });
     }
 };
+
+export default IIIFAnnotationLoader;

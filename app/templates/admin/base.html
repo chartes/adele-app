@@ -10,7 +10,7 @@
     {% endblock %}
     {% block head_scripts %}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
-        <link rel="stylesheet" href="/static/css/admin.css">
+        <link rel="stylesheet" href="{{url_for('app_bp.static', filename='css/admin.css')}}">
         <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
     {% endblock head_scripts %}
 </head>
@@ -19,7 +19,7 @@
         <nav class="navbar" role="navigation" aria-label="main navigation">
             <div class="navbar-brand">
                 <a class="navbar-item" href="/">
-                    <img src="/static/images/logo-ecole-nationale-des-chartes-header.png" alt="École Nationale des Chartes - PSL" height="30">
+                    <img src="{{ url_for('app_bp.static', filename='images/logo-ecole-nationale-des-chartes-header.png') }}" alt="École Nationale des Chartes - PSL" height="30">
                 </a>
 
                 <div class="navbar-burger">
@@ -30,7 +30,7 @@
               </div>
 
             <div class="navbar-menu">
-                <a class="navbar-item" href="{{ url_for('admin_documents') }}">Documents</a>
+                <a class="navbar-item" href="{{ url_for('app_bp.admin_documents') }}">Documents</a>
             </div>
         </nav>
     {% endblock %}

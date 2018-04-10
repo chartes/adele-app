@@ -12,12 +12,14 @@
   import '../modules/leaflet/Leaflet.Control.Custom';
   import axios from 'axios';
   import tileLayerIiif from '../modules/leaflet/leaflet-iiif';
-  import AMessage from './ui/AMessage'
+  import LeafletIIIFAnnotation from '../modules/leaflet/leaflet-iiif-annotation';
+  import IIIFAnnotationLoader from '../modules/leaflet/iiif-annotation-loader';
+  import AMessage from './ui/AMessage';
 
   export default {
     components: {AMessage},
     name: "iiif-map",
-    props: ['manifest','drawMode'],
+    props: ['manifest','drawMode','displayAnnotationsMode'],
     componenst: { AMessage },
 
     data() {
@@ -35,6 +37,11 @@
         .then( response => {
           let page = response.data.sequences[0].canvases[0];
           this.mapCreate(page);
+
+          const _featureGroup = this.editableLayers;
+          LeafletIIIFAnnotation.initialize(this.map);
+          this.annotationsLoader = IIIFAnnotationLoader.initialize(response.data);
+          this.toggleDisplayAnnotations();
         })
         /*.catch( error => {
           console.log(error)
@@ -60,7 +67,6 @@
         this.map.addLayer(this.editableLayers);
 
         this.toggleDrawControls();
-
       },
       createDrawControls () {
 
@@ -112,6 +118,17 @@
         this.map.off(L.Draw.Event.CREATED, this.drawCreatedhandler);
 
       },
+      addAnnotations () {
+        let _featureGroup = this.editableLayers;
+        console.log("add annotations");
+        this.annotationsLoader.then(function () {
+          LeafletIIIFAnnotation.display(_featureGroup, IIIFAnnotationLoader.annotations);
+        });
+      },
+      removeAnnotations () {
+        console.log("remove annotations");
+        this.editableLayers.clearLayers();
+      },
       toggleDrawControls () {
         if (this.drawMode) {
           this.addDrawControls();
@@ -119,14 +136,29 @@
           this.removeDrawControls();
         }
       },
+      toggleDisplayAnnotations () {
+        if (this.displayAnnotationsMode) {
+          this.addAnnotations();
+        } else {
+          this.removeAnnotations();
+        }
+      },
       drawCreatedhandler (e) {
         console.log("IIIFMap drawCreatedhandler", e, this);
-        var type = e.layerType,
+        let type = e.layerType,
           layer = e.layer;
         this.editableLayers.addLayer(layer);
+        LeafletIIIFAnnotation.resetMouseOverStyle();
       }
     },
     watch: {
+      displayAnnotationsMode: function () {
+        if (this.displayAnnotationsMode) {
+          this.addAnnotations();
+        } else {
+          this.removeAnnotations();
+        }
+      },
       drawMode: function () {
         if (this.drawMode) {
           this.addDrawControls();
