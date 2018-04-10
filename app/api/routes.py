@@ -11,7 +11,7 @@ from app import app
 from app.api.open_annotation import make_annotation_list, make_annotation
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
-from app.models import Image, User, Document, Transcription, Translation, ImageZone, AlignmentImage
+from app.models import Image, User, Document, NoteType, Transcription, Translation, ImageZone, AlignmentImage
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
@@ -414,5 +414,22 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
                 new_annotation = make_annotation(img.manifest_url, img_json, fragment_coords, res_uri, note_content, format="text/plain")
                 response = new_annotation
 
+    return APIResponseFactory.jsonify(response)
+
+
+@app.route("/api/<api_version>/note-types")
+def api_note_types(api_version):
+    """
+
+    :param api_version:
+    :return:
+    """
+    try:
+        note_types = NoteType.query.all()
+        response = APIResponseFactory.make_response(data=[nt.serialize() for nt in note_types])
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Types de note introuvables"
+        })
     return APIResponseFactory.jsonify(response)
 
