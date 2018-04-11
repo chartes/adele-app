@@ -4,11 +4,11 @@ import sys
 from urllib.error import HTTPError
 from urllib.request import urlopen, build_opener
 
-from flask import request, url_for, Response, Blueprint
+from flask import request, url_for,  Blueprint
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 import config
-from app import app
+from app import app, auth, db
 from app.api.open_annotation import make_annotation_list, make_annotation
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
@@ -34,11 +34,45 @@ def query_json_endpoint(request_obj, endpoint_url):
         response = APIResponseFactory.make_response(errors={"title":"Error : cannot fetch {0}".format(endpoint_url)})
     return response
 
+
 """
 ---------------------------------
 API Routes
 ---------------------------------
 """
+
+@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["DELETE"])
+@auth.login_required
+def api_test_auth_delete(api_version, doc_id):
+    user = User.query.filter(User.username == auth.username()).one()
+
+    for c in Commentary.query.all():
+        db.session.remove(c)
+    db.session.commit()
+
+    response = APIResponseFactory.make_response(data=[
+        user.serialize(), request.get_json(), [c.serialize() for c in Commentary.query.all()]
+    ])
+
+    return APIResponseFactory.jsonify(response)
+
+@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["POST"])
+@auth.login_required
+def api_test_auth_post(api_version, doc_id):
+    user = User.query.filter(User.username == auth.username()).one()
+
+    data = request.get_json()
+    if "content" in data and "type_id" in data and "doc_id" in data:
+        c = Commentary(doc_id=data["doc_id"], type_id=data["type_id"],
+                       user_id=user.id, content=data["content"])
+        db.session.add(c)
+        db.session.commit()
+
+    response = APIResponseFactory.make_response(data=[
+        user.serialize(), request.get_json(), [c.serialize() for c in Commentary.query.all()]
+    ])
+
+    return APIResponseFactory.jsonify(response)
 
 @api_bp.route('/api/<api_version>/alignments/translations/<transcription_id>/<translation_id>')
 def api_align_translation(api_version, transcription_id, translation_id):
@@ -58,6 +92,7 @@ def api_align_translation(api_version, transcription_id, translation_id):
     else:
         response = APIResponseFactory.make_response(errors={"status": 404, "title": "Alignement introuvable"})
     return APIResponseFactory.jsonify(response)
+
 
 @api_bp.route('/api/<api_version>/annotations', methods=['GET','POST'])
 def api_add_note(api_version):

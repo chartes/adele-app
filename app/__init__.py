@@ -7,6 +7,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.forms.register import CustomRegisterForm
 
 
+from  flask_httpauth import HTTPBasicAuth
+
+
 from config import Config
 
 app = Flask(__name__)
@@ -16,7 +19,7 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)  # Initialize Flask-SQLAlchemy
 mail = Mail(app)  # Initialize Flask-Mail
 scss = Scss(app)
-
+auth = HTTPBasicAuth()
 
 
 from app import routes, models
@@ -41,3 +44,11 @@ class CustomUserManager(UserManager):
 
 # Initialize Flask-User
 user_manager = CustomUserManager(db_adapter, app, register_form=CustomRegisterForm)
+
+# Initialize the HTTP Auth mechanism
+@auth.verify_password
+def verify_password(username, password):
+    user = models.User.query.filter(models.User.username == username).first()
+    if not user:
+        return False
+    return user_manager.verify_password(password, user)
