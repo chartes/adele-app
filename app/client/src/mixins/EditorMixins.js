@@ -24,7 +24,6 @@ var SimpleFormatMixin = {
     },
 
     onFocus () {
-      console.log('onFocus', this.editor.hasFocus())
       this.editorHasFocus = this.editor.hasFocus();
     },
 

@@ -3,7 +3,7 @@
         <p class="control">
             <label class="label">{{ label }}</label>
             <span class="select">
-                <select @change="onChange($event)">
+                <select v-model="val" @change="onChange(val)">
                     <option disabled value="">Choisissez</option>
                     <option
                             v-for="opt in options"
@@ -20,12 +20,6 @@
 <script>
   export default {
     name: "field-select",
-    data() {
-      console.log("select", this.$props)
-      return {
-        val: this.$props.selected || this.$props.options[0].id
-      }
-    },
     props: {
       options: {
         type: Array
@@ -39,6 +33,20 @@
       onChange: {
         type: Function,
         required: true
+      }
+    },
+    data() {
+      console.log("select", this.$props)
+      return {
+        val: this.$props.selected || this.$props.options[0].id
+      }
+    },
+    mounted(){
+      this.$props.onChange(this.val);
+    },
+    methods: {
+      onSelChange() {
+        console.log("select change", this.val)
       }
     }
   }

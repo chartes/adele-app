@@ -5,6 +5,7 @@
             :cancel="cancelAction"
             :submit="submitAction"
             :valid="textLength > 1"
+            :submittin="null"
     >
         <div class="NoteForm">
             <form @submit.prevent="">
@@ -66,7 +67,6 @@
       }
     },
     mounted () {
-      console.log('NoteForm mounted', this.note)
       this.$refs.editor.innerHTML = !!this.$props.note ? this.$props.note.content : '';
       this.editor = new Quill(this.$refs.editor);
       this.editor.on('selection-change', this.onSelection);
@@ -76,11 +76,12 @@
     },
     methods: {
 
-      onSelectChange (evt) {
-        console.log("change", evt.target.value)
+      onSelectChange (typeId) {
+        this.form.type_id = typeId;
       },
-      onTextChange (delta, oldDelta, source) {
+      onTextChange () {
         this.textLength = this.editor.getLength();
+        this.form.content = this.$refs.editor.childNodes[0].innerHTML;
       },
       onSelection (range) {
         if (range) {
@@ -90,6 +91,7 @@
       },
 
       submitAction () {
+        console.log("NoteForm.submitAction", this.form)
         this.$props.submit(this.form);
       },
       cancelAction () {

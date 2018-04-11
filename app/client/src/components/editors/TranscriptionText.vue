@@ -36,7 +36,7 @@
         <notes-list-form
             v-if="noteEditMode == 'list'"
             :noteId="selectedNoteId"
-            :submit="updateNote"
+            :submit="updateNoteId"
             :cancel="closeNoteEdit"
         />
         <note-form
@@ -210,11 +210,20 @@
         this.actionsPositions.bottom = rangeBounds.bottom;
       },
 
-      updateNote(newId) {
-        console.log('updateNote', newId)
+      updateNoteId(newId) {
+        console.log('TranscriptionText.updateNote', newId)
         this.editor.format('note', newId);
         this.selectedNoteId = newId;
         this.closeNoteEdit();
+      },
+      updateNote(note) {
+        console.log('TranscriptionText.updateNote', note);
+        this.$store.dispatch('addNote', note).then(()=>{
+          console.log('DONE')
+            /*this.editor.format('note', note.id);
+            this.selectedNoteId = note.id;
+            this.closeNoteEdit();*/
+        })
       },
       unlinkNote() {
         console.log('unlinkNote')

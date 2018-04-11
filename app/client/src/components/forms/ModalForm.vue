@@ -10,8 +10,8 @@
                 <slot></slot>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-success" :disabled="!valid" @click="submit">Valider</button>
-                <button class="button" @click="cancel">Annuler</button>
+                <button class="button is-success" :disabled="!valid || submitting" @click="submit">Valider</button>
+                <button class="button" :disabled="submitting" @click="cancel">Annuler</button>
             </footer>
         </div>
     </div>
@@ -21,10 +21,6 @@
 
   export default {
     name: "modal-form",
-    props: ['title', 'cancel', 'submit', 'valid', 'submitText'],
+    props: ['title', 'cancel', 'submit', 'valid', 'submitText', 'submitting'],
   }
 </script>
-
-<style scoped>
-
-</style>

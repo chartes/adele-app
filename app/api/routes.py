@@ -59,6 +59,15 @@ def api_align_translation(api_version, transcription_id, translation_id):
         response = APIResponseFactory.make_response(errors={"status": 404, "title": "Alignement introuvable"})
     return APIResponseFactory.jsonify(response)
 
+@api_bp.route('/api/<api_version>/annotations', methods=['GET','POST'])
+def api_add_note(api_version):
+    note_data = request.get_json()
+    # note = Note()
+    # dump(data)
+    return APIResponseFactory.jsonify({
+        'note_data': note_data
+    })
+
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>')
 def api_documents(api_version, doc_id):
