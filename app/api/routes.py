@@ -46,8 +46,8 @@ API Routes
 def api_test_auth_delete(api_version, doc_id):
     user = User.query.filter(User.username == auth.username()).one()
 
-    for c in Commentary.query.all():
-        db.session.remove(c)
+    for c in Commentary.query.filter(Commentary.doc_id==doc_id).all():
+        db.session.delete(c)
     db.session.commit()
 
     response = APIResponseFactory.make_response(data=[
