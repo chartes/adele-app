@@ -94,7 +94,7 @@ def api_align_translation(api_version, transcription_id, translation_id):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/annotations', methods=['GET','POST'])
+@api_bp.route('/api/<api_version>/notes', methods=['GET','POST'])
 def api_add_note(api_version):
     note_data = request.get_json()
     # note = Note()
@@ -210,8 +210,8 @@ def api_users(api_version, user_id):
         })
     return APIResponseFactory.jsonify(response)
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from/<user_id>")
-def api_documents_annotations_from_user(api_version, doc_id, user_id):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from/<user_id>")
+def api_documents_notes_from_user(api_version, doc_id, user_id):
 
     # sélectionner la liste des notes d'un utilisateur pour un doc
     # cad ses notes de transcrition, traduction, commentaire
