@@ -371,11 +371,28 @@ def api_post_documents_annotations(api_version, doc_id):
 @auth.login_required
 def api_put_documents_annotations(api_version, doc_id):
     """
-
+        {
+            "data" : [{
+                "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
+                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "zone_id" : 32,
+                "coords" : "10,40,500,50",
+                "content": "Je suis une première annotation avec <b>du markup</b>"
+            },
+        ...
+            },
+            {
+                "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
+                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "zone_id" : 30
+                "coords" : "30,40,500,50",
+                "content": "Je suis une n-ième annotation avec <b>du markup</b>"
+            }]
+        }
     :param api_version:
     :param doc_id:
     :param zone_id:
-    :return:
+    :return: the updated annotations
     """
 
     # TODO check en fonction du role de l'utilisateur (tout le monde ne peut pas supprimer les donnees de tout le monde)
@@ -403,7 +420,7 @@ def api_put_documents_annotations(api_version, doc_id):
                 img_zones.append(img_zone)
             except NoResultFound as e:
                 response = APIResponseFactory.make_response(errors={
-                    "status" : 404,
+                    "status": 404,
                     "title": "Image zone not found",
                     "details": str(e)}
                 )
@@ -424,19 +441,20 @@ def api_put_documents_annotations(api_version, doc_id):
                     "status": 403, "title": "Cannot update data", "details": str(e)
                 })
 
-            updated_zones = []
-            # perform a GET to retrieve the freshly updated data
-            for img_zone in img_zones:
-                json_obj = query_json_endpoint(request, url_for(
-                    "api_bp.api_documents_annotations_zone",
-                    api_version=api_version,
-                    doc_id=doc_id,
-                    zone_id=img_zone.zone_id
-                ))
-                if "errors" not in json_obj:
-                    updated_zones.append(json_obj)
+            if response is None:
+                updated_zones = []
+                # perform a GET to retrieve the freshly updated data
+                for img_zone in img_zones:
+                    json_obj = query_json_endpoint(request, url_for(
+                        "api_bp.api_documents_annotations_zone",
+                        api_version=api_version,
+                        doc_id=doc_id,
+                        zone_id=img_zone.zone_id
+                    ))
+                    if "errors" not in json_obj:
+                        updated_zones.append(json_obj)
 
-            response = APIResponseFactory.make_response(data=updated_zones)
+                response = APIResponseFactory.make_response(data=updated_zones)
     else:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Cannot update data", "details": "Check your request syntax"
@@ -449,11 +467,24 @@ def api_put_documents_annotations(api_version, doc_id):
 @auth.login_required
 def api_delete_documents_annotations(api_version, doc_id):
     """
-
+        {
+            "data" : [{
+                "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
+                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "zone_id" : 1
+            },
+        ...
+            },
+            {
+                "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
+                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "zone_id" : 2
+            }]
+        }
     :param api_version:
     :param doc_id:
     :param zone_id:
-    :return:
+    :return:  {"data": {}}
     """
 
     # TODO check en fonction du role de l'utilisateur (tout le monde ne peut pas supprimer les donnees de tout le monde)
@@ -467,3 +498,43 @@ def api_delete_documents_annotations(api_version, doc_id):
 
         if not isinstance(data, list):
             data = [data]
+
+        img_zones = []
+        validated_annotations = [d for d in data if "manifest_url" in d and "img_id" in d and "zone_id" in d]
+        for anno in validated_annotations:
+            try:
+                img_zone = ImageZone.query.filter(
+                    ImageZone.zone_id == anno["zone_id"],
+                    ImageZone.manifest_url == anno["manifest_url"],
+                    ImageZone.img_id == anno["img_id"]
+                ).one()
+                img_zones.append(img_zone)
+            except NoResultFound as e:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404,
+                    "title": "Image zone not found",
+                    "details": str(e)}
+                )
+                break
+
+        if response is None:
+            for img_zone in img_zones:
+                db.session.delete(img_zone)
+
+            try:
+                db.session.commit()
+            except Exception as e:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Cannot delete data", "details": str(e)
+                })
+
+            # the DELETE is OK, respond with no data
+            if response is None:
+                response = APIResponseFactory.make_response()
+
+    else:
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Cannot delete data", "details": "Check your request syntax"
+        })
+
+    return APIResponseFactory.jsonify(response)
