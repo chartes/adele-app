@@ -19,14 +19,14 @@ const actions = {
 
   getNotes ({ commit, getters }, docId) {
     console.log('getNotes', docId, getters.currentUser.id)
-    return axios.get(`/api/1.0/documents/${docId}/annotations/from/${getters.currentUser.id}`)
+    return axios.get(`/api/1.0/documents/${docId}/notes/from/${getters.currentUser.id}`)
       .then( (response) => {
         commit('UPDATE_NOTES', response.data.data.notes)
       })
   },
   addNote ({ commit, getters }, newNote) {
     console.log("addNote", newNote);
-    return axios.post(`/api/1.0/annotations`, newNote)
+    return axios.post(`/api/1.0/notes`, newNote)
       .then( (response) => {
         console.log(response)
         //commit('UPDATE_NOTES', response.data.data.notes)
