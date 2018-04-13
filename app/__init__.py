@@ -31,6 +31,16 @@ auth = HTTPBasicAuth()
 from app import models
 
 
+def get_current_user():
+    if auth.username() == "":
+        if current_user.is_anonymous:
+            user = None
+        else:
+            user = current_user
+    else:
+        user = models.User.query.filter(models.User.username == auth.username()).one()
+    return user
+
 def role_required(*wanted_roles):
     """
     Ensure the logged user has all of the wanted roles
@@ -38,20 +48,12 @@ def role_required(*wanted_roles):
     def wrap(route):
 
         def func_wrapper(*args, **kargs):
-            if auth.username() == "":
-                if current_user.is_anonymous:
-                    """
-                    unauthorized 
-                    """
-                    return redirect("/")
-                else:
-                    user = current_user
-            else:
-                user = models.User.query.filter(models.User.username == auth.username()).one()
+            user = get_current_user()
+            if user is None:
+                return redirect("/")
 
-            role_names = [r.name for r in user.roles]
             for role in wanted_roles:
-                if role not in role_names:
+                if not user.has_role(role):
                     response = APIResponseFactory.make_response(
                         errors={"status": 401, "title": "You are not authorized to access this resource"}
                     )

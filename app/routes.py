@@ -51,7 +51,7 @@ Admin Routes
 @app_bp.route('/')
 @app_bp.route('/admin')
 def admin():
-    return render_template('admin/index.html')#
+    return render_template('admin/index.html')
 
 @app_bp.route('/admin/documents')
 def admin_documents():

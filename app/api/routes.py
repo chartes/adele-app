@@ -262,27 +262,24 @@ def api_documents_notes_from_user(api_version, doc_id, user_id):
     return APIResponseFactory.jsonify(response)
 
 
-def get_validated_transcription(doc_id):
+def get_reference_transcription(doc_id):
     """
 
     :param doc_id:
     :return:
     """
-    # TODO : put a filter on the user role to get only the teacher's transcriptions
-    tr = None
+    transcription = None
     try:
-        tr = Transcription.query.filter(doc_id == Transcription.doc_id).one()
-        response = None
-    except MultipleResultsFound as e:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404,
-            "title": "Multiple transcriptions found. A unique transcription must be validated first".format(doc_id)
-        })
-    except NoResultFound as e:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Transcription of document {0} cannot be found".format(doc_id)
-        })
-    return (tr, response)
+        transcriptions = Transcription.query.filter(doc_id == Transcription.doc_id).all()
+        for tr in transcriptions:
+            user = User.query.filter(User.id == tr.user_id).first()
+            if user.is_teacher:
+                transcription = tr
+                break
+    except NoResultFound:
+        pass
+
+    return transcription
 
 
 @api_bp.route("/api/<api_version>/note-types")

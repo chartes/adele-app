@@ -8,7 +8,7 @@ from urllib.request import build_opener
 from app import auth, db, role_required
 from app.api.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
-from app.api.routes import query_json_endpoint, json_loads, api_bp, get_validated_transcription
+from app.api.routes import query_json_endpoint, json_loads, api_bp, get_reference_transcription
 from app.models import AlignmentImage, ImageZone, Image, Document, Transcription, User
 
 
@@ -91,35 +91,41 @@ def api_documents_annotations_list(api_version, doc_id):
     :return:
     """
 
-    json_obj = query_json_endpoint(
-        request,
-        url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
-    )
-
-    if "errors" in json_obj:
-        response = APIResponseFactory.make_response(errors=json_obj["errors"])
+    tr = get_reference_transcription(doc_id)
+    if tr is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
+        })
     else:
-        canvas = json_obj["data"]
-        img = Image.query.filter(Image.doc_id == doc_id).one()
-        # TODO s'il n'y a pas d'image dans le manifest
-        img_json = canvas["images"][0]
-        annotations = []
+        json_obj = query_json_endpoint(
+            request,
+            url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+        )
 
-        for img_zone in [z for z in img.zones if z.note is not None]:
-            res_uri = request.url_root[0:-1] + url_for(
-                "api_bp.api_documents_annotations_zone",
-                api_version=api_version,
-                doc_id=doc_id,
-                zone_id=img_zone.zone_id
-            )
-            fragment_coords = img_zone.coords
-            new_annotation = make_annotation(
-                img_zone.manifest_url, img_json, fragment_coords, res_uri, img_zone.note, format="text/plain"
-            )
-            annotations.append(new_annotation)
+        if "errors" in json_obj:
+            response = APIResponseFactory.make_response(errors=json_obj["errors"])
+        else:
+            canvas = json_obj["data"]
+            img = Image.query.filter(Image.doc_id == doc_id).one()
+            # TODO s'il n'y a pas d'image dans le manifest
+            img_json = canvas["images"][0]
+            annotations = []
 
-        annotation_list = make_annotation_list("f1", doc_id, annotations)
-        response = annotation_list
+            for img_zone in [z for z in img.zones if z.note is not None]:
+                res_uri = request.url_root[0:-1] + url_for(
+                    "api_bp.api_documents_annotations_zone",
+                    api_version=api_version,
+                    doc_id=doc_id,
+                    zone_id=img_zone.zone_id
+                )
+                fragment_coords = img_zone.coords
+                new_annotation = make_annotation(
+                    img_zone.manifest_url, img_json, fragment_coords, res_uri, img_zone.note, format="text/plain"
+                )
+                annotations.append(new_annotation)
+
+            annotation_list = make_annotation_list("f1", doc_id, annotations)
+            response = annotation_list
 
     return APIResponseFactory.jsonify(response)
 
@@ -133,17 +139,19 @@ def api_documents_transcriptions_list(api_version, doc_id):
     :param doc_id: Document id
     :return: a json object Obj with a sc:AnnotationList inside Obj["data"]. Return errors in Obj["errors"]
     """
-    # TODO : wip
 
     try:
         # Check if document exist first
         doc = Document.query.filter(Document.id == doc_id).one()
         # find the good transcription
-        # TODO : put a filter on the user role to get only the teacher's transcriptions
-        tr, response = get_validated_transcription(doc_id)
+        tr = get_reference_transcription(doc_id)
 
-        # let's go finding the alignment segments
-        if tr is not None:
+        if tr is None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
+            })
+        else:
+            # let's go finding the alignment segments
             try:
                 json_obj = query_json_endpoint(
                     request,
@@ -239,14 +247,24 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
             # if the note content is empty, then you need to fetch a transcription segment
             # else it is a mere image note
             if img_zone.note is None:
-                tr, response = get_validated_transcription(doc_id)
-                img_al = AlignmentImage.query.filter(
-                    AlignmentImage.transcription_id == tr.id,
-                    AlignmentImage.zone_id == img_zone.zone_id,
-                    AlignmentImage.user_id == tr.user_id,
-                    AlignmentImage.manifest_url == img.manifest_url
-                ).one()
-                note_content = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+                tr = get_reference_transcription(doc_id)
+                if tr is None:
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
+                    })
+                else:
+                    try:
+                        img_al = AlignmentImage.query.filter(
+                            AlignmentImage.transcription_id == tr.id,
+                            AlignmentImage.zone_id == img_zone.zone_id,
+                            AlignmentImage.user_id == tr.user_id,
+                            AlignmentImage.manifest_url == img.manifest_url
+                        ).one()
+                        note_content = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+                    except NoResultFound:
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 404, "title": "This transcription zone has no text fragment attached to it".format(doc_id)
+                        })
             else:
                 note_content = img_zone.note
 

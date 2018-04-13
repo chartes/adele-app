@@ -427,6 +427,15 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=association_user_has_role,
             backref=db.backref('users', lazy='dynamic'))
 
+    @property
+    def is_teacher(self): return self.has_role("teacher")
+
+    @property
+    def is_admin(self): return self.has_role("admin")
+
+    @property
+    def is_student(self): return self.has_role("student")
+
     def serialize(self):
         return {
             'id': self.id,
