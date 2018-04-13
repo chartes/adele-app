@@ -5,11 +5,11 @@ from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from urllib.request import build_opener
 
-from app import auth, db
+from app import auth, db, role_required
 from app.api.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp, get_validated_transcription
-from app.models import AlignmentImage, ImageZone, Image, Document, Transcription
+from app.models import AlignmentImage, ImageZone, Image, Document, Transcription, User
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/first-canvas")

@@ -4,6 +4,8 @@ from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import UserManager, SQLAlchemyAdapter
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from app.api.response import APIResponseFactory
 from app.forms.register import CustomRegisterForm
 
 
@@ -22,7 +24,27 @@ scss = Scss(app)
 auth = HTTPBasicAuth()
 
 
-from app import routes, models
+from app import models
+
+
+def role_required(*wanted_roles):
+    """
+    Ensure the logged user has all of the wanted roles
+    """
+    def wrap(route):
+        def func_wrapper(*args, **kargs):
+            user = models.User.query.filter(models.User.username == auth.username()).one()
+            role_names = [r.name for r in user.roles]
+            for role in wanted_roles:
+                if role not in role_names:
+                    response = APIResponseFactory.make_response(
+                        errors={"status": 401, "title": "You are not authorized to access this resource"}
+                    )
+                    return APIResponseFactory.jsonify(response)
+            # roles are OK
+            return route(*args, **kargs)
+        return func_wrapper
+    return wrap
 
 
 """
@@ -33,6 +55,7 @@ Setup Flask-User
 
 # Register the User model
 db_adapter = SQLAlchemyAdapter(db, models.User)
+
 
 class CustomUserManager(UserManager):
     def hash_password(self, password):
@@ -45,6 +68,7 @@ class CustomUserManager(UserManager):
 # Initialize Flask-User
 user_manager = CustomUserManager(db_adapter, app, register_form=CustomRegisterForm)
 
+
 # Initialize the HTTP Auth mechanism
 @auth.verify_password
 def verify_password(username, password):
@@ -52,3 +76,6 @@ def verify_password(username, password):
     if not user:
         return False
     return user_manager.verify_password(password, user)
+
+
+from app import routes

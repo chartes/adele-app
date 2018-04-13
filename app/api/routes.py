@@ -7,13 +7,10 @@ from urllib.request import urlopen, build_opener
 from flask import request, url_for,  Blueprint
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-import config
-from app import app, auth, db
-from app.api.open_annotation import make_annotation_list, make_annotation
+from app import app, auth, db, role_required
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
-from app.models import AlignmentImage, Commentary, Document, Image, ImageZone, Note, NoteType, Transcription, Translation, User
-from config import Config
+from app.models import  Commentary, Document, Image, Note, NoteType, Transcription, Translation, User
 
 
 api_bp = Blueprint('api_bp', __name__, template_folder='templates')
@@ -40,6 +37,19 @@ def query_json_endpoint(request_obj, endpoint_url):
 API Routes
 ---------------------------------
 """
+
+
+@api_bp.route("/api/user-role")
+@auth.login_required
+@role_required("teacher", "admin")
+def api_test_user_role():
+    """
+    I cannot be accessed by a student
+    """
+    user = User.query.filter(User.username == auth.username()).one()
+    role_names =[r.name for r in user.roles]
+    return APIResponseFactory.jsonify(role_names)
+
 
 @api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["DELETE"])
 @auth.login_required
