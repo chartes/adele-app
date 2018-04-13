@@ -2,8 +2,7 @@ from flask import render_template, flash, redirect, url_for, render_template_str
 from flask_user import login_required
 
 import config
-from app import app
-
+from app import app, role_required
 
 app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
 

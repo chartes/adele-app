@@ -1,4 +1,8 @@
-from flask import Flask
+import pprint
+
+import flask_login
+from flask import Flask, url_for, redirect
+from flask_login import current_user
 from flask_mail import Mail
 from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
@@ -32,8 +36,19 @@ def role_required(*wanted_roles):
     Ensure the logged user has all of the wanted roles
     """
     def wrap(route):
+
         def func_wrapper(*args, **kargs):
-            user = models.User.query.filter(models.User.username == auth.username()).one()
+            if auth.username() == "":
+                if current_user.is_anonymous:
+                    """
+                    unauthorized 
+                    """
+                    return redirect("/")
+                else:
+                    user = current_user
+            else:
+                user = models.User.query.filter(models.User.username == auth.username()).one()
+
             role_names = [r.name for r in user.roles]
             for role in wanted_roles:
                 if role not in role_names:
