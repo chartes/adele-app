@@ -304,6 +304,7 @@ Declare IIIF related routes
 """
 from app.api.iiif import routes
 
+
 app.register_blueprint(api_bp)
 
 

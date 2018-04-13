@@ -235,6 +235,7 @@ class ImageZone(db.Model):
     manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
     img_id = db.Column(db.String, db.ForeignKey('image.id'), primary_key=True)
     zone_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     coords = db.Column(db.String)
     note = db.Column(db.String)
 
@@ -243,6 +244,7 @@ class ImageZone(db.Model):
             'manifest_url': self.manifest_url,
             'img_id' : self.img_id,
             'zone_id' : self.zone_id,
+            'user_id' : self.user_id,
             'coords' : self.coords,
             'note' : self.note
         }
@@ -263,6 +265,7 @@ class Image(db.Model):
             'zones': [
                 {
                     "zone_id": z.zone_id,
+                    "user_id": z.user_id,
                     "coords": z.coords,
                     "note": z.note
 

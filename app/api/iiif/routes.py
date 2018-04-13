@@ -83,20 +83,24 @@ def api_documents_annotations(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list")
-def api_documents_annotations_list(api_version, doc_id):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list/from-user/<user_id>")
+def api_documents_annotations_list(api_version, doc_id, user_id=None):
     """
 
+    :param user_id:
     :param api_version:
     :param doc_id:
     :return:
     """
+    response = None
+    if user_id is None:
+        tr = get_reference_transcription(doc_id)
+        if tr is None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
+            })
 
-    tr = get_reference_transcription(doc_id)
-    if tr is None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
-        })
-    else:
+    if response is None:
         json_obj = query_json_endpoint(
             request,
             url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
@@ -111,13 +115,10 @@ def api_documents_annotations_list(api_version, doc_id):
             img_json = canvas["images"][0]
             annotations = []
 
+            kargs = {"doc_id": doc_id, "api_version": api_version, "user_id": user_id}
             for img_zone in [z for z in img.zones if z.note is not None]:
-                res_uri = request.url_root[0:-1] + url_for(
-                    "api_bp.api_documents_annotations_zone",
-                    api_version=api_version,
-                    doc_id=doc_id,
-                    zone_id=img_zone.zone_id
-                )
+                kargs["zone_id"] = img_zone.zone_id
+                res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
                 fragment_coords = img_zone.coords
                 new_annotation = make_annotation(
                     img_zone.manifest_url, img_json, fragment_coords, res_uri, img_zone.note, format="text/plain"
@@ -179,7 +180,8 @@ def api_documents_transcriptions_list(api_version, doc_id):
                         img_zone = ImageZone.query.filter(
                             ImageZone.manifest_url == img_al.manifest_url,
                             ImageZone.img_id == img_al.img_id,
-                            ImageZone.zone_id == img_al.zone_id
+                            ImageZone.zone_id == img_al.zone_id,
+                            ImageZone.user_id == tr.user_id
                         ).one()
 
                         fragment_coords = img_zone.coords
@@ -202,9 +204,11 @@ def api_documents_transcriptions_list(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<zone_id>")
-def api_documents_annotations_zone(api_version, doc_id, zone_id):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<zone_id>/from-user/<user_id>")
+def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
     """
 
+    :param user_id:
     :param api_version:
     :param doc_id:
     :param zone_id:
@@ -223,13 +227,23 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
 
         try:
             img = Image.query.filter(Image.doc_id == doc_id).one()
+
             # select annotations zones
-            img_zone = ImageZone.query.filter(
-                ImageZone.img_id == img.id,
-                ImageZone.zone_id == zone_id,
-                ImageZone.manifest_url == img.manifest_url
-                # ImageZone.note != None
-            ).one()
+            if user_id is None:
+                img_zone = ImageZone.query.filter(
+                    ImageZone.img_id == img.id,
+                    ImageZone.zone_id == zone_id,
+                    ImageZone.manifest_url == img.manifest_url
+                    # ImageZone.note != None
+                ).one()
+            else:
+                img_zone = ImageZone.query.filter(
+                    ImageZone.img_id == img.id,
+                    ImageZone.zone_id == zone_id,
+                    ImageZone.manifest_url == img.manifest_url,
+                    ImageZone.user_id == user_id
+                    # ImageZone.note != None
+                ).one()
         except NoResultFound:
             img_zone = None
             response = APIResponseFactory.make_response(
@@ -237,15 +251,14 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
             )
 
         if img_zone is not None:
-            res_uri = request.url_root[0:-1] + url_for(
-                "api_bp.api_documents_annotations_zone",
-                api_version=api_version,
-                doc_id=doc_id,
-                zone_id=img_zone.zone_id
-            )
+            kargs = {"doc_id": doc_id, "api_version": api_version, "zone_id": img_zone.zone_id}
+            if user_id is not None:
+                kargs["user_id"] = user_id
+            res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
 
             # if the note content is empty, then you need to fetch a transcription segment
             # else it is a mere image note
+            note_content = ""
             if img_zone.note is None:
                 tr = get_reference_transcription(doc_id)
                 if tr is None:
@@ -265,6 +278,7 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
                         response = APIResponseFactory.make_response(errors={
                             "status": 404, "title": "This transcription zone has no text fragment attached to it".format(doc_id)
                         })
+
             else:
                 note_content = img_zone.note
 
