@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from urllib.request import build_opener
 
-from app import auth, db, role_required
+from app import auth, db, role_required, get_current_user
 from app.api.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp, get_reference_transcription
@@ -330,9 +330,6 @@ def api_post_documents_annotations(api_version, doc_id):
     :return: the inserted annotations
     """
 
-    # TODO check en fonction du role de l'utilisateur (tout le monde ne peut pas supprimer les donnees de tout le monde)
-    # Le faire dans un decorateur ?
-
     data = request.get_json()
     response = None
 
@@ -442,20 +439,24 @@ def api_put_documents_annotations(api_version, doc_id):
         # find which zones to update
         validated_annotations = [a for a in data if validate_annotation_data_format(a) and "zone_id" in a]
         img_zones = []
+        user = get_current_user()
+        # only teacher and admin can modify everything
+        user_id = user.id if not user.is_teacher and not user.is_admin else ImageZone.user_id
         for anno in validated_annotations:
             try:
                 img_zone = ImageZone.query.filter(
                     ImageZone.zone_id == anno["zone_id"],
                     ImageZone.manifest_url == anno["manifest_url"],
-                    ImageZone.img_id == anno["img_id"]
+                    ImageZone.img_id == anno["img_id"],
+                    ImageZone.user_id == user_id
                 ).one()
                 img_zones.append(img_zone)
             except NoResultFound as e:
                 response = APIResponseFactory.make_response(errors={
                     "status": 404,
-                    "title": "Image zone not found",
-                    "details": str(e)}
-                )
+                    "title": "Image zone {0} not found".format(anno["zone_id"]),
+                    "details": "Cannot update image zone: {0}".format(str(e))
+                })
                 break
 
         if response is None:
@@ -531,6 +532,8 @@ def api_delete_documents_annotations(api_version, doc_id):
         if not isinstance(data, list):
             data = [data]
 
+        user = get_current_user()
+        user_id = user.id if not user.is_teacher and not user.is_admin else ImageZone.user_id
         img_zones = []
         validated_annotations = [d for d in data if "manifest_url" in d and "img_id" in d and "zone_id" in d]
         for anno in validated_annotations:
@@ -538,15 +541,16 @@ def api_delete_documents_annotations(api_version, doc_id):
                 img_zone = ImageZone.query.filter(
                     ImageZone.zone_id == anno["zone_id"],
                     ImageZone.manifest_url == anno["manifest_url"],
-                    ImageZone.img_id == anno["img_id"]
+                    ImageZone.img_id == anno["img_id"],
+                    ImageZone.user_id == user_id
                 ).one()
                 img_zones.append(img_zone)
             except NoResultFound as e:
                 response = APIResponseFactory.make_response(errors={
                     "status": 404,
-                    "title": "Image zone not found",
-                    "details": str(e)}
-                )
+                    "title": "Image zone {0} not found".format(anno["zone_id"]),
+                    "details": "Cannot delete image zone: {0}".format(str(e))
+                })
                 break
 
         if response is None:
