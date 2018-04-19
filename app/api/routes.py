@@ -200,9 +200,7 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
     else:
         # only teacher and admin can modify everything
         if not user.is_teacher and not user.is_admin:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Forbidden access".format(doc_id)
-            })
+            user_id = user.id
 
     if response is None:
         if user_id is None:
@@ -236,9 +234,7 @@ def api_documents_translations(api_version, doc_id, user_id=None):
     else:
         # only teacher and admin can modify everything
         if not user.is_teacher and not user.is_admin:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Forbidden access".format(doc_id)
-            })
+            user_id = user.id
 
     if response is None:
         if user_id is None:
