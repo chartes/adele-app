@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from urllib.request import build_opener
 
-from app import auth, db, role_required, get_current_user
+from app import auth, db, role_required, get_current_user, get_user_from_username
 from app.api.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp, get_reference_transcription
@@ -315,6 +315,7 @@ def api_post_documents_annotations(api_version, doc_id):
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>"
+                "username" : "Eleve1"    (optionnal)
             },
         ...
             },
@@ -323,6 +324,7 @@ def api_post_documents_annotations(api_version, doc_id):
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>"
+                "username" : "Professeur1"  (optionnal)
             }]
         }
     :param api_version:
@@ -340,6 +342,8 @@ def api_post_documents_annotations(api_version, doc_id):
             data = [data]
 
         validated_annotations = [a for a in data if validate_annotation_data_format(a)]
+        user = get_current_user()
+
         # get the zone_id max
         try:
             img_zone_max_zone_id = db.session.query(func.max(ImageZone.zone_id)).filter(
@@ -355,16 +359,25 @@ def api_post_documents_annotations(api_version, doc_id):
 
         new_img_zone_ids = []
         for anno in validated_annotations:
+
+            user_id = user.id
+            # teacher and admin MAY post/put/delete for others
+            if (user.is_teacher or user.is_admin) and "username" in anno:
+                usr = get_user_from_username(anno["username"])
+                if usr is not None:
+                    user_id = usr.id
+
             # INSERT data but dont commit yet
             img_zone = ImageZone(
                 manifest_url=anno["manifest_url"],
                 img_id=anno["img_id"],
                 note=anno["content"],
                 coords=anno["coords"],
-                zone_id=img_zone_max_zone_id
+                zone_id=img_zone_max_zone_id,
+                user_id=user_id
             )
             db.session.add(img_zone)
-            new_img_zone_ids.append(img_zone_max_zone_id)
+            new_img_zone_ids.append((user_id, img_zone_max_zone_id))
             img_zone_max_zone_id += 1
 
         try:
@@ -377,13 +390,18 @@ def api_post_documents_annotations(api_version, doc_id):
         if response is None:
             created_zones = []
             # perform a GET to retrieve the freshly inserted data
-            for img_zone_id in new_img_zone_ids:
-                json_obj = query_json_endpoint(request, url_for(
-                    "api_bp.api_documents_annotations_zone",
-                    api_version=api_version,
-                    doc_id=doc_id,
-                    zone_id=img_zone_id
-                ))
+            for user_id, img_zone_id in new_img_zone_ids:
+                json_obj = query_json_endpoint(
+                    request,
+                    url_for(
+                        "api_bp.api_documents_annotations_zone",
+                        api_version=api_version,
+                        doc_id=doc_id,
+                        zone_id=img_zone_id,
+                        user_id=user_id
+                    ),
+                    user=user
+                )
                 if "errors" not in json_obj:
                     created_zones.append(json_obj)
 
@@ -406,7 +424,8 @@ def api_put_documents_annotations(api_version, doc_id):
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
                 "zone_id" : 32,
                 "coords" : "10,40,500,50",
-                "content": "Je suis une première annotation avec <b>du markup</b>"
+                "content": "Je suis une première annotation avec <b>du markup</b>",
+                "username": "Eleve1"
             },
         ...
             },
@@ -415,7 +434,8 @@ def api_put_documents_annotations(api_version, doc_id):
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
                 "zone_id" : 30
                 "coords" : "30,40,500,50",
-                "content": "Je suis une n-ième annotation avec <b>du markup</b>"
+                "content": "Je suis une n-ième annotation avec <b>du markup</b>",
+                "username": "Professeur1"
             }]
         }
     :param api_version:
@@ -423,9 +443,6 @@ def api_put_documents_annotations(api_version, doc_id):
     :param zone_id:
     :return: the updated annotations
     """
-
-    # TODO check en fonction du role de l'utilisateur (tout le monde ne peut pas supprimer les donnees de tout le monde)
-    # Le faire dans un decorateur ?
 
     data = request.get_json()
     response = None
@@ -440,9 +457,15 @@ def api_put_documents_annotations(api_version, doc_id):
         validated_annotations = [a for a in data if validate_annotation_data_format(a) and "zone_id" in a]
         img_zones = []
         user = get_current_user()
-        # only teacher and admin can modify everything
-        user_id = user.id if not user.is_teacher and not user.is_admin else ImageZone.user_id
         for anno in validated_annotations:
+
+            user_id = user.id
+            # teacher and admin MAY post/put/delete for others
+            if (user.is_teacher or user.is_admin) and "username" in anno:
+                usr = get_user_from_username(anno["username"])
+                if usr is not None:
+                    user_id = usr.id
+
             try:
                 img_zone = ImageZone.query.filter(
                     ImageZone.zone_id == anno["zone_id"],
@@ -450,7 +473,7 @@ def api_put_documents_annotations(api_version, doc_id):
                     ImageZone.img_id == anno["img_id"],
                     ImageZone.user_id == user_id
                 ).one()
-                img_zones.append(img_zone)
+                img_zones.append((user_id, img_zone))
             except NoResultFound as e:
                 response = APIResponseFactory.make_response(errors={
                     "status": 404,
@@ -460,8 +483,8 @@ def api_put_documents_annotations(api_version, doc_id):
                 break
 
         if response is None:
-            # update the snnotations
-            for i, img_zone in enumerate(img_zones):
+            # update the annotations
+            for i, (user_id, img_zone) in enumerate(img_zones):
                 anno = validated_annotations[i]
                 img_zone.coords = anno["coords"]
                 img_zone.note = anno["content"]
@@ -477,13 +500,18 @@ def api_put_documents_annotations(api_version, doc_id):
             if response is None:
                 updated_zones = []
                 # perform a GET to retrieve the freshly updated data
-                for img_zone in img_zones:
-                    json_obj = query_json_endpoint(request, url_for(
-                        "api_bp.api_documents_annotations_zone",
-                        api_version=api_version,
-                        doc_id=doc_id,
-                        zone_id=img_zone.zone_id
-                    ))
+                for user_id, img_zone in img_zones:
+                    json_obj = query_json_endpoint(
+                        request,
+                        url_for(
+                            "api_bp.api_documents_annotations_zone",
+                            api_version=api_version,
+                            doc_id=doc_id,
+                            zone_id=img_zone.zone_id,
+                            user_id=user_id
+                        ),
+                        user=user
+                    )
                     if "errors" not in json_obj:
                         updated_zones.append(json_obj)
 
@@ -520,9 +548,6 @@ def api_delete_documents_annotations(api_version, doc_id):
     :return:  {"data": {}}
     """
 
-    # TODO check en fonction du role de l'utilisateur (tout le monde ne peut pas supprimer les donnees de tout le monde)
-    # Le faire dans un decorateur ?
-
     data = request.get_json()
     response = None
 
@@ -533,6 +558,7 @@ def api_delete_documents_annotations(api_version, doc_id):
             data = [data]
 
         user = get_current_user()
+        # restrict student to deltee only their own data
         user_id = user.id if not user.is_teacher and not user.is_admin else ImageZone.user_id
         img_zones = []
         validated_annotations = [d for d in data if "manifest_url" in d and "img_id" in d and "zone_id" in d]

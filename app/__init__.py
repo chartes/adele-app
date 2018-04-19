@@ -31,6 +31,10 @@ auth = HTTPBasicAuth()
 from app import models
 
 
+def get_user_from_username(username):
+    return models.User.query.filter(models.User.username == username).first()
+
+
 def get_current_user():
     if auth.username() == "":
         if current_user.is_anonymous:
