@@ -18,7 +18,7 @@ const mutations = {
     state.transcriptionSaved = true;
   },
   TRANSCRIPTION_CHANGED (state) {
-    cosnole.log("TRANSCRIPTION_CHANGED")
+    console.log("TRANSCRIPTION_CHANGED")
     state.transcriptionSaved = false;
   }
 
@@ -28,7 +28,7 @@ const actions = {
 
   getTranscription ({ commit, getters }) {
     const doc_id = getters.document.id;
-    const user_id = 1; //getters.currentUser.id;
+    const user_id = getters.currentUser.id;
 
     this.dispatch('getNoteTypes').then(() => {
       return this.dispatch('getNotes', getters.document.id);
@@ -36,7 +36,7 @@ const actions = {
 
       console.log('getTranscription', getters.document, getters.currentUser)
       // `/api/1.0/documents/${doc_id}/transcriptions/from/${user_id}`
-      axios.get(`/api/1.0/documents/${doc_id}/transcriptions`).then( response => {
+      axios.get(`/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
 
         /*const data = {
           "data": {

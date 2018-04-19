@@ -1,13 +1,12 @@
 import json
 import pprint
 import sys
-from urllib.error import HTTPError
 from urllib.request import urlopen, build_opener
 
 from flask import request, url_for,  Blueprint
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from app import app, auth, db, role_required
+from app import app, auth, db, role_required, get_current_user
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import  Commentary, Document, Image, Note, NoteType, Transcription, Translation, User
@@ -66,6 +65,7 @@ def api_test_auth_delete(api_version, doc_id):
 
     return APIResponseFactory.jsonify(response)
 
+
 @api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["POST"])
 @auth.login_required
 def api_test_auth_post(api_version, doc_id):
@@ -83,6 +83,7 @@ def api_test_auth_post(api_version, doc_id):
     ])
 
     return APIResponseFactory.jsonify(response)
+
 
 @api_bp.route('/api/<api_version>/alignments/translations/<transcription_id>/<translation_id>')
 def api_align_translation(api_version, transcription_id, translation_id):
@@ -103,6 +104,45 @@ def api_align_translation(api_version, transcription_id, translation_id):
         response = APIResponseFactory.make_response(errors={"status": 404, "title": "Alignement introuvable"})
     return APIResponseFactory.jsonify(response)
 
+
+
+def get_reference_transcription(doc_id):
+    """
+
+    :param doc_id:
+    :return:
+    """
+    transcription = None
+    try:
+        transcriptions = Transcription.query.filter(doc_id == Transcription.doc_id).all()
+        for tr in transcriptions:
+            user = User.query.filter(User.id == tr.user_id).first()
+            if user.is_teacher:
+                transcription = tr
+                break
+    except NoResultFound:
+        pass
+
+    return transcription
+
+def get_reference_translation(doc_id):
+    """
+
+    :param doc_id:
+    :return:
+    """
+    translation = None
+    try:
+        translations = Translation.query.filter(doc_id == Translation.doc_id).all()
+        for tr in translations:
+            user = User.query.filter(User.id == tr.user_id).first()
+            if user.is_teacher:
+                translation = tr
+                break
+    except NoResultFound:
+        pass
+
+    return translation
 
 @api_bp.route('/api/<api_version>/notes', methods=['GET','POST'])
 def api_add_note(api_version):
@@ -125,6 +165,7 @@ def api_documents(api_version, doc_id):
         })
     return APIResponseFactory.jsonify(response)
 
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest')
 def api_documents_manifest(api_version, doc_id):
     no_result = False
@@ -146,55 +187,78 @@ def api_documents_manifest(api_version, doc_id):
 
     return APIResponseFactory.jsonify(response)
 
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions')
-def api_documents_transcriptions(api_version, doc_id):
-    try:
-        # Check if document exist first
-        doc = Document.query.filter(Document.id == doc_id).one()
-        transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
-        response = APIResponseFactory.make_response(
-            data=[tr.serialize() for tr in transcriptions]
-        )
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Document {0} introuvable".format(doc_id)
-        })
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>')
+def api_documents_transcriptions(api_version, doc_id, user_id=None):
+    response = None
+    user = get_current_user()
+    if user is None:
+        # get the reference transcription
+        tr = get_reference_transcription(doc_id)
+        response = APIResponseFactory.make_response(data=tr.serialize())
+    else:
+        # only teacher and admin can modify everything
+        if not user.is_teacher and not user.is_admin:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Forbidden access".format(doc_id)
+            })
+
+    if response is None:
+        if user_id is None:
+            # In that case do not filter
+            user_id = Transcription.user_id
+
+        try:
+            # Check if document exist first
+            transcriptions = Transcription.query.filter(
+                Transcription.doc_id == doc_id,
+                Transcription.user_id == user_id
+            ).all()
+            response = APIResponseFactory.make_response(data=[tr.serialize() for tr in transcriptions])
+        except NoResultFound:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Transcription {0} not found".format(doc_id)
+            })
 
     return APIResponseFactory.jsonify(response)
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/<seg_id>')
-def api_documents_transcriptions_segments(api_version, doc_id, seg_id):
-    raise NotImplementedError
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from/<user_id>')
-def document_transcription_from_user(api_version, doc_id, user_id):
-    try:
-        transcription = Transcription.query.filter(
-            Transcription.doc_id == doc_id, Transcription.user_id == user_id
-        ).one()
-        response = APIResponseFactory.make_response(
-            data=transcription.serialize()
-        )
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Transcription {0} introuvable".format(doc_id)
-        })
-    return APIResponseFactory.jsonify(response)
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations')
-def api_documents_translations(api_version, doc_id):
-    try:
-        # Check if document exist first
-        doc = Document.query.filter(Document.id == doc_id).one()
-        translations = Translation.query.filter(Translation.doc_id == doc_id).all()
-        response = APIResponseFactory.make_response(
-            data=[tr.serialize() for tr in translations]
-        )
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Document {0} introuvable".format(doc_id)
-        })
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>')
+def api_documents_translations(api_version, doc_id, user_id=None):
+    response = None
+    user = get_current_user()
+    if user is None:
+        # get the reference translation
+        tr = get_reference_translation(doc_id)
+        response = APIResponseFactory.make_response(data=tr.serialize())
+    else:
+        # only teacher and admin can modify everything
+        if not user.is_teacher and not user.is_admin:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Forbidden access".format(doc_id)
+            })
+
+    if response is None:
+        if user_id is None:
+            # In that case do not filter
+            user_id = Translation.user_id
+
+        try:
+            # Check if document exist first
+            translations = Translation.query.filter(
+                Translation.doc_id == doc_id,
+                Translation.user_id == user_id
+            ).all()
+            response = APIResponseFactory.make_response(data=[tr.serialize() for tr in translations])
+        except NoResultFound:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Translation {0} not found".format(doc_id)
+            })
+
     return APIResponseFactory.jsonify(response)
+
 
 @api_bp.route('/api/<api_version>/user')
 def api_current_user(api_version):
@@ -204,7 +268,7 @@ def api_current_user(api_version):
         response = APIResponseFactory.make_response(data=user.serialize())
     except NoResultFound:
         response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Utilisateur introuvable"
+            "status": 404, "title": "User not found"
         })
     return APIResponseFactory.jsonify(response)
 
@@ -216,11 +280,12 @@ def api_users(api_version, user_id):
         response = APIResponseFactory.make_response(data=user.serialize())
     except NoResultFound:
         response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Utilisateur {0} introuvable".format(user_id)
+            "status": 404, "title": "User {0} not found".format(user_id)
         })
     return APIResponseFactory.jsonify(response)
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from/<user_id>")
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>")
 def api_documents_notes_from_user(api_version, doc_id, user_id):
 
     # sélectionner la liste des notes d'un utilisateur pour un doc
@@ -262,24 +327,6 @@ def api_documents_notes_from_user(api_version, doc_id, user_id):
     return APIResponseFactory.jsonify(response)
 
 
-def get_reference_transcription(doc_id):
-    """
-
-    :param doc_id:
-    :return:
-    """
-    transcription = None
-    try:
-        transcriptions = Transcription.query.filter(doc_id == Transcription.doc_id).all()
-        for tr in transcriptions:
-            user = User.query.filter(User.id == tr.user_id).first()
-            if user.is_teacher:
-                transcription = tr
-                break
-    except NoResultFound:
-        pass
-
-    return transcription
 
 
 @api_bp.route("/api/<api_version>/note-types")
