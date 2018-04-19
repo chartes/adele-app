@@ -4,18 +4,16 @@ import pprint
 import sys
 from urllib.request import urlopen, build_opener
 
-from flask import request, url_for,  Blueprint
+from flask import request, url_for, Blueprint
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from app import app, auth, db, role_required, get_current_user, get_user_from_username
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
-from app.models import  Commentary, Document, Image, Note, NoteType, Transcription, Translation, User
-
+from app.models import Commentary, Document, Image, Note, NoteType, Transcription, Translation, User
 
 api_bp = Blueprint('api_bp', __name__, template_folder='templates')
-
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
@@ -46,7 +44,6 @@ def query_json_endpoint(request_obj, endpoint_url, user=None):
     return response
 
 
-
 """
 ===========================
     Test routes 
@@ -62,7 +59,7 @@ def api_test_user_role():
     I cannot be accessed by a student
     """
     user = User.query.filter(User.username == auth.username()).one()
-    role_names =[r.name for r in user.roles]
+    role_names = [r.name for r in user.roles]
     return APIResponseFactory.jsonify(role_names)
 
 
@@ -71,7 +68,7 @@ def api_test_user_role():
 def api_test_auth_delete(api_version, doc_id):
     user = User.query.filter(User.username == auth.username()).one()
 
-    for c in Commentary.query.filter(Commentary.doc_id==doc_id).all():
+    for c in Commentary.query.filter(Commentary.doc_id == doc_id).all():
         db.session.delete(c)
     db.session.commit()
 
@@ -244,6 +241,9 @@ def api_post_documents_transcriptions(api_version, doc_id):
     """
     data = request.get_json()
     response = None
+    user = get_current_user()
+    usernames = set()
+    created_users = set()
 
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
@@ -253,81 +253,302 @@ def api_post_documents_transcriptions(api_version, doc_id):
         })
 
     if "data" in data and response is None:
-        tr = data["data"]
+        data = data["data"]
 
-        if isinstance(tr, list):
-            response = APIResponseFactory.make_response(errors={
-                "status": 403,
-                "title": "Insert forbidden",
-                "details": "Only one transcription per user and document is allowed"
-            })
+        if not isinstance(data, list):
+            data = [data]
 
-        if response is None:
-            user = get_current_user()
-            user_id = user.id
-            # teachers and admins can put/post/delete on others behalf
-            if (user.is_teacher or user.is_admin) and "username" in tr:
-                usr = get_user_from_username(tr["username"])
-                if usr is not None:
-                    user_id = usr.id
+        # do not allow multiple transcription for a single user
+        for d in data:
+            if "username" in d:
+                username = d["username"]
+            else:
+                username = user.username
 
-            # check that there's no transcription yet for this document/user
-            existing_tr = Transcription.query.filter(
-                Transcription.user_id == user_id,
-                Transcription.doc_id == doc_id
-            ).first()
-            if existing_tr is not None:
+            if username in usernames:
                 response = APIResponseFactory.make_response(errors={
                     "status": 403,
                     "title": "Insert forbidden",
                     "details": "Only one transcription per user and document is allowed"
                 })
+            else:
+                usernames.add(username)
+
+        if response is None:
+
+            for tr in data:
+                user = get_current_user()
+                user_id = user.id
+                # teachers and admins can put/post/delete on others behalf
+                if (user.is_teacher or user.is_admin) and "username" in tr:
+                    user = get_user_from_username(tr["username"])
+                    if user is not None:
+                        user_id = user.id
+
+                # check that there's no transcription yet for this document/user
+                existing_tr = Transcription.query.filter(
+                    Transcription.user_id == user_id,
+                    Transcription.doc_id == doc_id
+                ).first()
+
+                if existing_tr is not None:
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403,
+                        "title": "Insert forbidden",
+                        "details": "Only one transcription per user and document is allowed"
+                    })
+
+                if response is None:
+                    # check the request data structure
+                    if "content" not in tr:
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403,
+                            "title": "Insert forbidden",
+                            "details": "Data structure is incorrect: missing a 'content' field"
+                        })
+                    else:
+
+                        # get the transcription id max
+                        try:
+                            transcription_max_id = db.session.query(func.max(Transcription.id)).one()
+                            transcription_max_id = transcription_max_id[0] + 1
+                        except NoResultFound:
+                            # it is the transcription for this user and this document
+                            transcription_max_id = 1
+
+                        new_transcription = Transcription(
+                            id=transcription_max_id,
+                            content=tr["content"],
+                            doc_id=doc_id,
+                            user_id=user_id
+                        )
+
+                        db.session.add(new_transcription)
+                        created_users.add(user)
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Cannot insert data", "details": str(e)
+                })
 
             if response is None:
+                created_data = []
+                for usr in created_users:
+                    json_obj = query_json_endpoint(
+                        request,
+                        url_for(
+                            "api_bp.api_documents_transcriptions",
+                            api_version=api_version,
+                            doc_id=doc_id,
+                            user_id=user_id
+                        ),
+                        user=usr
+                    )
+                    created_data.append(json_obj)
+
+                response = APIResponseFactory.make_response(data=created_data)
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions', methods=["PUT"])
+@auth.login_required
+def api_put_documents_transcriptions(api_version, doc_id):
+    """
+    {
+        "data": [
+            {
+                "content" :  "My first transcription",   (mandatory)
+                "username":  "Eleve1"                    (optionnal)
+            },
+            {
+                "content" :  "My first transcription",   (mandatory)
+                "username":  "Eleve2"                    (optionnal)
+            }
+        ]
+    }
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+    data = request.get_json()
+    response = None
+
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+
+    if "data" in data and response is None:
+        data = data["data"]
+
+        if not isinstance(data, list):
+            data = [data]
+
+        if response is None:
+
+
+            updated_users = set()
+
+            for tr in data:
+
+                user = get_current_user()
+                user_id = user.id
+
+                # teachers and admins can put/post/delete on others behalf
+                if (user.is_teacher or user.is_admin) and "username" in tr:
+                    user = get_user_from_username(tr["username"])
+                    if user is not None:
+                        user_id = user.id
+
                 # check the request data structure
                 if "content" not in tr:
                     response = APIResponseFactory.make_response(errors={
                         "status": 403,
-                        "title": "Insert forbidden",
+                        "title": "Update forbidden",
                         "details": "Data structure is incorrect: missing a 'content' field"
                     })
+                    break
                 else:
 
-                    # get the transcription id max
                     try:
-                        transcription_max_id = db.session.query(func.max(Transcription.id)).one()
-                        transcription_max_id = transcription_max_id[0] + 1
+                        # get the transcription to update
+                        transcription = Transcription.query.filter(
+                            Transcription.user_id == user_id,
+                            Transcription.doc_id == doc_id
+                        ).one()
+
+                        transcription.content = tr["content"]
+                        db.session.add(transcription)
+                        # save which users to retriever later
+                        updated_users.add(user)
                     except NoResultFound:
-                        # it is the transcription for this user and this document
-                        transcription_max_id = 1
-
-                    new_transcription = Transcription(
-                        id=transcription_max_id,
-                        content=tr["content"],
-                        doc_id=doc_id,
-                        user_id=user_id
-                    )
-
-                    db.session.add(new_transcription)
-                    try:
-                        db.session.commit()
-                    except Exception as e:
                         response = APIResponseFactory.make_response(errors={
-                            "status": 403, "title": "Cannot insert data", "details": str(e)
+                            "status": 404,
+                            "title": "Update forbidden",
+                            "details": "Transcription not found"
                         })
+                        break
 
-                    if response is None:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for(
-                                "api_bp.api_documents_transcriptions",
-                                api_version=api_version,
-                                doc_id=doc_id,
-                                user_id=user_id
-                            ),
-                            user=user
-                        )
-                        response = APIResponseFactory.make_response(data=json_obj)
+            if response is None:
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403, "title": "Cannot update data", "details": str(e)
+                    })
+
+            if response is None:
+                updated_data = []
+                for usr in updated_users:
+                    json_obj = query_json_endpoint(
+                        request,
+                        url_for(
+                            "api_bp.api_documents_transcriptions",
+                            api_version=api_version,
+                            doc_id=doc_id,
+                            user_id=user_id
+                        ),
+                        user=usr
+                    )
+                    updated_data.append(json_obj)
+
+                response = APIResponseFactory.make_response(data=updated_data)
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions', methods=["DELETE"])
+@auth.login_required
+def api_delete_documents_transcriptions(api_version, doc_id):
+    """
+     {
+         "data": [
+             {
+                 "username":  "Eleve1"                    (optionnal)
+             },
+             {
+                 "username":  "Eleve2"                    (optionnal)
+             }
+         ]
+     }
+     :param api_version:
+     :param doc_id:
+     :return:
+     """
+    data = request.get_json()
+    response = None
+
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+
+    # delete all transcriptions for this document
+    if data is None:
+        Transcription.query.filter(Transcription.doc_id == doc_id).delete()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Transcription {0} not found".format(doc_id), "details": str(e)
+            })
+
+        if response is None:
+            response = APIResponseFactory.make_response(data=[])
+
+    # delete transcriptions for the give usernames
+    if response is None and "data" in data:
+        data = data["data"]
+
+        if not isinstance(data, list):
+            data = [data]
+
+        user = get_current_user()
+        user_id = user.id
+
+        for tr in data:
+            # teachers and admins can put/post/delete on others behalf
+            if (user.is_teacher or user.is_admin) and "username" in tr:
+                user = get_user_from_username(tr["username"])
+                if user is not None:
+                    user_id = user.id
+
+            try:
+                # get the transcription to update
+                transcription = Transcription.query.filter(
+                    Transcription.user_id == user_id,
+                    Transcription.doc_id == doc_id
+                ).one()
+                db.session.delete(transcription)
+
+            except NoResultFound:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404,
+                    "title": "Delete forbidden",
+                    "details": "Transcription not found"
+                })
+                break
+
+        if response is None:
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Cannot delete data", "details": str(e)
+                })
+
+        if response is None:
+            response = APIResponseFactory.make_response(data=[])
 
     return APIResponseFactory.jsonify(response)
 
@@ -392,7 +613,6 @@ def api_documents_translations(api_version, doc_id, user_id=None):
     return APIResponseFactory.jsonify(response)
 
 
-
 """
 ===========================
     Notes
@@ -400,7 +620,7 @@ def api_documents_translations(api_version, doc_id, user_id=None):
 """
 
 
-@api_bp.route('/api/<api_version>/notes', methods=['GET','POST'])
+@api_bp.route('/api/<api_version>/notes', methods=['GET', 'POST'])
 def api_add_note(api_version):
     note_data = request.get_json()
     # note = Note()
@@ -412,7 +632,6 @@ def api_add_note(api_version):
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>")
 def api_documents_notes_from_user(api_version, doc_id, user_id):
-
     # sélectionner la liste des notes d'un utilisateur pour un doc
     # cad ses notes de transcrition, traduction, commentaire
     # TODO refactor
@@ -424,7 +643,8 @@ def api_documents_notes_from_user(api_version, doc_id, user_id):
     :return:
     """
     try:
-        transcription = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user_id).first()
+        transcription = Transcription.query.filter(Transcription.doc_id == doc_id,
+                                                   Transcription.user_id == user_id).first()
         translation = Translation.query.filter(Translation.doc_id == doc_id, Translation.user_id == user_id).first()
         commentaries = Commentary.query.filter(Commentary.doc_id == doc_id, Commentary.user_id == user_id).all()
 
@@ -501,14 +721,9 @@ def api_users(api_version, user_id):
     return APIResponseFactory.jsonify(response)
 
 
-
-
 """
 Declare IIIF related routes
 """
 from app.api.iiif import routes
 
-
 app.register_blueprint(api_bp)
-
-

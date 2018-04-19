@@ -383,6 +383,7 @@ def api_post_documents_annotations(api_version, doc_id):
         try:
             db.session.commit()
         except Exception as e:
+            db.session.rollback()
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Cannot insert data", "details": str(e)
             })
@@ -493,6 +494,7 @@ def api_put_documents_annotations(api_version, doc_id):
             try:
                 db.session.commit()
             except Exception as e:
+                db.session.rollback()
                 response = APIResponseFactory.make_response(errors={
                     "status": 403, "title": "Cannot update data", "details": str(e)
                 })
@@ -532,14 +534,16 @@ def api_delete_documents_annotations(api_version, doc_id):
             "data" : [{
                 "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-                "zone_id" : 1
+                "zone_id" : 1,
+                "username": "Eleve1"     (optionnal)
             },
         ...
             },
             {
                 "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-                "zone_id" : 2
+                "zone_id" : 2,
+                "username": "Eleve1"     (optionnal)
             }]
         }
     :param api_version:
@@ -558,11 +562,18 @@ def api_delete_documents_annotations(api_version, doc_id):
             data = [data]
 
         user = get_current_user()
-        # restrict student to deltee only their own data
-        user_id = user.id if not user.is_teacher and not user.is_admin else ImageZone.user_id
         img_zones = []
         validated_annotations = [d for d in data if "manifest_url" in d and "img_id" in d and "zone_id" in d]
+
         for anno in validated_annotations:
+
+            user_id = user.id
+            # teacher and admin MAY post/put/delete for others
+            if (user.is_teacher or user.is_admin) and "username" in anno:
+                usr = get_user_from_username(anno["username"])
+                if usr is not None:
+                    user_id = usr.id
+
             try:
                 img_zone = ImageZone.query.filter(
                     ImageZone.zone_id == anno["zone_id"],
