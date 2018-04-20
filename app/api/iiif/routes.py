@@ -1,15 +1,44 @@
-import pprint
 from flask import url_for, request
 from requests import HTTPError
 from sqlalchemy import func
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from urllib.request import build_opener
+from sqlalchemy.orm.exc import NoResultFound
+from urllib.request import build_opener, urlopen
 
-from app import auth, db, role_required, get_current_user, get_user_from_username
-from app.api.open_annotation import make_annotation, make_annotation_list
+from app import auth, db, get_current_user, get_user_from_username
+from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
-from app.api.routes import query_json_endpoint, json_loads, api_bp, get_reference_transcription
-from app.models import AlignmentImage, ImageZone, Image, Document, Transcription, User
+from app.api.routes import query_json_endpoint, json_loads, api_bp
+from app.api.transcriptions.routes import get_reference_transcription
+from app.models import AlignmentImage, ImageZone, Image, Document
+
+
+"""
+===========================
+    Manifest
+===========================
+"""
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest')
+def api_documents_manifest(api_version, doc_id):
+    no_result = False
+    try:
+        img = Image.query.filter(Image.doc_id == doc_id).one()
+        manifest_data = urlopen(img.manifest_url).read()
+    except NoResultFound:
+        no_result = True
+        manifest_data = "{}"
+
+    if no_result:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404,
+            "details": "Cannot fetch manifest for the document {0}".format(doc_id)
+        })
+    else:
+        data = json_loads(manifest_data)
+        response = APIResponseFactory.make_response(data=data)
+
+    return APIResponseFactory.jsonify(response)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/first-canvas")
@@ -34,6 +63,13 @@ def api_documents_first_canvas(api_version, doc_id):
             })
 
     return APIResponseFactory.jsonify(response)
+
+
+"""
+===========================
+    Annotations
+===========================
+"""
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations")
@@ -426,7 +462,7 @@ def api_put_documents_annotations(api_version, doc_id):
                 "zone_id" : 32,
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>",
-                "username": "Eleve1"
+                "username": "Eleve1"    (optionnal)
             },
         ...
             },
@@ -436,7 +472,7 @@ def api_put_documents_annotations(api_version, doc_id):
                 "zone_id" : 30
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>",
-                "username": "Professeur1"
+                "username": "Professeur1"    (optionnal)
             }]
         }
     :param api_version:

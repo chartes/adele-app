@@ -1,6 +1,14 @@
 app package
 ===========
 
+Subpackages
+-----------
+
+.. toctree::
+
+    app.database
+    app.forms
+
 Submodules
 ----------
 

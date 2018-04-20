@@ -1,6 +1,13 @@
 app.database package
 ====================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    app.database.alignment
+
 Module contents
 ---------------
 

@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="fr" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="fr" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -25,25 +25,17 @@
   
 
   
-  
     <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Recherche" href="../search.html"/>
-    <link rel="top" title="Documentation Adele " href="../index.html"/>
-        <link rel="up" title="Code du module" href="index.html"/> 
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Recherche" href="../search.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -101,7 +93,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">Adele</a>
@@ -109,9 +101,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -141,8 +134,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -154,41 +145,112 @@
            <div itemprop="articleBody">
             
   <h1>Code source de app</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="k">import</span> <span class="n">Flask</span>
+<span></span><span class="kn">import</span> <span class="nn">pprint</span>
+
+<span class="kn">import</span> <span class="nn">flask_login</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="k">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">url_for</span><span class="p">,</span> <span class="n">redirect</span>
+<span class="kn">from</span> <span class="nn">flask_login</span> <span class="k">import</span> <span class="n">current_user</span>
+<span class="kn">from</span> <span class="nn">flask_mail</span> <span class="k">import</span> <span class="n">Mail</span>
+<span class="kn">from</span> <span class="nn">flask_scss</span> <span class="k">import</span> <span class="n">Scss</span>
+<span class="kn">from</span> <span class="nn">flask_sqlalchemy</span> <span class="k">import</span> <span class="n">SQLAlchemy</span>
+<span class="kn">from</span> <span class="nn">flask_user</span> <span class="k">import</span> <span class="n">UserManager</span><span class="p">,</span> <span class="n">SQLAlchemyAdapter</span>
+<span class="kn">from</span> <span class="nn">werkzeug.security</span> <span class="k">import</span> <span class="n">generate_password_hash</span><span class="p">,</span> <span class="n">check_password_hash</span>
+
+<span class="kn">from</span> <span class="nn">app.api.response</span> <span class="k">import</span> <span class="n">APIResponseFactory</span>
+<span class="kn">from</span> <span class="nn">app.forms.register</span> <span class="k">import</span> <span class="n">CustomRegisterForm</span>
+
+
+<span class="kn">from</span>  <span class="nn">flask_httpauth</span> <span class="k">import</span> <span class="n">HTTPBasicAuth</span>
+
+
 <span class="kn">from</span> <span class="nn">config</span> <span class="k">import</span> <span class="n">Config</span>
-<span class="kn">from</span> <span class="nn">sqlalchemy.ext.automap</span> <span class="k">import</span> <span class="n">automap_base</span>
-<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="k">import</span> <span class="n">create_session</span>
-<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="k">import</span> <span class="n">create_engine</span>
 
 <span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">from_object</span><span class="p">(</span><span class="n">Config</span><span class="p">)</span>
 
+<span class="c1"># Initialize Flask extensions</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">SQLAlchemy</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>  <span class="c1"># Initialize Flask-SQLAlchemy</span>
+<span class="n">mail</span> <span class="o">=</span> <span class="n">Mail</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>  <span class="c1"># Initialize Flask-Mail</span>
+<span class="n">scss</span> <span class="o">=</span> <span class="n">Scss</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="n">auth</span> <span class="o">=</span> <span class="n">HTTPBasicAuth</span><span class="p">()</span>
+
+
+<span class="kn">from</span> <span class="nn">app</span> <span class="k">import</span> <span class="n">models</span>
+
+
+<div class="viewcode-block" id="get_user_from_username"><a class="viewcode-back" href="../apidoc/app.html#app.get_user_from_username">[docs]</a><span class="k">def</span> <span class="nf">get_user_from_username</span><span class="p">(</span><span class="n">username</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">username</span> <span class="o">==</span> <span class="n">username</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_current_user"><a class="viewcode-back" href="../apidoc/app.html#app.get_current_user">[docs]</a><span class="k">def</span> <span class="nf">get_current_user</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">auth</span><span class="o">.</span><span class="n">username</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">current_user</span><span class="o">.</span><span class="n">is_anonymous</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">current_user</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">username</span> <span class="o">==</span> <span class="n">auth</span><span class="o">.</span><span class="n">username</span><span class="p">())</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">user</span></div>
+
+<div class="viewcode-block" id="role_required"><a class="viewcode-back" href="../apidoc/app.html#app.role_required">[docs]</a><span class="k">def</span> <span class="nf">role_required</span><span class="p">(</span><span class="o">*</span><span class="n">wanted_roles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ensure the logged user has all of the wanted roles</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="n">route</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">func_wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">):</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">get_current_user</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">wanted_roles</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">has_role</span><span class="p">(</span><span class="n">role</span><span class="p">):</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="n">APIResponseFactory</span><span class="o">.</span><span class="n">make_response</span><span class="p">(</span>
+                        <span class="n">errors</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="mi">401</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;You are not authorized to access this resource&quot;</span><span class="p">}</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="n">APIResponseFactory</span><span class="o">.</span><span class="n">jsonify</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+            <span class="c1"># roles are OK</span>
+            <span class="k">return</span> <span class="n">route</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">func_wrapper</span>
+    <span class="k">return</span> <span class="n">wrap</span></div>
+
+
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">open the sqlite database</span>
+<span class="sd">---------------------------------</span>
+<span class="sd">Setup Flask-User</span>
+<span class="sd">---------------------------------</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="c1">#handle conflicts in name resolution</span>
-<div class="viewcode-block" id="name_for_collection_relationship"><a class="viewcode-back" href="../apidoc/app.html#app.name_for_collection_relationship">[docs]</a><span class="k">def</span> <span class="nf">name_for_collection_relationship</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">local_cls</span><span class="p">,</span> <span class="n">referred_cls</span><span class="p">,</span> <span class="n">constraint</span><span class="p">):</span>
-    <span class="n">disc</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">constraint</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">referred_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">disc</span> <span class="o">+</span> <span class="s2">&quot;_collection&quot;</span>
+
+<span class="c1"># Register the User model</span>
+<span class="n">db_adapter</span> <span class="o">=</span> <span class="n">SQLAlchemyAdapter</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="CustomUserManager"><a class="viewcode-back" href="../apidoc/app.html#app.CustomUserManager">[docs]</a><span class="k">class</span> <span class="nc">CustomUserManager</span><span class="p">(</span><span class="n">UserManager</span><span class="p">):</span>
+<div class="viewcode-block" id="CustomUserManager.hash_password"><a class="viewcode-back" href="../apidoc/app.html#app.CustomUserManager.hash_password">[docs]</a>    <span class="k">def</span> <span class="nf">hash_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">generate_password_hash</span><span class="p">(</span><span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span></div>
 
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="s2">&quot;sqlite:///</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">Config</span><span class="o">.</span><span class="n">SQLALCHEMY_DATABASE_URI</span><span class="p">))</span>
-    <span class="n">automap_base</span><span class="p">()</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">reflect</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                           <span class="n">name_for_collection_relationship</span><span class="o">=</span><span class="n">name_for_collection_relationship</span><span class="p">)</span>
-    <span class="n">db</span> <span class="o">=</span> <span class="n">create_session</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
-<span class="k">except</span><span class="p">:</span>
-    <span class="n">db</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="viewcode-block" id="CustomUserManager.verify_password"><a class="viewcode-back" href="../apidoc/app.html#app.CustomUserManager.verify_password">[docs]</a>    <span class="k">def</span> <span class="nf">verify_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">check_password_hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_password</span><span class="p">(</span><span class="n">user</span><span class="p">),</span> <span class="n">password</span><span class="p">)</span></div></div>
 
 
-<span class="kn">from</span> <span class="nn">app</span> <span class="k">import</span> <span class="n">routes</span><span class="p">,</span> <span class="n">models</span>
+<span class="c1"># Initialize Flask-User</span>
+<span class="n">user_manager</span> <span class="o">=</span> <span class="n">CustomUserManager</span><span class="p">(</span><span class="n">db_adapter</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">register_form</span><span class="o">=</span><span class="n">CustomRegisterForm</span><span class="p">)</span>
+
+
+<span class="c1"># Initialize the HTTP Auth mechanism</span>
+<div class="viewcode-block" id="verify_password"><a class="viewcode-back" href="../apidoc/app.html#app.verify_password">[docs]</a><span class="nd">@auth</span><span class="o">.</span><span class="n">verify_password</span>
+<span class="k">def</span> <span class="nf">verify_password</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">User</span><span class="o">.</span><span class="n">username</span> <span class="o">==</span> <span class="n">username</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">user_manager</span><span class="o">.</span><span class="n">verify_password</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span></div>
+
+
+<span class="kn">from</span> <span class="nn">app</span> <span class="k">import</span> <span class="n">routes</span>
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -201,7 +263,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -220,6 +282,7 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
             VERSION:'',
+            LANGUAGE:'fr',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -239,14 +302,13 @@
     <script type="text/javascript" src="../_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

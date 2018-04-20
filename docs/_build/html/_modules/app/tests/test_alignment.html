@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="fr" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="fr" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -25,25 +25,17 @@
   
 
   
-  
     <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../../../genindex.html"/>
-        <link rel="search" title="Recherche" href="../../../search.html"/>
-    <link rel="top" title="Documentation Adele " href="../../../index.html"/>
-        <link rel="up" title="app" href="../../app.html"/> 
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Recherche" href="../../../search.html" /> 
 
   
   <script src="../../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -101,7 +93,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">Adele</a>
@@ -109,9 +101,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -143,8 +136,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -158,11 +149,12 @@
   <h1>Code source de app.tests.test_alignment</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">unittest</span>
-<span class="kn">from</span> <span class="nn">sqlalchemy.ext.automap</span> <span class="k">import</span> <span class="n">automap_base</span>
-<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="k">import</span> <span class="n">create_session</span>
-<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="k">import</span> <span class="n">create_engine</span>
 
-<span class="kn">from</span> <span class="nn">config</span> <span class="k">import</span> <span class="n">Config</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.sql.elements</span> <span class="k">import</span> <span class="n">and_</span>
+
+<span class="kn">from</span> <span class="nn">app</span> <span class="k">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">app.database.alignment.alignment_translation</span> <span class="k">import</span> <span class="n">align_translation</span>
+<span class="kn">from</span> <span class="nn">app.models</span> <span class="k">import</span> <span class="n">AlignmentTranslation</span>
 
 <span class="n">NS_TI</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ti&quot;</span><span class="p">:</span> <span class="s2">&quot;http://www.tei-c.org/ns/1.0&quot;</span><span class="p">}</span>
 <span class="n">TEST_DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;app/tests/data&quot;</span>
@@ -170,86 +162,74 @@
 
 <div class="viewcode-block" id="TestTranscriptionTranslationAlignment"><a class="viewcode-back" href="../../../apidoc/app.tests.html#app.tests.test_alignment.TestTranscriptionTranslationAlignment">[docs]</a><span class="k">class</span> <span class="nc">TestTranscriptionTranslationAlignment</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
 
-    <span class="n">ALIGNMENT_STMT</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">transcription_id</span> <span class="p">:</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">    -- Transcription vs Translation</span>
-<span class="s2">    SELECT</span>
-<span class="s2">      transcription.transcription_id,</span>
-<span class="s2">      translation.translation_id,</span>
-<span class="s2">      substr(transcription.content, ptr_transcription_start, </span>
-<span class="s2">        ptr_transcription_end - ptr_transcription_start) as transcription,</span>
-<span class="s2">      substr(translation.content, ptr_translation_start, </span>
-<span class="s2">        ptr_translation_end - ptr_translation_start) as translation</span>
-<span class="s2">    FROM</span>
-<span class="s2">      transcription</span>
-<span class="s2">      LEFT JOIN alignment_translation</span>
-<span class="s2">        on transcription.transcription_id = alignment_translation.transcription_id</span>
-<span class="s2">      LEFT JOIN  translation</span>
-<span class="s2">        ON alignment_translation.translation_id = translation.translation_id</span>
-<span class="s2">    WHERE</span>
-<span class="s2">      transcription.transcription_id = </span><span class="si">{transcription_id}</span><span class="s2">      </span>
-<span class="s2">    ;</span>
-<span class="s2">    &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">transcription_id</span><span class="o">=</span><span class="n">transcription_id</span><span class="p">)</span>
+    <span class="n">doc_list</span> <span class="o">=</span> <span class="p">[]</span>
 
 <div class="viewcode-block" id="TestTranscriptionTranslationAlignment.setUpClass"><a class="viewcode-back" href="../../../apidoc/app.tests.html#app.tests.test_alignment.TestTranscriptionTranslationAlignment.setUpClass">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">setUpClass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="bp">cls</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="s2">&quot;sqlite:///</span><span class="si">{url}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">Config</span><span class="o">.</span><span class="n">TESTS_DB_URL</span><span class="p">))</span>
-
-        <span class="k">def</span> <span class="nf">name_for_collection_relationship</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">local_cls</span><span class="p">,</span> <span class="n">referred_cls</span><span class="p">,</span> <span class="n">constraint</span><span class="p">):</span>
-            <span class="n">disc</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">constraint</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">referred_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">disc</span> <span class="o">+</span> <span class="s2">&quot;_collection&quot;</span>
-        <span class="n">automap_base</span><span class="p">()</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span> <span class="n">reflect</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                               <span class="n">name_for_collection_relationship</span><span class="o">=</span><span class="n">name_for_collection_relationship</span><span class="p">)</span>
-
-        <span class="bp">cls</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">create_session</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">engine</span><span class="p">)</span>
-
+        <span class="c1">#load the list of the fn of the tested documents</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">doc_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">directories</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">TEST_DATA_DIR</span><span class="p">,</span> <span class="s1">&#39;transcription&#39;</span><span class="p">)):</span>
             <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;10.txt&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">):</span>
                     <span class="bp">cls</span><span class="o">.</span><span class="n">doc_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
 
-        <span class="bp">cls</span><span class="o">.</span><span class="n">doc_list</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span></div>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Tested docs:&quot;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">doc_list</span><span class="p">)</span>
-
+        <span class="bp">cls</span><span class="o">.</span><span class="n">doc_list</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Tested docs:&quot;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">doc_list</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TestTranscriptionTranslationAlignment.test_both_ids_match"><a class="viewcode-back" href="../../../apidoc/app.tests.html#app.tests.test_alignment.TestTranscriptionTranslationAlignment.test_both_ids_match">[docs]</a>    <span class="k">def</span> <span class="nf">test_both_ids_match</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Translation and corresponding transcription ids may be equal. If not mandatory, it is still wishable.</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">TestTranscriptionTranslationAlignment</span><span class="o">.</span><span class="n">doc_list</span><span class="p">:</span>
-            <span class="n">stmt</span> <span class="o">=</span> <span class="n">TestTranscriptionTranslationAlignment</span><span class="o">.</span><span class="n">ALIGNMENT_STMT</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-            <span class="c1"># expect consistency between translation and traduction ids (shouldn&#39;t happen)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">align_translation</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
+
+            <span class="c1"># expect consistency between translation and traduction ids (error shouldn&#39;t happen)</span>
             <span class="n">transcription_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
             <span class="n">translation_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">transcription_id</span><span class="p">,</span> <span class="n">translation_id</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">translation_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">transcription_id</span><span class="p">,</span> <span class="n">translation_id</span><span class="p">,</span> <span class="n">ptr1</span><span class="p">,</span> <span class="n">ptr2</span><span class="p">,</span> <span class="n">ptr3</span><span class="p">,</span> <span class="n">ptr4</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">translation_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="c1">#sometime there&#39;s just no translation.</span>
                     <span class="n">transcription_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">transcription_id</span><span class="p">)</span>
-                    <span class="n">translation_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">translation_id</span><span class="p">)</span></div>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertSetEqual</span><span class="p">(</span><span class="n">transcription_ids</span><span class="p">,</span> <span class="n">translation_ids</span><span class="p">,</span> <span class="s2">&quot;Something is wrong with the IDs&quot;</span><span class="p">)</span>
+                    <span class="n">translation_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">translation_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertSetEqual</span><span class="p">(</span><span class="n">transcription_ids</span><span class="p">,</span> <span class="n">translation_ids</span><span class="p">,</span> <span class="s2">&quot;Something is wrong with the IDs&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TestTranscriptionTranslationAlignment.test_alignment_is_correct"><a class="viewcode-back" href="../../../apidoc/app.tests.html#app.tests.test_alignment.TestTranscriptionTranslationAlignment.test_alignment_is_correct">[docs]</a>    <span class="k">def</span> <span class="nf">test_alignment_is_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test alignment between static txt files and rows fetched from the db</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">TestTranscriptionTranslationAlignment</span><span class="o">.</span><span class="n">doc_list</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">TEST_DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;transcription&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">transcription_f</span><span class="p">,</span> \
                  <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">TEST_DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;translation&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">translation_f</span><span class="p">:</span>
                 <span class="n">transcription_lines</span> <span class="o">=</span> <span class="n">transcription_f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
                 <span class="n">translation_lines</span> <span class="o">=</span> <span class="n">translation_f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
 
-                <span class="n">stmt</span> <span class="o">=</span> <span class="n">TestTranscriptionTranslationAlignment</span><span class="o">.</span><span class="n">ALIGNMENT_STMT</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
-                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">align_translation</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">translation_lines</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">translation_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">l</span><span class="p">[</span><span class="s2">&quot;translation_id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">res</span> <span class="k">if</span> <span class="n">l</span><span class="p">[</span><span class="s2">&quot;translation_id&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">])</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">translation_ids</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;There is no translation for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">translation_ids</span><span class="p">),</span> <span class="s2">&quot;There is no translation for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">([</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">transcription_lines</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">len</span><span class="p">([</span><span class="n">l</span><span class="p">[</span><span class="s2">&quot;transcription&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">res</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="s2">&quot;transcription&quot;</span><span class="p">])</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]),</span> <span class="s2">&quot;Transcription lines count does not match for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+                    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                    Test line count</span>
+<span class="sd">                    &quot;&quot;&quot;</span>
+                    <span class="n">line_cnt_file</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">transcription_lines</span><span class="p">)</span>
+                    <span class="n">line_cnt_db</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">AlignmentTranslation</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">and_</span><span class="p">(</span><span class="n">AlignmentTranslation</span><span class="o">.</span><span class="n">transcription_id</span><span class="o">==</span><span class="n">doc</span><span class="p">,</span><span class="n">AlignmentTranslation</span><span class="o">.</span><span class="n">ptr_transcription_start</span><span class="o">!=</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">line_cnt_file</span><span class="p">,</span> <span class="n">line_cnt_db</span><span class="p">,</span> <span class="s2">&quot;Transcription lines count does not match for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+
+                    <span class="n">line_cnt_file</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">translation_lines</span><span class="p">)</span>
+                    <span class="n">line_cnt_db</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">AlignmentTranslation</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">and_</span><span class="p">(</span><span class="n">AlignmentTranslation</span><span class="o">.</span><span class="n">transcription_id</span><span class="o">==</span><span class="n">doc</span><span class="p">,</span><span class="n">AlignmentTranslation</span><span class="o">.</span><span class="n">ptr_translation_start</span><span class="o">!=</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">line_cnt_file</span><span class="p">,</span> <span class="n">line_cnt_db</span><span class="p">,</span> <span class="s2">&quot;Translation lines count does not match for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+                    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                    Test alignment database vs test file</span>
+<span class="sd">                    &quot;&quot;&quot;</span>
                     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transcription</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">transcription_lines</span><span class="p">):</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;transcription&quot;</span><span class="p">],</span> <span class="n">transcription</span><span class="p">,</span> <span class="s2">&quot;Transcription ptrs look wrong for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">transcription</span><span class="p">,</span> <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;transcription&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;transcription&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s2">&quot;Transcription ptrs look wrong for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">([</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">translation_lines</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">len</span><span class="p">([</span><span class="n">l</span><span class="p">[</span><span class="s2">&quot;translation&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">res</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="s2">&quot;translation&quot;</span><span class="p">])</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]),</span> <span class="s2">&quot;Translation lines count does not match for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
                     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">translation</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">translation_lines</span><span class="p">):</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;translation&quot;</span><span class="p">],</span> <span class="n">translation</span><span class="p">,</span> <span class="s2">&quot;Translation ptrs look wrong for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
-</div></div>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Alignment transcription/translation for doc </span><span class="si">{0}</span><span class="s2"> is OK&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">translation</span><span class="p">,</span> <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;translation&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;translation&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s2">&quot;Translation ptrs look wrong for doc </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span></div></div>
 
+            <span class="c1">#print(&quot;Alignment transcription/translation for doc {0} is OK&quot;.format(doc) )</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
@@ -257,9 +237,7 @@
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -272,7 +250,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -291,6 +269,7 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
             VERSION:'',
+            LANGUAGE:'fr',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -310,14 +289,13 @@
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

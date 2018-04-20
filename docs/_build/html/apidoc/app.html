@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="fr" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="fr" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -25,27 +25,19 @@
   
 
   
-  
     <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Recherche" href="../search.html"/>
-    <link rel="top" title="Documentation Adele " href="../index.html"/>
-        <link rel="up" title="app" href="modules.html"/>
-        <link rel="next" title="app.database package" href="app.database.html"/>
-        <link rel="prev" title="app" href="modules.html"/> 
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Recherche" href="../search.html" />
+    <link rel="next" title="app.database package" href="app.database.html" />
+    <link rel="prev" title="app" href="modules.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -91,6 +83,11 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">app</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">app package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="app.database.html">app.database package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="app.forms.html">app.forms package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-app.models">app.models module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-app.routes">app.routes module</a></li>
@@ -112,7 +109,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">Adele</a>
@@ -120,9 +117,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -168,30 +166,1029 @@
             
   <div class="section" id="app-package">
 <h1>app package<a class="headerlink" href="#app-package" title="Lien permanent vers ce titre">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Lien permanent vers ce titre">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="app.database.html">app.database package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="app.database.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="app.database.alignment.html">app.database.alignment package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="app.database.alignment.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="app.database.alignment.html#module-app.database.alignment.alignment_translation">app.database.alignment.alignment_translation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="app.database.alignment.html#module-app.database.alignment">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="app.database.html#module-app.database">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="app.forms.html">app.forms package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="app.forms.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.forms.html#module-app.forms.register">app.forms.register module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.forms.html#module-app.forms">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Lien permanent vers ce titre">¶</a></h2>
 </div>
 <div class="section" id="module-app.models">
 <span id="app-models-module"></span><h2>app.models module<a class="headerlink" href="#module-app.models" title="Lien permanent vers ce titre">¶</a></h2>
+<dl class="class">
+<dt id="app.models.ActeType">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">ActeType</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#ActeType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.ActeType" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.ActeType.description">
+<code class="descname">description</code><a class="headerlink" href="#app.models.ActeType.description" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.ActeType.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.ActeType.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.ActeType.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.ActeType.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.ActeType.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#ActeType.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.ActeType.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.AlignmentDiscours">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">AlignmentDiscours</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#AlignmentDiscours"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.AlignmentDiscours" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.AlignmentDiscours.note_id">
+<code class="descname">note_id</code><a class="headerlink" href="#app.models.AlignmentDiscours.note_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentDiscours.ptr_end">
+<code class="descname">ptr_end</code><a class="headerlink" href="#app.models.AlignmentDiscours.ptr_end" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentDiscours.ptr_start">
+<code class="descname">ptr_start</code><a class="headerlink" href="#app.models.AlignmentDiscours.ptr_start" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.AlignmentDiscours.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#AlignmentDiscours.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.AlignmentDiscours.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentDiscours.speech_part_type_id">
+<code class="descname">speech_part_type_id</code><a class="headerlink" href="#app.models.AlignmentDiscours.speech_part_type_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentDiscours.transcription_id">
+<code class="descname">transcription_id</code><a class="headerlink" href="#app.models.AlignmentDiscours.transcription_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentDiscours.user_id">
+<code class="descname">user_id</code><a class="headerlink" href="#app.models.AlignmentDiscours.user_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.AlignmentImage">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">AlignmentImage</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#AlignmentImage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.AlignmentImage" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.AlignmentImage.img_id">
+<code class="descname">img_id</code><a class="headerlink" href="#app.models.AlignmentImage.img_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentImage.manifest_url">
+<code class="descname">manifest_url</code><a class="headerlink" href="#app.models.AlignmentImage.manifest_url" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentImage.ptr_transcription_end">
+<code class="descname">ptr_transcription_end</code><a class="headerlink" href="#app.models.AlignmentImage.ptr_transcription_end" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentImage.ptr_transcription_start">
+<code class="descname">ptr_transcription_start</code><a class="headerlink" href="#app.models.AlignmentImage.ptr_transcription_start" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.AlignmentImage.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#AlignmentImage.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.AlignmentImage.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentImage.transcription_id">
+<code class="descname">transcription_id</code><a class="headerlink" href="#app.models.AlignmentImage.transcription_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentImage.user_id">
+<code class="descname">user_id</code><a class="headerlink" href="#app.models.AlignmentImage.user_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentImage.zone_id">
+<code class="descname">zone_id</code><a class="headerlink" href="#app.models.AlignmentImage.zone_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.AlignmentTranslation">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">AlignmentTranslation</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#AlignmentTranslation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.AlignmentTranslation" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.AlignmentTranslation.ptr_transcription_end">
+<code class="descname">ptr_transcription_end</code><a class="headerlink" href="#app.models.AlignmentTranslation.ptr_transcription_end" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentTranslation.ptr_transcription_start">
+<code class="descname">ptr_transcription_start</code><a class="headerlink" href="#app.models.AlignmentTranslation.ptr_transcription_start" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentTranslation.ptr_translation_end">
+<code class="descname">ptr_translation_end</code><a class="headerlink" href="#app.models.AlignmentTranslation.ptr_translation_end" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentTranslation.ptr_translation_start">
+<code class="descname">ptr_translation_start</code><a class="headerlink" href="#app.models.AlignmentTranslation.ptr_translation_start" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.AlignmentTranslation.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#AlignmentTranslation.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.AlignmentTranslation.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentTranslation.transcription_id">
+<code class="descname">transcription_id</code><a class="headerlink" href="#app.models.AlignmentTranslation.transcription_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.AlignmentTranslation.translation_id">
+<code class="descname">translation_id</code><a class="headerlink" href="#app.models.AlignmentTranslation.translation_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Commentary">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Commentary</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Commentary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Commentary" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Commentary.content">
+<code class="descname">content</code><a class="headerlink" href="#app.models.Commentary.content" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Commentary.doc_id">
+<code class="descname">doc_id</code><a class="headerlink" href="#app.models.Commentary.doc_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Commentary.notes">
+<code class="descname">notes</code><a class="headerlink" href="#app.models.Commentary.notes" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Commentary.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Commentary.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Commentary.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Commentary.type_id">
+<code class="descname">type_id</code><a class="headerlink" href="#app.models.Commentary.type_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Commentary.user_id">
+<code class="descname">user_id</code><a class="headerlink" href="#app.models.Commentary.user_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.CommentaryType">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">CommentaryType</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#CommentaryType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.CommentaryType" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.CommentaryType.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.CommentaryType.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.CommentaryType.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.CommentaryType.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.CommentaryType.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#CommentaryType.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.CommentaryType.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Country">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Country</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Country"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Country" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Country.documents">
+<code class="descname">documents</code><a class="headerlink" href="#app.models.Country.documents" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Country.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.Country.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Country.ref">
+<code class="descname">ref</code><a class="headerlink" href="#app.models.Country.ref" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Country.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Country.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Country.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.District">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">District</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#District"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.District" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.District.country_ref">
+<code class="descname">country_ref</code><a class="headerlink" href="#app.models.District.country_ref" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.District.documents">
+<code class="descname">documents</code><a class="headerlink" href="#app.models.District.documents" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.District.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.District.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.District.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.District.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.District.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#District.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.District.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Document">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Document</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Document" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Document.acte_types">
+<code class="descname">acte_types</code><a class="headerlink" href="#app.models.Document.acte_types" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.argument">
+<code class="descname">argument</code><a class="headerlink" href="#app.models.Document.argument" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.copy_cent">
+<code class="descname">copy_cent</code><a class="headerlink" href="#app.models.Document.copy_cent" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.copy_year">
+<code class="descname">copy_year</code><a class="headerlink" href="#app.models.Document.copy_year" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.countries">
+<code class="descname">countries</code><a class="headerlink" href="#app.models.Document.countries" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.creation">
+<code class="descname">creation</code><a class="headerlink" href="#app.models.Document.creation" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.creation_lab">
+<code class="descname">creation_lab</code><a class="headerlink" href="#app.models.Document.creation_lab" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.date_insert">
+<code class="descname">date_insert</code><a class="headerlink" href="#app.models.Document.date_insert" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.date_update">
+<code class="descname">date_update</code><a class="headerlink" href="#app.models.Document.date_update" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.districts">
+<code class="descname">districts</code><a class="headerlink" href="#app.models.Document.districts" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.editors">
+<code class="descname">editors</code><a class="headerlink" href="#app.models.Document.editors" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Document.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.images">
+<code class="descname">images</code><a class="headerlink" href="#app.models.Document.images" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.institution">
+<code class="descname">institution</code><a class="headerlink" href="#app.models.Document.institution" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.institution_ref">
+<code class="descname">institution_ref</code><a class="headerlink" href="#app.models.Document.institution_ref" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.languages">
+<code class="descname">languages</code><a class="headerlink" href="#app.models.Document.languages" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.linked_documents">
+<code class="descname">linked_documents</code><a class="headerlink" href="#app.models.Document.linked_documents" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.pressmark">
+<code class="descname">pressmark</code><a class="headerlink" href="#app.models.Document.pressmark" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Document.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Document.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Document.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.subtitle">
+<code class="descname">subtitle</code><a class="headerlink" href="#app.models.Document.subtitle" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.title">
+<code class="descname">title</code><a class="headerlink" href="#app.models.Document.title" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Document.traditions">
+<code class="descname">traditions</code><a class="headerlink" href="#app.models.Document.traditions" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Editor">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Editor</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Editor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Editor" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Editor.documents">
+<code class="descname">documents</code><a class="headerlink" href="#app.models.Editor.documents" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Editor.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Editor.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Editor.name">
+<code class="descname">name</code><a class="headerlink" href="#app.models.Editor.name" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Editor.ref">
+<code class="descname">ref</code><a class="headerlink" href="#app.models.Editor.ref" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Editor.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Editor.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Editor.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Image">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Image</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Image" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Image.doc_id">
+<code class="descname">doc_id</code><a class="headerlink" href="#app.models.Image.doc_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Image.document">
+<code class="descname">document</code><a class="headerlink" href="#app.models.Image.document" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Image.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Image.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Image.manifest_url">
+<code class="descname">manifest_url</code><a class="headerlink" href="#app.models.Image.manifest_url" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Image.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Image.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Image.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Image.zones">
+<code class="descname">zones</code><a class="headerlink" href="#app.models.Image.zones" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.ImageZone">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">ImageZone</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#ImageZone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.ImageZone" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.ImageZone.coords">
+<code class="descname">coords</code><a class="headerlink" href="#app.models.ImageZone.coords" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.ImageZone.img_id">
+<code class="descname">img_id</code><a class="headerlink" href="#app.models.ImageZone.img_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.ImageZone.manifest_url">
+<code class="descname">manifest_url</code><a class="headerlink" href="#app.models.ImageZone.manifest_url" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.ImageZone.note">
+<code class="descname">note</code><a class="headerlink" href="#app.models.ImageZone.note" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.ImageZone.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#ImageZone.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.ImageZone.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.ImageZone.user_id">
+<code class="descname">user_id</code><a class="headerlink" href="#app.models.ImageZone.user_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.ImageZone.zone_id">
+<code class="descname">zone_id</code><a class="headerlink" href="#app.models.ImageZone.zone_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Institution">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Institution</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Institution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Institution" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Institution.document">
+<code class="descname">document</code><a class="headerlink" href="#app.models.Institution.document" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Institution.name">
+<code class="descname">name</code><a class="headerlink" href="#app.models.Institution.name" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Institution.ref">
+<code class="descname">ref</code><a class="headerlink" href="#app.models.Institution.ref" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Institution.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Institution.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Institution.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Language">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Language</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Language"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Language" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Language.code">
+<code class="descname">code</code><a class="headerlink" href="#app.models.Language.code" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Language.documents">
+<code class="descname">documents</code><a class="headerlink" href="#app.models.Language.documents" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Language.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.Language.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Language.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Language.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Language.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Note">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Note</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Note"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Note" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Note.commentary">
+<code class="descname">commentary</code><a class="headerlink" href="#app.models.Note.commentary" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Note.content">
+<code class="descname">content</code><a class="headerlink" href="#app.models.Note.content" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Note.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Note.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Note.note_type">
+<code class="descname">note_type</code><a class="headerlink" href="#app.models.Note.note_type" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Note.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Note.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Note.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Note.transcription">
+<code class="descname">transcription</code><a class="headerlink" href="#app.models.Note.transcription" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Note.translation">
+<code class="descname">translation</code><a class="headerlink" href="#app.models.Note.translation" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Note.type_id">
+<code class="descname">type_id</code><a class="headerlink" href="#app.models.Note.type_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Note.user_id">
+<code class="descname">user_id</code><a class="headerlink" href="#app.models.Note.user_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.NoteType">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">NoteType</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#NoteType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.NoteType" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.NoteType.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.NoteType.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.NoteType.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.NoteType.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.NoteType.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#NoteType.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.NoteType.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Role">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Role</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Role"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Role" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Role.description">
+<code class="descname">description</code><a class="headerlink" href="#app.models.Role.description" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Role.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Role.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Role.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.Role.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Role.name">
+<code class="descname">name</code><a class="headerlink" href="#app.models.Role.name" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Role.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Role.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Role.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Role.users">
+<code class="descname">users</code><a class="headerlink" href="#app.models.Role.users" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.SpeechPartType">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">SpeechPartType</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#SpeechPartType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.SpeechPartType" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.SpeechPartType.definition">
+<code class="descname">definition</code><a class="headerlink" href="#app.models.SpeechPartType.definition" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.SpeechPartType.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.SpeechPartType.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.SpeechPartType.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.SpeechPartType.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.SpeechPartType.lang_code">
+<code class="descname">lang_code</code><a class="headerlink" href="#app.models.SpeechPartType.lang_code" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Tradition">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Tradition</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Tradition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Tradition" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Tradition.documents">
+<code class="descname">documents</code><a class="headerlink" href="#app.models.Tradition.documents" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Tradition.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Tradition.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Tradition.label">
+<code class="descname">label</code><a class="headerlink" href="#app.models.Tradition.label" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Tradition.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Tradition.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Tradition.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Transcription">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Transcription</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Transcription"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Transcription" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Transcription.content">
+<code class="descname">content</code><a class="headerlink" href="#app.models.Transcription.content" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Transcription.doc_id">
+<code class="descname">doc_id</code><a class="headerlink" href="#app.models.Transcription.doc_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Transcription.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Transcription.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Transcription.notes">
+<code class="descname">notes</code><a class="headerlink" href="#app.models.Transcription.notes" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Transcription.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Transcription.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Transcription.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Transcription.user_id">
+<code class="descname">user_id</code><a class="headerlink" href="#app.models.Transcription.user_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.TranscriptionHasNote">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">TranscriptionHasNote</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#TranscriptionHasNote"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.TranscriptionHasNote" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.TranscriptionHasNote.note">
+<code class="descname">note</code><a class="headerlink" href="#app.models.TranscriptionHasNote.note" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranscriptionHasNote.note_id">
+<code class="descname">note_id</code><a class="headerlink" href="#app.models.TranscriptionHasNote.note_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranscriptionHasNote.ptr_end">
+<code class="descname">ptr_end</code><a class="headerlink" href="#app.models.TranscriptionHasNote.ptr_end" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranscriptionHasNote.ptr_start">
+<code class="descname">ptr_start</code><a class="headerlink" href="#app.models.TranscriptionHasNote.ptr_start" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranscriptionHasNote.transcription">
+<code class="descname">transcription</code><a class="headerlink" href="#app.models.TranscriptionHasNote.transcription" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranscriptionHasNote.transcription_id">
+<code class="descname">transcription_id</code><a class="headerlink" href="#app.models.TranscriptionHasNote.transcription_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.Translation">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">Translation</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Translation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Translation" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.Translation.content">
+<code class="descname">content</code><a class="headerlink" href="#app.models.Translation.content" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Translation.doc_id">
+<code class="descname">doc_id</code><a class="headerlink" href="#app.models.Translation.doc_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Translation.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.Translation.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Translation.notes">
+<code class="descname">notes</code><a class="headerlink" href="#app.models.Translation.notes" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.Translation.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#Translation.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.Translation.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.Translation.user_id">
+<code class="descname">user_id</code><a class="headerlink" href="#app.models.Translation.user_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.TranslationHasNote">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">TranslationHasNote</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#TranslationHasNote"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.TranslationHasNote" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="attribute">
+<dt id="app.models.TranslationHasNote.note">
+<code class="descname">note</code><a class="headerlink" href="#app.models.TranslationHasNote.note" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranslationHasNote.note_id">
+<code class="descname">note_id</code><a class="headerlink" href="#app.models.TranslationHasNote.note_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranslationHasNote.ptr_end">
+<code class="descname">ptr_end</code><a class="headerlink" href="#app.models.TranslationHasNote.ptr_end" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranslationHasNote.ptr_start">
+<code class="descname">ptr_start</code><a class="headerlink" href="#app.models.TranslationHasNote.ptr_start" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranslationHasNote.translation">
+<code class="descname">translation</code><a class="headerlink" href="#app.models.TranslationHasNote.translation" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.TranslationHasNote.translation_id">
+<code class="descname">translation_id</code><a class="headerlink" href="#app.models.TranslationHasNote.translation_id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="app.models.User">
+<em class="property">class </em><code class="descclassname">app.models.</code><code class="descname">User</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#User"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.User" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">flask_user.UserMixin</span></code></p>
+<dl class="attribute">
+<dt id="app.models.User.active">
+<code class="descname">active</code><a class="headerlink" href="#app.models.User.active" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.confirmed_at">
+<code class="descname">confirmed_at</code><a class="headerlink" href="#app.models.User.confirmed_at" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.email">
+<code class="descname">email</code><a class="headerlink" href="#app.models.User.email" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.first_name">
+<code class="descname">first_name</code><a class="headerlink" href="#app.models.User.first_name" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.id">
+<code class="descname">id</code><a class="headerlink" href="#app.models.User.id" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.is_admin">
+<code class="descname">is_admin</code><a class="headerlink" href="#app.models.User.is_admin" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.is_student">
+<code class="descname">is_student</code><a class="headerlink" href="#app.models.User.is_student" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.is_teacher">
+<code class="descname">is_teacher</code><a class="headerlink" href="#app.models.User.is_teacher" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.last_name">
+<code class="descname">last_name</code><a class="headerlink" href="#app.models.User.last_name" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.password">
+<code class="descname">password</code><a class="headerlink" href="#app.models.User.password" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.roles">
+<code class="descname">roles</code><a class="headerlink" href="#app.models.User.roles" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.models.User.serialize">
+<code class="descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models.html#User.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.models.User.serialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="app.models.User.username">
+<code class="descname">username</code><a class="headerlink" href="#app.models.User.username" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="module-app.routes">
 <span id="app-routes-module"></span><h2>app.routes module<a class="headerlink" href="#module-app.routes" title="Lien permanent vers ce titre">¶</a></h2>
 <dl class="function">
-<dt id="app.routes.index">
-<code class="descclassname">app.routes.</code><code class="descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/routes.html#index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.routes.index" title="Lien permanent vers cette définition">¶</a></dt>
+<dt id="app.routes.admin">
+<code class="descclassname">app.routes.</code><code class="descname">admin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/routes.html#admin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.routes.admin" title="Lien permanent vers cette définition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="app.routes.r_align_translation">
-<code class="descclassname">app.routes.</code><code class="descname">r_align_translation</code><span class="sig-paren">(</span><em>transcription_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/routes.html#r_align_translation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.routes.r_align_translation" title="Lien permanent vers cette définition">¶</a></dt>
+<dt id="app.routes.admin_document">
+<code class="descclassname">app.routes.</code><code class="descname">admin_document</code><span class="sig-paren">(</span><em>doc_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/routes.html#admin_document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.routes.admin_document" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="app.routes.admin_document_edit">
+<code class="descclassname">app.routes.</code><code class="descname">admin_document_edit</code><span class="sig-paren">(</span><em>doc_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/routes.html#admin_document_edit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.routes.admin_document_edit" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="app.routes.admin_documents">
+<code class="descclassname">app.routes.</code><code class="descname">admin_documents</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/routes.html#admin_documents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.routes.admin_documents" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="app.routes.app_bp">
+<code class="descclassname">app.routes.</code><code class="descname">app_bp</code><em class="property"> = &lt;flask.blueprints.Blueprint object&gt;</em><a class="headerlink" href="#app.routes.app_bp" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="app.routes.members_page">
+<code class="descclassname">app.routes.</code><code class="descname">members_page</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/routes.html#members_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.routes.members_page" title="Lien permanent vers cette définition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
 <div class="section" id="module-app">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-app" title="Lien permanent vers ce titre">¶</a></h2>
+<dl class="class">
+<dt id="app.CustomUserManager">
+<em class="property">class </em><code class="descclassname">app.</code><code class="descname">CustomUserManager</code><span class="sig-paren">(</span><em>db_adapter=None</em>, <em>app=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#CustomUserManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.CustomUserManager" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bases : <code class="xref py py-class docutils literal notranslate"><span class="pre">flask_user.UserManager</span></code></p>
+<dl class="method">
+<dt id="app.CustomUserManager.hash_password">
+<code class="descname">hash_password</code><span class="sig-paren">(</span><em>password</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#CustomUserManager.hash_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.CustomUserManager.hash_password" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="app.CustomUserManager.verify_password">
+<code class="descname">verify_password</code><span class="sig-paren">(</span><em>password</em>, <em>user</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#CustomUserManager.verify_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.CustomUserManager.verify_password" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Make it backward compatible to legacy password hash.
+In addition, if such password were found, update the user’s password field.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="function">
-<dt id="app.name_for_collection_relationship">
-<code class="descclassname">app.</code><code class="descname">name_for_collection_relationship</code><span class="sig-paren">(</span><em>base</em>, <em>local_cls</em>, <em>referred_cls</em>, <em>constraint</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#name_for_collection_relationship"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.name_for_collection_relationship" title="Lien permanent vers cette définition">¶</a></dt>
+<dt id="app.get_current_user">
+<code class="descclassname">app.</code><code class="descname">get_current_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#get_current_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.get_current_user" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="app.get_user_from_username">
+<code class="descclassname">app.</code><code class="descname">get_user_from_username</code><span class="sig-paren">(</span><em>username</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#get_user_from_username"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.get_user_from_username" title="Lien permanent vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="app.role_required">
+<code class="descclassname">app.</code><code class="descname">role_required</code><span class="sig-paren">(</span><em>*wanted_roles</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#role_required"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.role_required" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Ensure the logged user has all of the wanted roles</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="app.verify_password">
+<code class="descclassname">app.</code><code class="descname">verify_password</code><span class="sig-paren">(</span><em>username</em>, <em>password</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app.html#verify_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.verify_password" title="Lien permanent vers cette définition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -199,9 +1196,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -223,7 +1218,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -242,6 +1237,7 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
             VERSION:'',
+            LANGUAGE:'fr',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -261,14 +1257,13 @@
     <script type="text/javascript" src="../_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

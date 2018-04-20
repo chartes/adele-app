@@ -221,15 +221,18 @@ class Document(db.Model):
             'traditions': [tr.serialize() for tr in self.traditions]
         }
 
+
 class Editor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ref = db.Column(db.String)
     name = db.Column(db.String)
+
     def serialize(self):
         return {
             'ref': self.ref,
             'name': self.name
         }
+
 
 class ImageZone(db.Model):
     manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
@@ -248,6 +251,7 @@ class ImageZone(db.Model):
             'coords' : self.coords,
             'note' : self.note
         }
+
 
 class Image(db.Model):
     manifest_url = db.Column(db.String, primary_key=True)
@@ -277,20 +281,24 @@ class Image(db.Model):
 class Institution(db.Model):
     ref = db.Column(db.String, primary_key=True)
     name = db.Column(db.String)
+
     def serialize(self):
         return {
             'ref': self.ref,
             'name': self.name
         }
 
+
 class Language(db.Model):
     code = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
+
     def serialize(self):
         return {
             'code': self.code,
             'label': self.label
         }
+
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -300,8 +308,8 @@ class Note(db.Model):
 
     note_type = db.relationship("NoteType")
 
-    transcriptions = db.relationship("TranscriptionHasNote", back_populates="note")
-    translations = db.relationship("TranslationHasNote", back_populates="note")
+    transcription = db.relationship("TranscriptionHasNote", back_populates="note")
+    translation = db.relationship("TranslationHasNote", back_populates="note")
 
     def serialize(self):
         return {
@@ -311,14 +319,17 @@ class Note(db.Model):
             "note_type": self.note_type.serialize()
         }
 
+
 class NoteType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
+
     def serialize(self):
         return {
             'id': self.id,
             'label': self.label
         }
+
 
 # Define the Role DataModel
 class Role(db.Model):
@@ -326,6 +337,7 @@ class Role(db.Model):
     name = db.Column(db.String(), unique=True)
     description = db.Column(db.String())
     label = db.Column(db.String())
+
     def serialize(self):
         return {
             'id': self.id,
@@ -334,11 +346,13 @@ class Role(db.Model):
             'label': self.label
         }
 
+
 class SpeechPartType(db.Model):
     id = db.Column(db.String, primary_key=True)
     lang_code = db.Column(db.String, db.ForeignKey("language.code"), primary_key=True)
     label = db.Column(db.String)
     definition = db.Column(db.Text)
+
 
 class Tradition(db.Model):
     id = db.Column(db.String, primary_key=True)
@@ -349,12 +363,13 @@ class Tradition(db.Model):
             'label': self.label
         }
 
+
 class TranscriptionHasNote(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="transcriptions")
+    note = db.relationship("Note", back_populates="transcription")
     transcription = db.relationship("Transcription", back_populates="notes")
 
 
@@ -385,7 +400,7 @@ class TranslationHasNote(db.Model):
     note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="translations")
+    note = db.relationship("Note", back_populates="translation")
     translation = db.relationship("Translation", back_populates="notes")
 
 
@@ -408,6 +423,7 @@ class Translation(db.Model):
                 for n in self.notes
             ]
         }
+
 
 # Define the User data model
 class User(db.Model, UserMixin):

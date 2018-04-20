@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="fr" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="fr" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -25,25 +25,19 @@
   
 
   
-  
     <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Recherche" href="../search.html"/>
-    <link rel="top" title="Documentation Adele " href="../index.html"/>
-        <link rel="prev" title="app.database package" href="app.database.html"/> 
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Recherche" href="../search.html" />
+    <link rel="next" title="app.forms package" href="app.forms.html" />
+    <link rel="prev" title="app.database package" href="app.database.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -106,7 +100,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">Adele</a>
@@ -114,9 +108,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -138,6 +133,12 @@
   <ul class="wy-breadcrumbs">
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">app</a> &raquo;</li>
+        
+          <li><a href="app.html">app package</a> &raquo;</li>
+        
+          <li><a href="app.database.html">app.database package</a> &raquo;</li>
         
       <li>app.database.alignment package</li>
     
@@ -167,7 +168,7 @@
 <span id="app-database-alignment-alignment-translation-module"></span><h2>app.database.alignment.alignment_translation module<a class="headerlink" href="#module-app.database.alignment.alignment_translation" title="Lien permanent vers ce titre">¶</a></h2>
 <dl class="function">
 <dt id="app.database.alignment.alignment_translation.align_translation">
-<code class="descclassname">app.database.alignment.alignment_translation.</code><code class="descname">align_translation</code><span class="sig-paren">(</span><em>transcription_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/database/alignment/alignment_translation.html#align_translation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.database.alignment.alignment_translation.align_translation" title="Lien permanent vers cette définition">¶</a></dt>
+<code class="descclassname">app.database.alignment.alignment_translation.</code><code class="descname">align_translation</code><span class="sig-paren">(</span><em>transcription_id</em>, <em>translation_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/database/alignment/alignment_translation.html#align_translation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#app.database.alignment.alignment_translation.align_translation" title="Lien permanent vers cette définition">¶</a></dt>
 <dd><p>Fetches rows from alignment_translation.</p>
 <p>Retrieves rows from the transcription and translation tables
 using the alignment_transcription table to join data</p>
@@ -189,13 +190,13 @@ Each returned row is a tuple with the following database fields:
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="app.forms.html" class="btn btn-neutral float-right" title="app.forms package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="app.database.html" class="btn btn-neutral" title="app.database package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -211,7 +212,7 @@ Each returned row is a tuple with the following database fields:
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -230,6 +231,7 @@ Each returned row is a tuple with the following database fields:
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
             VERSION:'',
+            LANGUAGE:'fr',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -249,14 +251,13 @@ Each returned row is a tuple with the following database fields:
     <script type="text/javascript" src="../_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>
