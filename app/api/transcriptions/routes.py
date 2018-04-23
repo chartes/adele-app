@@ -49,36 +49,43 @@ def api_documents_transcriptions_reference(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>')
 def api_documents_transcriptions(api_version, doc_id, user_id=None):
-    user = get_current_user()
-    if user is None:
-        return redirect(url_for("api_bp.api_documents_transcriptions_reference", api_version="1.0", doc_id=doc_id))
-
     response = None
-    # only teacher and admin can see everything
-    if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+    user = get_current_user()
+    if user is None and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
-
-    if response is None:
-        if user_id is None:
-            if not user.is_teacher and not user.is_admin:
-                user_id = user.id
-            else:
-                # In that case do not filter
-                user_id = Transcription.user_id
-
-        try:
-            transcriptions = Transcription.query.filter(
-                Transcription.doc_id == doc_id,
-                Transcription.user_id == user_id
-            ).all()
-
-            response = APIResponseFactory.make_response(data=[tr.serialize() for tr in transcriptions])
-        except NoResultFound:
+    elif user is None:
+        tr = get_reference_transcription(doc_id)
+        if tr is None:
             response = APIResponseFactory.make_response(errors={
                 "status": 404, "title": "Transcription not found"
             })
+        else:
+            user_id = tr.user_id
+
+    if response is None:
+
+        if user is not None:
+            # only teacher and admin can see everything
+            if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Access forbidden"
+                })
+
+        if response is None:
+
+            try:
+                transcriptions = Transcription.query.filter(
+                    Transcription.doc_id == doc_id,
+                    Transcription.user_id == user_id
+                ).all()
+
+                response = APIResponseFactory.make_response(data=[tr.serialize() for tr in transcriptions])
+            except NoResultFound:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "title": "Transcription not found"
+                })
 
     return APIResponseFactory.jsonify(response)
 
@@ -117,22 +124,6 @@ def api_post_documents_transcriptions(api_version, doc_id):
         if not isinstance(data, list):
             data = [data]
 
-        # do not allow multiple transcriptions for a single user
-        for d in data:
-            if "username" in d:
-                username = d["username"]
-            else:
-                username = user.username
-
-            if username in usernames:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403,
-                    "title": "Insert forbidden",
-                    "details": "Only one transcription per user and document is allowed"
-                })
-            else:
-                usernames.add(username)
-
         if response is None:
 
             user = get_current_user()
@@ -157,36 +148,27 @@ def api_post_documents_transcriptions(api_version, doc_id):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403,
                         "title": "Insert forbidden",
-                        "details": "Only one transcription per user and document is allowed"
                     })
+                    db.session.rollback()
 
                 if response is None:
-                    # check the request data structure
-                    if "content" not in tr:
-                        response = APIResponseFactory.make_response(errors={
-                            "status": 403,
-                            "title": "Insert forbidden",
-                            "details": "Data structure is incorrect: missing a 'content' field"
-                        })
-                    else:
+                    # get the transcription id max
+                    try:
+                        transcription_max_id = db.session.query(func.max(Transcription.id)).one()
+                        transcription_max_id = transcription_max_id[0] + 1
+                    except NoResultFound:
+                        # it is the transcription for this user and this document
+                        transcription_max_id = 1
 
-                        # get the transcription id max
-                        try:
-                            transcription_max_id = db.session.query(func.max(Transcription.id)).one()
-                            transcription_max_id = transcription_max_id[0] + 1
-                        except NoResultFound:
-                            # it is the transcription for this user and this document
-                            transcription_max_id = 1
+                    new_transcription = Transcription(
+                        id=transcription_max_id,
+                        content=tr["content"],
+                        doc_id=doc_id,
+                        user_id=user_id
+                    )
 
-                        new_transcription = Transcription(
-                            id=transcription_max_id,
-                            content=tr["content"],
-                            doc_id=doc_id,
-                            user_id=user_id
-                        )
-
-                        db.session.add(new_transcription)
-                        created_users.add(user)
+                    db.session.add(new_transcription)
+                    created_users.add(user)
             try:
                 db.session.commit()
             except Exception as e:
@@ -270,35 +252,33 @@ def api_put_documents_transcriptions(api_version, doc_id):
                     user = get_user_from_username(tr["username"])
                     if user is not None:
                         user_id = user.id
-
-                # check the request data structure
-                if "content" not in tr:
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403,
-                        "title": "Update forbidden",
-                        "details": "Data structure is incorrect: missing a 'content' field"
-                    })
-                    break
-                else:
-
-                    try:
-                        # get the transcription to update
-                        transcription = Transcription.query.filter(
-                            Transcription.user_id == user_id,
-                            Transcription.doc_id == doc_id
-                        ).one()
-
-                        transcription.content = tr["content"]
-                        db.session.add(transcription)
-                        # save which users to retriever later
-                        updated_users.add(user)
-                    except NoResultFound:
+                elif "username" in tr:
+                    usr = get_user_from_username(tr["username"])
+                    if usr is not None and usr.id != user.id:
+                        db.session.rollback()
                         response = APIResponseFactory.make_response(errors={
-                            "status": 404,
-                            "title": "Update forbidden",
-                            "details": "Transcription not found"
+                            "status": 403, "title": "Access forbidden", "details": "Cannot update data"
                         })
                         break
+
+                try:
+                    # get the transcription to update
+                    transcription = Transcription.query.filter(
+                        Transcription.user_id == user_id,
+                        Transcription.doc_id == doc_id
+                    ).one()
+
+                    transcription.content = tr["content"]
+                    db.session.add(transcription)
+                    # save which users to retriever later
+                    updated_users.add(user)
+                except NoResultFound:
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 404,
+                        "title": "Update forbidden",
+                        "details": "Transcription not found"
+                    })
+                    break
 
             if response is None:
                 try:
@@ -322,7 +302,7 @@ def api_put_documents_transcriptions(api_version, doc_id):
                         ),
                         user=usr
                     )
-                    updated_data.append(json_obj)
+                    updated_data.append(json_obj["data"])
 
                 response = APIResponseFactory.make_response(data=updated_data)
 

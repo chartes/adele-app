@@ -7,7 +7,6 @@ from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
 from app.models import Translation, User, Document
 
-
 """
 ===========================
     Translations
@@ -267,35 +266,33 @@ def api_put_documents_translations(api_version, doc_id):
                     user = get_user_from_username(tr["username"])
                     if user is not None:
                         user_id = user.id
-
-                # check the request data structure
-                if "content" not in tr:
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403,
-                        "title": "Update forbidden",
-                        "details": "Data structure is incorrect: missing a 'content' field"
-                    })
-                    break
-                else:
-
-                    try:
-                        # get the translation to update
-                        translation = Translation.query.filter(
-                            Translation.user_id == user_id,
-                            Translation.doc_id == doc_id
-                        ).one()
-
-                        translation.content = tr["content"]
-                        db.session.add(translation)
-                        # save which users to retriever later
-                        updated_users.add(user)
-                    except NoResultFound:
+                elif "username" in tr:
+                    usr = get_user_from_username(tr["username"])
+                    if usr is not None and usr.id != user.id:
+                        db.session.rollback()
                         response = APIResponseFactory.make_response(errors={
-                            "status": 404,
-                            "title": "Update forbidden",
-                            "details": "Translation not found"
+                            "status": 403, "title": "Access forbidden", "details": "Cannot update data"
                         })
                         break
+
+                try:
+                    # get the translation to update
+                    translation = Translation.query.filter(
+                        Translation.user_id == user_id,
+                        Translation.doc_id == doc_id
+                    ).one()
+
+                    translation.content = tr["content"]
+                    db.session.add(translation)
+                    # save which users to retriever later
+                    updated_users.add(user)
+                except NoResultFound:
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 404,
+                        "title": "Update forbidden",
+                        "details": "Translation not found"
+                    })
+                    break
 
             if response is None:
                 try:
@@ -319,7 +316,7 @@ def api_put_documents_translations(api_version, doc_id):
                         ),
                         user=usr
                     )
-                    updated_data.append(json_obj)
+                    updated_data.append(json_obj["data"])
 
                 response = APIResponseFactory.make_response(data=updated_data)
 
