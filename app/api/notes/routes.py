@@ -88,7 +88,7 @@ def api_documents_transcriptions_notes(api_version, doc_id, user_id=None):
 
     response = None
     # only teacher and admin can see everything
-    if (not user.is_teacher and not user.is_admin) and user_id is not None and user_id != user.id:
+    if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })

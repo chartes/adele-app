@@ -348,7 +348,7 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
 
     user = get_current_user()
     if user is not None:
-        if (not user.is_teacher and not user.is_admin) and user_id != user.id:
+        if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
             })

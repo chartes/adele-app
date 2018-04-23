@@ -1,7 +1,5 @@
-import pprint
 
-import flask_login
-from flask import Flask, url_for, redirect
+from flask import Flask, redirect
 from flask_login import current_user
 from flask_mail import Mail
 from flask_scss import Scss
@@ -41,7 +39,6 @@ def make_json_unauthorized_response():
         "status": 403, "title": "Access forbidden"
     }))
     resp.status_code = 200
-    print(type(resp), resp.status_code, resp.status, resp.headers)
     return resp
 
 
