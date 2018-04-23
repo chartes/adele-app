@@ -3,6 +3,7 @@ from flask_user import login_required
 
 import config
 from app import app, role_required
+from app.models import Document
 
 app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
 
@@ -12,6 +13,8 @@ app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folde
 Test routes
 ---------------------------------
 """
+
+
 @app_bp.route('/test/alignments/translation/<transcription_id>/<translation_id>')
 def align_translation(transcription_id, translation_id):
     res = align_translation(transcription_id, translation_id)

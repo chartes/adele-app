@@ -1,4 +1,4 @@
-from flask import url_for, request
+from flask import url_for, request, redirect
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -35,22 +35,39 @@ def get_reference_translation(doc_id):
     return translation
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/reference')
+def api_documents_translations_reference(api_version, doc_id):
+    tr = get_reference_translation(doc_id)
+    if tr is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Translation not found"
+        })
+    else:
+        response = APIResponseFactory.make_response(data=tr.serialize())
+    return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>')
 def api_documents_translations(api_version, doc_id, user_id=None):
     user = get_current_user()
     if user is None:
-        # get the reference translation
-        tr = get_reference_translation(doc_id)
-        response = APIResponseFactory.make_response(data=tr.serialize())
-    else:
-        # only teacher and admin can see everything
-        if not user.is_teacher and not user.is_admin:
-            user_id = user.id
+        return redirect(url_for("api_bp.api_documents_translations_reference", api_version="1.0", doc_id=doc_id))
 
+    response = None
+    # only teacher and admin can see everything
+    if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
+    if response is None:
         if user_id is None:
-            # In that case do not filter
-            user_id = Translation.user_id
+            if not user.is_teacher and not user.is_admin:
+                user_id = user.id
+            else:
+                # In that case do not filter
+                user_id = Translation.user_id
 
         try:
             translations = Translation.query.filter(
@@ -60,7 +77,7 @@ def api_documents_translations(api_version, doc_id, user_id=None):
             response = APIResponseFactory.make_response(data=[tr.serialize() for tr in translations])
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Translation {0} not found".format(doc_id)
+                "status": 404, "title": "Translation not found"
             })
 
     return APIResponseFactory.jsonify(response)
@@ -237,6 +254,8 @@ def api_put_documents_translations(api_version, doc_id):
         if response is None:
 
             updated_users = set()
+            user = get_current_user()
+            user_id = user.id
 
             for tr in data:
 
@@ -307,25 +326,14 @@ def api_put_documents_translations(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/translations', methods=["DELETE"])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["DELETE"])
 @auth.login_required
-def api_delete_documents_translations(api_version, doc_id):
+def api_delete_documents_translations(api_version, doc_id, user_id):
     """
-     {
-         "data": [
-             {
-                 "username":  "Eleve1"                    (optionnal)
-             },
-             {
-                 "username":  "Eleve2"                    (optionnal)
-             }
-         ]
-     }
      :param api_version:
      :param doc_id:
      :return:
      """
-    data = request.get_json()
     response = None
 
     try:
@@ -335,55 +343,28 @@ def api_delete_documents_translations(api_version, doc_id):
             "status": 404, "title": "Document {0} not found".format(doc_id)
         })
 
-    # delete all translation for this document
-    if data is None:
-        Translation.query.filter(Translation.doc_id == doc_id).delete()
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
+    user = get_current_user()
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin) and user_id != user.id:
             response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Translation {0} not found".format(doc_id), "details": str(e)
+                "status": 403, "title": "Access forbidden"
             })
 
-        if response is None:
-            response = APIResponseFactory.make_response(data=[])
-
-    # delete translation for the give usernames
-    if response is None and "data" in data:
-        data = data["data"]
-
-        if not isinstance(data, list):
-            data = [data]
-
-        user = get_current_user()
-        user_id = user.id
-
-        for tr in data:
-            # teachers and admins can put/post/delete on others behalf
-            if (user.is_teacher or user.is_admin) and "username" in tr:
-                user = get_user_from_username(tr["username"])
-                if user is not None:
-                    user_id = user.id
-
-            try:
-                # get the translation to update
-                translation = Translation.query.filter(
-                    Translation.user_id == user_id,
-                    Translation.doc_id == doc_id
-                ).one()
-                db.session.delete(translation)
-
-            except NoResultFound:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404,
-                    "title": "Delete forbidden",
-                    "details": "Translation not found"
-                })
-                break
+    # delete translations for the given user id
+    if response is None:
+        try:
+            # bring the translation to delete
+            translation = Translation.query.filter(
+                Translation.user_id == user_id,
+                Translation.doc_id == doc_id
+            ).one()
+            db.session.delete(translation)
+        except NoResultFound:
+            pass
 
         if response is None:
             try:
+
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()

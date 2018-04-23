@@ -60,13 +60,20 @@ const actions = {
         }
         const transcription = data.data;
         */
-        const transcription = response.data.data;
 
+        let transcription = {content : " ", notes: []};
+
+        if (response.data.data && response.data.data.length !== 0) {
+            transcription = response.data.data;
+        }
+
+        const content = transcription.content;
         const notes = transcription.notes;
-        const formatted = insertNotes(transcription.content, notes);
+        const formatted = insertNotes(content, notes);
+
         //console.log('formatted', formatted)
 
-        commit('UPDATE_TRANSCRIPTION', { raw: transcription, formatted: formatted })
+        commit('UPDATE_TRANSCRIPTION', { raw: transcription, formatted: formatted });
       })
 
 
@@ -82,7 +89,6 @@ const actions = {
 };
 
 const getters = {
-
   transcription: state => {console.log("transcription"); return state.transcription},
   transcriptionFormatted: state => {console.log("transcription"); return state.transcriptionFormatted},
   transcriptionContent: state => !!state.transcription ? state.transcription.content : null,

@@ -7,6 +7,7 @@ from flask_mail import Mail
 from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import UserManager, SQLAlchemyAdapter
+from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.api.response import APIResponseFactory
@@ -42,7 +43,10 @@ def get_current_user():
         else:
             user = current_user
     else:
-        user = models.User.query.filter(models.User.username == auth.username()).one()
+        try:
+            user = models.User.query.filter(models.User.username == auth.username()).one()
+        except NoResultFound:
+            user = None
     return user
 
 def role_required(*wanted_roles):

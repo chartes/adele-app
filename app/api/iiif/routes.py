@@ -9,8 +9,7 @@ from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
 from app.api.transcriptions.routes import get_reference_transcription
-from app.models import AlignmentImage, ImageZone, Image, Document
-
+from app.models import AlignmentImage, ImageZone, Image, Document, Transcription
 
 """
 ===========================
@@ -119,7 +118,7 @@ def api_documents_annotations(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list/from-user/<user_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>/list")
 def api_documents_annotations_list(api_version, doc_id, user_id=None):
     """
 
@@ -134,6 +133,13 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
         if tr is None:
             response = APIResponseFactory.make_response(errors={
                 "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
+            })
+
+    user = get_current_user()
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin) and user_id is not None and user_id != user.id:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
             })
 
     if response is None:
@@ -152,7 +158,13 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
             annotations = []
 
             kargs = {"doc_id": doc_id, "api_version": api_version, "user_id": user_id}
-            for img_zone in [z for z in img.zones if z.note is not None]:
+
+            if user_id is None:
+                zones = [z for z in img.zones if z.note is not None]
+            else:
+                zones = [z for z in img.zones if z.note is not None and z.user_id == int(user_id)]
+
+            for img_zone in zones:
                 kargs["zone_id"] = img_zone.zone_id
                 res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
                 fragment_coords = img_zone.coords
@@ -168,73 +180,76 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/list')
-def api_documents_transcriptions_list(api_version, doc_id):
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>/list')
+def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
     """
     Fetch transcription segments formated as a sc:AnnotationList
-    Only the teacher's transcription segments are returned
     :param api_version: API version
     :param doc_id: Document id
     :return: a json object Obj with a sc:AnnotationList inside Obj["data"]. Return errors in Obj["errors"]
     """
+    response = None
 
-    try:
-        # Check if document exist first
-        doc = Document.query.filter(Document.id == doc_id).one()
-        # find the good transcription
-        tr = get_reference_transcription(doc_id)
-
-        if tr is None:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
-            })
-        else:
-            # let's go finding the alignment segments
-            try:
-                json_obj = query_json_endpoint(
-                    request,
-                    url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
-                )
-
-                if "errors" in json_obj:
-                    response = APIResponseFactory.make_response(errors=json_obj["errors"])
-                else:
-                    canvas = json_obj["data"]
-                    img_json = canvas["images"][0]
-
-                    annotations = []
-                    img_als = AlignmentImage.query.filter(AlignmentImage.transcription_id == tr.id).all()
-                    for img_al in img_als:
-                        tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
-
-                        res_uri = request.url_root[0:-1] + url_for(
-                            "api_bp.api_documents_annotations_zone",
-                            api_version=api_version,
-                            doc_id=doc_id,
-                            zone_id=img_al.zone_id
-                        )
-                        # TODO: gerer erreur
-                        img_zone = ImageZone.query.filter(
-                            ImageZone.manifest_url == img_al.manifest_url,
-                            ImageZone.img_id == img_al.img_id,
-                            ImageZone.zone_id == img_al.zone_id,
-                            ImageZone.user_id == tr.user_id
-                        ).one()
-
-                        fragment_coords = img_zone.coords
-                        annotations.append(
-                            make_annotation(img_al.manifest_url, img_json, fragment_coords, res_uri, tr_seg,
-                                            "text/plain")
-                        )
-                    annotation_list = make_annotation_list("f2", doc_id, annotations)
-                    response = annotation_list
-
-            except NoResultFound:
-                response = APIResponseFactory.make_response()
-
-    except NoResultFound:
+    tr = get_reference_transcription(doc_id)
+    if tr is None:
         response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Document {0} cannot be found".format(doc_id)
+            "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
         })
+
+    user = get_current_user()
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin) and user_id is not None and user_id != user.id:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+
+    if response is None:
+        # let's go finding the alignment segments
+        try:
+            json_obj = query_json_endpoint(
+                request,
+                url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+            )
+
+            if "errors" in json_obj:
+                response = APIResponseFactory.make_response(errors=json_obj["errors"])
+            else:
+                canvas = json_obj["data"]
+                img_json = canvas["images"][0]
+
+                annotations = []
+
+                img_als = AlignmentImage.query.filter(
+                    AlignmentImage.transcription_id == tr.id,
+                    AlignmentImage.user_id == user_id if user_id is not None else AlignmentImage.user_id
+                ).all()
+                for img_al in img_als:
+                    tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+
+                    kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": img_al.zone_id}
+                    if user_id is not None:
+                        kargs["user_id"] = user_id
+
+                    res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
+
+                    # TODO: gerer erreur
+                    img_zone = ImageZone.query.filter(
+                        ImageZone.manifest_url == img_al.manifest_url,
+                        ImageZone.img_id == img_al.img_id,
+                        ImageZone.zone_id == img_al.zone_id,
+                        ImageZone.user_id == tr.user_id
+                    ).one()
+
+                    fragment_coords = img_zone.coords
+                    annotations.append(
+                        make_annotation(img_al.manifest_url, img_json, fragment_coords, res_uri, tr_seg, "text/plain")
+                    )
+
+                annotation_list = make_annotation_list("f2", doc_id, annotations)
+                response = annotation_list
+
+        except NoResultFound:
+            response = APIResponseFactory.make_response()
 
     return APIResponseFactory.jsonify(response)
 
@@ -312,7 +327,8 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
                         note_content = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
                     except NoResultFound:
                         response = APIResponseFactory.make_response(errors={
-                            "status": 404, "title": "This transcription zone has no text fragment attached to it".format(doc_id)
+                            "status": 404,
+                            "title": "This transcription zone has no text fragment attached to it".format(doc_id)
                         })
 
             else:
@@ -562,74 +578,61 @@ def api_put_documents_annotations(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<zone_id>/from-user/<user_id>", methods=["DELETE"])
 @auth.login_required
-def api_delete_documents_annotations(api_version, doc_id):
+def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None):
     """
-        {
-            "data" : [{
-                "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-                "zone_id" : 1,
-                "username": "Eleve1"     (optionnal)
-            },
-        ...
-            },
-            {
-                "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-                "zone_id" : 2,
-                "username": "Eleve1"     (optionnal)
-            }]
-        }
+    :param user_id:
     :param api_version:
     :param doc_id:
     :param zone_id:
     :return:  {"data": {}}
     """
 
-    data = request.get_json()
     response = None
 
-    if "data" in data:
-        data = data["data"]
+    user = get_current_user()
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin)  and user_id != user.id:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
 
-        if not isinstance(data, list):
-            data = [data]
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_bp.api_documents_manifest', api_version=api_version, doc_id=doc_id)
+    )
 
-        user = get_current_user()
-        img_zones = []
-        validated_annotations = [d for d in data if "manifest_url" in d and "img_id" in d and "zone_id" in d]
+    if "errors" in json_obj:
+        response = APIResponseFactory.make_response(errors=json_obj["errors"])
+    else:
+        manifest = json_obj["data"]
 
-        for anno in validated_annotations:
+        if zone_id is None:
+            img_id = ImageZone.img_id
+            zone_id = ImageZone.zone_id
+        else:
+            # TODO c'est pas ouf
+            img_id = manifest["sequences"][0]["canvases"][0]["images"][0]["resource"]["@id"]
 
-            user_id = user.id
-            # teacher and admin MAY post/put/delete for others
-            if (user.is_teacher or user.is_admin) and "username" in anno:
-                usr = get_user_from_username(anno["username"])
-                if usr is not None:
-                    user_id = usr.id
-
-            try:
-                img_zone = ImageZone.query.filter(
-                    ImageZone.zone_id == anno["zone_id"],
-                    ImageZone.manifest_url == anno["manifest_url"],
-                    ImageZone.img_id == anno["img_id"],
-                    ImageZone.user_id == user_id
-                ).one()
-                img_zones.append(img_zone)
-            except NoResultFound as e:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404,
-                    "title": "Image zone {0} not found".format(anno["zone_id"]),
-                    "details": "Cannot delete image zone: {0}".format(str(e))
-                })
-                break
-
-        if response is None:
+        try:
+            img_zones = ImageZone.query.filter(
+                ImageZone.zone_id == zone_id,
+                ImageZone.manifest_url == manifest["@id"],
+                ImageZone.img_id == img_id,
+                ImageZone.user_id == user_id
+            ).all()
             for img_zone in img_zones:
                 db.session.delete(img_zone)
+        except NoResultFound as e:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404,
+                "title": "Image zone not found".format(zone_id),
+                "details": "Cannot delete image zone: {0}".format(str(e))
+            })
 
+        if response is None:
             try:
                 db.session.commit()
             except Exception as e:
@@ -640,10 +643,5 @@ def api_delete_documents_annotations(api_version, doc_id):
             # the DELETE is OK, respond with no data
             if response is None:
                 response = APIResponseFactory.make_response()
-
-    else:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Cannot delete data", "details": "Check your request syntax"
-        })
 
     return APIResponseFactory.jsonify(response)

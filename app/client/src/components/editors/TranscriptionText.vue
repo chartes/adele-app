@@ -129,6 +129,7 @@
         console.log('onTranscriptionTextChange', delta, oldDelta, source)
         this.lastOperations = delta;
         this.updateContent();
+        this.$store.dispatch('transcriptionChanged')
       },
       onSelection (range) {
         if (range) {

@@ -140,23 +140,4 @@ def make_annotation(manifest_url, img, fragment_coords, res_uri, content, format
 
 
 if __name__ == "__main__":
-    img = {
-        "@context": "http://iiif.io/api/presentation/2/context.json",
-        "@id": "http://193.48.42.68/loris/adele/dossiers/20/annotation/a1",
-        "@type": "oa:Annotation",
-        "motivation": "sc:painting",
-        "resource": {
-            "@id": "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-            "@type": "dctypes:Image",
-            "height": 1184,
-            "width": 900,
-            "format": "image/jpeg",
-            "service": {
-                "@context": "http://iiif.io/api/image/2/context.json",
-                "@id": "http://193.48.42.68/loris/adele/dossiers/20.jpg",
-                "profile": "http://iiif.io/api/image/2/level2.json"
-            }
-        }
-        }
-    anno = make_annotation("dummy_manifest_url", img, "10,80,800,67", "my-res-uri", "My note")
-    pprint.pprint(anno)
+    pass

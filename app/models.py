@@ -109,23 +109,39 @@ class AlignmentTranslation(db.Model):
             'ptr_translation_end': self.ptr_translation_end
         }
 
+
 class Country(db.Model):
     ref = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
+
     def serialize(self):
         return {
             'ref': self.ref,
             'label': self.label
         }
 
+
 class CommentaryType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
+
     def serialize(self):
         return {
             'id': self.ref,
             'label': self.label
         }
+
+"""
+# TODO
+class CommentaryHasNote(db.Model):
+    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    ptr_start = db.Column(db.Integer)
+    ptr_end = db.Column(db.Integer)
+    note = db.relationship("Note", back_populates="translation")
+    translation = db.relationship("Translation", back_populates="notes")
+"""
+
 
 class Commentary(db.Model):
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id'), primary_key=True)
@@ -139,7 +155,6 @@ class Commentary(db.Model):
                                           association_commentary_has_note.c.user_id == user_id),
                              backref=db.backref('commentary'))
 
-
     def serialize(self):
         return {
             'doc_id': self.doc_id,
@@ -149,16 +164,19 @@ class Commentary(db.Model):
             'notes': [n.serialize() for n in self.notes]
         }
 
+
 class District(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
     country_ref = db.Column(db.String, db.ForeignKey('country.ref'))
+
     def serialize(self):
         return {
             'id': self.id,
             'label': self.label,
             'country_ref': self.country_ref
         }
+
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -199,6 +217,7 @@ class Document(db.Model):
                                        secondary=association_document_linked_to_document,
                                        primaryjoin=(association_document_linked_to_document.c.doc_id==id),
                                        secondaryjoin=(association_document_linked_to_document.c.linked_doc_id==id))
+
     def serialize(self):
         return {
             'id': self.id,
@@ -357,6 +376,7 @@ class SpeechPartType(db.Model):
 class Tradition(db.Model):
     id = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
+
     def serialize(self):
         return {
             'id': self.id,
@@ -405,7 +425,7 @@ class TranslationHasNote(db.Model):
 
 
 class Translation(db.Model):
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
