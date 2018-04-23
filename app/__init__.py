@@ -29,7 +29,39 @@ scss = Scss(app)
 auth = HTTPBasicAuth()
 
 
+"""
+=========================================================
+    Override default 401 Reponse with a 403 Response 
+========================================================
+"""
+
+
+def make_json_unauthorized_response():
+    resp = APIResponseFactory.jsonify(APIResponseFactory.make_response(errors={
+        "status": 403, "title": "Access forbidden"
+    }))
+    resp.status_code = 200
+    print(type(resp), resp.status_code, resp.status, resp.headers)
+    return resp
+
+
+auth.auth_error_callback = make_json_unauthorized_response
+
+
+"""
+========================================================
+    Import models
+========================================================
+"""
+
 from app import models
+
+
+"""
+========================================================
+    A bunch of useful functions
+========================================================
+"""
 
 
 def get_user_from_username(username):
@@ -48,6 +80,7 @@ def get_current_user():
         except NoResultFound:
             user = None
     return user
+
 
 def role_required(*wanted_roles):
     """
@@ -73,9 +106,9 @@ def role_required(*wanted_roles):
 
 
 """
----------------------------------
-Setup Flask-User
----------------------------------
+========================================================
+    Setup Flask-User
+========================================================
 """
 
 # Register the User model
@@ -102,5 +135,11 @@ def verify_password(username, password):
         return False
     return user_manager.verify_password(password, user)
 
+
+"""
+========================================================
+    Import all routes
+========================================================
+"""
 
 from app import routes

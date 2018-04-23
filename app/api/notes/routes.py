@@ -9,6 +9,7 @@ from app.api.translations.routes import get_reference_translation
 from app.models import Transcription, Commentary, Translation, Note, NoteType, Document, TranslationHasNote, \
     TranscriptionHasNote
 
+
 """
 ===========================
     Notes
