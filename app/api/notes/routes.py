@@ -312,6 +312,59 @@ def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route("/api/<api_version>/documents/<doc_id>/notes")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/notes/<note_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/notes/<note_id>/from-user/<user_id>")
+def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
+
+    user = get_current_user()
+    args = {
+        "api_version": api_version,
+        "doc_id" : doc_id,
+        "user_id" : user_id,
+        "note_id": note_id
+    }
+
+    data = []
+    errors = []
+
+    transcriptions_notes = query_json_endpoint(
+        request,
+        url_for( "api_bp.api_documents_transcriptions_notes", **args), user=user
+    )
+    if "data" in transcriptions_notes:
+        data.extend(transcriptions_notes["data"])
+    else:
+        errors.append(transcriptions_notes["errors"])
+
+    translations_notes = query_json_endpoint(
+        request,
+        url_for( "api_bp.api_documents_translations_notes", **args), user=user
+    )
+    if "data" in translations_notes:
+        data.extend(translations_notes["data"])
+    else:
+        errors.append(translations_notes["errors"])
+
+    commentaries_notes = query_json_endpoint(
+        request,
+        url_for( "api_bp.api_documents_commentaries_notes", **args), user=user
+    )
+
+    if "data" in commentaries_notes:
+        data.extend(commentaries_notes["data"])
+    else:
+        errors.append(commentaries_notes["errors"])
+
+    if len(errors) != 0 and len(data) == 0:
+        response = APIResponseFactory.make_response(errors=errors)
+    else:
+        response = APIResponseFactory.make_response(data=data)
+
+    return APIResponseFactory.jsonify(response)
+
+
 def make_note_from_data(user_id, data, note_id, src=None):
     """
     :param note_id:

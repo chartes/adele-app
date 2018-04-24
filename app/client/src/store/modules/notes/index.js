@@ -19,7 +19,7 @@ const actions = {
 
   getNotes ({ commit, getters }, docId) {
     console.log('getNotes', docId, getters.currentUser.id)
-    return axios.get(`/api/1.0/documents/${docId}/transcriptions/notes`)
+    return axios.get(`/api/1.0/documents/${docId}/notes`)
       .then( (response) => {
         commit('UPDATE_NOTES', response.data.data)
       })
