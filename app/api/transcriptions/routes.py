@@ -63,6 +63,10 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
             })
         else:
             user_id = tr.user_id
+    else:
+        # user_id is None and user is not None
+        if not user.is_teacher and not user.is_admin:
+            user_id = user.id
 
     if response is None:
 
@@ -74,6 +78,8 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
                 })
 
         if response is None:
+            if user_id is None:
+                user_id = Transcription.user_id
 
             try:
                 transcriptions = Transcription.query.filter(
@@ -125,9 +131,6 @@ def api_post_documents_transcriptions(api_version, doc_id):
             data = [data]
 
         if response is None:
-
-            user = get_current_user()
-            user_id = user.id
 
             for tr in data:
                 user = get_current_user()

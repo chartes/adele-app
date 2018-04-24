@@ -1,4 +1,5 @@
 from flask import request, redirect, url_for
+from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import get_current_user, auth, get_user_from_username, db
@@ -35,8 +36,9 @@ def api_documents_transcriptions_reference_notes(api_version, doc_id):
             "status": 404, "title": "Transcription not found"
         })
     else:
-        #TODO filtrer le user_id
-        response = APIResponseFactory.make_response(data=[thn.note.serialize() for thn in tr.notes])
+        response = APIResponseFactory.make_response(data=[
+            thn.note.serialize() for thn in tr.notes if thn.note.user_id == tr.user_id
+        ])
     return APIResponseFactory.jsonify(response)
 
 
@@ -48,7 +50,9 @@ def api_documents_translations_reference_notes(api_version, doc_id):
             "status": 404, "title": "Translation not found"
         })
     else:
-        response = APIResponseFactory.make_response(data=[thn.note.serialize() for thn in tr.notes])
+        response = APIResponseFactory.make_response(data=[
+            thn.note.serialize() for thn in tr.notes if thn.note.user_id == tr.user_id
+        ])
     return APIResponseFactory.jsonify(response)
 
 
@@ -71,8 +75,10 @@ def api_documents_commentaries_reference_notes(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>")
-def api_documents_transcriptions_notes(api_version, doc_id, user_id=None):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>")
+def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_id=None):
     # sélectionner la liste des notes de transcription d'un utilisateur pour un doc
     """
 
@@ -81,141 +87,243 @@ def api_documents_transcriptions_notes(api_version, doc_id, user_id=None):
     :param user_id:
     :return:
     """
+    response = None
 
     user = get_current_user()
-    if user is None:
-        return redirect(url_for("api_bp.api_documents_transcriptions_reference_notes", api_version="1.0", doc_id=doc_id))
-
-    response = None
-    # only teacher and admin can see everything
-    if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
+    if user is None and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
+    elif user is None:
+        tr = get_reference_transcription(doc_id)
+        if tr is None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Transcription not found"
+            })
+        else:
+            user_id = tr.user_id
+    else:
+        # user_id is None and user is not None
+        if not user.is_teacher and not user.is_admin:
+            user_id = user.id
+
+    # only teacher and admin can see everything
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
 
     if response is None:
-        if user_id is None:
-            user_id = user.id
-        else:
-            user_id = int(user_id)
+
+        transcriptions = []
+        try:
+            if user_id is None:
+                transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
+            else:
+                user_id = int(user_id)
+                transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user_id).all()
+        except NoResultFound:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Transcription not found"
+            })
 
         notes = []
-        try:
-            transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user.id).all()
-            for tr in transcriptions:
-                notes.extend([thn for thn in tr.notes if thn.note.user_id == user_id])
-        except NoResultFound:
-            pass
+        for tr in transcriptions:
+            for thn in tr.notes:
+                if user_id is None:
+                    if note_id is None:
+                        notes.append(thn.note)
+                    elif int(note_id) == thn.note.id:
+                        notes.append(thn.note)
+                elif thn.note.user_id == user_id or (user.is_teacher or user.is_admin):
+                    if note_id is None:
+                        notes.append(thn.note)
+                    elif int(note_id) == thn.note.id:
+                        notes.append(thn.note)
 
         if response is None:
-            response = APIResponseFactory.make_response(data=[thn.note.serialize() for thn in notes])
+            if len(notes) == 0:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "title": "Notes not found"
+                })
+            else:
+                response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
 
     return APIResponseFactory.jsonify(response)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>")
-def api_documents_translations_notes(api_version, doc_id, user_id=None):
-    # sélectionner la liste des notes de traduction d'un utilisateur pour un doc
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>")
+def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=None):
+    # sélectionner la liste des notes de translation d'un utilisateur pour un doc
     """
 
+    :param note_id:
     :param api_version:
     :param doc_id:
     :param user_id:
     :return:
     """
-    user = get_current_user()
-    if user is None:
-        return redirect(url_for("api_bp.api_documents_translations_reference_notes", api_version="1.0", doc_id=doc_id))
-
     response = None
-    # only teacher and admin can see everything
-    if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+
+    user = get_current_user()
+    if user is None and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
+    elif user is None:
+        tr = get_reference_translation(doc_id)
+        if tr is None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Translation not found"
+            })
+        else:
+            user_id = tr.user_id
+    else:
+        # user_id is None and user is not None
+        if not user.is_teacher and not user.is_admin:
+            user_id = user.id
+
+    # only teacher and admin can see everything
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
 
     if response is None:
-        if user_id is None:
-            user_id = user.id
-        else:
-            user_id = int(user_id)
+
+        translations = []
+        try:
+            if user_id is None:
+                translations = Translation.query.filter(Translation.doc_id == doc_id).all()
+            else:
+                user_id = int(user_id)
+                translations = Translation.query.filter(Translation.doc_id == doc_id, Translation.user_id == user_id).all()
+        except NoResultFound:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Translation not found"
+            })
 
         notes = []
-        try:
-            translations = Translation.query.filter(Translation.doc_id == doc_id,
-                                                      Translation.user_id == user.id).all()
-            for tr in translations:
-                notes.extend([thn for thn in tr.notes if thn.note.user_id == user_id])
-        except NoResultFound:
-            pass
+        for tr in translations:
+            for thn in tr.notes:
+                if user_id is None:
+                    if note_id is None:
+                        notes.append(thn.note)
+                    elif int(note_id) == thn.note.id:
+                        notes.append(thn.note)
+                elif thn.note.user_id == user_id or (user.is_teacher or user.is_admin):
+                    if note_id is None:
+                        notes.append(thn.note)
+                    elif int(note_id) == thn.note.id:
+                        notes.append(thn.note)
 
         if response is None:
-            response = APIResponseFactory.make_response(data=[thn.note.serialize() for thn in notes])
+            if len(notes) == 0:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "title": "Notes not found"
+                })
+            else:
+                response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
 
     return APIResponseFactory.jsonify(response)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>")
-def api_documents_commentaries_notes(api_version, doc_id, user_id=None):
-    # sélectionner la liste des notes de commentaire d'un utilisateur pour un doc
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>")
+def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=None):
+    # sélectionner la liste des notes de commentary d'un utilisateur pour un doc
     """
 
+    :param note_id:
     :param api_version:
     :param doc_id:
     :param user_id:
     :return:
     """
+    response = None
 
     user = get_current_user()
-    response = None
-    if user is None:
-        # get the reference transcription
+    if user is None and user_id is not None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+    elif user is None:
         tr = get_reference_transcription(doc_id)
-        user_id = tr.user_id
-
+        if tr is None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Commentary not found"
+            })
+        else:
+            user_id = tr.user_id
     else:
-        # only teacher and admin can see everything
-        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+        # user_id is None and user is not None
+        if not user.is_teacher and not user.is_admin:
+            user_id = user.id
+
+    # only teacher and admin can see everything
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
             })
+
     if response is None:
-        if user_id is None:
-            user_id = user.id
-        else:
-            user_id = int(user_id)
+
+        commentaries = []
+        try:
+            if user_id is None:
+                commentaries = Commentary.query.filter(Commentary.doc_id == doc_id).all()
+            else:
+                user_id = int(user_id)
+                commentaries = Commentary.query.filter(Commentary.doc_id == doc_id, Commentary.user_id == user_id).all()
+        except NoResultFound:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Commentary not found"
+            })
 
         notes = []
-        try:
-            commentaries = Commentary.query.filter(Commentary.doc_id == doc_id,
-                                                   Commentary.user_id == user.id).all()
-            for c in commentaries:
-                notes.extend([n for n in c.notes if n.user_id == user_id])
-        except NoResultFound:
-            pass
+        for c in commentaries:
+            if user_id is None:
+                if note_id is None:
+                    notes.append(c.note)
+                elif int(note_id) == c.note.id:
+                     notes.append(c.note)
+            elif c.note.user_id == user_id or (user.is_teacher or user.is_admin):
+                if note_id is None:
+                    notes.append(c.note)
+                elif int(note_id) == c.note.id:
+                    notes.append(c.note)
 
         if response is None:
-            response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
+            if len(notes) == 0:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "title": "Notes not found"
+                })
+            else:
+                response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
 
     return APIResponseFactory.jsonify(response)
 
 
-def make_note_from_data(user_id, data, src=None):
+def make_note_from_data(user_id, data, note_id, src=None):
     """
+    :param note_id:
     :param src:
     :param user_id:
     :param data:
-    :param kind_of_note: transcription | translation | commentary
     :return:
     """
-    note = None
-
     if isinstance(src, Transcription):
         # TODO: todo gérer erreur
         note_type = NoteType.query.filter(NoteType.id == data["note_type"]).first()
-        note = Note(user_id=user_id, content=data["content"], type_id=note_type.id, note_type=note_type)
+        note = Note(id=note_id, user_id=user_id, content=data["content"], type_id=note_type.id, note_type=note_type)
         transcription_has_note = TranscriptionHasNote()
         transcription_has_note.transcription = src
         transcription_has_note.transcription_id = src.id
@@ -274,10 +382,19 @@ def api_post_documents_transcription_notes(api_version, doc_id):
             data = [data]
 
         if response is None:
+            user = get_current_user()
+            # local note id offset
+            nb = 0
+            # get the transcription id max
+            try:
+                note_max_id = db.session.query(func.max(Note.id)).one()
+                note_max_id = note_max_id[0] + 1
+            except NoResultFound:
+                # it is the transcription for this user and this document
+                note_max_id = 1
 
             for n_data in data:
-
-                user = get_current_user()
+                # user = get_current_user()
                 user_id = user.id
                 # teachers and admins can put/post/delete on others behalf
                 if (user.is_teacher or user.is_admin) and "username" in n_data:
@@ -292,10 +409,12 @@ def api_post_documents_transcription_notes(api_version, doc_id):
                     tr_usr = user
                 src = Transcription.query.filter(Transcription.user_id == tr_usr.id, Transcription.doc_id == doc_id).first()
 
-                new_note = make_note_from_data(user_id, n_data, src)
+                new_note = make_note_from_data(user_id, n_data, note_max_id + nb + 1, src)
                 if new_note is not None:
                     db.session.add(new_note)
-                    created_users.add(tr_usr)
+                    created_users.add((new_note.user_id, new_note.id, tr_usr))
+                    # move local note id offset
+                    nb += 1
                 else:
                     raise NotImplementedError
 
@@ -309,17 +428,19 @@ def api_post_documents_transcription_notes(api_version, doc_id):
 
             if response is None:
                 created_data = []
-                for tr_usr in created_users:
+                for note_user_id, note_id, tr_usr in created_users:
                     json_obj = query_json_endpoint(
                         request,
                         url_for(
                             "api_bp.api_documents_transcriptions_notes",
                             api_version=api_version,
                             doc_id=doc_id,
+                            user_id=note_user_id,
+                            note_id=note_id
                         ),
-                        user=tr_usr
+                        user=user
                     )
-                    created_data.append(json_obj)
+                    created_data.append(json_obj["data"])
 
                 response = APIResponseFactory.make_response(data=created_data)
 

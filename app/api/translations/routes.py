@@ -4,7 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app import get_user_from_username, get_current_user, db, auth
 from app.api.response import APIResponseFactory
-from app.api.routes import query_json_endpoint, json_loads, api_bp
+from app.api.routes import query_json_endpoint, api_bp
 from app.models import Translation, User, Document
 
 """
@@ -49,35 +49,48 @@ def api_documents_translations_reference(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>')
 def api_documents_translations(api_version, doc_id, user_id=None):
-    user = get_current_user()
-    if user is None:
-        return redirect(url_for("api_bp.api_documents_translations_reference", api_version="1.0", doc_id=doc_id))
-
     response = None
-    # only teacher and admin can see everything
-    if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+    user = get_current_user()
+    if user is None and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
-
-    if response is None:
-        if user_id is None:
-            if not user.is_teacher and not user.is_admin:
-                user_id = user.id
-            else:
-                # In that case do not filter
-                user_id = Translation.user_id
-
-        try:
-            translations = Translation.query.filter(
-                Translation.doc_id == doc_id,
-                Translation.user_id == user_id
-            ).all()
-            response = APIResponseFactory.make_response(data=[tr.serialize() for tr in translations])
-        except NoResultFound:
+    elif user is None:
+        tr = get_reference_translation(doc_id)
+        if tr is None:
             response = APIResponseFactory.make_response(errors={
                 "status": 404, "title": "Translation not found"
             })
+        else:
+            user_id = tr.user_id
+    else:
+        # user_id is None and user is not None
+        if not user.is_teacher and not user.is_admin:
+            user_id = user.id
+
+    if response is None:
+
+        if user is not None:
+            # only teacher and admin can see everything
+            if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Access forbidden"
+                })
+
+        if response is None:
+            if user_id is None:
+                user_id = Translation.user_id
+            try:
+                translations = Translation.query.filter(
+                    Translation.doc_id == doc_id,
+                    Translation.user_id == user_id
+                ).all()
+
+                response = APIResponseFactory.make_response(data=[tr.serialize() for tr in translations])
+            except NoResultFound:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "title": "Translation not found"
+                })
 
     return APIResponseFactory.jsonify(response)
 
@@ -116,26 +129,7 @@ def api_post_documents_translations(api_version, doc_id):
         if not isinstance(data, list):
             data = [data]
 
-        # do not allow multiple translation for a single user
-        for d in data:
-            if "username" in d:
-                username = d["username"]
-            else:
-                username = user.username
-
-            if username in usernames:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403,
-                    "title": "Insert forbidden",
-                    "details": "Only one translation per user and document is allowed"
-                })
-            else:
-                usernames.add(username)
-
         if response is None:
-
-            user = get_current_user()
-            user_id = user.id
 
             for tr in data:
                 user = get_current_user()
@@ -156,36 +150,27 @@ def api_post_documents_translations(api_version, doc_id):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403,
                         "title": "Insert forbidden",
-                        "details": "Only one translation per user and document is allowed"
                     })
+                    db.session.rollback()
 
                 if response is None:
-                    # check the request data structure
-                    if "content" not in tr:
-                        response = APIResponseFactory.make_response(errors={
-                            "status": 403,
-                            "title": "Insert forbidden",
-                            "details": "Data structure is incorrect: missing a 'content' field"
-                        })
-                    else:
+                    # get the translation id max
+                    try:
+                        translation_max_id = db.session.query(func.max(Translation.id)).one()
+                        translation_max_id = translation_max_id[0] + 1
+                    except NoResultFound:
+                        # it is the translation for this user and this document
+                        translation_max_id = 1
 
-                        # get the translation id max
-                        try:
-                            translation_max_id = db.session.query(func.max(Translation.id)).one()
-                            translation_max_id = translation_max_id[0] + 1
-                        except NoResultFound:
-                            # it is the translation for this user and this document
-                            translation_max_id = 1
+                    new_translation = Translation(
+                        id=translation_max_id,
+                        content=tr["content"],
+                        doc_id=doc_id,
+                        user_id=user_id
+                    )
 
-                        new_translation = Translation(
-                            id=translation_max_id,
-                            content=tr["content"],
-                            doc_id=doc_id,
-                            user_id=user_id
-                        )
-
-                        db.session.add(new_translation)
-                        created_users.add(user)
+                    db.session.add(new_translation)
+                    created_users.add(user)
             try:
                 db.session.commit()
             except Exception as e:
@@ -203,11 +188,14 @@ def api_post_documents_translations(api_version, doc_id):
                             "api_bp.api_documents_translations",
                             api_version=api_version,
                             doc_id=doc_id,
-                            user_id=user_id
+                            user_id=usr.id
                         ),
                         user=usr
                     )
-                    created_data.append(json_obj)
+                    if "data" in json_obj:
+                        created_data.append(json_obj["data"])
+                    elif "errors":
+                        created_data.append(json_obj["errors"])
 
                 response = APIResponseFactory.make_response(data=created_data)
 

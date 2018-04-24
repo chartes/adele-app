@@ -36,7 +36,7 @@ const actions = {
 
       console.log('getTranscription', getters.document, getters.currentUser)
       // `/api/1.0/documents/${doc_id}/transcriptions/from/${user_id}`
-      axios.get(`/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
+      axios.get(`/api/1.0/documents/${doc_id}/transcriptions`).then( response => {
 
         /*const data = {
           "data": {
