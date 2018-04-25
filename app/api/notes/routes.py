@@ -516,14 +516,7 @@ def make_translation_binding(note, data, usr_id, doc_id, type_id=None):
 def make_commentary_binding(note, data, usr_id, doc_id, type_id):
     commentary = Commentary.query.filter(Commentary.user_id == usr_id, Commentary.doc_id == doc_id, Commentary.type_id == type_id).first()
 
-    commentary.
-    translation_has_note = TranslationHasNote()
-    translation_has_note.translation = commentary
-    translation_has_note.translation_id = commentary.id
-    translation_has_note.note = note
-    translation_has_note.ptr_start = data["ptr_start"]
-    translation_has_note.ptr_end = data["ptr_end"]
-    note.translation = [translation_has_note]
+    
     return note
 
 
