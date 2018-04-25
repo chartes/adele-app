@@ -31,29 +31,34 @@ association_user_has_role = db.Table('user_has_role',
     db.Column('role_id', db.Integer, db.ForeignKey('role.id'), primary_key=True)
 )
 
+
 association_commentary_has_note = db.Table('commentary_has_note',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('type_id', db.Integer, db.ForeignKey('commentary_type.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('doc_id', db.Integer, db.ForeignKey('commentary.doc_id'), primary_key=True),
+    db.Column('type_id', db.Integer, db.ForeignKey('commentary.type_id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('commentary.user_id'), primary_key=True),
     db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
     db.Column('ptr_start', db.Integer),
     db.Column('ptr_end', db.Integer),
 )
+
 association_document_linked_to_document = db.Table('document_linked_to_document',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('linked_doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
 )
 
+
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
     description = db.Column(db.String)
+
     def serialize(self):
         return {
             'id': self.id,
             'label': self.label,
             'description': self.label
         }
+
 
 class AlignmentDiscours(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
@@ -62,6 +67,7 @@ class AlignmentDiscours(db.Model):
     ptr_start = db.Column(db.Integer, primary_key=True)
     ptr_end = db.Column(db.Integer, primary_key=True)
     speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"))
+
     def serialize(self):
         return {
             'transcription_id': self.transcription_id,
@@ -71,6 +77,7 @@ class AlignmentDiscours(db.Model):
             'ptr_end': self.ptr_end,
             'speech_part_type_id': self.speech_part_type_id,
         }
+
 
 class AlignmentImage(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
@@ -92,6 +99,7 @@ class AlignmentImage(db.Model):
             'ptr_end': self.ptr_transcription_end
         }
 
+
 class AlignmentTranslation(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
     translation_id = db.Column(db.Integer, db.ForeignKey('translation.id'), primary_key=True)
@@ -99,6 +107,7 @@ class AlignmentTranslation(db.Model):
     ptr_transcription_end = db.Column(db.Integer, primary_key=True)
     ptr_translation_start = db.Column(db.Integer, primary_key=True)
     ptr_translation_end = db.Column(db.Integer, primary_key=True)
+
     def serialize(self):
         return {
             'transcription_id': self.transcription_id,
@@ -131,17 +140,6 @@ class CommentaryType(db.Model):
             'label': self.label
         }
 
-"""
-# TODO
-class CommentaryHasNote(db.Model):
-    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id'), primary_key=True)
-    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
-    ptr_start = db.Column(db.Integer)
-    ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="translation")
-    translation = db.relationship("Translation", back_populates="notes")
-"""
-
 
 class Commentary(db.Model):
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id'), primary_key=True)
@@ -161,7 +159,10 @@ class Commentary(db.Model):
             'type_id': self.type_id,
             'user_id': self.user_id,
             'content': self.content,
-            'notes': [n.serialize() for n in self.notes]
+            'notes': [
+                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
+                for n in self.notes
+            ]
         }
 
 

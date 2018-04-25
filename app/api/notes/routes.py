@@ -8,8 +8,7 @@ from app.api.routes import api_bp, query_json_endpoint
 from app.api.transcriptions.routes import get_reference_transcription
 from app.api.translations.routes import get_reference_translation
 from app.models import Transcription, Commentary, Translation, Note, NoteType, Document, TranslationHasNote, \
-    TranscriptionHasNote
-
+    TranscriptionHasNote, association_commentary_has_note
 
 """
 ===========================
@@ -168,7 +167,6 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
     :return:
     """
     response = None
-
     user = get_current_user()
     if user is None and user_id is not None:
         response = APIResponseFactory.make_response(errors={
@@ -365,7 +363,7 @@ def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
     return APIResponseFactory.jsonify(response)
 
 
-def make_note_from_data(user_id, data, note_id, src=None):
+def make_note_from_data(user_id, data, note_id):
     """
     :param note_id:
     :param src:
@@ -373,40 +371,26 @@ def make_note_from_data(user_id, data, note_id, src=None):
     :param data:
     :return:
     """
-    if isinstance(src, Transcription):
-        # TODO: todo gérer erreur
-        note_type = NoteType.query.filter(NoteType.id == data["note_type"]).first()
-        note = Note(id=note_id, user_id=user_id, content=data["content"], type_id=note_type.id, note_type=note_type)
-        transcription_has_note = TranscriptionHasNote()
-        transcription_has_note.transcription = src
-        transcription_has_note.transcription_id = src.id
-        transcription_has_note.note = note
-        transcription_has_note.ptr_start = data["ptr_start"]
-        transcription_has_note.ptr_end = data["ptr_end"]
-        note.transcription = [transcription_has_note]
-    else:
-        raise NotImplementedError
-
+    note_type = NoteType.query.filter(NoteType.id == data["note_type"]).first()
+    note = Note(id=note_id, user_id=user_id, content=data["content"], type_id=note_type.id, note_type=note_type)
     return note
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["POST"])
-@auth.login_required
-def api_post_documents_transcription_notes(api_version, doc_id):
+def api_post_documents_flavor_notes(request, user, api_version, doc_id, flavor):
     """
      {
         "data": [
                 {
                     "username": "Eleve1" (optionnal),
                     "note_type": 1,
-                    "content": "My first transcription note",
+                    "content": "My first <flavor> note",
                     "ptr_start": 1,
                     "ptr_end": 80
                 },
                 {
                     "username": "Eleve1" (optionnal),
                     "note_type": 1,
-                    "content": "My second transcription note",
+                    "content": "My second <flavor> note",
                     "ptr_start": 80,
                     "ptr_end": 96
                 }
@@ -415,6 +399,10 @@ def api_post_documents_transcription_notes(api_version, doc_id):
     :param api_version:
     :param doc_id:
     :return:
+    """
+
+    """
+        Use the flavor parameter to determine between transcriptions, translations and commentaries
     """
 
     data = request.get_json()
@@ -435,15 +423,14 @@ def api_post_documents_transcription_notes(api_version, doc_id):
             data = [data]
 
         if response is None:
-            user = get_current_user()
             # local note id offset
             nb = 0
-            # get the transcription id max
+            # get the <flavor> id max
             try:
                 note_max_id = db.session.query(func.max(Note.id)).one()
                 note_max_id = note_max_id[0] + 1
             except NoResultFound:
-                # it is the transcription for this user and this document
+                # it is the <flavor> for this user and this document
                 note_max_id = 1
 
             for n_data in data:
@@ -455,14 +442,16 @@ def api_post_documents_transcription_notes(api_version, doc_id):
                     if usr is not None:
                         user_id = usr.id
 
-                # on wich transcription should the note be attached ?
-                if (user.is_teacher or user.is_admin) and "transcription_username" in n_data:
-                    tr_usr = get_user_from_username(n_data["transcription_username"])
+                # on wich <flavor> should the note be attached ?
+                if (user.is_teacher or user.is_admin) and flavor["data_username_field"] in n_data:
+                    tr_usr = get_user_from_username(n_data[flavor["data_username_field"] ])
                 else:
                     tr_usr = user
-                src = Transcription.query.filter(Transcription.user_id == tr_usr.id, Transcription.doc_id == doc_id).first()
-
-                new_note = make_note_from_data(user_id, n_data, note_max_id + nb + 1, src)
+                
+                # make the new note
+                new_note = make_note_from_data(user_id, n_data, note_max_id + nb + 1)
+                new_note = flavor["bind"](new_note)
+                
                 if new_note is not None:
                     db.session.add(new_note)
                     created_users.add((new_note.user_id, new_note.id, tr_usr))
@@ -485,7 +474,7 @@ def api_post_documents_transcription_notes(api_version, doc_id):
                     json_obj = query_json_endpoint(
                         request,
                         url_for(
-                            "api_bp.api_documents_transcriptions_notes",
+                            flavor["getter"],
                             api_version=api_version,
                             doc_id=doc_id,
                             user_id=note_user_id,
@@ -498,6 +487,86 @@ def api_post_documents_transcription_notes(api_version, doc_id):
                 response = APIResponseFactory.make_response(data=created_data)
 
     return APIResponseFactory.jsonify(response)
+
+
+def make_transcription_binding(note, data, usr_id, doc_id, type_id=None):
+    transcription = Transcription.query.filter(Transcription.user_id == usr_id, Transcription.doc_id == doc_id).first()
+    transcription_has_note = TranscriptionHasNote()
+    transcription_has_note.transcription = transcription
+    transcription_has_note.transcription_id = transcription.id
+    transcription_has_note.note = note
+    transcription_has_note.ptr_start = data["ptr_start"]
+    transcription_has_note.ptr_end = data["ptr_end"]
+    note.transcription = [transcription_has_note]
+    return note
+
+
+def make_translation_binding(note, data, usr_id, doc_id, type_id=None):
+    translation = Translation.query.filter(Translation.user_id == usr_id, Translation.doc_id == doc_id).first()
+    translation_has_note = TranslationHasNote()
+    translation_has_note.translation = translation
+    translation_has_note.translation_id = translation.id
+    translation_has_note.note = note
+    translation_has_note.ptr_start = data["ptr_start"]
+    translation_has_note.ptr_end = data["ptr_end"]
+    note.translation = [translation_has_note]
+    return note
+
+
+def make_commentary_binding(note, data, usr_id, doc_id, type_id):
+    commentary = Commentary.query.filter(Commentary.user_id == usr_id, Commentary.doc_id == doc_id, Commentary.type_id == type_id).first()
+
+    commentary.
+    translation_has_note = TranslationHasNote()
+    translation_has_note.translation = commentary
+    translation_has_note.translation_id = commentary.id
+    translation_has_note.note = note
+    translation_has_note.ptr_start = data["ptr_start"]
+    translation_has_note.ptr_end = data["ptr_end"]
+    note.translation = [translation_has_note]
+    return note
+
+
+transcription_flavor = {
+    "data_username_field": "transcription_username",
+    "getter": "api_bp.api_documents_transcriptions_notes",
+    "bind": make_transcription_binding
+}
+
+
+translation_flavor = {
+    "data_username_field": "translation_username",
+    "getter": "api_bp.api_documents_translations_notes",
+    "bind": make_translation_binding
+}
+
+
+commentary_flavor = {
+    "data_username_field": "commentary_username",
+    "getter": "api_bp.api_documents_commentaries_notes",
+    "bind": make_commentary_binding
+}
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["POST"])
+@auth.login_required
+def api_post_documents_transcriptions_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_post_documents_flavor_notes(request, user, api_version, doc_id, transcription_flavor)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["POST"])
+@auth.login_required
+def api_post_documents_translations_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_post_documents_flavor_notes(request, user, api_version, doc_id, translation_flavor)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["POST"])
+@auth.login_required
+def api_post_documents_commentaries_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_post_documents_flavor_notes(request, user, api_version, doc_id, commentary_flavor)
 
 
 @api_bp.route("/api/<api_version>/note-types")

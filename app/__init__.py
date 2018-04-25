@@ -1,5 +1,7 @@
+import pprint
+from collections import OrderedDict
 
-from flask import Flask, redirect
+from flask import Flask, redirect, url_for
 from flask_login import current_user
 from flask_mail import Mail
 from flask_scss import Scss
@@ -140,3 +142,19 @@ def verify_password(username, password):
 """
 
 from app import routes
+
+
+# OUTPUT A LIST OF ALL ROUTES to API_ROUTES.md
+
+api_rules = {}
+for rule in app.url_map.iter_rules():
+    if rule.rule.startswith("/api/"):
+        if rule.rule in api_rules:
+            api_rules[rule.rule].update(rule.methods)
+        else:
+            api_rules[rule.rule] = set(rule.methods)
+
+
+with open("API_ROUTES.md", "w") as f:
+    for api_rule in sorted(api_rules):
+        f.write("{0} {1}\n".format(api_rule, api_rules[api_rule]))
