@@ -1,4 +1,5 @@
 from flask_user import UserMixin
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from app import db
 
@@ -30,17 +31,6 @@ association_user_has_role = db.Table('user_has_role',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('role.id'), primary_key=True)
 )
-
-
-association_commentary_has_note = db.Table('commentary_has_note',
-    db.Column('doc_id', db.Integer, db.ForeignKey('commentary.doc_id'), primary_key=True),
-    db.Column('type_id', db.Integer, db.ForeignKey('commentary.type_id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('commentary.user_id'), primary_key=True),
-    db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
-    db.Column('ptr_start', db.Integer),
-    db.Column('ptr_end', db.Integer),
-)
-
 association_document_linked_to_document = db.Table('document_linked_to_document',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('linked_doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
@@ -147,11 +137,15 @@ class Commentary(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     content = db.Column(db.Text)
 
+    """
     notes = db.relationship("Note", secondary=association_commentary_has_note,
                              primaryjoin=(association_commentary_has_note.c.doc_id == doc_id and
                                           association_commentary_has_note.c.type_id == type_id and
                                           association_commentary_has_note.c.user_id == user_id),
                              backref=db.backref('commentary'))
+    """
+
+    notes = association_proxy('commentary_notes', 'note')
 
     def serialize(self):
         return {
@@ -164,6 +158,30 @@ class Commentary(db.Model):
                 for n in self.notes
             ]
         }
+
+
+class CommentaryNote(db.Model):
+    doc_id = db.Column(db.Integer, db.ForeignKey('commentary.doc_id'), primary_key=True)
+    type_id = db.Column(db.Integer, db.ForeignKey('commentary.type_id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('commentary.user_id'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    ptr_start = db.Column('ptr_start', db.Integer)
+    ptr_end = db.Column('ptr_end', db.Integer)
+
+    # bidirectional attribute/collection
+    commentary = db.relationship(Commentary,
+                                 primaryjoin=(Commentary.doc_id == doc_id and
+                                              Commentary.type_id == type_id and
+                                              Commentary.user_id == user_id),
+                                 backref=db.backref("commentary_notes", cascade="all, delete-orphan"))
+    # reference to the "Note" object
+    note = db.relationship("Note")
+
+    def __init__(self, commentary=None, note=None, ptr_start=None, ptr_end=None):
+        self.note = note
+        self.commentary = commentary
+        self.ptr_start = ptr_start
+        self.ptr_end = ptr_end
 
 
 class District(db.Model):

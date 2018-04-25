@@ -8,7 +8,7 @@ from app.api.routes import api_bp, query_json_endpoint
 from app.api.transcriptions.routes import get_reference_transcription
 from app.api.translations.routes import get_reference_translation
 from app.models import Transcription, Commentary, Translation, Note, NoteType, Document, TranslationHasNote, \
-    TranscriptionHasNote, association_commentary_has_note
+    TranscriptionHasNote, CommentaryNote
 
 """
 ===========================
@@ -36,7 +36,7 @@ def api_documents_transcriptions_reference_notes(api_version, doc_id):
         })
     else:
         response = APIResponseFactory.make_response(data=[
-            thn.note.serialize() for thn in tr.notes if thn.note.user_id == tr.user_id
+            thn.note.serialize() for thn in tr.notes if thn.transcription_id == tr.id
         ])
     return APIResponseFactory.jsonify(response)
 
@@ -50,7 +50,7 @@ def api_documents_translations_reference_notes(api_version, doc_id):
         })
     else:
         response = APIResponseFactory.make_response(data=[
-            thn.note.serialize() for thn in tr.notes if thn.note.user_id == tr.user_id
+            thn.note.serialize() for thn in tr.notes if thn.translation_id == tr.id
         ])
     return APIResponseFactory.jsonify(response)
 
@@ -117,11 +117,7 @@ def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_i
 
         transcriptions = []
         try:
-            if user_id is None:
-                transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
-            else:
-                user_id = int(user_id)
-                transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user_id).all()
+            transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
                 "status": 404, "title": "Transcription not found"
@@ -196,11 +192,7 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
 
         translations = []
         try:
-            if user_id is None:
-                translations = Translation.query.filter(Translation.doc_id == doc_id).all()
-            else:
-                user_id = int(user_id)
-                translations = Translation.query.filter(Translation.doc_id == doc_id, Translation.user_id == user_id).all()
+            translations = Translation.query.filter(Translation.doc_id == doc_id).all()
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
                 "status": 404, "title": "Translation not found"
@@ -276,11 +268,7 @@ def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=
 
         commentaries = []
         try:
-            if user_id is None:
-                commentaries = Commentary.query.filter(Commentary.doc_id == doc_id).all()
-            else:
-                user_id = int(user_id)
-                commentaries = Commentary.query.filter(Commentary.doc_id == doc_id, Commentary.user_id == user_id).all()
+            commentaries = Commentary.query.filter(Commentary.doc_id == doc_id).all()
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
                 "status": 404, "title": "Commentary not found"
@@ -444,13 +432,15 @@ def api_post_documents_flavor_notes(request, user, api_version, doc_id, flavor):
 
                 # on wich <flavor> should the note be attached ?
                 if (user.is_teacher or user.is_admin) and flavor["data_username_field"] in n_data:
-                    tr_usr = get_user_from_username(n_data[flavor["data_username_field"] ])
+                    tr_usr = get_user_from_username(n_data[flavor["data_username_field"]])
                 else:
                     tr_usr = user
+                print(tr_usr.id)
                 
                 # make the new note
                 new_note = make_note_from_data(user_id, n_data, note_max_id + nb + 1)
-                new_note = flavor["bind"](new_note)
+                new_note = flavor["bind"](new_note, n_data, tr_usr.id, doc_id)
+                print(new_note.translation)
                 
                 if new_note is not None:
                     db.session.add(new_note)
@@ -482,14 +472,17 @@ def api_post_documents_flavor_notes(request, user, api_version, doc_id, flavor):
                         ),
                         user=user
                     )
+                    print(json_obj)
                     created_data.append(json_obj["data"])
+                    # TODO gerer "errors"
 
                 response = APIResponseFactory.make_response(data=created_data)
 
     return APIResponseFactory.jsonify(response)
 
 
-def make_transcription_binding(note, data, usr_id, doc_id, type_id=None):
+def make_transcription_binding(note, data, usr_id, doc_id):
+    # TODO gerer erreur
     transcription = Transcription.query.filter(Transcription.user_id == usr_id, Transcription.doc_id == doc_id).first()
     transcription_has_note = TranscriptionHasNote()
     transcription_has_note.transcription = transcription
@@ -501,7 +494,8 @@ def make_transcription_binding(note, data, usr_id, doc_id, type_id=None):
     return note
 
 
-def make_translation_binding(note, data, usr_id, doc_id, type_id=None):
+def make_translation_binding(note, data, usr_id, doc_id):
+    # TODO gerer erreur
     translation = Translation.query.filter(Translation.user_id == usr_id, Translation.doc_id == doc_id).first()
     translation_has_note = TranslationHasNote()
     translation_has_note.translation = translation
@@ -513,10 +507,16 @@ def make_translation_binding(note, data, usr_id, doc_id, type_id=None):
     return note
 
 
-def make_commentary_binding(note, data, usr_id, doc_id, type_id):
-    commentary = Commentary.query.filter(Commentary.user_id == usr_id, Commentary.doc_id == doc_id, Commentary.type_id == type_id).first()
-
-    
+def make_commentary_binding(note, data, usr_id, doc_id):
+    type_id = data["note_type"]
+    # TODO gerer erreur
+    commentary = Commentary.query.filter(
+        Commentary.user_id == usr_id,
+        Commentary.doc_id == doc_id,
+        Commentary.type_id == type_id
+    ).first()
+    # bind through the association proxy
+    CommentaryNote(commentary, note, data["ptr_start"], data["ptr_end"])
     return note
 
 
