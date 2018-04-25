@@ -73,87 +73,8 @@ def api_documents_commentaries_reference_notes(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>")
-def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_id=None):
-    # sélectionner la liste des notes de transcription d'un utilisateur pour un doc
-    """
-
-    :param api_version:
-    :param doc_id:
-    :param user_id:
-    :return:
-    """
-    response = None
-
-    user = get_current_user()
-    if user is None and user_id is not None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    elif user is None:
-        tr = get_reference_transcription(doc_id)
-        if tr is None:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Transcription not found"
-            })
-        else:
-            user_id = tr.user_id
-    else:
-        # user_id is None and user is not None
-        if not user.is_teacher and not user.is_admin:
-            user_id = user.id
-
-    # only teacher and admin can see everything
-    if user is not None:
-        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
-
-    if response is None:
-
-        transcriptions = []
-        try:
-            transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Transcription not found"
-            })
-
-        notes = []
-        for tr in transcriptions:
-            for thn in tr.notes:
-                if user_id is None:
-                    if note_id is None:
-                        notes.append(thn.note)
-                    elif int(note_id) == thn.note.id:
-                        notes.append(thn.note)
-                elif thn.note.user_id == user_id or (user.is_teacher or user.is_admin):
-                    if note_id is None:
-                        notes.append(thn.note)
-                    elif int(note_id) == thn.note.id:
-                        notes.append(thn.note)
-
-        if response is None:
-            if len(notes) == 0:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404, "title": "Notes not found"
-                })
-            else:
-                response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
-
-    return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>")
-def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=None):
-    # sélectionner la liste des notes de translation d'un utilisateur pour un doc
+def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, binder):
+    # sélectionner la liste des notes de <binder> d'un utilisateur pour un doc
     """
 
     :param note_id:
@@ -163,7 +84,6 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
     :return:
     """
     response = None
-    user = get_current_user()
     if user is None and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
@@ -177,7 +97,6 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
         else:
             user_id = tr.user_id
     else:
-        # user_id is None and user is not None
         if not user.is_teacher and not user.is_admin:
             user_id = user.id
 
@@ -190,27 +109,22 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
 
     if response is None:
 
-        translations = []
-        try:
-            translations = Translation.query.filter(Translation.doc_id == doc_id).all()
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Translation not found"
-            })
+        all_notes = binder.get_notes(doc_id)
+        print(user_id)
 
         notes = []
-        for tr in translations:
-            for thn in tr.notes:
-                if user_id is None:
-                    if note_id is None:
-                        notes.append(thn.note)
-                    elif int(note_id) == thn.note.id:
-                        notes.append(thn.note)
-                elif thn.note.user_id == user_id or (user.is_teacher or user.is_admin):
-                    if note_id is None:
-                        notes.append(thn.note)
-                    elif int(note_id) == thn.note.id:
-                        notes.append(thn.note)
+        for note in all_notes:
+            print(user_id, note.user_id, note_id, note.id,  note.user_id == user_id, note_id == note.id)
+            if user_id is None:
+                if note_id is None:
+                    notes.append(note)
+                elif int(note_id) == note.id:
+                    notes.append(note)
+            elif note.user_id == int(user_id):
+                if note_id is None:
+                    notes.append(note)
+                elif int(note_id) == note.id:
+                    notes.append(note)
 
         if response is None:
             if len(notes) == 0:
@@ -221,6 +135,24 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
                 response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
 
     return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>")
+def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_id=None):
+    user = get_current_user()
+    return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, TranscriptionNoteBinder)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>")
+def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=None):
+    user = get_current_user()
+    return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, TranslationNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes")
@@ -228,74 +160,8 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>")
 def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=None):
-    # sélectionner la liste des notes de commentary d'un utilisateur pour un doc
-    """
-
-    :param note_id:
-    :param api_version:
-    :param doc_id:
-    :param user_id:
-    :return:
-    """
-    response = None
-
     user = get_current_user()
-    if user is None and user_id is not None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    elif user is None:
-        tr = get_reference_transcription(doc_id)
-        if tr is None:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Commentary not found"
-            })
-        else:
-            user_id = tr.user_id
-    else:
-        # user_id is None and user is not None
-        if not user.is_teacher and not user.is_admin:
-            user_id = user.id
-
-    # only teacher and admin can see everything
-    if user is not None:
-        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
-
-    if response is None:
-
-        commentaries = []
-        try:
-            commentaries = Commentary.query.filter(Commentary.doc_id == doc_id).all()
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Commentary not found"
-            })
-
-        notes = []
-        for c in commentaries:
-            if user_id is None:
-                if note_id is None:
-                    notes.append(c.note)
-                elif int(note_id) == c.note.id:
-                     notes.append(c.note)
-            elif c.note.user_id == user_id or (user.is_teacher or user.is_admin):
-                if note_id is None:
-                    notes.append(c.note)
-                elif int(note_id) == c.note.id:
-                    notes.append(c.note)
-
-        if response is None:
-            if len(notes) == 0:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404, "title": "Notes not found"
-                })
-            else:
-                response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
-
-    return APIResponseFactory.jsonify(response)
+    return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, CommentaryNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes")
@@ -349,19 +215,6 @@ def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
         response = APIResponseFactory.make_response(data=data)
 
     return APIResponseFactory.jsonify(response)
-
-
-def make_note_from_data(user_id, data, note_id):
-    """
-    :param note_id:
-    :param src:
-    :param user_id:
-    :param data:
-    :return:
-    """
-    note_type = NoteType.query.filter(NoteType.id == data["note_type"]).first()
-    note = Note(id=note_id, user_id=user_id, content=data["content"], type_id=note_type.id, note_type=note_type)
-    return note
 
 
 def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
@@ -435,13 +288,19 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
                     tr_usr = get_user_from_username(n_data[binder.username_field])
                 else:
                     tr_usr = user
-                print(tr_usr.id)
-                
+
                 # make the new note
-                new_note = make_note_from_data(user_id, n_data, note_max_id + nb + 1)
+                # TODO gérer erreur
+                note_type = NoteType.query.filter(NoteType.id == n_data["note_type"]).first()
+                new_note = Note(
+                    id=note_max_id + nb + 1,
+                    user_id=user_id,
+                    content=n_data["content"],
+                    type_id=note_type.id,
+                    note_type=note_type
+                )
                 new_note = binder.bind(new_note, n_data, tr_usr.id, doc_id)
-                print(new_note.translation)
-                
+
                 if new_note is not None:
                     db.session.add(new_note)
                     created_users.add((new_note.user_id, new_note.id, tr_usr))
