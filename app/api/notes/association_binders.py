@@ -1,4 +1,6 @@
-from app.models import Transcription, TranscriptionHasNote, Translation, Commentary, CommentaryNote, TranslationHasNote
+from app import db
+from app.models import Transcription, TranscriptionHasNote, Translation, Commentary, CommentaryNote, TranslationHasNote, \
+    Note
 
 
 class TranscriptionNoteBinder(object):
@@ -28,6 +30,22 @@ class TranscriptionNoteBinder(object):
         transcription_has_note.ptr_start = data["ptr_start"]
         transcription_has_note.ptr_end = data["ptr_end"]
         note.transcription = [transcription_has_note]
+        return note
+
+    @staticmethod
+    def update(doc_id, data):
+        # TODO gérer erreur
+        # get the note to update
+        note = Note.query.filter(Note.id == data["note_id"]).one()
+        note.content = data["content"]
+
+        transcription_has_note = note.transcription[0]
+        transcription_has_note.ptr_start = data["ptr_start"]
+        transcription_has_note.ptr_end = data["ptr_end"]
+
+        db.session.add(note)
+        db.session.add(transcription_has_note)
+
         return note
 
 
@@ -60,6 +78,21 @@ class TranslationNoteBinder(object):
         note.translation = [translation_has_note]
         return note
 
+    @staticmethod
+    def update(doc_id, data):
+        # TODO gérer erreur
+        # get the note to update
+        note = Note.query.filter(Note.id == data["note_id"]).one()
+
+        translation_has_note = note.translation[0]
+        translation_has_note.ptr_start = data["ptr_start"]
+        translation_has_note.ptr_end = data["ptr_end"]
+
+        db.session.add(note)
+        db.session.add(translation_has_note)
+
+        return note
+
 
 class CommentaryNoteBinder(object):
 
@@ -87,3 +120,7 @@ class CommentaryNoteBinder(object):
         # bind through the association proxy
         CommentaryNote(commentary, note, data["ptr_start"], data["ptr_end"])
         return note
+
+    @staticmethod
+    def update(doc_id, data):
+        raise NotImplementedError

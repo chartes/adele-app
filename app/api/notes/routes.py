@@ -110,11 +110,9 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
     if response is None:
 
         all_notes = binder.get_notes(doc_id)
-        print(user_id)
 
         notes = []
         for note in all_notes:
-            print(user_id, note.user_id, note_id, note.id,  note.user_id == user_id, note_id == note.id)
             if user_id is None:
                 if note_id is None:
                     notes.append(note)
@@ -140,7 +138,6 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>")
 def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_id=None):
     user = get_current_user()
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, TranscriptionNoteBinder)
@@ -149,7 +146,6 @@ def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_i
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>")
 def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=None):
     user = get_current_user()
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, TranslationNoteBinder)
@@ -158,7 +154,6 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>")
 def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=None):
     user = get_current_user()
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, CommentaryNoteBinder)
@@ -167,7 +162,6 @@ def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/notes/<note_id>/from-user/<user_id>")
 def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
 
     user = get_current_user()
@@ -223,6 +217,7 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
         "data": [
                 {
                     "username": "Eleve1" (optionnal),
+                    "transcription_username" : "Eleve1"
                     "note_type": 1,
                     "content": "My first <binder> note",
                     "ptr_start": 1,
@@ -230,6 +225,7 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
                 },
                 {
                     "username": "Eleve1" (optionnal),
+                    "transcription_username" : "AdminJulien"
                     "note_type": 1,
                     "content": "My second <binder> note",
                     "ptr_start": 80,
@@ -359,6 +355,116 @@ def api_post_documents_translations_notes(api_version, doc_id):
 def api_post_documents_commentaries_notes(api_version, doc_id):
     user = get_current_user()
     return api_post_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
+
+
+def api_put_documents_binder_notes(request, user, api_version, doc_id, binder):
+    """
+     {
+        "data": [
+                {
+                    "note_id" : 1159,
+                    "content": "My first <binder> note",
+                    "ptr_start": 1,
+                    "ptr_end": 80
+                },
+                {
+                    "note_id": 1160,
+                    "content": "My second <binder> note",
+                    "ptr_start": 80,
+                    "ptr_end": 96
+                }
+        ]
+    }
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+
+    """
+        Use the binder parameter to determine between transcriptions, translations and commentaries
+    """
+
+    data = request.get_json()
+    response = None
+    updated_notes = set()
+
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+
+    if "data" in data and response is None:
+        data = data["data"]
+
+        if not isinstance(data, list):
+            data = [data]
+
+        if response is None:
+
+            for n_data in data:
+
+                try:
+                    # todo gérer la secu dans le update
+                    updated_note = binder.update(doc_id, n_data)
+                    # save which users to retrieve later
+                    updated_notes.add(updated_note)
+                except NoResultFound:
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403,
+                        "title": "Update forbidden",
+                    })
+                    break
+
+                if response is None:
+                    try:
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403, "title": "Cannot update data", "details": str(e)
+                        })
+
+            if response is None:
+                updated_data = []
+                for note in updated_notes:
+                    json_obj = query_json_endpoint(
+                        request,
+                        url_for(
+                            binder.get_endpoint_name,
+                            api_version=api_version,
+                            doc_id=doc_id,
+                            note_id=note.id
+                        ),
+                        user=user
+                    )
+                    updated_data.append(json_obj["data"])
+
+                response = APIResponseFactory.make_response(data=updated_data)
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["PUT"])
+@auth.login_required
+def api_put_documents_transcriptions_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_put_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["PUT"])
+@auth.login_required
+def api_put_documents_translations_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_put_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["PUT"])
+@auth.login_required
+def api_put_documents_commentariess_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_put_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/note-types")
