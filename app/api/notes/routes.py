@@ -27,6 +27,23 @@ def api_add_note(api_version):
     })
 
 
+@api_bp.route("/api/<api_version>/note-types")
+def api_note_types(api_version):
+    """
+
+    :param api_version:
+    :return:
+    """
+    try:
+        note_types = NoteType.query.all()
+        response = APIResponseFactory.make_response(data=[nt.serialize() for nt in note_types])
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Types de note introuvables"
+        })
+    return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/reference/notes')
 def api_documents_transcriptions_reference_notes(api_version, doc_id):
     tr = get_reference_transcription(doc_id)
@@ -299,7 +316,7 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
 
                 if new_note is not None:
                     db.session.add(new_note)
-                    created_users.add((new_note.user_id, new_note.id, tr_usr))
+                    created_users.add((new_note.id, tr_usr))
                     # move local note id offset
                     nb += 1
                 else:
@@ -315,46 +332,23 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
 
             if response is None:
                 created_data = []
-                for note_user_id, note_id, tr_usr in created_users:
+                for note_id, tr_usr in created_users:
                     json_obj = query_json_endpoint(
                         request,
                         url_for(
                             binder.get_endpoint_name,
                             api_version=api_version,
                             doc_id=doc_id,
-                            user_id=note_user_id,
                             note_id=note_id
                         ),
                         user=user
                     )
-                    print(json_obj)
                     created_data.append(json_obj["data"])
                     # TODO gerer "errors"
 
                 response = APIResponseFactory.make_response(data=created_data)
 
     return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["POST"])
-@auth.login_required
-def api_post_documents_transcriptions_notes(api_version, doc_id):
-    user = get_current_user()
-    return api_post_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["POST"])
-@auth.login_required
-def api_post_documents_translations_notes(api_version, doc_id):
-    user = get_current_user()
-    return api_post_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["POST"])
-@auth.login_required
-def api_post_documents_commentaries_notes(api_version, doc_id):
-    user = get_current_user()
-    return api_post_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
 
 
 def api_put_documents_binder_notes(request, user, api_version, doc_id, binder):
@@ -446,6 +440,88 @@ def api_put_documents_binder_notes(request, user, api_version, doc_id, binder):
     return APIResponseFactory.jsonify(response)
 
 
+def api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, binder):
+    response = None
+
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+
+    if user is not None:
+        if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+
+    # delete transcriptions for the given user id
+    if response is None:
+        try:
+            # bring the transcription to delete
+
+            if note_id is not None:
+                note = Note.query.filter(Note.id == note_id).first()
+                db.session.delete(note)
+            else:
+                notes = binder.get_notes()
+                for note in notes:
+                    if note.user_id == user_id:
+                        db.session.delete(note)
+        except NoResultFound:
+            pass
+
+        if response is None:
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Cannot delete data", "details": str(e)
+                })
+
+        if response is None:
+            response = APIResponseFactory.make_response(data=[])
+
+    return APIResponseFactory.jsonify(response)
+
+
+"""
+===========================
+    POST Notes
+===========================
+"""
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["POST"])
+@auth.login_required
+def api_post_documents_transcriptions_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_post_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["POST"])
+@auth.login_required
+def api_post_documents_translations_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_post_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["POST"])
+@auth.login_required
+def api_post_documents_commentaries_notes(api_version, doc_id):
+    user = get_current_user()
+    return api_post_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
+
+
+"""
+===========================
+    PUT Notes
+===========================
+"""
+
+
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["PUT"])
 @auth.login_required
 def api_put_documents_transcriptions_notes(api_version, doc_id):
@@ -462,23 +538,38 @@ def api_put_documents_translations_notes(api_version, doc_id):
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["PUT"])
 @auth.login_required
-def api_put_documents_commentariess_notes(api_version, doc_id):
+def api_put_documents_commentaries_notes(api_version, doc_id):
     user = get_current_user()
     return api_put_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
 
 
-@api_bp.route("/api/<api_version>/note-types")
-def api_note_types(api_version):
-    """
+"""
+===========================
+    DELETE Notes
+===========================
+"""
 
-    :param api_version:
-    :return:
-    """
-    try:
-        note_types = NoteType.query.all()
-        response = APIResponseFactory.make_response(data=[nt.serialize() for nt in note_types])
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Types de note introuvables"
-        })
-    return APIResponseFactory.jsonify(response)
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
+@auth.login_required
+def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id, note_id=None):
+    user = get_current_user()
+    return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, TranscriptionNoteBinder)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
+@auth.login_required
+def api_delete_documents_translations_notes(api_version, doc_id, user_id, note_id=None):
+    user = get_current_user()
+    return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, TranslationNoteBinder)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
+@auth.login_required
+def api_delete_documents_commentaries_notes(api_version, doc_id, user_id, note_id=None):
+    user = get_current_user()
+    return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, CommentaryNoteBinder)
+

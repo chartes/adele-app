@@ -212,7 +212,7 @@ class Document(db.Model):
     date_update = db.Column(db.String())
 
     # Relationships#
-    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document')
+    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document', cascade="all, delete-orphan")
     institution = db.relationship("Institution", backref=db.backref('document', lazy=True))
     acte_types = db.relationship(ActeType,
                              secondary=association_document_has_acte_type,
@@ -297,7 +297,8 @@ class Image(db.Model):
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
 
     zones = db.relationship("ImageZone",
-                            primaryjoin=(ImageZone.img_id==id and ImageZone.manifest_url==manifest_url))
+                            primaryjoin=(ImageZone.img_id==id and ImageZone.manifest_url==manifest_url),
+                            cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -346,8 +347,8 @@ class Note(db.Model):
 
     note_type = db.relationship("NoteType")
 
-    transcription = db.relationship("TranscriptionHasNote", back_populates="note")
-    translation = db.relationship("TranslationHasNote", back_populates="note")
+    transcription = db.relationship("TranscriptionHasNote", back_populates="note", cascade="all, delete-orphan")
+    translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
