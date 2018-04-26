@@ -241,6 +241,7 @@ class Document(db.Model):
         return {
             'id': self.id,
             'title': self.title,
+            'subtitle' : self.subtitle,
             'creation': self.creation,
             'creation_lab': self.creation_lab,
             'copy_year': self.copy_year,
