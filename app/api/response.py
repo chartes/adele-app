@@ -18,7 +18,10 @@ class APIResponseFactory:
         if len(errors) == 0:
             if cls.is_iterable(data):
                 if len(data) == 1:
-                    data = data[0]
+                    if isinstance(data, set):
+                        data = data.pop()
+                    else:
+                        data = data[0]
             r["data"] = data
         else:
             r["errors"] = errors

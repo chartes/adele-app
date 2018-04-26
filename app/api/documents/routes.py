@@ -1,10 +1,12 @@
+import datetime
 
+from flask import request, url_for
 from sqlalchemy.orm.exc import NoResultFound
 
+from app import auth, get_current_user, db
 from app.api.response import APIResponseFactory
-from app.api.routes import api_bp
-from app.models import Document
-
+from app.api.routes import api_bp, query_json_endpoint
+from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition
 
 """
 ===========================
@@ -24,3 +26,137 @@ def api_documents(api_version, doc_id):
         })
     return APIResponseFactory.jsonify(response)
 
+
+@api_bp.route('/api/<api_version>/documents', methods=['POST'])
+@auth.login_required
+def api_post_documents(api_version):
+    """
+    {
+    "data":
+        {
+          "title":  "My new title",
+          "subtitle": "My new subtitle",
+          "argument" : "<p>L’infante Urra</p>"
+          "creation": 1400,
+          "creation_lab" : "1400",
+          "copy_year" : "[1409-1420 ca.]",
+          "copy_cent" : 15,
+          "institution_ref" :  "http://data.bnf.fr/ark:/12148/cb12381002j"
+          "institution_name" :  "Archives départementales du Poitou"
+          "pressmark" : "J 340, n° 21",
+
+          "editor_id" : [1, 2],
+          "country_ref" : [1, 2, 3],
+          "district_id" : [1, 2, 3],
+          "acte_type_id" : [1],
+          "language_code" : "fro",
+          "tradition_id": [1]
+          "linked_document_id" : [110, 22]
+        }
+    }
+
+    :param api_version:
+    :return:
+    """
+    response = None
+    user = get_current_user()
+
+    if user is None or not (user.is_teacher or user.is_admin):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
+    if response is None:
+        data = request.get_json()
+
+        if "data" in data:
+            data = data["data"]
+            tmp_doc = {
+                "title": "Sans titre"
+            }
+
+            for key in ("title", "subtitle", "argument", "pressmark",
+                        "creation", "creation_lab", "copy_year", "copy_cent"):
+                if key in data:
+                    tmp_doc[key] = data[key]
+
+            if "institution_ref" in data:
+                institution = Institution.query.filter(Institution.ref == data["institution_ref"]).first()
+                if institution is None:
+                    institution = Institution(ref=data["institution_ref"])
+                    if "institution_name" in data:
+                        institution.name = data["instituion_name"]
+                    db.session.add(institution)
+                tmp_doc["institution_ref"] = data["institution_ref"]
+
+            if "editor_id" in data:
+                if not isinstance(data["editor_id"], list):
+                    data["editor_id"] = [data["editor_id"]]
+                editors = Editor.query.filter(Editor.id.in_(data["editor_id"])).all()
+                tmp_doc["editors"] = editors
+
+            if "country_ref" in data:
+                if not isinstance(data["country_ref"], list):
+                    data["country_ref"] = [data["country_ref"]]
+                countries = Country.query.filter(Country.ref.in_(data["country_ref"])).all()
+                tmp_doc["countries"] = countries
+
+            if "district_id" in data:
+                if not isinstance(data["district_id"], list):
+                    data["district_id"] = [data["district_id"]]
+                districts = District.query.filter(District.id.in_(data["district_id"])).all()
+                tmp_doc["districts"] = districts
+
+            if "acte_type_id" in data:
+                if not isinstance(data["acte_type_id"], list):
+                    data["acte_type_id"] = [data["acte_type_id"]]
+                acte_types = ActeType.query.filter(ActeType.id.in_(data["acte_type_id"])).all()
+                tmp_doc["acte_types"] = acte_types
+
+            if "language_code" in data:
+                if not isinstance(data["language_code"], list):
+                    data["language_code"] = [data["language_code"]]
+                languages = Language.query.filter(Language.code.in_(data["language_code"])).all()
+                tmp_doc["languages"] = languages
+
+            if "tradition_id" in data:
+                if not isinstance(data["tradition_id"], list):
+                    data["tradition_id"] = [data["tradition_id"]]
+                traditions = Tradition.query.filter(Tradition.id.in_(data["tradition_id"])).all()
+                tmp_doc["traditions"] = traditions
+
+            if "linked_document_id" in data:
+                if not isinstance(data["linked_document_id"], list):
+                    data["linked_document_id"] = [data["linked_document_id"]]
+                linked_documents = Document.query.filter(Document.id.in_(data["linked_document_id"])).all()
+                tmp_doc["linked_documents"] = linked_documents
+
+            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            tmp_doc["date_insert"] = now
+            tmp_doc["date_update"] = now
+
+            if response is None:
+
+                new_doc = Document(**tmp_doc)
+                db.session.add(new_doc)
+
+                try:
+                    db.session.commit()
+                    print(new_doc.id)
+                except Exception as e:
+                    db.session.rollback()
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403, "title": "Cannot insert data", "details": str(e)
+                    })
+
+                if response is None:
+                    json_obj = query_json_endpoint(
+                        request,
+                        url_for("api_bp.api_documents", api_version=api_version, doc_id=new_doc.id)
+                    )
+                    if "data" in json_obj:
+                        response = APIResponseFactory.make_response(data=json_obj["data"])
+                    else:
+                        response = APIResponseFactory.make_response(errors=json_obj["errors"])
+
+    return APIResponseFactory.jsonify(response)

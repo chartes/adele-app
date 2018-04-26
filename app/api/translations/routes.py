@@ -46,6 +46,18 @@ def api_documents_translations_reference(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/users')
+def api_documents_translations_users(api_version, doc_id):
+    try:
+        translations = Translation.query.filter(Translation.doc_id == doc_id).all()
+        users = User.query.filter(User.id.in_(set([tr.user_id for tr in translations]))).all()
+        users = [{"id": user.id, "username": user.username} for user in users]
+    except NoResultFound:
+        users = []
+    response = APIResponseFactory.make_response(data=users)
+    return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>')
 def api_documents_translations(api_version, doc_id, user_id=None):

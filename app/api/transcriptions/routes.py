@@ -46,6 +46,18 @@ def api_documents_transcriptions_reference(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/users')
+def api_documents_transcriptions_users(api_version, doc_id):
+    try:
+        transcriptions = Transcription.query.filter( Transcription.doc_id == doc_id).all()
+        users = User.query.filter(User.id.in_(set([tr.user_id for tr in transcriptions]))).all()
+        users = [{"id": user.id, "username": user.username} for user in users]
+    except NoResultFound:
+        users = []
+    response = APIResponseFactory.make_response(data=users)
+    return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>')
 def api_documents_transcriptions(api_version, doc_id, user_id=None):
@@ -113,8 +125,6 @@ def api_post_documents_transcriptions(api_version, doc_id):
     """
     data = request.get_json()
     response = None
-    user = get_current_user()
-    usernames = set()
     created_users = set()
 
     try:

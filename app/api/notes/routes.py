@@ -465,9 +465,9 @@ def api_delete_documents_binder_notes(request, user, api_version, doc_id, user_i
                 note = Note.query.filter(Note.id == note_id).first()
                 db.session.delete(note)
             else:
-                notes = binder.get_notes()
+                notes = binder.get_notes(doc_id)
                 for note in notes:
-                    if note.user_id == user_id:
+                    if note.user_id == int(user_id):
                         db.session.delete(note)
         except NoResultFound:
             pass
