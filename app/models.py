@@ -128,32 +128,28 @@ class CommentaryType(db.Model):
 
     def serialize(self):
         return {
-            'id': self.ref,
+            'id': self.id,
             'label': self.label
         }
 
 
 class Commentary(db.Model):
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'), primary_key=True)
-    type_id = db.Column(db.Integer, db.ForeignKey('commentary_type.id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+    type_id = db.Column(db.Integer, db.ForeignKey('commentary_type.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
 
-    """
-    notes = db.relationship("Note", secondary=association_commentary_has_note,
-                             primaryjoin=(association_commentary_has_note.c.doc_id == doc_id and
-                                          association_commentary_has_note.c.type_id == type_id and
-                                          association_commentary_has_note.c.user_id == user_id),
-                             backref=db.backref('commentary'))
-    """
-
-    notes = association_proxy('commentary_notes', 'note')
+    notes = db.relationship("CommentaryHasNote", back_populates="commentary", cascade="all, delete-orphan")
+    type = db.relationship("CommentaryType", backref="commentary")
 
     def serialize(self):
+
         return {
+            'id': self.id,
             'doc_id': self.doc_id,
-            'type_id': self.type_id,
             'user_id': self.user_id,
+            'type': self.type.serialize(),
             'content': self.content,
             'notes': [
                 dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
@@ -162,28 +158,13 @@ class Commentary(db.Model):
         }
 
 
-class CommentaryNote(db.Model):
-    doc_id = db.Column(db.Integer, db.ForeignKey('commentary.doc_id'), primary_key=True)
-    type_id = db.Column(db.Integer, db.ForeignKey('commentary.type_id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('commentary.user_id'), primary_key=True)
+class CommentaryHasNote(db.Model):
+    commentary_id = db.Column(db.Integer, db.ForeignKey('commentary.id'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
-    ptr_start = db.Column('ptr_start', db.Integer)
-    ptr_end = db.Column('ptr_end', db.Integer)
-
-    # bidirectional attribute/collection
-    commentary = db.relationship(Commentary,
-                                 primaryjoin=(Commentary.doc_id == doc_id and
-                                              Commentary.type_id == type_id and
-                                              Commentary.user_id == user_id),
-                                 backref=db.backref("commentary_notes", cascade="all, delete-orphan"))
-    # reference to the "Note" object
-    note = db.relationship("Note")
-
-    def __init__(self, commentary=None, note=None, ptr_start=None, ptr_end=None):
-        self.note = note
-        self.commentary = commentary
-        self.ptr_start = ptr_start
-        self.ptr_end = ptr_end
+    ptr_start = db.Column(db.Integer)
+    ptr_end = db.Column(db.Integer)
+    note = db.relationship("Note", back_populates="commentary")
+    commentary = db.relationship("Commentary", back_populates="notes")
 
 
 class District(db.Model):
@@ -354,6 +335,7 @@ class Note(db.Model):
 
     transcription = db.relationship("TranscriptionHasNote", back_populates="note", cascade="all, delete-orphan")
     translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan")
+    commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan")
 
     def serialize(self):
         return {

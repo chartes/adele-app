@@ -1,7 +1,7 @@
 from flask import request, url_for
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, get_current_user, db
+from app import APIResponseFactory, get_current_user, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import Institution
 
@@ -24,6 +24,7 @@ def api_institution(api_version, institution_id=None):
 
 @api_bp.route('/api/<api_version>/institutions', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/institutions/<institution_id>', methods=['DELETE'])
+@auth.login_required
 def api_delete_institution(api_version, institution_id=None):
     response = None
     user = get_current_user()
@@ -56,6 +57,7 @@ def api_delete_institution(api_version, institution_id=None):
 
 
 @api_bp.route('/api/<api_version>/institutions', methods=['PUT'])
+@auth.login_required
 def api_put_institution(api_version):
     response = None
     user = get_current_user()
@@ -113,6 +115,7 @@ def api_put_institution(api_version):
 
 
 @api_bp.route('/api/<api_version>/institutions', methods=['POST'])
+@auth.login_required
 def api_post_institution(api_version):
     response = None
     user = get_current_user()

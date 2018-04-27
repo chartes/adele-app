@@ -192,34 +192,52 @@ def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
     data = []
     errors = []
 
+    """
+        Transcriptions
+    """
     transcriptions_notes = query_json_endpoint(
         request,
         url_for( "api_bp.api_documents_transcriptions_notes", **args), user=user
     )
+
     if "data" in transcriptions_notes:
+        if not isinstance(transcriptions_notes["data"], list):
+            transcriptions_notes["data"] = [transcriptions_notes["data"]]
         data.extend(transcriptions_notes["data"])
     else:
         errors.append(transcriptions_notes["errors"])
 
+    """
+        Translations
+    """
     translations_notes = query_json_endpoint(
         request,
         url_for( "api_bp.api_documents_translations_notes", **args), user=user
     )
     if "data" in translations_notes:
+        if not isinstance(translations_notes["data"], list):
+            translations_notes["data"] = [translations_notes["data"]]
         data.extend(translations_notes["data"])
     else:
         errors.append(translations_notes["errors"])
 
+    """
+        Commentaries
+    """
     commentaries_notes = query_json_endpoint(
         request,
         url_for( "api_bp.api_documents_commentaries_notes", **args), user=user
     )
-
     if "data" in commentaries_notes:
+        if not isinstance(commentaries_notes["data"], list):
+            commentaries_notes["data"] = [commentaries_notes["data"]]
         data.extend(commentaries_notes["data"])
     else:
         errors.append(commentaries_notes["errors"])
 
+    """
+        Make response
+    """
     if len(errors) != 0 and len(data) == 0:
         response = APIResponseFactory.make_response(errors=errors)
     else:

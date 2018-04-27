@@ -1,7 +1,7 @@
 from flask import request, url_for
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, get_current_user, db
+from app import APIResponseFactory, get_current_user, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import ActeType
 
@@ -24,6 +24,7 @@ def api_acte_type(api_version, acte_type_id=None):
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/acte-types/<acte_type_id>', methods=['DELETE'])
+@auth.login_required
 def api_delete_acte_type(api_version, acte_type_id=None):
     response = None
     user = get_current_user()
@@ -56,6 +57,7 @@ def api_delete_acte_type(api_version, acte_type_id=None):
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])
+@auth.login_required
 def api_put_acte_type(api_version):
     response = None
     user = get_current_user()
@@ -108,6 +110,7 @@ def api_put_acte_type(api_version):
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['POST'])
+@auth.login_required
 def api_post_acte_type(api_version):
     response = None
     user = get_current_user()

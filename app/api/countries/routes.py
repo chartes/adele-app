@@ -1,7 +1,7 @@
 from flask import request, url_for
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, get_current_user, db
+from app import APIResponseFactory, get_current_user, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import Country
 
@@ -24,6 +24,7 @@ def api_country(api_version, country_id=None):
 
 @api_bp.route('/api/<api_version>/countries', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/countries/<country_id>', methods=['DELETE'])
+@auth.login_required
 def api_delete_country(api_version, country_id=None):
     response = None
     user = get_current_user()
@@ -56,6 +57,7 @@ def api_delete_country(api_version, country_id=None):
 
 
 @api_bp.route('/api/<api_version>/countries', methods=['PUT'])
+@auth.login_required
 def api_put_country(api_version):
     response = None
     user = get_current_user()
@@ -113,6 +115,7 @@ def api_put_country(api_version):
 
 
 @api_bp.route('/api/<api_version>/countries', methods=['POST'])
+@auth.login_required
 def api_post_country(api_version):
     response = None
     user = get_current_user()

@@ -1,5 +1,5 @@
 from app import db
-from app.models import Transcription, TranscriptionHasNote, Translation, Commentary, CommentaryNote, TranslationHasNote, \
+from app.models import Transcription, TranscriptionHasNote, Translation, Commentary, CommentaryHasNote, TranslationHasNote, \
     Note
 
 
@@ -102,25 +102,39 @@ class CommentaryNoteBinder(object):
     @staticmethod
     def get_notes(doc_id):
         # TODO gérer erreur
-        commentaries = Commentary.query.filter(Translation.doc_id == doc_id).all()
+        commentaries = Commentary.query.filter(Commentary.doc_id == doc_id).all()
         notes = []
-        for c in commentaries:
-            notes.extend(c.notes)
+        for tr in commentaries:
+            for thn in tr.notes:
+                notes.append(thn.note)
         return notes
 
     @staticmethod
     def bind(note, data, usr_id, doc_id):
-        type_id = data["note_type"]
         # TODO gerer erreur
-        commentary = Commentary.query.filter(
-            Commentary.user_id == usr_id,
-            Commentary.doc_id == doc_id,
-            Commentary.type_id == type_id
-        ).first()
-        # bind through the association proxy
-        CommentaryNote(commentary, note, data["ptr_start"], data["ptr_end"])
+        commentary = Commentary.query.filter(Commentary.user_id == usr_id,
+                                             Commentary.doc_id == doc_id,
+                                             Commentary.type_id == data["type_id"]).first()
+        commentary_has_note = CommentaryHasNote()
+        commentary_has_note.commentary = commentary
+        commentary_has_note.commentary_id = commentary.id
+        commentary_has_note.note = note
+        commentary_has_note.ptr_start = data["ptr_start"]
+        commentary_has_note.ptr_end = data["ptr_end"]
+        note.commentary = [commentary_has_note]
         return note
 
     @staticmethod
     def update(doc_id, data):
-        raise NotImplementedError
+        # TODO gérer erreur
+        # get the note to update
+        note = Note.query.filter(Note.id == data["note_id"]).one()
+
+        commentary_has_note = note.commentary[0]
+        commentary_has_note.ptr_start = data["ptr_start"]
+        commentary_has_note.ptr_end = data["ptr_end"]
+
+        db.session.add(note)
+        db.session.add(commentary_has_note)
+
+        return note
