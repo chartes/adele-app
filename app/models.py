@@ -170,7 +170,7 @@ class CommentaryHasNote(db.Model):
 class District(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
-    country_id = db.Column(db.String, db.ForeignKey('country.id'))
+    country_id = db.Column(db.Integer, db.ForeignKey('country.id'))
 
     def serialize(self):
         return {
@@ -374,10 +374,20 @@ class Role(db.Model):
 
 
 class SpeechPartType(db.Model):
-    id = db.Column(db.String, primary_key=True)
-    lang_code = db.Column(db.String, db.ForeignKey("language.code"), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    lang_code = db.Column(db.String, db.ForeignKey("language.code"))
     label = db.Column(db.String)
     definition = db.Column(db.Text)
+
+    language = db.relationship("Language", primaryjoin=(Language.code == lang_code))
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'label': self.label,
+            'language': self.language.serialize(),
+            'definition': self.definition
+        }
 
 
 class Tradition(db.Model):
