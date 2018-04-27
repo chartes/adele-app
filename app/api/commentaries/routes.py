@@ -4,7 +4,29 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import APIResponseFactory, get_current_user, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.api.transcriptions.routes import get_reference_transcription
-from app.models import Commentary
+from app.models import Commentary, User
+
+
+def get_reference_commentary(doc_id, type_id):
+    """
+
+    :param doc_id:
+    :return:
+    """
+    commentary = None
+    try:
+        tr_ref = get_reference_transcription(doc_id)
+        if tr_ref is None:
+            raise NoResultFound("Reference transcription not found")
+        commentary = Commentary.query.filter(
+            doc_id == Commentary.doc_id,
+            type_id == Commentary.type_id,
+            tr_ref.user_id == Commentary.user_id
+        ).one()
+    except NoResultFound:
+        pass
+
+    return commentary
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries')
@@ -54,10 +76,34 @@ def api_commentary(api_version, doc_id, user_id=None, type_id=None):
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference/of-type/<type_id>')
+def api_commentary_reference(api_version, doc_id, type_id=None):
+    tr = get_reference_transcription(doc_id)
+    response = None
+    if tr is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Reference transcription note found"
+        })
+
+    if response is None:
+        user = User.query.filter(User.id == tr.user_id).one()
+        json_obj = query_json_endpoint(
+            request,
+            url_for("api_bp.api_commentary", api_version=api_version,
+                    doc_id=doc_id, user_id=tr.user_id, type_id=type_id),
+            user=user
+        )
+        response = APIResponseFactory.make_response(data=json_obj["data"])
+
+    return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>', methods=['DELETE'])
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>',  methods=['DELETE'])
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>',
+              methods=['DELETE'])
 @auth.login_required
 def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
     user = get_current_user()
@@ -235,9 +281,9 @@ def api_put_commentary(api_version, doc_id):
                             break
 
                         c = Commentary.query.filter(
-                                Commentary.doc_id == co["doc_id"],
-                                Commentary.user_id == co["user_id"],
-                                Commentary.type_id == co["type_id"]
+                            Commentary.doc_id == co["doc_id"],
+                            Commentary.user_id == co["user_id"],
+                            Commentary.type_id == co["type_id"]
                         ).one()
                         c.content = co["content"]
 
@@ -269,4 +315,3 @@ def api_put_commentary(api_version, doc_id):
             })
 
     return APIResponseFactory.jsonify(response)
-

@@ -19,7 +19,9 @@
 /api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id> {'DELETE', 'OPTIONS'}
 /api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id> {'DELETE', 'HEAD', 'OPTIONS', 'GET'}
 /api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id> {'DELETE', 'HEAD', 'OPTIONS', 'GET'}
+/api/<api_version>/documents/<doc_id>/commentaries/reference {'HEAD', 'OPTIONS', 'GET'}
 /api/<api_version>/documents/<doc_id>/commentaries/reference/notes {'HEAD', 'OPTIONS', 'GET'}
+/api/<api_version>/documents/<doc_id>/commentaries/reference/of-type/<type_id> {'HEAD', 'OPTIONS', 'GET'}
 /api/<api_version>/documents/<doc_id>/first-canvas {'HEAD', 'OPTIONS', 'GET'}
 /api/<api_version>/documents/<doc_id>/manifest {'HEAD', 'OPTIONS', 'GET'}
 /api/<api_version>/documents/<doc_id>/notes {'HEAD', 'OPTIONS', 'GET'}

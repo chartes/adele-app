@@ -42,6 +42,12 @@ def api_documents_translations_reference(api_version, doc_id):
             "status": 404, "title": "Translation not found"
         })
     else:
+        # filter notes
+        notes = []
+        for thn in tr.notes:
+            if thn.note.user_id == tr.user_id:
+                notes.append(thn)
+        tr.notes = notes
         response = APIResponseFactory.make_response(data=tr.serialize())
     return APIResponseFactory.jsonify(response)
 
