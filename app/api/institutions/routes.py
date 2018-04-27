@@ -35,11 +35,12 @@ def api_delete_institution(api_version, institution_id=None):
     if response is None:
         try:
             if institution_id is not None:
-                institutions = Institution.query.filter(Institution.id == institution_id).one()
+                institutions = [Institution.query.filter(Institution.id == institution_id).one()]
             else:
                 institutions = Institution.query.all()
 
-            db.session.delete(institutions)
+            for i in institutions:
+                db.session.delete(i)
             try:
                 db.session.commit()
                 response = APIResponseFactory.make_response(data=[])

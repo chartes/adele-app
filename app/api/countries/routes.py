@@ -35,11 +35,12 @@ def api_delete_country(api_version, country_id=None):
     if response is None:
         try:
             if country_id is not None:
-                countries = Country.query.filter(Country.id == country_id).one()
+                countries = [Country.query.filter(Country.id == country_id).one()]
             else:
                 countries = Country.query.all()
 
-            db.session.delete(countries)
+            for c in countries:
+                db.session.delete(c)
             try:
                 db.session.commit()
                 response = APIResponseFactory.make_response(data=[])

@@ -35,11 +35,12 @@ def api_delete_acte_type(api_version, acte_type_id=None):
     if response is None:
         try:
             if acte_type_id is not None:
-                acte_types = ActeType.query.filter(ActeType.id == acte_type_id).one()
+                acte_types = [ActeType.query.filter(ActeType.id == acte_type_id).one()]
             else:
                 acte_types = ActeType.query.all()
 
-            db.session.delete(acte_types)
+            for a in acte_types:
+                db.session.delete(a)
             try:
                 db.session.commit()
                 response = APIResponseFactory.make_response(data=[])
