@@ -21,7 +21,7 @@ association_document_has_tradition = db.Table('document_has_tradition',
 )
 association_document_from_country = db.Table('document_from_country',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('country_ref', db.String, db.ForeignKey('country.ref'), primary_key=True)
+    db.Column('country_id', db.Integer, db.ForeignKey('country.id'), primary_key=True)
 )
 association_document_from_district = db.Table('document_from_district',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
@@ -110,11 +110,13 @@ class AlignmentTranslation(db.Model):
 
 
 class Country(db.Model):
-    ref = db.Column(db.String, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    ref = db.Column(db.String)
     label = db.Column(db.String)
 
     def serialize(self):
         return {
+            'id' : self.id,
             'ref': self.ref,
             'label': self.label
         }
@@ -187,13 +189,13 @@ class CommentaryNote(db.Model):
 class District(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String)
-    country_ref = db.Column(db.String, db.ForeignKey('country.ref'))
+    country_id = db.Column(db.String, db.ForeignKey('country.id'))
 
     def serialize(self):
         return {
             'id': self.id,
             'label': self.label,
-            'country_ref': self.country_ref
+            'country_id': self.country_id
         }
 
 
@@ -211,8 +213,8 @@ class Document(db.Model):
     date_insert = db.Column(db.String())
     date_update = db.Column(db.String())
 
-    # Relationships#
-    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document', cascade="all, delete-orphan")
+    # Relationships #
+    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document')
     institution = db.relationship("Institution", backref=db.backref('document', lazy=True))
     acte_types = db.relationship(ActeType,
                              secondary=association_document_has_acte_type,
@@ -420,7 +422,7 @@ class Transcription(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranscriptionHasNote", back_populates="transcription")
+    notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
 
     def serialize(self):
 
@@ -451,7 +453,7 @@ class Translation(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranslationHasNote", back_populates="translation")
+    notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan")
 
     def serialize(self):
         return {

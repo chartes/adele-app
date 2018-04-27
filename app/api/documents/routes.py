@@ -46,7 +46,7 @@ def api_post_documents(api_version):
           "pressmark" : "J 340, n° 21",
 
           "editor_id" : [1, 2],
-          "country_ref" : [1, 2, 3],
+          "country_id" : [1, 2, 3],
           "district_id" : [1, 2, 3],
           "acte_type_id" : [1],
           "language_code" : "fro",
@@ -137,10 +137,10 @@ def api_post_documents(api_version):
                     else:
                         tmp_doc.editors = editors
 
-                if "country_ref" in data:
-                    if not isinstance(data["country_ref"], list):
-                        data["country_ref"] = [data["country_ref"]]
-                    countries = Country.query.filter(Country.ref.in_(data["country_ref"])).all()
+                if "country_id" in data:
+                    if not isinstance(data["country_id"], list):
+                        data["country_id"] = [data["country_id"]]
+                    countries = Country.query.filter(Country.ref.in_(data["country_id"])).all()
                     if is_post_method:
                         tmp_doc["countries"] = countries
                     else:
@@ -230,7 +230,7 @@ def api_post_documents(api_version):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['DELETE'])
 @auth.login_required
-def api_deltee_documents(api_version, doc_id):
+def api_delete_documents(api_version, doc_id):
 
     response = None
     user = get_current_user()
