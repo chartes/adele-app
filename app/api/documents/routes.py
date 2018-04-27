@@ -27,6 +27,19 @@ def api_documents(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route('/api/<api_version>/documents')
+def api_documents_id_list(api_version):
+    try:
+        docs = Document.query.all()
+        data = [doc.id for doc in docs]
+        response = APIResponseFactory.make_response(data=data)
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Documents not found"
+        })
+    return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents', methods=['POST', 'PUT'])
 @auth.login_required
 def api_post_documents(api_version):
@@ -41,8 +54,7 @@ def api_post_documents(api_version):
           "creation_lab" : "1400",
           "copy_year" : "[1409-1420 ca.]",
           "copy_cent" : 15,
-          "institution_ref" :  "http://data.bnf.fr/ark:/12148/cb12381002j"
-          "institution_name" :  "Archives départementales du Poitou"
+          "institution_id" :  1
           "pressmark" : "J 340, n° 21",
 
           "editor_id" : [1, 2],
@@ -114,19 +126,12 @@ def api_post_documents(api_version):
                     if "copy_year" in data: tmp_doc.copy_year = data["copy_year"]
                     if "copy_cent" in data: tmp_doc.copy_cent = data["copy_cent"]
 
-                if "institution" in data:
-                    if "ref" in data["institution"]:
-                        institution = Institution.query.filter(Institution.ref == data["institution"]["ref"]).first()
-
-                        if institution is None:
-                            if "name" in data["institution"]:
-                                institution = Institution(ref=data["institution"]["ref"], name=data["institution"]["name"])
-                                db.session.add(institution)
-
-                        if is_post_method:
-                            tmp_doc["institution"] = institution
-                        else:
-                            tmp_doc.institution = institution
+                if "institution_id" in data:
+                    institution = Institution.query.filter(Institution.id == data["institution_id"]).one()
+                    if is_post_method:
+                        tmp_doc["institution"] = institution
+                    else:
+                        tmp_doc.institution = institution
 
                 if "editor_id" in data:
                     if not isinstance(data["editor_id"], list):
@@ -140,7 +145,7 @@ def api_post_documents(api_version):
                 if "country_id" in data:
                     if not isinstance(data["country_id"], list):
                         data["country_id"] = [data["country_id"]]
-                    countries = Country.query.filter(Country.ref.in_(data["country_id"])).all()
+                    countries = Country.query.filter(Country.id.in_(data["country_id"])).all()
                     if is_post_method:
                         tmp_doc["countries"] = countries
                     else:

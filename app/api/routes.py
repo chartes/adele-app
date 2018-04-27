@@ -125,6 +125,7 @@ def api_align_translation(api_version, transcription_id, translation_id):
 from app.api.documents import routes
 from app.api.acte_types import routes
 from app.api.countries import routes
+from app.api.institutions import routes
 from app.api.users import routes
 from app.api.transcriptions import routes
 from app.api.translations import routes

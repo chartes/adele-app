@@ -3,28 +3,28 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app import APIResponseFactory, get_current_user, db
 from app.api.routes import api_bp, query_json_endpoint
-from app.models import ActeType
+from app.models import Institution
 
 
-@api_bp.route('/api/<api_version>/acte-types')
-@api_bp.route('/api/<api_version>/acte-types/<acte_type_id>')
-def api_acte_type(api_version, acte_type_id=None):
+@api_bp.route('/api/<api_version>/institutions')
+@api_bp.route('/api/<api_version>/institutions/<institution_id>')
+def api_institution(api_version, institution_id=None):
     try:
-        if acte_type_id is not None:
-            acte_types = [ActeType.query.filter(ActeType.id == acte_type_id).one()]
+        if institution_id is not None:
+            institutions = [Institution.query.filter(Institution.id == institution_id).one()]
         else:
-            acte_types = ActeType.query.all()
-        response = APIResponseFactory.make_response(data=[a.serialize() for a in acte_types])
+            institutions = Institution.query.all()
+        response = APIResponseFactory.make_response(data=[a.serialize() for a in institutions])
     except NoResultFound:
         response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
+            "status": 404, "title": "Institution {0} not found".format(institution_id)
         })
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/acte-types', methods=['DELETE'])
-@api_bp.route('/api/<api_version>/acte-types/<acte_type_id>', methods=['DELETE'])
-def api_delete_acte_type(api_version, acte_type_id=None):
+@api_bp.route('/api/<api_version>/institutions', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/institutions/<institution_id>', methods=['DELETE'])
+def api_delete_institution(api_version, institution_id=None):
     response = None
     user = get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
@@ -33,12 +33,12 @@ def api_delete_acte_type(api_version, acte_type_id=None):
         })
     if response is None:
         try:
-            if acte_type_id is not None:
-                acte_types = ActeType.query.filter(ActeType.id == acte_type_id).one()
+            if institution_id is not None:
+                institutions = Institution.query.filter(Institution.id == institution_id).one()
             else:
-                acte_types = ActeType.query.all()
+                institutions = Institution.query.all()
 
-            db.session.delete(acte_types)
+            db.session.delete(institutions)
             try:
                 db.session.commit()
                 response = APIResponseFactory.make_response(data=[])
@@ -50,13 +50,13 @@ def api_delete_acte_type(api_version, acte_type_id=None):
 
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
+                "status": 404, "title": "Institution {0} not found".format(institution_id)
             })
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])
-def api_put_acte_type(api_version):
+@api_bp.route('/api/<api_version>/institutions', methods=['PUT'])
+def api_put_institution(api_version):
     response = None
     user = get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
@@ -74,14 +74,18 @@ def api_put_acte_type(api_version):
                     data = [data]
 
                 modifed_data = []
-                for acte_type in data:
-                    a = ActeType.query.filter(ActeType.id == acte_type["id"]).one()
-                    a.label = acte_type["label"]
-                    a.description = acte_type["description"]
-                    db.session.add(a)
-                    modifed_data.append(a)
-
                 try:
+                    for institution in data:
+                        if "id" not in institution:
+                            raise Exception("Institution id is missing from the payload")
+                        a = Institution.query.filter(Institution.id == institution["id"]).one()
+                        if "ref" in institution:
+                            a.ref = institution["ref"]
+                        if "name" in institution:
+                            a.name = institution["name"]
+                        db.session.add(a)
+                        modifed_data.append(a)
+
                     db.session.commit()
                 except Exception as e:
                     db.session.rollback()
@@ -94,21 +98,22 @@ def api_put_acte_type(api_version):
                     for a in modifed_data:
                         json_obj = query_json_endpoint(
                             request,
-                            url_for("api_bp.api_acte_type", api_version=api_version, acte_type_id=a.id)
+                            url_for("api_bp.api_institution", api_version=api_version, institution_id=a.id)
                         )
+                        print(json_obj)
                         data.append(json_obj["data"])
                     response = APIResponseFactory.make_response(data=data)
 
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "ActeType not found"
+                "status": 404, "title": "Institution not found"
             })
 
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/acte-types', methods=['POST'])
-def api_post_acte_type(api_version):
+@api_bp.route('/api/<api_version>/institutions', methods=['POST'])
+def api_post_institution(api_version):
     response = None
     user = get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
@@ -126,8 +131,10 @@ def api_post_acte_type(api_version):
                     data = [data]
 
                 created_data = []
-                for acte_type in data:
-                    a = ActeType(**acte_type)
+                for institution in data:
+                    if "id" in institution:
+                        institution.pop("id")
+                    a = Institution(**institution)
                     db.session.add(a)
                     created_data.append(a)
 
@@ -144,14 +151,14 @@ def api_post_acte_type(api_version):
                     for a in created_data:
                         json_obj = query_json_endpoint(
                             request,
-                            url_for("api_bp.api_acte_type", api_version=api_version, acte_type_id=a.id)
+                            url_for("api_bp.api_institution", api_version=api_version, institution_id=a.id)
                         )
                         data.append(json_obj["data"])
                     response = APIResponseFactory.make_response(data=data)
 
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "ActeType not found"
+                "status": 404, "title": "Institution not found"
             })
 
     return APIResponseFactory.jsonify(response)

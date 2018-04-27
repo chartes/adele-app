@@ -207,15 +207,15 @@ class Document(db.Model):
     creation_lab = db.Column(db.String())
     copy_year = db.Column(db.String())
     copy_cent = db.Column(db.Integer)
-    institution_ref = db.Column(db.String(), db.ForeignKey('institution.ref'))
     pressmark = db.Column(db.String())
     argument = db.Column(db.Text())
     date_insert = db.Column(db.String())
     date_update = db.Column(db.String())
+    institution_id = db.Column(db.Integer(), db.ForeignKey("institution.id"))
 
     # Relationships #
     images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document')
-    institution = db.relationship("Institution", backref=db.backref('document', lazy=True))
+    institution = db.relationship("Institution", primaryjoin="Document.institution_id==Institution.id", backref=db.backref('documents'))
     acte_types = db.relationship(ActeType,
                              secondary=association_document_has_acte_type,
                              backref=db.backref('documents', ))
@@ -321,11 +321,13 @@ class Image(db.Model):
 
 
 class Institution(db.Model):
-    ref = db.Column(db.String, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    ref = db.Column(db.String)
     name = db.Column(db.String)
 
     def serialize(self):
         return {
+            'id': self.id,
             'ref': self.ref,
             'name': self.name
         }

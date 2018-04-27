@@ -75,7 +75,7 @@
                         <p><strong>Pays :</strong></p>
                         <ul>
                             {% for country in doc.countries %}
-                            <li><a href="{{ country.id }}" target="_blank">{{ country.label }}</a></li>
+                            <li><a href="{{ country.ref }}" target="_blank">{{ country.label }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>

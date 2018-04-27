@@ -22,6 +22,7 @@ def api_country(api_version, country_id=None):
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route('/api/<api_version>/countries', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/countries/<country_id>', methods=['DELETE'])
 def api_delete_country(api_version, country_id=None):
     response = None
