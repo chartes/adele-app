@@ -102,9 +102,9 @@ def api_documents_translations(api_version, doc_id, user_id=None):
                 translations = Translation.query.filter(
                     Translation.doc_id == doc_id,
                     Translation.user_id == user_id
-                ).all()
+                ).one()
 
-                response = APIResponseFactory.make_response(data=[tr.serialize() for tr in translations])
+                response = APIResponseFactory.make_response(data=translations.serialize())
             except NoResultFound:
                 response = APIResponseFactory.make_response(errors={
                     "status": 404, "title": "Translation not found"

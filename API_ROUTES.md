@@ -34,6 +34,8 @@
 /api/<api_version>/documents/<doc_id>/notes/<note_id> {'OPTIONS', 'GET', 'HEAD'}
 /api/<api_version>/documents/<doc_id>/notes/from-user/<user_id> {'OPTIONS', 'GET', 'HEAD'}
 /api/<api_version>/documents/<doc_id>/transcriptions {'POST', 'HEAD', 'OPTIONS', 'PUT', 'GET'}
+/api/<api_version>/documents/<doc_id>/transcriptions/alignments {'OPTIONS', 'GET', 'HEAD'}
+/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id> {'HEAD', 'OPTIONS', 'DELETE', 'GET'}
 /api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id> {'HEAD', 'OPTIONS', 'DELETE', 'GET'}
 /api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>/list {'OPTIONS', 'GET', 'HEAD'}
 /api/<api_version>/documents/<doc_id>/transcriptions/list {'OPTIONS', 'GET', 'HEAD'}

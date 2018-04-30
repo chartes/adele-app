@@ -98,6 +98,9 @@ class AlignmentTranslation(db.Model):
     ptr_translation_start = db.Column(db.Integer, primary_key=True)
     ptr_translation_end = db.Column(db.Integer, primary_key=True)
 
+    transcription = db.relationship("Transcription")
+    translation = db.relationship("Translation")
+
     def serialize(self):
         return {
             'transcription_id': self.transcription_id,

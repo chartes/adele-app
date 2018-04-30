@@ -5,7 +5,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import get_user_from_username, get_current_user, db, auth
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, api_bp
-from app.models import Transcription, User, Document
+from app.api.translations.routes import get_reference_translation
+from app.models import Transcription, User, Document, AlignmentTranslation, Translation
 
 """
 ===========================
@@ -55,7 +56,7 @@ def api_documents_transcriptions_reference(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/users')
 def api_documents_transcriptions_users(api_version, doc_id):
     try:
-        transcriptions = Transcription.query.filter( Transcription.doc_id == doc_id).all()
+        transcriptions = Transcription.query.filter(Transcription.doc_id == doc_id).all()
         users = User.query.filter(User.id.in_(set([tr.user_id for tr in transcriptions]))).all()
         users = [{"id": user.id, "username": user.username} for user in users]
     except NoResultFound:
@@ -100,12 +101,12 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
                 user_id = Transcription.user_id
 
             try:
-                transcriptions = Transcription.query.filter(
+                tr = Transcription.query.filter(
                     Transcription.doc_id == doc_id,
                     Transcription.user_id == user_id
-                ).all()
+                ).one()
 
-                response = APIResponseFactory.make_response(data=[tr.serialize() for tr in transcriptions])
+                response = APIResponseFactory.make_response(data=tr.serialize())
             except NoResultFound:
                 response = APIResponseFactory.make_response(errors={
                     "status": 404, "title": "Transcription not found"
@@ -366,7 +367,6 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
 
         if response is None:
             try:
-
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
@@ -378,3 +378,117 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
             response = APIResponseFactory.make_response(data=[])
 
     return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>')
+def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
+    user = get_current_user()
+    response = None
+
+    transcription = get_reference_transcription(doc_id)
+
+    if transcription is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Reference transcription not found"
+        })
+
+    else:
+        alignments = []
+
+        # pick the reference translation if you are not logged or asking for a user who is not you
+        if user_id is None or user is None or int(user_id) != user.id:
+            translation = get_reference_translation(doc_id)
+            alignments = AlignmentTranslation.query.filter(
+                AlignmentTranslation.transcription_id == transcription.id,
+                AlignmentTranslation.translation_id == translation.id
+            ).all()
+        else:
+            json_obj = query_json_endpoint(
+                request,
+                url_for(
+                    "api_bp.api_documents_translations",
+                    api_version=api_version,
+                    doc_id=doc_id,
+                    user_id=user_id
+                ),
+                user=user
+            )
+
+            if "data" not in json_obj:
+                response = APIResponseFactory.make_response(errors=json_obj["errors"])
+            else:
+                translation = json_obj["data"]
+
+                alignments = AlignmentTranslation.query.filter(
+                    AlignmentTranslation.transcription_id == transcription.id,
+                    AlignmentTranslation.translation_id == translation["id"]
+                ).all()
+
+        if response is None:
+            ptrs = [(a.ptr_transcription_start, a.ptr_transcription_end,
+                     a.ptr_translation_start, a.ptr_translation_end)
+                    for a in alignments]
+
+            response = APIResponseFactory.make_response(data=ptrs)
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>', methods=['DELETE'])
+@auth.login_required
+def api_delete_documents_alignments(api_version, doc_id, user_id=None):
+    response = None
+    user = get_current_user()
+    if user is None or (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
+    if response is None:
+        transcription = get_reference_transcription(doc_id)
+        if transcription is None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Reference transcription not found"
+            })
+
+        if user_id is None:
+            translation = get_reference_translation(doc_id)
+            if translation is None:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "title": "Reference translation not found"
+                })
+        else:
+            translation = Translation.query.filter(
+                Translation.doc_id == doc_id,
+                Translation.user_id == user_id
+            ).one()
+
+        if response is None:
+            try:
+                alignments = AlignmentTranslation.query.filter(
+                    AlignmentTranslation.transcription_id == transcription.id,
+                    AlignmentTranslation.translation_id == translation.id
+                ).all()
+
+                for al in alignments:
+                    db.session.delete(al)
+
+            except NoResultFound as e:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "title": str(e)
+                })
+                db.session.rollback()
+
+            if response is None:
+                try:
+                    db.session.commit()
+                    response = APIResponseFactory.make_response()
+                except Exception as e:
+                    db.session.rollback()
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403, "title": "Cannot delete data", "details": str(e)
+                    })
+
+    return APIResponseFactory.jsonify(response)
+

@@ -1,5 +1,6 @@
 from app import db
 
+
 def __get_translation_alignment(transcription_id, translation_id):
     return """
         -- Transcription vs Translation
