@@ -11,7 +11,6 @@ from app.api.routes import query_json_endpoint, json_loads, api_bp
 from app.api.transcriptions.routes import get_reference_transcription
 from app.models import AlignmentImage, ImageZone, Image
 
-
 """
 ===========================
     Manifest
@@ -101,9 +100,9 @@ def api_documents_annotations(api_version, doc_id):
                     resp = op.open(oc["@id"], timeout=10).read()
                 except HTTPError as e:
                     response = APIResponseFactory.make_response(
-                        errors={"details": e.msg,
+                        errors={"details": str(e),
                                 "title": "The annotation list {0} cannot be reached".format(oc["@id"]),
-                                "status": e.code}
+                                "status": 404}
                     )
                     return APIResponseFactory.jsonify(response)
 
@@ -372,7 +371,6 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
             new_annotation = make_annotation(img.manifest_url, img_json, fragment_coords, res_uri, note_content,
                                              format="text/plain")
             response = new_annotation
-
 
     return APIResponseFactory.jsonify(response)
 
@@ -686,5 +684,143 @@ def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None)
             # the DELETE is OK, respond with no data
             if response is None:
                 response = APIResponseFactory.make_response()
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/images")
+def api_documents_images(api_version, doc_id):
+    images = Image.query.filter(Image.doc_id == doc_id).all()
+
+    response = APIResponseFactory.make_response(data=[{
+        "manifest_url": img.manifest_url,
+        "id": img.id
+    } for img in images])
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=["POST"])
+@auth.login_required
+def api_post_documents_images(api_version, doc_id):
+    """
+    {
+        "data" : {
+            "manifest_url" : "http://my.manifests/man1.json",
+            "id": "http://image/iiif/1/full/full/0/default.jpg"
+        }
+    }
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+    response = None
+
+    user = get_current_user()
+    if not (user.is_teacher or user.is_admin):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
+    if response is None:
+        data = request.get_json()
+        data = data["data"]
+
+        if not isinstance(data, list):
+            data = [data]
+
+        new_images = []
+
+        images_before = query_json_endpoint(
+            request,
+            url_for("api_bp.api_documents_images", api_version=api_version, doc_id=doc_id)
+        )
+
+        if "data" in images_before:
+            if not isinstance(images_before["data"], list):
+                manifest_url = images_before["data"]["manifest_url"]
+            else:
+                manifest_url = images_before["data"][0]["manifest_url"]
+        else:
+            manifest_url = None
+
+        try:
+            for img_data in data:
+                if manifest_url is not None and img_data["manifest_url"] != manifest_url:
+                    raise ValueError("Only one manifest per document is allowed")
+
+                new_img = Image(manifest_url=img_data["manifest_url"], id=img_data["id"], doc_id=doc_id)
+                db.session.add(new_img)
+                new_images.append(new_img)
+        except KeyError:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Insert forbidden", "details": "Data is malformed"
+            })
+            db.session.rollback()
+        except ValueError as e:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Insert forbidden", "details": str(e)
+            })
+            db.session.rollback()
+
+        if response is None:
+
+            try:
+                db.session.commit()
+            except Exception as e:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Cannot insert data", "details": str(e)
+                })
+
+            if response is None:
+                images_after = query_json_endpoint(
+                    request,
+                    url_for("api_bp.api_documents_images", api_version=api_version, doc_id=doc_id)
+                )
+
+                if not isinstance(images_before["data"], list):
+                    images_before = [images_before["data"]]
+                else:
+                    images_before = images_before["data"]
+
+                if not isinstance(images_after["data"], list):
+                    images_after = [images_after["data"]]
+                else:
+                    images_after = images_after["data"]
+
+                images_before = [(img["manifest_url"], img["id"]) for img in images_before]
+                created_images = [{
+                    "manifest_url": img["manifest_url"], "id": img["id"]
+                } for img in images_after if (img["manifest_url"], img["id"]) not in images_before]
+
+                response = APIResponseFactory.make_response(data=created_images)
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=['DELETE'])
+@auth.login_required
+def api_delete_documents_images(api_version, doc_id):
+    response = None
+
+    user = get_current_user()
+    if not (user.is_teacher or user.is_admin):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
+    if response is None:
+
+        images = Image.query.filter(Image.doc_id == doc_id).all()
+        for img in images:
+            db.session.delete(img)
+
+        try:
+            db.session.commit()
+            response = APIResponseFactory.make_response()
+        except Exception as e:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Cannot delete data", "details": str(e)
+            })
 
     return APIResponseFactory.jsonify(response)
