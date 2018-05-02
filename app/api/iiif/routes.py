@@ -188,6 +188,7 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
 def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
     """
     Fetch transcription segments formated as a sc:AnnotationList
+    :param user_id:
     :param api_version: API version
     :param doc_id: Document id
     :return: a json object Obj with a sc:AnnotationList inside Obj["data"]. Return errors in Obj["errors"]

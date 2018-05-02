@@ -101,12 +101,15 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
                 user_id = Transcription.user_id
 
             try:
-                tr = Transcription.query.filter(
+                transcriptions = Transcription.query.filter(
                     Transcription.doc_id == doc_id,
                     Transcription.user_id == user_id
-                ).one()
+                ).all()
 
-                response = APIResponseFactory.make_response(data=tr.serialize())
+                if len(transcriptions) == 0:
+                    raise NoResultFound
+
+                response = APIResponseFactory.make_response(data=[tr.serialize() for tr in transcriptions])
             except NoResultFound:
                 response = APIResponseFactory.make_response(errors={
                     "status": 404, "title": "Transcription not found"
@@ -383,6 +386,13 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>')
 def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
+    """
+    If user_id is None: get the reference translation (if any) to find the alignment
+    :param api_version:
+    :param doc_id:
+    :param user_id:
+    :return:
+    """
     user = get_current_user()
     response = None
 
@@ -395,9 +405,17 @@ def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
 
     else:
         alignments = []
-
-        # pick the reference translation if you are not logged or asking for a user who is not you
-        if user_id is None or user is None or int(user_id) != user.id:
+        if user is not None:
+            if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Access forbidden"
+                })
+        elif user_id is not None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+        # pick the reference translation if you are not logged
+        if user is None:
             translation = get_reference_translation(doc_id)
             alignments = AlignmentTranslation.query.filter(
                 AlignmentTranslation.transcription_id == transcription.id,
@@ -435,9 +453,56 @@ def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/reference')
+def api_documents_transcriptions_alignments_reference(api_version, doc_id):
+    """
+    :param api_version:
+    :param doc_id:
+    :param user_id:
+    :return:
+    """
+    response = None
+
+    transcription = get_reference_transcription(doc_id)
+
+    if transcription is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Reference transcription not found"
+        })
+
+    translation = get_reference_translation(doc_id)
+
+    if translation is None and response is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Reference translation not found"
+        })
+    else:
+        alignments = AlignmentTranslation.query.filter(
+            AlignmentTranslation.transcription_id == transcription.id,
+            AlignmentTranslation.translation_id == translation.id
+        ).all()
+
+        ptrs = [
+            (a.ptr_transcription_start, a.ptr_transcription_end,  a.ptr_translation_start, a.ptr_translation_end)
+            for a in alignments
+        ]
+
+        response = APIResponseFactory.make_response(data=ptrs)
+
+    return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments', methods=['DELETE'])
 @auth.login_required
-def api_delete_documents_alignments(api_version, doc_id, user_id=None):
+def api_delete_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
+    """
+        If user_id is None: get the reference translation (if any) to find the alignment
+    :param api_version:
+    :param doc_id:
+    :param user_id:
+    :return:
+    """
     response = None
     user = get_current_user()
     if user is None or (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
@@ -490,5 +555,135 @@ def api_delete_documents_alignments(api_version, doc_id, user_id=None):
                         "status": 403, "title": "Cannot delete data", "details": str(e)
                     })
 
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments', methods=['POST'])
+@auth.login_required
+def api_post_documents_transcriptions_alignments(api_version, doc_id):
+    """
+        {
+            "data": {
+                "username" : "Eleve1",
+                "ptr_list" : [
+                    [...],
+                    [...]
+                ]
+            }
+        }
+
+        If user_id is None: get the reference translation (if any) to find the alignment
+        :param api_version:
+        :param doc_id:
+        :param user_id:
+        :return:
+        """
+    response = None
+
+    transcription = get_reference_transcription(doc_id)
+
+    if transcription is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Reference transcription not found"
+        })
+    else:
+        data = request.get_json()
+        if "data" in data and "ptr_list" in data["data"] and response is None:
+            data = data["data"]
+
+            user = get_current_user()
+            user_id = user.id
+
+            if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Access forbidden"
+                })
+
+            if response is None:
+                # teachers and admins can put/post/delete on others behalf
+                if (user.is_teacher or user.is_admin) and "username" in data:
+                    user = get_user_from_username(data["username"])
+                    if user is not None:
+                        user_id = user.id
+
+                json_obj = query_json_endpoint(
+                    request,
+                    url_for(
+                        "api_bp.api_documents_translations",
+                        api_version=api_version,
+                        doc_id=doc_id,
+                        user_id=user_id
+                    ),
+                    user=user
+                )
+
+                if "data" not in json_obj:
+                    response = APIResponseFactory.make_response(errors=json_obj["errors"])
+                    translation = None
+                else:
+                    translation = json_obj["data"]
+
+                    # let's make the new alignments from the data
+                if translation is not None and response is None:
+
+                    if not isinstance(data["ptr_list"], list):
+                        data = [data["ptr_list"]]
+                    else:
+                        data = data["ptr_list"]
+
+                    # DELETE the old data
+                    for old_al in AlignmentTranslation.query.filter(
+                            AlignmentTranslation.transcription_id == transcription.id,
+                            AlignmentTranslation.translation_id == translation["id"]
+                    ).all():
+                        db.session.delete(old_al)
+
+                    try:
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403, "title": "Cannot insert data",
+                            "details": "Cannot delete the old data before the insertion of the new ones: %s " % str(e)
+                        })
+                    if response is None:
+                        for (ptr_transcription_start, ptr_transcription_end,
+                             ptr_translation_start, ptr_translation_end) in data:
+                            new_al = AlignmentTranslation(
+                                transcription_id=transcription.id, translation_id=translation["id"],
+                                ptr_transcription_start=ptr_transcription_start,
+                                ptr_transcription_end=ptr_transcription_end,
+                                ptr_translation_start=ptr_translation_start,
+                                ptr_translation_end=ptr_translation_end
+                            )
+                            db.session.add(new_al)
+
+                        try:
+                            db.session.commit()
+                        except Exception as e:
+                            db.session.rollback()
+                            response = APIResponseFactory.make_response(errors={
+                                "status": 403, "title": "Cannot insert data", "details": str(e)
+                            })
+
+                        if response is None:
+                            json_obj = query_json_endpoint(
+                                request,
+                                url_for(
+                                    "api_bp.api_documents_transcriptions_alignments",
+                                    api_version=api_version,
+                                    doc_id=doc_id,
+                                    user_id=user_id
+                                ),
+                                user=user
+                            )
+                            if "data" in json_obj:
+                                response = APIResponseFactory.make_response(data=json_obj["data"])
+                            else:
+                                response = APIResponseFactory.make_response(data=json_obj["errors"])
+        else:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Data is malformed"
+            })
     return APIResponseFactory.jsonify(response)
 

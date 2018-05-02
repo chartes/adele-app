@@ -1,7 +1,7 @@
 import base64
 import json
 import sys
-from urllib.request import urlopen, build_opener
+from urllib.request import urlopen, build_opener, Request
 
 from flask import request, Blueprint
 
@@ -19,25 +19,32 @@ else:
     json_loads = json.loads
 
 
-def query_json_endpoint(request_obj, endpoint_url, user=None):
+def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', headers_arg=None):
     url = "{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url)
 
-    op = build_opener()
-    op.addheaders = [
-        ("Content-type", "text/plain")
-    ]
+    headers = {'Content-Type': 'application/json;charset=UTF-8'}
+
+    if headers_arg is not None:
+        headers.update(headers_arg)
 
     if user is not None:
         base64string = base64.b64encode(bytes('%s:%s' % (user.username, user.password), "utf-8"))
-        op.addheaders.append(
-            ("Authorization", "Basic %s" % base64string.decode("ascii"))
-        )
+        headers['Authorization'] = "Basic %s" % base64string.decode("ascii")
 
     try:
-        data = op.open(url, timeout=10, ).read()
+        if method == 'GET':
+            op = build_opener()
+            op.addheaders = [(k, v) for k, v in headers.items()]
+            data = op.open(url, timeout=10).read()
+        else:
+            raise NotImplementedError
+
         response = json_loads(data)
-    except:
-        response = APIResponseFactory.make_response(errors={"title": "Error : cannot fetch {0}".format(endpoint_url)})
+    except Exception as e:
+        response = APIResponseFactory.make_response(errors={
+            "title": "Error : cannot {0} {1} | {2}".format(method, endpoint_url, headers),
+            "details": str(e)
+        })
 
     return response
 
