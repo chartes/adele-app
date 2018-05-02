@@ -52,21 +52,28 @@ class ActeType(db.Model):
 
 class AlignmentDiscours(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
-    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     ptr_start = db.Column(db.Integer, primary_key=True)
     ptr_end = db.Column(db.Integer, primary_key=True)
-    speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"))
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id'))
+
+    transcription = db.relationship("Transcription")
+    speech_part_type = db.relationship("SpeechPartType")
+    user = db.relationship("User")
+    note = db.relationship("Note")
 
     def serialize(self):
-        return {
+        al = {
             'transcription_id': self.transcription_id,
+            'speech_part_type': self.speech_part_type.serialize(),
             'user_id': self.user_id,
-            'note_id': self.note_id,
             'ptr_start': self.ptr_start,
             'ptr_end': self.ptr_end,
-            'speech_part_type_id': self.speech_part_type_id,
         }
+        if self.note is not None:
+            al["note"] = self.note.serialize()
+        return al
 
 
 class AlignmentImage(db.Model):
