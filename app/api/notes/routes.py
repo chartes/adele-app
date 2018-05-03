@@ -330,15 +330,21 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
                     type_id=note_type.id,
                     note_type=note_type
                 )
-                new_note = binder.bind(new_note, n_data, tr_usr.id, doc_id)
+                try:
+                    new_note = binder.bind(new_note, n_data, tr_usr.id, doc_id)
+                except Exception as e:
+                    db.session.rollback()
+                    new_note = None
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 404, "title": "Object not found", "details": str(e)
+                    })
+                    break
 
                 if new_note is not None:
                     db.session.add(new_note)
                     created_users.add((new_note.id, tr_usr))
                     # move local note id offset
                     nb += 1
-                else:
-                    raise NotImplementedError
 
             try:
                 db.session.commit()

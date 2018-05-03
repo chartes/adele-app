@@ -311,7 +311,6 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
             response = APIResponseFactory.make_response(errors=json_obj["errors"])
         else:
             canvas = json_obj["data"]
-            print("user_id", user_id)
             try:
                 img = Image.query.filter(Image.doc_id == doc_id).one()
                 # select annotations zones

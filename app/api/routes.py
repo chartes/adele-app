@@ -35,7 +35,7 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
         if method == 'GET':
             op = build_opener()
             op.addheaders = [(k, v) for k, v in headers.items()]
-            data = op.open(url, timeout=10).read()
+            data = op.open(url, timeout=15).read()
         else:
             raise NotImplementedError
 
