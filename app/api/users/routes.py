@@ -13,6 +13,14 @@ from app.models import User, Role
 """
 
 
+@api_bp.route('/api/<api_version>/token')
+@auth.login_required
+def get_auth_token(api_version):
+    user = get_current_user()
+    token = user.generate_auth_token()
+    return APIResponseFactory.jsonify({'token': token.decode('ascii')})
+
+
 @api_bp.route('/api/<api_version>/user')
 def api_current_user(api_version):
     # TODO: change hard coded id

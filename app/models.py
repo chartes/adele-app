@@ -1,7 +1,7 @@
 from flask_user import UserMixin
-from sqlalchemy.ext.associationproxy import association_proxy
-
-from app import db
+from itsdangerous import (TimedJSONWebSignatureSerializer
+                          as Serializer, BadSignature, SignatureExpired)
+from app import db, app
 
 association_document_has_acte_type = db.Table('document_has_acte_type',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
@@ -514,4 +514,19 @@ class User(db.Model, UserMixin):
             'roles': [ro.name for ro in self.roles]
         }
 
+    def generate_auth_token(self, expiration=3600*24):
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None # valid token, but expired
+        except BadSignature:
+            return None # invalid token
+        user = User.query.get(data['id'])
+        return user
 

@@ -10,9 +10,12 @@ const LeafletIIIFAnnotation = {
         }
     },
 
-    initialize: function (leaflet_map) {
+    initialize: function (leaflet_map, featureGroup) {
+
+        this.annotations = [];
 
         this.map = leaflet_map;
+        this.featureGroup = featureGroup;
 
         /*
             Define the mouse :hover style on annotation regions
@@ -33,8 +36,7 @@ const LeafletIIIFAnnotation = {
 
     },
 
-    display: function display(featureGroup, annotations) {
-
+    setAnnotations: function(annotations) {
         /*
             let's draw the regions
          */
@@ -59,9 +61,12 @@ const LeafletIIIFAnnotation = {
                         shape = L.circle(this.map.unproject([c[0], c[1]], 2), {radius: c[2] * 0.33});
                         break;
                 }
-                featureGroup.addLayer(shape);
+                //add the shape & the content to the map
+                this.featureGroup.addLayer(shape);
                 shape.bindTooltip(annotation.content, facsimileToolTipOptions);
                 shape.addTo(this.map);
+                //append to the annotations list
+                this.annotations.push(annotation);
             }
         }
 

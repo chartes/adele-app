@@ -14,7 +14,7 @@ from app.api.response import APIResponseFactory
 from app.forms.register import CustomRegisterForm
 
 
-from  flask_httpauth import HTTPBasicAuth
+from flask_httpauth import HTTPBasicAuth
 
 
 from config import Config
@@ -128,11 +128,13 @@ user_manager = CustomUserManager(db_adapter, app, register_form=CustomRegisterFo
 
 # Initialize the HTTP Auth mechanism
 @auth.verify_password
-def verify_password(username, password):
-    user = models.User.query.filter(models.User.username == username).first()
+def verify_password(username_or_token, password):
+    user = models.User.verify_auth_token(username_or_token)
     if not user:
-        return False
-    return user_manager.verify_password(password, user)
+        user = models.User.query.filter(models.User.username == username_or_token).first()
+        if not user or not user_manager.verify_password(password, user):
+            return False
+    return True
 
 
 """
