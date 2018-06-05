@@ -2,32 +2,6 @@
 
 {% block content %}
 
-    <section class="hero is-light">
-      <div class="hero-body">
-        <div class="container">
-          <h1 class="title">Adele</h1>
-          <h2 class="subtitle">Album de diplomatique en ligne</h2>
-        </div>
-      </div>
-    </section>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <section class="section">
-                <div class="container is-fullhd">
-                    <article class="message is-danger">
-                        <div class="message-body">
-                            <ul>
-                            {% for message in messages %}
-                            <li class="alert alert-info" role="alert">{{ message }}</li>
-                            {% endfor %}
-                            </ul>
-                        </div>
-                    </article>
-                </div>
-            </section>
-        {% endif %}
-    {% endwith %}
-
     <section class="section">
         <div class="container is-fullhd">
             <div class="columns is-multiline">
