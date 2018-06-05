@@ -164,14 +164,15 @@
                 for (let anno of LeafletIIIFAnnotation.annotations) {
                     const newAnnotation = {
                         manifestUrl: this.$store.getters.manifestURL,
-                        img_id : this.page.images[0].resource["@id"],
+                        img_id: this.page.images[0].resource["@id"],
                         coords: anno.region.coords,
                         content: anno.content
                     };
                     console.log(newAnnotation);
                     annotations.push(newAnnotation);
                 }
-
+                const APP_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImlhdCI6MTUyNzc3NzE3OSwiZXhwIjoxNTI3ODYzNTc5fQ.eyJpZCI6MX0.DcVu_nQr0FH4aMn6STAQmCArlynjvSnwYi3gpaYoie0';
+                console.log(APP_AUTH_TOKEN);
                 console.log('saveAnnotations');
                 const docId = this.$store.getters.document.id;
                 console.log(docId);
@@ -179,7 +180,7 @@
 
                 axios.post(`/api/1.0/documents/${docId}/annotations`, annotations,
                     {
-                        auth: { username: APP_AUTH_TOKEN, password: undefined }
+                        auth: {username: APP_AUTH_TOKEN, password: undefined}
                     })
                     .then((response) => {
                         console.log(response.data);

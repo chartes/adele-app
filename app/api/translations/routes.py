@@ -1,8 +1,8 @@
-from flask import url_for, request, redirect
+from flask import url_for, request, redirect, current_app
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import get_user_from_username, get_current_user, db, auth
+from app import  db, auth
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, api_bp
 from app.models import Translation, User, Document
@@ -68,7 +68,7 @@ def api_documents_translations_users(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>')
 def api_documents_translations(api_version, doc_id, user_id=None):
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is None and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
@@ -131,7 +131,7 @@ def api_post_documents_translations(api_version, doc_id):
     """
     data = request.get_json()
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
     usernames = set()
     created_users = set()
 
@@ -151,11 +151,11 @@ def api_post_documents_translations(api_version, doc_id):
         if response is None:
 
             for tr in data:
-                user = get_current_user()
+                user = current_app.get_current_user()
                 user_id = user.id
                 # teachers and admins can put/post/delete on others behalf
                 if (user.is_teacher or user.is_admin) and "username" in tr:
-                    user = get_user_from_username(tr["username"])
+                    user = current_app.get_user_from_username(tr["username"])
                     if user is not None:
                         user_id = user.id
 
@@ -260,21 +260,21 @@ def api_put_documents_translations(api_version, doc_id):
         if response is None:
 
             updated_users = set()
-            user = get_current_user()
+            user = current_app.get_current_user()
             user_id = user.id
 
             for tr in data:
 
-                user = get_current_user()
+                user = current_app.get_current_user()
                 user_id = user.id
 
                 # teachers and admins can put/post/delete on others behalf
                 if (user.is_teacher or user.is_admin) and "username" in tr:
-                    user = get_user_from_username(tr["username"])
+                    user = current_app.get_user_from_username(tr["username"])
                     if user is not None:
                         user_id = user.id
                 elif "username" in tr:
-                    usr = get_user_from_username(tr["username"])
+                    usr = current_app.get_user_from_username(tr["username"])
                     if usr is not None and usr.id != user.id:
                         db.session.rollback()
                         response = APIResponseFactory.make_response(errors={
@@ -347,7 +347,7 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
             "status": 404, "title": "Document {0} not found".format(doc_id)
         })
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is not None:
         if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={

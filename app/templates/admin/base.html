@@ -42,10 +42,8 @@
 {% endblock %}
 
 <script type="text/javascript">
-    console.log("auth token:");
     {% if session["auth_token"] %}
         APP_AUTH_TOKEN = '{{ session["auth_token"]|e }}';
-        console.log(APP_AUTH_TOKEN);
     {% endif %}
 </script>
 

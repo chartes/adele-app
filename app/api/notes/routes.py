@@ -1,8 +1,8 @@
-from flask import request, redirect, url_for
+from flask import request, redirect, url_for, current_app
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import get_current_user, auth, get_user_from_username, db
+from app import auth, db
 from app.api.notes.association_binders import TranscriptionNoteBinder, TranslationNoteBinder, CommentaryNoteBinder
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
@@ -156,7 +156,7 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>")
 def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, TranscriptionNoteBinder)
 
 
@@ -164,7 +164,7 @@ def api_documents_transcriptions_notes(api_version, doc_id, note_id=None, user_i
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>")
 def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, TranslationNoteBinder)
 
 
@@ -172,7 +172,7 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>")
 def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, CommentaryNoteBinder)
 
 
@@ -181,7 +181,7 @@ def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>")
 def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     args = {
         "api_version": api_version,
         "doc_id" : doc_id,
@@ -306,17 +306,17 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
                 note_max_id = 1
 
             for n_data in data:
-                # user = get_current_user()
+                # user = current_app.get_current_user()
                 user_id = user.id
                 # teachers and admins can put/post/delete on others behalf
                 if (user.is_teacher or user.is_admin) and "username" in n_data:
-                    usr = get_user_from_username(n_data["username"])
+                    usr = current_app.get_user_from_username(n_data["username"])
                     if usr is not None:
                         user_id = usr.id
 
                 # on wich <binder> should the note be attached ?
                 if (user.is_teacher or user.is_admin) and binder.username_field in n_data:
-                    tr_usr = get_user_from_username(n_data[binder.username_field])
+                    tr_usr = current_app.get_user_from_username(n_data[binder.username_field])
                 else:
                     tr_usr = user
 
@@ -521,21 +521,21 @@ def api_delete_documents_binder_notes(request, user, api_version, doc_id, user_i
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["POST"])
 @auth.login_required
 def api_post_documents_transcriptions_notes(api_version, doc_id):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_post_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["POST"])
 @auth.login_required
 def api_post_documents_translations_notes(api_version, doc_id):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_post_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["POST"])
 @auth.login_required
 def api_post_documents_commentaries_notes(api_version, doc_id):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_post_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
 
 
@@ -549,21 +549,21 @@ def api_post_documents_commentaries_notes(api_version, doc_id):
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["PUT"])
 @auth.login_required
 def api_put_documents_transcriptions_notes(api_version, doc_id):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_put_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["PUT"])
 @auth.login_required
 def api_put_documents_translations_notes(api_version, doc_id):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_put_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["PUT"])
 @auth.login_required
 def api_put_documents_commentaries_notes(api_version, doc_id):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_put_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
 
 
@@ -578,7 +578,7 @@ def api_put_documents_commentaries_notes(api_version, doc_id):
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
 @auth.login_required
 def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id, note_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, TranscriptionNoteBinder)
 
 
@@ -586,7 +586,7 @@ def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id, note
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
 @auth.login_required
 def api_delete_documents_translations_notes(api_version, doc_id, user_id, note_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, TranslationNoteBinder)
 
 
@@ -594,6 +594,6 @@ def api_delete_documents_translations_notes(api_version, doc_id, user_id, note_i
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
 @auth.login_required
 def api_delete_documents_commentaries_notes(api_version, doc_id, user_id, note_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, CommentaryNoteBinder)
 

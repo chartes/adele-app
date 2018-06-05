@@ -1,7 +1,7 @@
-from flask import request, url_for
+from flask import request, url_for, current_app
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, get_current_user, db, auth
+from app import APIResponseFactory, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import District, Country
 
@@ -31,7 +31,7 @@ def api_district(api_version, district_id=None, country_id=None):
 @auth.login_required
 def api_delete_district(api_version, district_id=None, country_id=None):
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
@@ -67,7 +67,7 @@ def api_delete_district(api_version, district_id=None, country_id=None):
 @auth.login_required
 def api_put_district(api_version):
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
@@ -126,7 +126,7 @@ def api_put_district(api_version):
 @auth.login_required
 def api_post_district(api_version):
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"

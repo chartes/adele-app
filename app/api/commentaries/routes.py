@@ -1,7 +1,7 @@
-from flask import request, url_for
+from flask import request, url_for, current_app
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, get_current_user, db, auth
+from app import APIResponseFactory, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.api.transcriptions.routes import get_reference_transcription
 from app.models import Commentary, User
@@ -34,7 +34,7 @@ def get_reference_commentary(doc_id, type_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>')
 def api_commentary(api_version, doc_id, user_id=None, type_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     response = None
 
     if user is not None:
@@ -106,7 +106,7 @@ def api_commentary_reference(api_version, doc_id, type_id=None):
               methods=['DELETE'])
 @auth.login_required
 def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
-    user = get_current_user()
+    user = current_app.get_current_user()
     response = None
 
     # only teacher and admin can see everything
@@ -167,7 +167,7 @@ def api_post_commentary(api_version, doc_id):
     :return:
     """
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
@@ -249,7 +249,7 @@ def api_put_commentary(api_version, doc_id):
     :return:
     """
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is None or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"

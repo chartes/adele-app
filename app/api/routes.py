@@ -1,11 +1,13 @@
 import base64
 import json
 import sys
+
+from flask_user import roles_required
 from urllib.request import urlopen, build_opener, Request
 
 from flask import request, Blueprint
 
-from app import app, auth, db, role_required
+from app import auth, db
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import Commentary, User
@@ -58,7 +60,7 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
 
 @api_bp.route("/api/user-role")
 @auth.login_required
-@role_required("teacher", "admin")
+@roles_required("teacher", "admin")
 def api_test_user_role():
     """
     I cannot be accessed by a student
@@ -147,4 +149,4 @@ from app.api.translations import routes
 from app.api.users import routes
 
 
-app.register_blueprint(api_bp)
+

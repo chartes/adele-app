@@ -1,10 +1,10 @@
-from flask import url_for, request
+from flask import url_for, request, current_app
 from requests import HTTPError
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from urllib.request import build_opener, urlopen
 
-from app import auth, db, get_current_user, get_user_from_username
+from app import auth, db
 from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
@@ -135,7 +135,7 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
                 "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
             })
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is not None:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
@@ -201,7 +201,7 @@ def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
             "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
         })
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is not None:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
@@ -278,7 +278,7 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
     img_zone = None
     tr = None
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is not None:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
@@ -423,7 +423,7 @@ def api_post_documents_annotations(api_version, doc_id):
             data = [data]
 
         validated_annotations = [a for a in data if validate_annotation_data_format(a)]
-        user = get_current_user()
+        user = current_app.get_current_user()
 
         # get the zone_id max
         try:
@@ -444,11 +444,11 @@ def api_post_documents_annotations(api_version, doc_id):
             user_id = user.id
             # teacher and admin MAY post/put/delete for others
             if (user.is_teacher or user.is_admin) and "username" in anno:
-                usr = get_user_from_username(anno["username"])
+                usr = current_app.get_user_from_username(anno["username"])
                 if usr is not None:
                     user_id = usr.id
             elif "username" in anno:
-                usr = get_user_from_username(anno["username"])
+                usr = current_app.get_user_from_username(anno["username"])
                 if usr is not None and usr.id != user.id:
                     db.session.rollback()
                     response = APIResponseFactory.make_response(errors={
@@ -543,17 +543,17 @@ def api_put_documents_annotations(api_version, doc_id):
         # find which zones to update
         validated_annotations = [a for a in data if validate_annotation_data_format(a) and "zone_id" in a]
         img_zones = []
-        user = get_current_user()
+        user = current_app.get_current_user()
         for anno in validated_annotations:
 
             user_id = user.id
             # teacher and admin MAY post/put/delete for others
             if (user.is_teacher or user.is_admin) and "username" in anno:
-                usr = get_user_from_username(anno["username"])
+                usr = current_app.get_user_from_username(anno["username"])
                 if usr is not None:
                     user_id = usr.id
             elif "username" in anno:
-                usr = get_user_from_username(anno["username"])
+                usr = current_app.get_user_from_username(anno["username"])
                 if usr is not None and usr.id != user.id:
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Access forbidden", "details": "Cannot update data"
@@ -633,7 +633,7 @@ def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None)
 
     response = None
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     if user is not None:
         if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
@@ -716,7 +716,7 @@ def api_post_documents_images(api_version, doc_id):
     """
     response = None
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     if not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
@@ -803,7 +803,7 @@ def api_post_documents_images(api_version, doc_id):
 def api_delete_documents_images(api_version, doc_id):
     response = None
 
-    user = get_current_user()
+    user = current_app.get_current_user()
     if not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"

@@ -1,9 +1,9 @@
 import datetime
 
-from flask import request, url_for
+from flask import request, url_for, current_app
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import auth, get_current_user, db
+from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition
@@ -71,7 +71,7 @@ def api_post_documents(api_version):
     :return:
     """
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
 
     if user is None or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
@@ -238,7 +238,7 @@ def api_post_documents(api_version):
 def api_delete_documents(api_version, doc_id):
 
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
 
     if user is None or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={

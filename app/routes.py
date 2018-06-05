@@ -1,8 +1,7 @@
-from flask import render_template, flash, redirect, url_for, render_template_string, Blueprint, session
+from flask import render_template, flash, redirect, url_for, render_template_string, Blueprint, session, current_app
 from flask_user import login_required
 
 import config
-from app import app, role_required, get_current_user
 from app.models import Document
 
 app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
@@ -35,7 +34,7 @@ User Managment Routes
 @app_bp.route('/members')
 @login_required
 def members_page():
-    user = get_current_user()
+    user = current_app.get_current_user()
     token = user.generate_auth_token()
 
     session['auth_token'] = token.decode("utf-8")
@@ -82,7 +81,6 @@ def admin_document_edit(doc_id):
     return render_template('admin/document_edit.html', title='Document - Adele', doc=doc)
 
 
-app.register_blueprint(app_bp, url_prefix=config.Config.APP_PREFIX)
 
 """
 ---------------------------------
