@@ -31,21 +31,14 @@ User Managment Routes
 ---------------------------------
 """
 
-@app_bp.route('/members')
+@app_bp.route('/login')
 @login_required
-def members_page():
+def login_make_token():
     user = current_app.get_current_user()
     token = user.generate_auth_token()
 
     session['auth_token'] = token.decode("utf-8")
-    return render_template_string("""
-        {% extends "base.html" %}
-        {% block content %}
-            <h2>Members page</h2>
-            <p>This page can only be accessed by authenticated users.</p><br/>
-            <p><a href={{ url_for('user.logout') }}>logout</a></p>
-        {% endblock %}
-        """)
+    return redirect(url_for('user.login'))
 
 
 """
