@@ -1,13 +1,3 @@
-/*
-var text = "<bookstore>"+
-  "<book>" +
-  "<title class='title'>Everyday Italian</title> test " +
-  '<hi rend="b">text en gras et <HI rend="i" class="italic">italique et avec un <hi rend="sup">exposant</hi>, la classe</HI> ou pas</hi> test2 ' +
-  "<author>Giada De Laurentiis</author>" +
-  "<year id='Y2K5'>2005</year>" +
-  "</book></bookstore>";
-  */
-
 const parser = new DOMParser();
 
 const teiToQuill = (teiString) => {
@@ -15,8 +5,6 @@ const teiToQuill = (teiString) => {
   const xmlDoc = parser.parseFromString(teiString,"text/xml");
 
   let newDoc = recurChange(xmlDoc.documentElement.firstChild, "");
-
-  console.log(newDoc)
 
 }
 

@@ -1,7 +1,6 @@
 <template>
     <div class="editor-area">
         <div class="editor-controls" ref="controls">
-
             <editor-button :selected="buttons.bold" :active="editorHasFocus" :callback="simpleFormat" :format="'bold'"/>
             <editor-button :selected="buttons.italic" :active="editorHasFocus" :callback="simpleFormat" :format="'italic'"/>
             <editor-button :selected="buttons.superscript" :active="editorHasFocus" :callback="simpleFormat" :format="'superscript'"/>
@@ -9,8 +8,8 @@
             <editor-button :selected="buttons.underline" :active="editorHasFocus" :callback="simpleFormat" :format="'underline'"/>
             <editor-button :selected="buttons.del" :active="editorHasFocus" :callback="simpleFormat" :format="'del'"/>
             <editor-button :selected="buttons.expan" :active="editorHasFocus" :callback="simpleFormat" :format="'expan'"/>
-            <editor-button :selected="buttons.perso" :active="editorHasFocus" :callback="simpleFormat" :format="'person'"/>
-            <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="simpleFormat" :format="'location'"/>
+            <editor-button :selected="buttons.person" :active="editorHasFocus" :callback="displayPersonForm" :format="'person'"/>
+            <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="displayLocationForm" :format="'location'"/>
             <editor-button :active="isNoteButtonActive" :callback="newNoteChoiceOpen" :format="'note'"/>
         </div>
         <div class="editor-container">
@@ -29,7 +28,6 @@
                 :modeNew="setNoteEditModeNew"
                 :modeLink="setNoteEditModeList"
                 :cancel="newNoteChoiceClose"
-
             />
         </div>
 
@@ -39,6 +37,13 @@
             :submit="updateNoteId"
             :cancel="closeNoteEdit"
         />
+        <textfield-form
+            v-if="formTextfield"
+            :title="formTextfield.title"
+            :label="formTextfield.label"
+            :value="formTextfield.value"
+            :submit="submitTextfieldForm"
+            :cancel="cancelTextfieldForm"/>
         <note-form
                 v-if="noteEditMode == 'new' || noteEditMode == 'edit'"
                 :note="currentNote"
@@ -51,6 +56,9 @@
                 :cancel="closeNoteEdit"
                 :submit="deleteNote"
         />
+
+        <save-bar :action="() => { console.log('save')}"/>
+
         <!--<small><pre>{{ delta }}</pre></small>-->
 
     </div>
@@ -67,12 +75,16 @@
   import NoteForm from '../forms/NoteForm';
   import NotesListForm from '../forms/NotesListForm';
   import ModalConfirmNoteDelete from '../forms/ModalConfirmNoteDelete';
+  import SaveBar from "../ui/save-bar";
+  import TextfieldForm from "../forms/TextfieldForm";
 
   export default {
     name: "transcription-text",
     props: ['initialContent'],
     mixins: [EditorMixins],
     components: {
+      TextfieldForm,
+      SaveBar,
       NewNoteActions,
       InEditorActions,
       EditorButton,
@@ -92,6 +104,7 @@
         currentNote: null,
         noteEditMode: null,
         defineNewNote: false,
+        formTextfield: null,
         buttons: {
           bold: false,
           italic: false,
@@ -100,10 +113,9 @@
           underline: false,
           del: false,
           expan: false,
-          perso: false,
+          person: false,
           location: false,
           note: false,
-
         },
         actionsPositions: {
           top: 0, left: 0, right: 0, bottom: 0
@@ -145,6 +157,25 @@
           }
         }
       },
+      updateContent () {
+        this.delta = this.editor.getContents().ops;
+
+      },
+
+      /** get and set the range bound of the selection to locate the actions bar **/
+      setRangeBound (range) {
+        console.log("setRangeBound", range);
+        let rangeBounds = this.editor.getBounds(range);
+        this.actionsPositions.left = rangeBounds.left;
+        this.actionsPositions.right = rangeBounds.right;
+        this.actionsPositions.bottom = rangeBounds.bottom;
+      },
+
+
+      /**************
+       *
+       * NOTES METHODS
+       */
 
       onNoteSelected (note, range) {
         console.log("onNoteSelected", note, range.index, range.length)
@@ -197,20 +228,6 @@
 
       },
 
-      updateContent () {
-        this.delta = this.editor.getContents().ops;
-
-      },
-
-      /** get and set the range bound of the selection to locate the actions bar **/
-      setRangeBound (range) {
-        console.log("setRangeBound", range);
-        let rangeBounds = this.editor.getBounds(range);
-        this.actionsPositions.left = rangeBounds.left;
-        this.actionsPositions.right = rangeBounds.right;
-        this.actionsPositions.bottom = rangeBounds.bottom;
-      },
-
       updateNoteId(newId) {
         console.log('TranscriptionText.updateNote', newId)
         this.editor.format('note', newId);
@@ -221,9 +238,11 @@
         console.log('TranscriptionText.updateNote', note);
         this.$store.dispatch('addNote', note).then(()=>{
           console.log('DONE')
-            /*this.editor.format('note', note.id);
+            /*
+            */
+            this.editor.format('note', note.id);
             this.selectedNoteId = note.id;
-            this.closeNoteEdit();*/
+            this.closeNoteEdit();
         })
       },
       unlinkNote() {
@@ -265,6 +284,50 @@
       newNoteChoiceClose() {
         this.defineNewNote = false;
       },
+
+
+      displayTextfieldForm (formData) {
+        let format = this.editor.getFormat();
+        formData.value = format[formData.format];
+        this.formTextfield = formData;
+      },
+      cancelTextfieldForm () {
+        this.formTextfield = null;
+      },
+      submitTextfieldForm (data) {
+        console.log("submitTextfieldForm", this.formTextfield, data);
+        this.editor.format(this.formTextfield.format, data);
+        this.cancelTextfieldForm();
+        let formats = this.editor.getFormat();
+        this.updateButtons(formats)
+      },
+      /**************
+       *
+       * LOCATION METHODS
+       */
+      displayLocationForm() {
+        console.log('displayLocationForm')
+        this.displayTextfieldForm ({
+          format: 'location',
+          attr: 'href',
+          title: '<i class="fas fa-map-marker-alt"></i> Identifier un lieu',
+          label: 'Nom du lieu'
+        });
+      },
+
+      /**************
+       *
+       * PERSON METHODS
+       */
+      displayPersonForm() {
+        this.displayTextfieldForm ({
+          format: 'person',
+          attr: 'href',
+          title: '<i class="fas fa-user"></i> Identifier une personne',
+          label: 'Nom de la personne'
+        });
+      }
+
 
     },
 

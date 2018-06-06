@@ -51,7 +51,6 @@
     },
     props: ['title', 'noteId', 'note', 'cancel', 'submit'],
     data() {
-      console.log('NoteForm data');
       return {
         form: Object.assign({}, this.note),
         textLength: 0,
@@ -91,7 +90,6 @@
       },
 
       submitAction () {
-        console.log("NoteForm.submitAction", this.form)
         this.$props.submit(this.form);
       },
       cancelAction () {

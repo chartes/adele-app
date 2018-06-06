@@ -5,7 +5,7 @@
     <section class="section">
         <h1>{{ doc.title }} ({{ doc.id }})</h1>
 
-        <div id="app" data-document-id="{{ doc.id }}"></div>
+        <div id="app" data-document-id="{{ doc.id }}" data-auth-token="{{ session["auth_token"]|e }}"></div>
 
     </section>
 {% endblock content %}

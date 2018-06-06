@@ -24,11 +24,39 @@ const actions = {
         commit('UPDATE_NOTES', response.data.data)
       })
   },
-  addNote ({ commit, getters }, newNote) {
-    console.log("addNote", newNote);
-    return axios.post(`/api/1.0/notes`, newNote)
+  addNote ({ commit, getters, rootState }, newNote) {
+    console.log("addNote", newNote, rootState);
+    /**
+
+     {
+      "data": [
+          {
+            "username": "Eleve1",
+            "transcription_username" : "AdminJulien",
+            "note_type": 0,
+            "content": "My first transcription note",
+            "ptr_start": 20,
+            "ptr_end": 80
+          }
+        ]
+      }
+
+     */
+
+    const config = { auth: { username: rootState.user.authToken, password: undefined }};
+
+    const newNotes = {
+      data: [{ "username": rootState.user.currentUser.username,
+        "transcription_username" : rootState.user.currentUser.username,
+        "note_type": newNote.type_id,
+        "content": newNote.content,
+        "ptr_start": -1,
+        "ptr_end": -1 }]
+    }
+
+    return axios.post(`/api/1.0/documents/20/transcriptions/notes`, newNotes, config)
       .then( (response) => {
-        console.log(response)
+        console.log('new note added', response.data)
         //commit('UPDATE_NOTES', response.data.data.notes)
       })
   }

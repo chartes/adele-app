@@ -7,6 +7,8 @@ import transcription from './modules/transcription'
 import noteTypes from './modules/noteTypes'
 import notes from './modules/notes'
 
+import axios from 'axios';
+
 Vue.use(Vuex);
 
 export default new Vuex.Store({

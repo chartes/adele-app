@@ -11,6 +11,8 @@ import DelBlot from './blots/semantic/Del';
 import LinkBlot from './blots/semantic/Link';
 import BlockquoteBlot from './blots/semantic/Blockquote';
 import InlinequoteBlot from './blots/semantic/Inlinequote';
+import PersonBlot from './blots/semantic/Person';
+import LocationBlot from './blots/semantic/Location';
 
 import NoteBlot from './blots/editorial/Note';
 //import { LayoutCol } from './blots/editorial/Division';
@@ -38,6 +40,8 @@ Quill.register(DelBlot, true);
 Quill.register(LinkBlot, true);
 Quill.register(BlockquoteBlot, true);
 Quill.register(InlinequoteBlot, true);
+Quill.register(LocationBlot, true);
+Quill.register(PersonBlot, true);
 
 // editorial
 Quill.register(NoteBlot, true);
