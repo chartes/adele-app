@@ -1,7 +1,8 @@
+from flask import current_app
 from flask_user import UserMixin
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-from app import db, app
+from app import db
 
 association_document_has_acte_type = db.Table('document_has_acte_type',
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
@@ -515,12 +516,12 @@ class User(db.Model, UserMixin):
         }
 
     def generate_auth_token(self, expiration=3600*24):
-        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
         return s.dumps({'id': self.id})
 
     @staticmethod
     def verify_auth_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
+        s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
         except SignatureExpired:

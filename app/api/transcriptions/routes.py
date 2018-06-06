@@ -1,8 +1,8 @@
-from flask import url_for, request, redirect
+from flask import url_for, request, redirect, current_app
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import get_user_from_username, get_current_user, db, auth
+from app import db, auth
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, api_bp
 from app.api.translations.routes import get_reference_translation
@@ -70,12 +70,12 @@ def api_documents_transcriptions_users(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>')
 def api_documents_transcriptions(api_version, doc_id, user_id=None):
     response = None
-    user = get_current_user()
-    if user is None and user_id is not None:
+    user = current_app.get_current_user()
+    if user.is_anonymous and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
-    elif user is None:
+    elif user.is_anonymous:
         tr = get_reference_transcription(doc_id)
         if tr is None:
             response = APIResponseFactory.make_response(errors={
@@ -90,7 +90,7 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
 
     if response is None:
 
-        if user is not None:
+        if not user.is_anonymous:
             # only teacher and admin can see everything
             if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
                 response = APIResponseFactory.make_response(errors={
@@ -154,21 +154,23 @@ def api_post_documents_transcriptions(api_version, doc_id):
         if response is None:
 
             for tr in data:
-                user = get_current_user()
-                user_id = user.id
-                # teachers and admins can put/post/delete on others behalf
-                if (user.is_teacher or user.is_admin) and "username" in tr:
-                    user = get_user_from_username(tr["username"])
-                    if user is not None:
-                        user_id = user.id
+                user = current_app.get_current_user()
+                existing_tr = None
+                if not user.is_anonymous:
+                    user_id = user.id
+                    # teachers and admins can put/post/delete on others behalf
+                    if (user.is_teacher or user.is_admin) and "username" in tr:
+                        user = current_app.get_user_from_username(tr["username"])
+                        if user is not None:
+                            user_id = user.id
 
-                # check that there's no transcription yet for this document/user
-                existing_tr = Transcription.query.filter(
-                    Transcription.user_id == user_id,
-                    Transcription.doc_id == doc_id
-                ).first()
+                    # check that there's no transcription yet for this document/user
+                    existing_tr = Transcription.query.filter(
+                        Transcription.user_id == user_id,
+                        Transcription.doc_id == doc_id
+                    ).first()
 
-                if existing_tr is not None:
+                if existing_tr is not None or user.is_anonymous:
                     response = APIResponseFactory.make_response(errors={
                         "status": 403,
                         "title": "Insert forbidden",
@@ -263,46 +265,52 @@ def api_put_documents_transcriptions(api_version, doc_id):
         if response is None:
 
             updated_users = set()
-            user = get_current_user()
-            user_id = user.id
+            user = current_app.get_current_user()
 
-            for tr in data:
-
-                user = get_current_user()
+            if user.is_anonymous:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+                })
+            else:
                 user_id = user.id
 
-                # teachers and admins can put/post/delete on others behalf
-                if (user.is_teacher or user.is_admin) and "username" in tr:
-                    user = get_user_from_username(tr["username"])
-                    if user is not None:
-                        user_id = user.id
-                elif "username" in tr:
-                    usr = get_user_from_username(tr["username"])
-                    if usr is not None and usr.id != user.id:
-                        db.session.rollback()
+                for tr in data:
+
+                    user = current_app.get_current_user()
+                    user_id = user.id
+
+                    # teachers and admins can put/post/delete on others behalf
+                    if (user.is_teacher or user.is_admin) and "username" in tr:
+                        user = current_app.get_user_from_username(tr["username"])
+                        if user is not None:
+                            user_id = user.id
+                    elif "username" in tr:
+                        usr = current_app.get_user_from_username(tr["username"])
+                        if usr is not None and usr.id != user.id:
+                            db.session.rollback()
+                            response = APIResponseFactory.make_response(errors={
+                                "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+                            })
+                            break
+
+                    try:
+                        # get the transcription to update
+                        transcription = Transcription.query.filter(
+                            Transcription.user_id == user_id,
+                            Transcription.doc_id == doc_id
+                        ).one()
+
+                        transcription.content = tr["content"]
+                        db.session.add(transcription)
+                        # save which users to retriever later
+                        updated_users.add(user)
+                    except NoResultFound:
                         response = APIResponseFactory.make_response(errors={
-                            "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+                            "status": 404,
+                            "title": "Update forbidden",
+                            "details": "Transcription not found"
                         })
                         break
-
-                try:
-                    # get the transcription to update
-                    transcription = Transcription.query.filter(
-                        Transcription.user_id == user_id,
-                        Transcription.doc_id == doc_id
-                    ).one()
-
-                    transcription.content = tr["content"]
-                    db.session.add(transcription)
-                    # save which users to retriever later
-                    updated_users.add(user)
-                except NoResultFound:
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 404,
-                        "title": "Update forbidden",
-                        "details": "Transcription not found"
-                    })
-                    break
 
             if response is None:
                 try:
@@ -350,8 +358,8 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
             "status": 404, "title": "Document {0} not found".format(doc_id)
         })
 
-    user = get_current_user()
-    if user is not None:
+    user = current_app.get_current_user()
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
@@ -394,7 +402,7 @@ def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
     :param user_id:
     :return:
     """
-    user = get_current_user()
+    user = current_app.get_current_user()
     response = None
 
     transcription = get_reference_transcription(doc_id)
@@ -406,7 +414,7 @@ def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
 
     else:
         alignments = []
-        if user is not None:
+        if not user.is_anonymous:
             if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
                 response = APIResponseFactory.make_response(errors={
                     "status": 403, "title": "Access forbidden"
@@ -416,7 +424,7 @@ def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
                 "status": 403, "title": "Access forbidden"
             })
         # pick the reference translation if you are not logged
-        if user is None:
+        if user.is_anonymous:
             translation = get_reference_translation(doc_id)
             alignments = AlignmentTranslation.query.filter(
                 AlignmentTranslation.transcription_id == transcription.id,
@@ -504,8 +512,8 @@ def api_delete_documents_transcriptions_alignments(api_version, doc_id, user_id)
     :return:
     """
     response = None
-    user = get_current_user()
-    if user is None or (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
+    user = current_app.get_current_user()
+    if user.is_anonymous or (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -585,18 +593,22 @@ def api_post_documents_transcriptions_alignments(api_version, doc_id):
             if "data" in data and "ptr_list" in data["data"]:
                 data = data["data"]
 
-                user = get_current_user()
-                user_id = user.id
-
-                if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
+                user = current_app.get_current_user()
+                if user.is_anonymous():
                     response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Access forbidden"
+                        "status": 403, "title": "Cannot insert data"
                     })
+                else:
+                    if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403, "title": "Access forbidden"
+                        })
 
                 if response is None:
+                    user_id = user.id
                     # teachers and admins can put/post/delete on others behalf
                     if (user.is_teacher or user.is_admin) and "username" in data:
-                        user = get_user_from_username(data["username"])
+                        user = current_app.get_user_from_username(data["username"])
                         if user is not None:
                             user_id = user.id
 
@@ -684,7 +696,7 @@ def api_documents_transcriptions_alignments_discours(api_version, doc_id, user_i
     :param user_id:
     :return:
     """
-    user = get_current_user()
+    user = current_app.get_current_user()
     response = None
 
     transcription = get_reference_transcription(doc_id)
@@ -695,7 +707,7 @@ def api_documents_transcriptions_alignments_discours(api_version, doc_id, user_i
         })
 
     else:
-        if user is not None:
+        if not user.is_anonymous:
             if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
                 response = APIResponseFactory.make_response(errors={
                     "status": 403, "title": "Access forbidden"
@@ -707,7 +719,7 @@ def api_documents_transcriptions_alignments_discours(api_version, doc_id, user_i
 
         if response is None:
 
-            if user is None:
+            if user.is_anonymous:
                 user_id = transcription.user_id
 
             if user_id is None:
@@ -768,18 +780,18 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
             if "data" in data and "speech_parts" in data["data"]:
                 data = data["data"]
 
-                user = get_current_user()
-                user_id = user.id
+                user = current_app.get_current_user()
 
-                if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
+                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Access forbidden"
                     })
 
                 if response is None:
+                    user_id = user.id
                     # teachers and admins can put/post/delete on others behalf
                     if (user.is_teacher or user.is_admin) and "username" in data:
-                        user = get_user_from_username(data["username"])
+                        user = current_app.get_user_from_username(data["username"])
                         if user is not None:
                             user_id = user.id
 
@@ -887,8 +899,8 @@ def api_delete_documents_transcriptions_alignments_discours(api_version, doc_id,
     :return:
     """
     response = None
-    user = get_current_user()
-    if not (user.is_teacher or user.is_admin) and int(user_id) != user.id:
+    user = current_app.get_current_user()
+    if user.is_anonymous or (not (user.is_teacher or user.is_admin) and int(user_id) != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -939,7 +951,7 @@ def api_documents_transcriptions_alignments_images(api_version, doc_id, user_id=
     :param user_id:
     :return:
     """
-    user = get_current_user()
+    user = current_app.get_current_user()
     response = None
 
     transcription = get_reference_transcription(doc_id)
@@ -950,7 +962,7 @@ def api_documents_transcriptions_alignments_images(api_version, doc_id, user_id=
         })
 
     else:
-        if user is not None:
+        if not user.is_anonymous:
             if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
                 response = APIResponseFactory.make_response(errors={
                     "status": 403, "title": "Access forbidden"
@@ -962,7 +974,7 @@ def api_documents_transcriptions_alignments_images(api_version, doc_id, user_id=
 
         if response is None:
 
-            if user is None:
+            if user.is_anonymous:
                 user_id = transcription.user_id
 
             if user_id is None:
@@ -1052,7 +1064,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
             if "data" in data and "alignments" in data["data"]:
                 data = data["data"]
 
-                user = get_current_user()
+                user = current_app.get_current_user()
                 user_id = user.id
 
                 if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
@@ -1068,7 +1080,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                 if response is None:
                     # teachers and admins can put/post/delete on others behalf
                     if (user.is_teacher or user.is_admin) and "username" in data:
-                        user = get_user_from_username(data["username"])
+                        user = current_app.get_user_from_username(data["username"])
                         if user is not None:
                             user_id = user.id
 
@@ -1150,8 +1162,8 @@ def api_delete_documents_transcriptions_alignments_images(api_version, doc_id, u
     :return:
     """
     response = None
-    user = get_current_user()
-    if not (user.is_teacher or user.is_admin) and int(user_id) != user.id:
+    user = current_app.get_current_user()
+    if user.is_anonymous or (not (user.is_teacher or user.is_admin) and int(user_id) != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })

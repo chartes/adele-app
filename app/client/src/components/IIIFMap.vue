@@ -161,29 +161,41 @@
                  */
 
                 const annotations = [];
-                for (let anno of LeafletIIIFAnnotation.annotations) {
+                for (let anno of LeafletIIIFAnnotation.getAnnotations()) {
                     const newAnnotation = {
-                        manifestUrl: this.$store.getters.manifestURL,
-                        img_id : this.page.images[0].resource["@id"],
+                        manifest_url: this.$store.getters.manifestURL,
+                        img_id: this.page.images[0].resource["@id"],
                         coords: anno.region.coords,
                         content: anno.content
                     };
-                    console.log(newAnnotation);
+                    //console.log(newAnnotation);
                     annotations.push(newAnnotation);
                 }
-
+                const APP_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImlhdCI6MTUyODIwMjE3NCwiZXhwIjoxNTI4Mjg4NTc0fQ.eyJpZCI6MX0.4FBgzya9MsDwEJLWck6B6gTCldJsjzl3WUUkO3prvBk';
                 console.log('saveAnnotations');
-                const docId = this.$store.getters.document.id;
-                console.log(docId);
                 console.log('AUTH_TOKEN:' + APP_AUTH_TOKEN);
 
-                axios.post(`/api/1.0/documents/${docId}/annotations`, annotations,
-                    {
-                        auth: { username: APP_AUTH_TOKEN, password: undefined }
-                    })
-                    .then((response) => {
-                        console.log(response.data);
-                    });
+                const docId = this.$store.getters.document.id;
+
+                this.$store.dispatch('getCurrentUser').then(() =>  {
+                    const user_id = this.$store.getters.currentUser.id;
+                    axios.delete(`/api/1.0/documents/${docId}/annotations/from-user/${user_id}`,
+                        {
+                            auth: {username: APP_AUTH_TOKEN, password: undefined}
+                        })
+                        .then((response) => {
+                            console.log("annotations deleted");
+                            axios.post(`/api/1.0/documents/${docId}/annotations`, {"data": annotations},
+                                {
+                                    auth: {username: APP_AUTH_TOKEN, password: undefined}
+                                })
+                                .then((response) => {
+                                    console.log("annotations created")
+                                });
+                        });
+
+                });
+
 
                 return false;
             },

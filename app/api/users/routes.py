@@ -1,7 +1,8 @@
-from flask import request
+from flask import request, current_app
+from flask_login import AnonymousUserMixin
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import get_current_user, auth, db
+from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp
 from app.models import User, Role
@@ -16,24 +17,19 @@ from app.models import User, Role
 @api_bp.route('/api/<api_version>/token')
 @auth.login_required
 def get_auth_token(api_version):
-    user = get_current_user()
+    user = current_app.get_current_user()
     token = user.generate_auth_token()
     return APIResponseFactory.jsonify({'token': token.decode('ascii')})
 
 
 @api_bp.route('/api/<api_version>/user')
 def api_current_user(api_version):
-    # TODO: change hard coded id
-    try:
-        user = get_current_user()
-        if user is None:
-            response = APIResponseFactory.make_response()
-        else:
-            response = APIResponseFactory.make_response(data=user.serialize())
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "User not found"
-        })
+    user = current_app.get_current_user()
+    if user.is_anonymous:
+        response = APIResponseFactory.make_response()
+    else:
+        response = APIResponseFactory.make_response(data=user.serialize())
+
     return APIResponseFactory.jsonify(response)
 
 
@@ -41,9 +37,9 @@ def api_current_user(api_version):
 @auth.login_required
 def api_users(api_version, user_id):
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
 
-    if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
+    if user.is_anonymous or ((not user.is_teacher and not user.is_admin) and int(user_id) != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -64,13 +60,13 @@ def api_users(api_version, user_id):
 @auth.login_required
 def api_users_roles(api_version, user_id):
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
 
-    if user is not None:
-        if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
+    if user.is_anonymous or ((not user.is_teacher and not user.is_admin) and int(user_id) != user.id):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
     if response is None:
         try:
             target_user = User.query.filter(User.id == user_id).one()
@@ -102,9 +98,9 @@ def api_post_users_roles(api_version, user_id):
     :return:
     """
     response = None
-    user = get_current_user()
+    user = current_app.get_current_user()
 
-    if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
+    if user.is_anonymous or ((not user.is_teacher and not user.is_admin) and int(user_id) != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -151,8 +147,8 @@ def api_post_users_roles(api_version, user_id):
 @auth.login_required
 def api_delete_users(api_version, user_id):
     response = None
-    user = get_current_user()
-    if not (user.is_teacher or user.is_admin):
+    user = current_app.get_current_user()
+    if user.is_anonymous or (not user.is_teacher and not user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -188,8 +184,8 @@ def api_delete_users(api_version, user_id):
 @auth.login_required
 def api_delete_users_roles(api_version, user_id):
     response = None
-    user = get_current_user()
-    if not (user.is_teacher or user.is_admin):
+    user = current_app.get_current_user()
+    if user.is_anonymous or (not user.is_teacher and not user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })

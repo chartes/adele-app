@@ -1,10 +1,10 @@
-from flask import url_for, request
+from flask import url_for, request, current_app
 from requests import HTTPError
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from urllib.request import build_opener, urlopen
 
-from app import auth, db, get_current_user, get_user_from_username
+from app import auth, db
 from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
@@ -135,8 +135,8 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
                 "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
             })
 
-    user = get_current_user()
-    if user is not None:
+    user = current_app.get_current_user()
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
@@ -201,8 +201,8 @@ def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
             "status": 404, "title": "Reference transcription of document {0} cannot be found".format(doc_id)
         })
 
-    user = get_current_user()
-    if user is not None:
+    user = current_app.get_current_user()
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
@@ -278,8 +278,8 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
     img_zone = None
     tr = None
 
-    user = get_current_user()
-    if user is not None:
+    user = current_app.get_current_user()
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
@@ -378,6 +378,8 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
 def validate_annotation_data_format(anno):
     if "content" in anno and "coords" in anno and "manifest_url" in anno and "img_id" in anno:
         # check type of data and that there is at least 3 coords value (a circle)
+        #print(isinstance(anno["content"], str), isinstance(anno["img_id"]), isinstance(anno["manifest_url"], str),
+        #                                                   len([int(c) for c in anno["coords"].split(",")]))
         return isinstance(anno["content"], str) and \
                isinstance(anno["img_id"], str) and \
                isinstance(anno["manifest_url"], str) and \
@@ -415,59 +417,61 @@ def api_post_documents_annotations(api_version, doc_id):
 
     data = request.get_json()
     response = None
-
     if "data" in data:
         data = data["data"]
-
         if not isinstance(data, list):
             data = [data]
 
-        validated_annotations = [a for a in data if validate_annotation_data_format(a)]
-        user = get_current_user()
+        user = current_app.get_current_user()
+        if user.is_anonymous:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden", "details": "Cannot insert data"
+            })
+        else:
+            validated_annotations = [a for a in data if validate_annotation_data_format(a)]
+            # get the zone_id max
+            try:
+                img_zone_max_zone_id = db.session.query(func.max(ImageZone.zone_id)).filter(
+                    ImageZone.manifest_url == validated_annotations[0]["manifest_url"],
+                    ImageZone.img_id == validated_annotations[0]["img_id"]
+                ).group_by(
+                    ImageZone.manifest_url, ImageZone.img_id
+                ).one()
+                img_zone_max_zone_id = img_zone_max_zone_id[0] + 1
+            except NoResultFound:
+                # it is the first zone for this image in this manifest
+                img_zone_max_zone_id = 1
 
-        # get the zone_id max
-        try:
-            img_zone_max_zone_id = db.session.query(func.max(ImageZone.zone_id)).filter(
-                ImageZone.manifest_url == validated_annotations[0]["manifest_url"],
-                ImageZone.img_id == validated_annotations[0]["img_id"]
-            ).group_by(
-                ImageZone.manifest_url, ImageZone.img_id
-            ).one()
-            img_zone_max_zone_id = img_zone_max_zone_id[0] + 1
-        except NoResultFound:
-            # it is the first zone for this image in this manifest
-            img_zone_max_zone_id = 1
+            new_img_zone_ids = []
+            for anno in validated_annotations:
 
-        new_img_zone_ids = []
-        for anno in validated_annotations:
+                user_id = user.id
+                # teacher and admin MAY post/put/delete for others
+                if (user.is_teacher or user.is_admin) and "username" in anno:
+                    usr = current_app.get_user_from_username(anno["username"])
+                    if usr is not None:
+                        user_id = usr.id
+                elif "username" in anno:
+                    usr = current_app.get_user_from_username(anno["username"])
+                    if usr is not None and usr.id != user.id:
+                        db.session.rollback()
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403, "title": "Access forbidden", "details": "Cannot insert data"
+                        })
+                        break
 
-            user_id = user.id
-            # teacher and admin MAY post/put/delete for others
-            if (user.is_teacher or user.is_admin) and "username" in anno:
-                usr = get_user_from_username(anno["username"])
-                if usr is not None:
-                    user_id = usr.id
-            elif "username" in anno:
-                usr = get_user_from_username(anno["username"])
-                if usr is not None and usr.id != user.id:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Access forbidden", "details": "Cannot insert data"
-                    })
-                    break
-
-            # INSERT data but dont commit yet
-            img_zone = ImageZone(
-                manifest_url=anno["manifest_url"],
-                img_id=anno["img_id"],
-                note=anno["content"],
-                coords=anno["coords"],
-                zone_id=img_zone_max_zone_id,
-                user_id=user_id
-            )
-            db.session.add(img_zone)
-            new_img_zone_ids.append((user_id, img_zone_max_zone_id))
-            img_zone_max_zone_id += 1
+                # INSERT data but dont commit yet
+                img_zone = ImageZone(
+                    manifest_url=anno["manifest_url"],
+                    img_id=anno["img_id"],
+                    note=anno["content"],
+                    coords=anno["coords"],
+                    zone_id=img_zone_max_zone_id,
+                    user_id=user_id
+                )
+                db.session.add(img_zone)
+                new_img_zone_ids.append((user_id, img_zone_max_zone_id))
+                img_zone_max_zone_id += 1
 
         if response is None:
             try:
@@ -543,38 +547,43 @@ def api_put_documents_annotations(api_version, doc_id):
         # find which zones to update
         validated_annotations = [a for a in data if validate_annotation_data_format(a) and "zone_id" in a]
         img_zones = []
-        user = get_current_user()
-        for anno in validated_annotations:
+        user = current_app.get_current_user()
+        if user.is_anonymous:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+            })
+        else:
+            for anno in validated_annotations:
 
-            user_id = user.id
-            # teacher and admin MAY post/put/delete for others
-            if (user.is_teacher or user.is_admin) and "username" in anno:
-                usr = get_user_from_username(anno["username"])
-                if usr is not None:
-                    user_id = usr.id
-            elif "username" in anno:
-                usr = get_user_from_username(anno["username"])
-                if usr is not None and usr.id != user.id:
+                user_id = user.id
+                # teacher and admin MAY post/put/delete for others
+                if (user.is_teacher or user.is_admin) and "username" in anno:
+                    usr = current_app.get_user_from_username(anno["username"])
+                    if usr is not None:
+                        user_id = usr.id
+                elif "username" in anno:
+                    usr = current_app.get_user_from_username(anno["username"])
+                    if usr is not None and usr.id != user.id:
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+                        })
+                        break
+
+                try:
+                    img_zone = ImageZone.query.filter(
+                        ImageZone.zone_id == anno["zone_id"],
+                        ImageZone.manifest_url == anno["manifest_url"],
+                        ImageZone.img_id == anno["img_id"],
+                        ImageZone.user_id == user_id
+                    ).one()
+                    img_zones.append((user_id, img_zone))
+                except NoResultFound as e:
                     response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+                        "status": 404,
+                        "title": "Image zone {0} not found".format(anno["zone_id"]),
+                        "details": "Cannot update image zone: {0}".format(str(e))
                     })
                     break
-
-            try:
-                img_zone = ImageZone.query.filter(
-                    ImageZone.zone_id == anno["zone_id"],
-                    ImageZone.manifest_url == anno["manifest_url"],
-                    ImageZone.img_id == anno["img_id"],
-                    ImageZone.user_id == user_id
-                ).one()
-                img_zones.append((user_id, img_zone))
-            except NoResultFound as e:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404,
-                    "title": "Image zone {0} not found".format(anno["zone_id"]),
-                    "details": "Cannot update image zone: {0}".format(str(e))
-                })
-                break
 
         if response is None:
             # update the annotations
@@ -633,8 +642,8 @@ def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None)
 
     response = None
 
-    user = get_current_user()
-    if user is not None:
+    user = current_app.get_current_user()
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
@@ -716,8 +725,8 @@ def api_post_documents_images(api_version, doc_id):
     """
     response = None
 
-    user = get_current_user()
-    if not (user.is_teacher or user.is_admin):
+    user = current_app.get_current_user()
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -803,8 +812,8 @@ def api_post_documents_images(api_version, doc_id):
 def api_delete_documents_images(api_version, doc_id):
     response = None
 
-    user = get_current_user()
-    if not (user.is_teacher or user.is_admin):
+    user = current_app.get_current_user()
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
