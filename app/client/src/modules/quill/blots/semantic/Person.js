@@ -6,4 +6,43 @@
  Utilisation : transcription, traduction, commentaire
 */
 
-// TODO
+import Quill from 'quill';
+
+let Inline = Quill.import('blots/inline');
+
+class PersonBlot extends Inline {
+
+  static create(data) {
+    console.log("PersonBlot.create", data);
+    let node = super.create();
+    node.setAttribute('ref', data);
+    return node;
+  }
+
+  static formats(domNode) {
+    let ref = domNode.getAttribute('ref');
+    return ref || true;
+  }
+
+
+
+  format(name, data) {
+    if (name === 'person' && data) {
+      this.domNode.setAttribute('ref', data);
+    } else {
+      super.format(name, data);
+    }
+  }
+
+  formats() {
+    let formats = super.formats();
+    formats['person'] = PersonBlot.formats(this.domNode);
+    console.log("PersonBlot.formats", formats['person']);
+    return formats;
+  }
+}
+PersonBlot.blotName = 'person';
+PersonBlot.tagName = 'persName';
+
+export default PersonBlot;
+

@@ -3,7 +3,7 @@
         <div class="modal-background" @click="cancel"></div>
         <div class="modal-card">
             <header class="modal-card-head">
-                <p class="modal-card-title">{{ title }}</p>
+                <p class="modal-card-title" v-html="title"></p>
                 <button class="delete" aria-label="close" @click="cancel"></button>
             </header>
             <section class="modal-card-body">
