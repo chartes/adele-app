@@ -69,11 +69,11 @@ def api_documents_translations_users(api_version, doc_id):
 def api_documents_translations(api_version, doc_id, user_id=None):
     response = None
     user = current_app.get_current_user()
-    if user is None and user_id is not None:
+    if user.is_anonymous and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
-    elif user is None:
+    elif user.is_anonymous:
         tr = get_reference_translation(doc_id)
         if tr is None:
             response = APIResponseFactory.make_response(errors={
@@ -88,7 +88,7 @@ def api_documents_translations(api_version, doc_id, user_id=None):
 
     if response is None:
 
-        if user is not None:
+        if not user.is_anonymous:
             # only teacher and admin can see everything
             if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
                 response = APIResponseFactory.make_response(errors={
@@ -131,8 +131,6 @@ def api_post_documents_translations(api_version, doc_id):
     """
     data = request.get_json()
     response = None
-    user = current_app.get_current_user()
-    usernames = set()
     created_users = set()
 
     try:
@@ -140,6 +138,11 @@ def api_post_documents_translations(api_version, doc_id):
     except NoResultFound:
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+
+    if current_app.get_current_user().is_anonymous:
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Cannot insert data"
         })
 
     if "data" in data and response is None:
@@ -257,10 +260,15 @@ def api_put_documents_translations(api_version, doc_id):
         if not isinstance(data, list):
             data = [data]
 
+        user = current_app.get_current_user()
+        if user.is_anonymous:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+            })
+
         if response is None:
 
             updated_users = set()
-            user = current_app.get_current_user()
             user_id = user.id
 
             for tr in data:
@@ -348,7 +356,7 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
         })
 
     user = current_app.get_current_user()
-    if user is not None:
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"

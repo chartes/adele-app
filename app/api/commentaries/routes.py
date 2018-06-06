@@ -37,7 +37,7 @@ def api_commentary(api_version, doc_id, user_id=None, type_id=None):
     user = current_app.get_current_user()
     response = None
 
-    if user is not None:
+    if not user.is_anonymous:
         # only teacher and admin can see everything
         if not (user.is_teacher or user.is_admin) and user_id is not None and int(user_id) != int(user.id):
             response = APIResponseFactory.make_response(errors={
@@ -54,7 +54,7 @@ def api_commentary(api_version, doc_id, user_id=None, type_id=None):
 
     if response is None:
 
-        if user is not None:
+        if not user.is_anonymous:
             if not (user.is_teacher or user.is_admin) and type_id is not None and user_id is None:
                 user_id = user.id
 
@@ -110,7 +110,7 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
     response = None
 
     # only teacher and admin can see everything
-    if not (user.is_teacher or user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+    if user.is_anonymous or (not (user.is_teacher or user.is_admin) and user_id is not None and int(user_id) != int(user.id)):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -168,7 +168,7 @@ def api_post_commentary(api_version, doc_id):
     """
     response = None
     user = current_app.get_current_user()
-    if user is None or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -250,7 +250,7 @@ def api_put_commentary(api_version, doc_id):
     """
     response = None
     user = current_app.get_current_user()
-    if user is None or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })

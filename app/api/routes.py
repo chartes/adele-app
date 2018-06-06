@@ -29,7 +29,7 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
     if headers_arg is not None:
         headers.update(headers_arg)
 
-    if user is not None:
+    if user is not None and not user.is_anonymous:
         base64string = base64.b64encode(bytes('%s:%s' % (user.username, user.password), "utf-8"))
         headers['Authorization'] = "Basic %s" % base64string.decode("ascii")
 

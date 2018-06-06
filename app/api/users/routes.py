@@ -1,4 +1,5 @@
 from flask import request, current_app
+from flask_login import AnonymousUserMixin
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import auth, db
@@ -23,17 +24,12 @@ def get_auth_token(api_version):
 
 @api_bp.route('/api/<api_version>/user')
 def api_current_user(api_version):
-    # TODO: change hard coded id
-    try:
-        user = current_app.get_current_user()
-        if user is None:
-            response = APIResponseFactory.make_response()
-        else:
-            response = APIResponseFactory.make_response(data=user.serialize())
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "User not found"
-        })
+    user = current_app.get_current_user()
+    if user.is_anonymous:
+        response = APIResponseFactory.make_response()
+    else:
+        response = APIResponseFactory.make_response(data=user.serialize())
+
     return APIResponseFactory.jsonify(response)
 
 
@@ -43,7 +39,7 @@ def api_users(api_version, user_id):
     response = None
     user = current_app.get_current_user()
 
-    if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
+    if user.is_anonymous or ((not user.is_teacher and not user.is_admin) and int(user_id) != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -66,11 +62,11 @@ def api_users_roles(api_version, user_id):
     response = None
     user = current_app.get_current_user()
 
-    if user is not None:
-        if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
+    if user.is_anonymous or ((not user.is_teacher and not user.is_admin) and int(user_id) != user.id):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
     if response is None:
         try:
             target_user = User.query.filter(User.id == user_id).one()
@@ -104,7 +100,7 @@ def api_post_users_roles(api_version, user_id):
     response = None
     user = current_app.get_current_user()
 
-    if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
+    if user.is_anonymous or ((not user.is_teacher and not user.is_admin) and int(user_id) != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -152,7 +148,7 @@ def api_post_users_roles(api_version, user_id):
 def api_delete_users(api_version, user_id):
     response = None
     user = current_app.get_current_user()
-    if not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or (not user.is_teacher and not user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -189,7 +185,7 @@ def api_delete_users(api_version, user_id):
 def api_delete_users_roles(api_version, user_id):
     response = None
     user = current_app.get_current_user()
-    if not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or (not user.is_teacher and not user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })

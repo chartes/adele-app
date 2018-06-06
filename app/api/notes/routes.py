@@ -1,4 +1,5 @@
-from flask import request, redirect, url_for, current_app
+from flask import request, redirect, url_for, current_app, render_template_string
+from flask_login import current_user
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -101,11 +102,11 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
     :return:
     """
     response = None
-    if user is None and user_id is not None:
+    if user.is_anonymous and user_id is not None:
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
-    elif user is None:
+    elif user.is_anonymous:
         tr = get_reference_translation(doc_id)
         if tr is None:
             response = APIResponseFactory.make_response(errors={
@@ -118,7 +119,7 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
             user_id = user.id
 
     # only teacher and admin can see everything
-    if user is not None:
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
@@ -324,7 +325,7 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
                 # TODO gérer erreur
                 note_type = NoteType.query.filter(NoteType.id == n_data["note_type"]).first()
                 new_note = Note(
-                    id=note_max_id + nb + 1,
+                    id=note_max_id + nb,
                     user_id=user_id,
                     content=n_data["content"],
                     type_id=note_type.id,
@@ -474,7 +475,7 @@ def api_delete_documents_binder_notes(request, user, api_version, doc_id, user_i
             "status": 404, "title": "Document {0} not found".format(doc_id)
         })
 
-    if user is not None:
+    if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"

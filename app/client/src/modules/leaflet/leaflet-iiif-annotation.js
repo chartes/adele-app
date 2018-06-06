@@ -36,6 +36,36 @@ const LeafletIIIFAnnotation = {
 
     },
 
+    getAnnotations: function() {
+        this.annotations = [];
+        const _this = this;
+        this.featureGroup.eachLayer(function(layer){
+           const tooltip = layer.getTooltip();
+           const content = tooltip === undefined ? "" : tooltip.getContent();
+
+           let coords = [];
+           console.log(content);
+           console.log(layer.toGeoJSON());
+           if (layer instanceof L.Circle) {
+               const a = layer.getLatLngBounds();
+               coords = [a.lat, a.lng, layer.getRadius()]
+           } else {
+               for(let c of layer.toGeoJSON().geometry.coordinates ) {
+                   for(let i = 0; i < c.length; i++) {
+                      coords.push(c[i].join(','));
+                  }
+               }
+           }
+
+           let annotation = {
+               region : { coords : coords.join(',')},
+               content : content
+           };
+           _this.annotations.push(annotation);
+        });
+        return this.annotations
+    },
+
     setAnnotations: function(annotations) {
         /*
             let's draw the regions
@@ -66,7 +96,7 @@ const LeafletIIIFAnnotation = {
                 shape.bindTooltip(annotation.content, facsimileToolTipOptions);
                 shape.addTo(this.map);
                 //append to the annotations list
-                this.annotations.push(annotation);
+                //this.annotations.push(annotation);
             }
         }
 

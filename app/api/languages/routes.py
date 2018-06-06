@@ -28,7 +28,7 @@ def api_language(api_version, language_code=None):
 def api_delete_language(api_version, language_code=None):
     response = None
     user = current_app.get_current_user()
-    if user is None or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -62,7 +62,7 @@ def api_delete_language(api_version, language_code=None):
 def api_put_language(api_version):
     response = None
     user = current_app.get_current_user()
-    if user is None or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -118,7 +118,7 @@ def api_put_language(api_version):
 def api_post_language(api_version):
     response = None
     user = current_app.get_current_user()
-    if user is None or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })

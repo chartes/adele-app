@@ -1,4 +1,4 @@
-from flask_login import current_user
+from flask_login import current_user, AnonymousUserMixin
 from app import auth, models
 
 
@@ -15,10 +15,11 @@ def get_user_from_username(username):
 
 def get_current_user():
     if auth.username() == "":
-        if current_user.is_anonymous:
-            user = None
-        else:
-            user = current_user
+        user = current_user
     else:
-        user = models.User.query.filter(models.User.username == auth.username()).first()
+        user = models.User.verify_auth_token(auth.username())
+        if not user:
+            user = models.User.query.filter(models.User.username == auth.username()).first()
+        if not user:
+            user = AnonymousUserMixin()
     return user
