@@ -1,6 +1,8 @@
 
 const LeafletIIIFAnnotation = {
 
+    ZOOM:2,
+
     resetMouseOverStyle: function () {
         for (let e of document.getElementsByClassName("leaflet-interactive")) {
             e.style.opacity = 0;
@@ -36,32 +38,37 @@ const LeafletIIIFAnnotation = {
 
     },
 
-    getAnnotations: function() {
-        this.annotations = [];
-        const _this = this;
-        this.featureGroup.eachLayer(function(layer){
-           const tooltip = layer.getTooltip();
+    _makeAnnotation: function(layer) {
+          const tooltip = layer.getTooltip();
            const content = tooltip === undefined ? "" : tooltip.getContent();
-
            let coords = [];
-           console.log(content);
-           console.log(layer.toGeoJSON());
            if (layer instanceof L.Circle) {
-               const a = layer.getLatLngBounds();
-               coords = [a.lat, a.lng, layer.getRadius()]
+               const c = layer.toGeoJSON().geometry.coordinates;
+               const center = this.map.project([c[1], c[0]], LeafletIIIFAnnotation.ZOOM);
+               coords = [center.x, center.y, layer.getRadius()]
            } else {
+               // todo instance of L.Rectangle
+               // else polygon
                for(let c of layer.toGeoJSON().geometry.coordinates ) {
                    for(let i = 0; i < c.length; i++) {
-                      coords.push(c[i].join(','));
+                      const point = this.map.project([c[i][1], c[i][0]], LeafletIIIFAnnotation.ZOOM);
+                      coords.push(point.x + "," + point.y);
                   }
                }
            }
 
-           let annotation = {
+           const annotation = {
                region : { coords : coords.join(',')},
                content : content
            };
-           _this.annotations.push(annotation);
+           return annotation
+    },
+
+    getAnnotations: function() {
+        this.annotations = [];
+        const _this = this;
+        this.featureGroup.eachLayer(function(layer){
+            _this.annotations.push(_this._makeAnnotation(layer))
         });
         return this.annotations
     },
@@ -78,17 +85,17 @@ const LeafletIIIFAnnotation = {
                 let shape = null;
                 switch (annotation.region.type) {
                     case "rect":
-                        shape = L.rectangle([this.map.unproject([c[0], c[1]], 2), this.map.unproject([c[2], c[3]], 2)]);
+                        shape = L.rectangle([this.map.unproject([c[0], c[1]], LeafletIIIFAnnotation.ZOOM), this.map.unproject([c[2], c[3]], 2)]);
                         break;
                     case "polygon":
                         let pointList = [];
                         for (let i = 0; i < c.length; i += 2) {
-                            pointList.push(this.map.unproject([c[i], c[i + 1]], 2));
+                            pointList.push(this.map.unproject([c[i], c[i + 1]], LeafletIIIFAnnotation.ZOOM));
                         }
                         shape = L.polygon(pointList);
                         break;
                     case "circle":
-                        shape = L.circle(this.map.unproject([c[0], c[1]], 2), {radius: c[2] * 0.33});
+                        shape = L.circle(this.map.unproject([c[0], c[1]], LeafletIIIFAnnotation.ZOOM), {radius: c[2]});
                         break;
                 }
                 //add the shape & the content to the map

@@ -152,12 +152,13 @@ const IIIFAnnotationLoader = {
 
         return axios.get(list_url)
             .then(response => {
-                for (let annotation of response.data.resources) {
-                    let new_annotation = this.parseAnnotation(annotation);
-                    if (new_annotation) {
-                        this.annotations[list_url].push(new_annotation);
+                if (response.data.resources)
+                    for (let annotation of response.data.resources) {
+                        let new_annotation = this.parseAnnotation(annotation);
+                        if (new_annotation) {
+                            this.annotations[list_url].push(new_annotation);
+                        }
                     }
-                }
             })
             .catch(error => {
                 console.log(error)
