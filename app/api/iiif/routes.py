@@ -383,7 +383,7 @@ def validate_annotation_data_format(anno):
         return isinstance(anno["content"], str) and \
                isinstance(anno["img_id"], str) and \
                isinstance(anno["manifest_url"], str) and \
-               len([int(c) for c in anno["coords"].split(",")]) >= 3
+               len(anno["coords"].split(",")) >= 3
     else:
         return False
 
