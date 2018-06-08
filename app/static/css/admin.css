@@ -1217,6 +1217,10 @@
             width: 100%;
             border: 1px solid #eee; }
 
+            .editor-controls {
+              display: flex;
+              flex-wrap: wrap;
+            }
             .editor-controls hr {
               margin: 0.5em 0; }
               .editor-controls button {
@@ -1224,6 +1228,18 @@
                 margin: 0.125em 0; }
                 .editor-controls button:active, .editor-controls button:focus {
                   outline: none; }
+              .editor-controls-group {
+                margin-right: 2em;
+                margin-bottom: .5em;
+              }
+              .editor-controls-group:last-child {
+                margin-right: 0;
+              }
+              .editor-controls-group label {
+                display: block;
+                font-size: 60%;
+                font-variant: small-caps;
+              }
 
 .editor-container {
   position: relative; }
@@ -1238,7 +1254,8 @@
         margin-bottom: 50px; }
 
 .ql-editor {
-  line-height: 1.6; }
+  line-height: 1.6;
+    counter-reset: segment-count 0; }
   .ql-editor:focus {
     outline: none; }
     .ql-editor p {
@@ -1276,6 +1293,28 @@ smallcaps {
             border-color: lightseagreen; }
             speechpart:nth-child(5n+4) {
               border-color: rebeccapurple; }
+
+segment {
+  display: inline-block;
+  margin: 0 .5em;
+}
+l {
+  font-family: Georgia, Times New Roman, serif;
+}
+segment:before {
+    content: counter(segment-count);
+    counter-increment: segment-count;
+  background: cornflowerblue;
+  display: block;
+  min-width: 1em;
+  font-size: .75em;
+  padding: .125em;
+  line-height: 100%;
+  border-radius: .5em;
+  text-align: center;
+  color: #ffff00;
+  font-weight: bold;
+  }
 
 .in-editor-actions, .note-actions {
   position: absolute;

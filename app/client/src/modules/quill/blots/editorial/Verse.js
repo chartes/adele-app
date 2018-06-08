@@ -2,12 +2,8 @@ import Quill from 'quill';
 
 let Block = Quill.import('blots/block');
 
-class DivisionBlot extends Block { }
-DivisionBlot.blotName = 'division';
-DivisionBlot.tagName = 'div';
+class VerseBlot extends Block { }
+VerseBlot.blotName = 'verse';
+VerseBlot.tagName = 'l';
 
-export default DivisionBlot;
-
-
-// TODO check TEI ou html5
-// TODO garder ou supprimer
+export default VerseBlot;

@@ -4,6 +4,7 @@ import Vuex from 'vuex';
 import user from './modules/user'
 import document from './modules/document'
 import transcription from './modules/transcription'
+import translation from './modules/translation'
 import noteTypes from './modules/noteTypes'
 import notes from './modules/notes'
 
@@ -17,6 +18,7 @@ export default new Vuex.Store({
       noteTypes,
       notes,
       transcription,
+      translation,
       user
     }
 });

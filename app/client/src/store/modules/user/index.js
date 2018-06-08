@@ -22,7 +22,6 @@ const actions = {
 
   getCurrentUser ({ commit }) {
     return axios.get('/api/1.0/user').then( (response) => {
-      console.log('currentUser', response.data.data)
       commit('UPDATE_CURRENT_USER', response.data.data)
     })
   },
@@ -39,6 +38,7 @@ const checkRole = (user, role) => {
 const getters = {
 
   authToken: state => state.authToken,
+  authHeader: state => { return { auth: { username: state.authToken, password: undefined }}},
   currentUser: state => state.currentUser,
   currentUserIsAdmin: state => {
     return checkRole(state.currentUser, 'admin')

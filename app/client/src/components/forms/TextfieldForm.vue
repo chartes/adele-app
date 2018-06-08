@@ -38,10 +38,8 @@
       submit: { type: Function },
     },
     data() {
-      console.log("TextfieldForm", this.value)
       return {
-        form: this.value,
-        textLength: 0,
+        form: this.value
       }
     },
     mounted () {

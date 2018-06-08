@@ -13,7 +13,6 @@ new Vue({
   beforeMount: function () {
     this.documentId = this.$el.dataset.documentId;
     this.authToken = this.$el.dataset.authToken;
-    console.log("AUTH", this.$el.dataset)
   },
   render (h) {
     return h(App, { props: {

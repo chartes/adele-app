@@ -9,7 +9,6 @@ const state = {
 const mutations = {
 
     UPDATE_DOCUMENT (state, payload) {
-      console.log('UPDATE_DOCUMENT', payload)
         state.document = payload;
     }
 

@@ -67,7 +67,27 @@ const insertNotes = (text, notes) => {
   return result;
 };
 
+const computeNotesPointers  = (htmlWithNotes) => {
+
+  const regexpStart = /<note id="(\d+)">/;
+  const regexpEnd = /<\/note>/;
+  let resStart, resEnd;
+  const notes = [];
+  while((resStart = regexpStart.exec(htmlWithNotes)) !== null) {
+    htmlWithNotes = htmlWithNotes.replace(regexpStart, '');
+    resEnd = regexpEnd.exec(htmlWithNotes);
+    htmlWithNotes = htmlWithNotes.replace(regexpEnd, '');
+    notes.push({
+      "note_id" : parseInt(resStart[1]),
+      "ptr_start": resStart.index,
+      "ptr_end": resEnd.index
+    });
+  }
+  return notes;
+}
+
 export default teiToQuill;
 export {
-  insertNotes
+  insertNotes,
+  computeNotesPointers,
 };

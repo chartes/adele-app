@@ -1,23 +1,48 @@
 import axios from 'axios';
-import TEItoQuill,{insertNotes} from '../../../modules/quill/TEIConversion'
+import Quill from '../../../modules/quill/AdeleQuill';
+import TEItoQuill, {insertNotes, computeNotesPointers} from '../../../modules/quill/TEIConversion'
+import {removeNotesFromDelta} from '../../../modules/quill/DeltaUtils'
 
 const state = {
 
   transcription: undefined,
-  transcriptionFormatted: undefined,
-  transcriptionSaved: false
+  transcriptionWithNotes: undefined,
+  transcriptionSaved: false,
+  transcriptionHtml: null,
+  shadowQuillElement: document.createElement('div',{ class: 'phantom-quill-transcription'}),
+  shadowQuill: null
 
 };
 
 const mutations = {
 
+  TRANSCRIPTION_INIT(state, payload) {
+    if (!state.shadowQuill) {
+      state.shadowQuillElement.innerHTML = payload;
+      state.shadowQuill = new Quill(state.shadowQuillElement);
+      state.transcriptionHtml = payload;
+    }
+  },
+
   UPDATE_TRANSCRIPTION (state, payload) {
     console.log("UPDATE_TRANSCRIPTION")
     state.transcription = payload.raw;
-    state.transcriptionFormatted = payload.formatted;
+    state.transcriptionWithNotes = payload.formatted;
     state.transcriptionSaved = true;
   },
   TRANSCRIPTION_CHANGED (state) {
+    // transcription changed and needs to be saved
+    console.log("TRANSCRIPTION_CHANGED")
+    state.transcriptionSaved = false;
+  },
+  TRANSCRIPTION_ADD_OPERATION (state, payload) {
+    const filteredDelta = removeNotesFromDelta(payload)
+    state.shadowQuill.updateContents(payload);
+    state.transcriptionHtml = state.shadowQuillElement.children[0].innerHTML;
+    console.log("TRANSCRIPTION_ADD_OPERATION", filteredDelta, state.shadowQuillElement.innerHTML, state.transcriptionHtml)
+  },
+  TRANSCRIPTION_SAVED (state) {
+    // transcription changed and needs to be saved
     console.log("TRANSCRIPTION_CHANGED")
     state.transcriptionSaved = false;
   }
@@ -26,17 +51,18 @@ const mutations = {
 
 const actions = {
 
-  getTranscription ({ commit, getters }) {
+  fetchTranscription ({ commit, getters, rootState }) {
     const doc_id = getters.document.id;
     const user_id = getters.currentUser.id;
 
-    this.dispatch('getNoteTypes').then(() => {
-      return this.dispatch('getNotes', getters.document.id);
+    console.log('STORE ACTION fetchTranscription')
+
+    this.dispatch('fetchNoteTypes').then(() => {
+      console.log('   dispatch fetchNoteTypes')
+      return this.dispatch('fetchNotes', getters.document.id);
     }).then(() => {
 
-      console.log('getTranscription', getters.document, getters.currentUser)
-      // `/api/1.0/documents/${doc_id}/transcriptions/from/${user_id}`
-      axios.get(`/api/1.0/documents/${doc_id}/transcriptions`).then( response => {
+      axios.get(`/api/1.0/documents/${doc_id}/transcriptions/from-user/${rootState.user.currentUser.id}`).then( response => {
 
         /*const data = {
           "data": {
@@ -61,11 +87,14 @@ const actions = {
         const transcription = data.data;
         */
 
+
         let transcription = {content : " ", notes: []};
 
         if (response.data.data && response.data.data.length !== 0) {
-            transcription = response.data.data;
+          transcription = response.data.data;
         }
+
+        console.log("FETCHED TRANSCRIPTION", transcription);
 
         const content = transcription.content;
         const notes = transcription.notes;
@@ -73,26 +102,70 @@ const actions = {
 
         //console.log('formatted', formatted)
 
+        commit('TRANSCRIPTION_INIT', content)
         commit('UPDATE_TRANSCRIPTION', { raw: transcription, formatted: formatted });
       })
 
-
     });
   },
-  transcriptionChanged ({ commit }) {
-    commit('TRANSCRIPTION_CHANGED', false)
+  saveTranscription ({ commit, getters, state, rootState }, transcriptionWithNotes) {
+
+    console.log('STORE ACTION saveTranscription', state.transcriptionWithNotes, state.transcriptionHtml);
+
+
+
+    // count notes pointers
+    const notes = computeNotesPointers(transcriptionWithNotes);
+    notes.forEach((note) => {
+      let found = rootState.notes.notes.find((element) => {
+        return element.id === note.note_id;
+      });
+      note.content = found.content;
+    });
+    console.log(notes);
+
+    // Save transcription content without notes
+    const data = { data: [
+      {
+        "content" :  state.transcriptionHtml,
+        "username": rootState.user.currentUser.username
+      }
+    ]};
+    console.log('rootState.user', rootState.user)
+    const headerConfig = { auth: { username: rootState.user.authToken, password: undefined }};
+    console.log('headerConfig', headerConfig)
+    axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions`, data, headerConfig)
+      .then( (response) => {
+        console.log('   transcription saved', response);
+
+        return axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions/notes`, { data: notes }, headerConfig)
+
+        //commit('UPDATE_NOTES', response.data.data)
+      }).then((response) => {
+        console.log('   notes saved', response)
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+
+    // remove notes
+
+
   },
-  saveTranscription ({ commit }, newTranscription) {
-    commit('UPDATE_TRANSCRIPTION', newTranscription)
+  transcriptionChanged ({ commit }, deltas) {
+    commit('TRANSCRIPTION_ADD_OPERATION', deltas)
+    commit('TRANSCRIPTION_SAVED', false)
   }
 
 };
 
 const getters = {
-  transcription: state => {console.log("transcription"); return state.transcription},
-  transcriptionFormatted: state => {console.log("transcription"); return state.transcriptionFormatted},
+  transcription: state => state.transcription,
+  transcriptionWithNotes: state => state.transcriptionWithNotes,
   transcriptionContent: state => !!state.transcription ? state.transcription.content : null,
-  transcriptionIsSaved: state => state.transcriptionSaved
+  transcriptionIsSaved: state => state.transcriptionSaved,
+  transcriptionHTML: state => state.transcriptionHtml,
+  //transcriptionWithNotes: state =>
 };
 
 const transcriptionModule = {

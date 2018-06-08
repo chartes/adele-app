@@ -116,9 +116,9 @@
                         // save failed on the server side
                         console.log("saving annotations has failed on the server side");
                     }
-                    if (drawControls._toolbars.edit._activeMode) {
+                    /*if (drawControls._toolbars.edit._activeMode) {
                         drawControls._toolbars.edit._activeMode.handler.disable();
-                    }
+                    }*/
                 };
 
                 this.drawControls = drawControls;
@@ -171,9 +171,7 @@
                     //console.log(newAnnotation);
                     annotations.push(newAnnotation);
                 }
-                const APP_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImlhdCI6MTUyODIwMjE3NCwiZXhwIjoxNTI4Mjg4NTc0fQ.eyJpZCI6MX0.4FBgzya9MsDwEJLWck6B6gTCldJsjzl3WUUkO3prvBk';
                 console.log('saveAnnotations');
-                console.log('AUTH_TOKEN:' + APP_AUTH_TOKEN);
 
                 const docId = this.$store.getters.document.id;
 

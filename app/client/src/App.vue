@@ -12,7 +12,7 @@
 <script>
 
   import { mapGetters } from 'vuex'
-  import DocumentEdition from './components/DocumentEdition';
+  import DocumentEdition from './components/edit/DocumentEdition';
 
   export default {
 

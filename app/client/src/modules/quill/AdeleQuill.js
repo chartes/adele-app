@@ -1,6 +1,6 @@
 import Quill from 'quill';
+import Delta from 'quill-delta';
 
-//import Break from 'quill/blots/break'
 import BoldBlot from './blots/typo/Bold';
 import ItalicBlot from './blots/typo/Italic';
 import SmallCapsBlot from './blots/typo/SmallCaps';
@@ -13,20 +13,17 @@ import BlockquoteBlot from './blots/semantic/Blockquote';
 import InlinequoteBlot from './blots/semantic/Inlinequote';
 import PersonBlot from './blots/semantic/Person';
 import LocationBlot from './blots/semantic/Location';
+import SegmentBlot from './blots/semantic/Segment';
 
+import LineBreak from './blots/editorial/LineBreak';
+import Paragraph from './blots/editorial/Paragraph';
+import Verse from './blots/editorial/Verse';
 import NoteBlot from './blots/editorial/Note';
-//import { LayoutCol } from './blots/editorial/Division';
 import List from 'quill/formats/list';
 
 import SpeechpartBlot from './blots/SpeechpartBlot';
 
-let Inline = Quill.import('blots/inline');
-let Block = Quill.import('blots/block');
-let BlockEmbed = Quill.import('blots/block/embed');
-
-
-
-//Quill.register(Break, true);
+Quill.register(LineBreak, true);
 
 // typo
 Quill.register(BoldBlot, true);
@@ -42,8 +39,11 @@ Quill.register(BlockquoteBlot, true);
 Quill.register(InlinequoteBlot, true);
 Quill.register(LocationBlot, true);
 Quill.register(PersonBlot, true);
+Quill.register(SegmentBlot, true);
 
 // editorial
+Quill.register(Paragraph, true);
+Quill.register(Verse, true);
 Quill.register(NoteBlot, true);
 //Quill.register(List, true);
 //Quill.register(ListItem, true);
@@ -51,8 +51,50 @@ Quill.register(NoteBlot, true);
 // other
 Quill.register(SpeechpartBlot, true);
 
+function lineBreakMatcher() {
+  var newDelta = new Delta();
+  newDelta.insert({'break': ''});
+  return newDelta;
+}
+
+const options = {
+  modules: {
+
+    clipboard: {
+      matchers: [
+        ['BR', lineBreakMatcher]
+      ]
+    },
+    keyboard: {
+      bindings: {
+        linebreak: {
+          key: 13,
+          shiftKey: true,
+          handler: function (range) {
+            let currentLeaf = this.quill.getLeaf(range.index)[0]
+            let nextLeaf = this.quill.getLeaf(range.index + 1)[0]
+
+            this.quill.insertEmbed(range.index, 'break', true, 'user');
+
+            // Insert a second break if:
+            // At the end of the editor, OR next leaf has a different parent (<p>)
+            if (nextLeaf === null || (currentLeaf.parent !== nextLeaf.parent)) {
+              this.quill.insertEmbed(range.index, 'break', true, 'user');
+            }
+
+            // Now that we've inserted a line break, move the cursor forward
+            this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
+          }
+        }
+      }
+    }
+  }
+};
+
 export default Quill;
 export {
+
+  options,
 
   BoldBlot,
   ItalicBlot,

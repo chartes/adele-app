@@ -1,28 +1,16 @@
 <template>
     <div class="editor-area">
         <div class="editor-controls" ref="controls">
-            <div class="editor-controls-group">
-                <label>Structure éditoriale</label>
-                <editor-button :selected="buttons.paragraph" :active="editorHasFocus" :callback="simpleFormat" :format="'paragraph'"/>
-                <editor-button :selected="buttons.verse" :active="editorHasFocus" :callback="simpleFormat" :format="'verse'"/>
-                <editor-button :active="isNoteButtonActive" :callback="newNoteChoiceOpen" :format="'note'"/>
-                <editor-button :selected="buttons.segment" :active="editorHasFocus" :callback="insertSegment" :format="'segment'"/>
-            </div>
-            <div class="editor-controls-group">
-                <label>Enrichissements typographiques</label>
-                <editor-button :selected="buttons.bold" :active="editorHasFocus" :callback="simpleFormat" :format="'bold'"/>
-                <editor-button :selected="buttons.italic" :active="editorHasFocus" :callback="simpleFormat" :format="'italic'"/>
-                <editor-button :selected="buttons.superscript" :active="editorHasFocus" :callback="simpleFormat" :format="'superscript'"/>
-                <editor-button :selected="buttons.smallcaps" :active="editorHasFocus" :callback="simpleFormat" :format="'smallcaps'"/>
-                <editor-button :selected="buttons.underline" :active="editorHasFocus" :callback="simpleFormat" :format="'underline'"/>
-            </div>
-            <div class="editor-controls-group">
-                <label>Enrichissements sémantiques</label>
-                <editor-button :selected="buttons.del" :active="editorHasFocus" :callback="simpleFormat" :format="'del'"/>
-                <editor-button :selected="buttons.expan" :active="editorHasFocus" :callback="simpleFormat" :format="'expan'"/>
-                <editor-button :selected="buttons.person" :active="editorHasFocus" :callback="displayPersonForm" :format="'person'"/>
-                <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="displayLocationForm" :format="'location'"/>
-            </div>
+            <editor-button :selected="buttons.bold" :active="editorHasFocus" :callback="simpleFormat" :format="'bold'"/>
+            <editor-button :selected="buttons.italic" :active="editorHasFocus" :callback="simpleFormat" :format="'italic'"/>
+            <editor-button :selected="buttons.superscript" :active="editorHasFocus" :callback="simpleFormat" :format="'superscript'"/>
+            <editor-button :selected="buttons.smallcaps" :active="editorHasFocus" :callback="simpleFormat" :format="'smallcaps'"/>
+            <editor-button :selected="buttons.underline" :active="editorHasFocus" :callback="simpleFormat" :format="'underline'"/>
+            <editor-button :selected="buttons.del" :active="editorHasFocus" :callback="simpleFormat" :format="'del'"/>
+            <editor-button :selected="buttons.expan" :active="editorHasFocus" :callback="simpleFormat" :format="'expan'"/>
+            <editor-button :selected="buttons.person" :active="editorHasFocus" :callback="displayPersonForm" :format="'person'"/>
+            <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="displayLocationForm" :format="'location'"/>
+            <editor-button :active="isNoteButtonActive" :callback="newNoteChoiceOpen" :format="'note'"/>
         </div>
         <div class="editor-container">
             <div class="quill-editor" ref="editor" spellcheck="false"></div>
@@ -71,15 +59,12 @@
 
         <save-bar :action="save"/>
 
-        <!--<small><pre>{{ delta }}</pre></small>-->
-
-        <div v-html="$store.getters.transcriptionHTML"></div>
-
     </div>
 </template>
 
 <script>
 
+  import Quill from '../../modules/quill/AdeleQuill';
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
   import EditorNotesMixins from '../../mixins/EditorNotesMixins'
@@ -93,7 +78,7 @@
   import TextfieldForm from "../forms/TextfieldForm";
 
   export default {
-    name: "transcription-editor",
+    name: "translation-editor",
     props: ['initialContent'],
     mixins: [EditorMixins, EditorNotesMixins],
     components: {
@@ -110,8 +95,8 @@
     data() {
       return {
         storeActions: {
-          save: 'saveTranscription',
-          changed: 'transcriptionChanged'
+          save: 'saveTranslation',
+          changed: 'translationChanged'
         },
         delta: null,
         buttons: {
@@ -125,8 +110,6 @@
           person: false,
           location: false,
           note: false,
-          segment: false,
-          paragraph: false,
         }
       }
     },
