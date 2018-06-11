@@ -50,7 +50,7 @@ def create_app(config_name="dev"):
 
     db.init_app(app)
     mail.init_app(app)
-    Scss(app)
+    app.scss = Scss(app)
     """
     ========================================================
         Import models

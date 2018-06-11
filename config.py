@@ -49,6 +49,8 @@ class DevelopmentConfig(Config):
                 shutil.copyfileobj(response, out_file)
                 print("** DB ready **")
 
+        app.debug = True
+
     # SQLALCHEMY_ECHO=True
 
 
