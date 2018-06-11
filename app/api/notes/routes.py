@@ -1,5 +1,5 @@
-from flask import request, redirect, url_for, current_app, render_template_string
-from flask_login import current_user
+import pprint
+from flask import request, url_for, current_app
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -9,7 +9,7 @@ from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
 from app.api.transcriptions.routes import get_reference_transcription
 from app.api.translations.routes import get_reference_translation
-from app.models import Transcription, Commentary, Translation, Note, NoteType, Document
+from app.models import Commentary, Note, NoteType, Document, User
 
 """
 ===========================
@@ -18,14 +18,95 @@ from app.models import Transcription, Commentary, Translation, Note, NoteType, D
 """
 
 
-@api_bp.route('/api/<api_version>/notes', methods=['GET', 'POST'])
+@api_bp.route('/api/<api_version>/notes', methods=['POST', 'PUT'])
 def api_add_note(api_version):
-    note_data = request.get_json()
-    # note = Note()
-    # dump(data)
-    return APIResponseFactory.jsonify({
-        'note_data': note_data
-    })
+    """
+    {
+        "data": [
+                {
+                    "username": "Eleve1",
+                    "content": "My first note",
+                    "type_id": 0
+                },
+                {
+                    "username": "Eleve2",
+                    "content": "My second note",
+                    "type_id": 0
+                }
+        ]
+    }
+    :param api_version:
+    :return:
+    """
+    user = current_app.get_current_user()
+
+    response = None
+    if user.is_anonymous:
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
+    data = request.get_json()
+    if "data" in data and response is None:
+        data = data["data"]
+        if not isinstance(data, list):
+            data = [data]
+        # find the correct user_id
+        for note_data in data:
+            note_data["user_id"] = user.id
+            if "username" in note_data:
+                if (not user.is_teacher and not user.is_admin) and note_data["username"] != user.username:
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403,
+                        "title": "Insert forbidden",
+                    })
+                    break
+                if note_data["username"] != user.username:
+                    u = User.query.filter(User.username == note_data["username"]).one()
+                    note_data["user_id"] = u.id
+            else:
+                note_data["username"] = user.username
+
+        # insert/update the notes
+        notes = []
+        if response is None:
+            try:
+                if request.method == 'POST':
+                    for note_data in data:
+                        new_note = Note(
+                            type_id=note_data["type_id"],
+                            user_id=note_data["user_id"],
+                            content=note_data["content"]
+                        )
+                        notes.append(new_note)
+                else:
+                    # method is PUT
+                    for note_data in data:
+                        note = Note.query.filter(Note.id == note_data["id"]).one()
+                        if note is None:
+                            raise NoResultFound("Note %s not found" % note_data["id"])
+                        note.type_id = note_data["type_id"]
+                        note.user_id = note_data["user_id"]
+                        note.content = note_data["content"]
+                        notes.append(note)
+
+            except (NoResultFound, KeyError) as e:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Cannot insert or update data", "details": "%s %s" % (type(e), str(e))
+                })
+
+        if response is None:
+            try:
+                db.session.add_all(notes)
+                db.session.commit()
+                response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
+            except Exception as e:
+                db.session.rollback()
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Cannot insert data", "details": str(e)
+                })
+
+    return APIResponseFactory.jsonify(response)
 
 
 @api_bp.route("/api/<api_version>/note-types")
@@ -181,12 +262,11 @@ def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes/<note_id>")
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>")
 def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
-
     user = current_app.get_current_user()
     args = {
         "api_version": api_version,
-        "doc_id" : doc_id,
-        "user_id" : user_id,
+        "doc_id": doc_id,
+        "user_id": user_id,
         "note_id": note_id
     }
 
@@ -198,7 +278,7 @@ def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
     """
     transcriptions_notes = query_json_endpoint(
         request,
-        url_for( "api_bp.api_documents_transcriptions_notes", **args), user=user
+        url_for("api_bp.api_documents_transcriptions_notes", **args), user=user
     )
 
     if "data" in transcriptions_notes:
@@ -213,7 +293,7 @@ def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
     """
     translations_notes = query_json_endpoint(
         request,
-        url_for( "api_bp.api_documents_translations_notes", **args), user=user
+        url_for("api_bp.api_documents_translations_notes", **args), user=user
     )
     if "data" in translations_notes:
         if not isinstance(translations_notes["data"], list):
@@ -227,7 +307,7 @@ def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
     """
     commentaries_notes = query_json_endpoint(
         request,
-        url_for( "api_bp.api_documents_commentaries_notes", **args), user=user
+        url_for("api_bp.api_documents_commentaries_notes", **args), user=user
     )
     if "data" in commentaries_notes:
         if not isinstance(commentaries_notes["data"], list):
@@ -576,25 +656,29 @@ def api_put_documents_commentaries_notes(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>", methods=["DELETE"])
-@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>",
+              methods=["DELETE"])
 @auth.login_required
 def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id, note_id=None):
     user = current_app.get_current_user()
-    return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, TranscriptionNoteBinder)
+    return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id,
+                                             TranscriptionNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>", methods=["DELETE"])
-@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>",
+              methods=["DELETE"])
 @auth.login_required
 def api_delete_documents_translations_notes(api_version, doc_id, user_id, note_id=None):
     user = current_app.get_current_user()
-    return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, TranslationNoteBinder)
+    return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id,
+                                             TranslationNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>", methods=["DELETE"])
-@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>", methods=["DELETE"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>",
+              methods=["DELETE"])
 @auth.login_required
 def api_delete_documents_commentaries_notes(api_version, doc_id, user_id, note_id=None):
     user = current_app.get_current_user()
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, CommentaryNoteBinder)
-
