@@ -19,6 +19,7 @@ from app.models import Commentary, Note, NoteType, Document, User
 
 
 @api_bp.route('/api/<api_version>/notes', methods=['POST', 'PUT'])
+@auth.login_required
 def api_add_note(api_version):
     """
     {
@@ -39,14 +40,9 @@ def api_add_note(api_version):
     :return:
     """
     user = current_app.get_current_user()
-
     response = None
-    if user.is_anonymous:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-
     data = request.get_json()
+    
     if "data" in data and response is None:
         data = data["data"]
         if not isinstance(data, list):
