@@ -91,8 +91,26 @@ const options = {
   }
 };
 
+
+function getNewQuill (elt, opt = null) {
+
+  let opts = opt || options;
+
+  let quill = new Quill(elt, options);
+  var length = quill.getLength()
+  var text = quill.getText(length - 2, 2)
+
+  // Remove extraneous new lines
+  if (text === '\n\n') {
+    quill.deleteText(quill.getLength() - 2, 2)
+  }
+  return quill;
+}
+
 export default Quill;
 export {
+
+  getNewQuill,
 
   options,
 

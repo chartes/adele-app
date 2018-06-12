@@ -1,6 +1,8 @@
 import axios from 'axios';
 import Quill from '../../../modules/quill/AdeleQuill';
-import TEItoQuill, {insertNotes, computeNotesPointers} from '../../../modules/quill/TEIConversion'
+import TEItoQuill, {
+  insertNotes, stripSegments, computeNotesPointers, computeAlignmentPointers, stripNotes
+} from '../../../modules/quill/MarkupUtils'
 import {removeNotesFromDelta} from '../../../modules/quill/DeltaUtils'
 
 const state = {
@@ -39,7 +41,7 @@ const mutations = {
     const filteredDelta = removeNotesFromDelta(payload)
     state.shadowQuill.updateContents(payload);
     state.transcriptionHtml = state.shadowQuillElement.children[0].innerHTML;
-    console.log("TRANSCRIPTION_ADD_OPERATION", filteredDelta, state.shadowQuillElement.innerHTML, state.transcriptionHtml)
+    console.log("TRANSCRIPTION_ADD_OPERATION")
   },
   TRANSCRIPTION_SAVED (state) {
     // transcription changed and needs to be saved
@@ -110,19 +112,24 @@ const actions = {
   },
   saveTranscription ({ commit, getters, state, rootState }, transcriptionWithNotes) {
 
-    console.log('STORE ACTION saveTranscription', state.transcriptionWithNotes, state.transcriptionHtml);
+    console.log('STORE ACTION saveTranscription');
 
-
-
-    // count notes pointers
-    const notes = computeNotesPointers(transcriptionWithNotes);
-    notes.forEach((note) => {
+    // compute notes pointers
+    const sanitizedTranscriptionWithNotes = stripSegments(transcriptionWithNotes);
+    console.log('sanitizedTranscriptionWithNotes', sanitizedTranscriptionWithNotes, '\n')
+    const notes = computeNotesPointers(sanitizedTranscriptionWithNotes);
+    notes.forEach(note => {
       let found = rootState.notes.notes.find((element) => {
         return element.id === note.note_id;
       });
       note.content = found.content;
     });
     console.log(notes);
+
+    // Compute alignment pointers
+    const sanitizedTranscriptionWithSegments = stripNotes(transcriptionWithNotes);
+    const alignPointers = computeAlignmentPointers(sanitizedTranscriptionWithSegments);
+    console.log('alignPointers', alignPointers);
 
     // Save transcription content without notes
     const data = { data: [

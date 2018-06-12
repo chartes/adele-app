@@ -18,15 +18,3 @@ LineBreak.blotName = 'break';
 LineBreak.tagName = 'BR';
 
 export default LineBreak;
-
-/*
-var quill = new Quill('.editor', options);
-
-var length = quill.getLength()
-var text = quill.getText(length - 2, 2)
-
-// Remove extraneous new lines
-if (text === '\n\n') {
-  quill.deleteText(quill.getLength() - 2, 2)
-}
-*/

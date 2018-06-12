@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Quill from '../../../modules/quill/AdeleQuill';
-import TEItoQuill, {insertNotes, computeNotesPointers} from '../../../modules/quill/TEIConversion'
+import TEItoQuill, {insertNotes, computeNotesPointers} from '../../../modules/quill/MarkupUtils'
 
 const state = {
 

@@ -1,4 +1,4 @@
-import Quill, {options} from '../modules/quill/AdeleQuill';
+import Quill, {getNewQuill, options} from '../modules/quill/AdeleQuill';
 import { getNewDelta } from '../modules/quill/DeltaUtils';
 
 var EditorMixin = {
@@ -23,7 +23,7 @@ var EditorMixin = {
     initEditor(editorElement, initialContent) {
 
       editorElement.innerHTML = initialContent;
-      this.editor = new Quill(editorElement, options);
+      this.editor = getNewQuill(editorElement);
       this.editor.on('selection-change', this.onSelection);
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);

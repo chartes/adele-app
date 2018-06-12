@@ -2,15 +2,27 @@ import axios from "axios/index";
 
 const state = {
 
-  notes: undefined,
+  notes: [],
+  newNote: false,
 
 };
 
 const mutations = {
 
-  UPDATE_NOTES (state, payload) {
-    console.log("UPDATE_NOTES")
-    state.notes = payload;
+  UPDATE_NOTES (state, notes) {
+    console.log("UPDATE_NOTES");
+    state.notes = notes;
+  },
+  NEW_NOTE (state, note) {
+    state.newNote = note;
+    state.notes.push(note);
+    console.log("ADD_NEW_NOTE", state.newNote);
+  },
+  UPDATE_NOTE (state, note) {
+    state.notes.push(note);
+    console.log("UPDATE_NOTE", note);
+    let foundNote = state.notes.find(n => n.id === note.id);
+    console.log('foundNote', foundNote)
   }
 
 };
@@ -28,37 +40,55 @@ const actions = {
       });
   },
   addNote ({ commit, getters, rootState }, newNote) {
-    console.log("addNote", newNote, rootState);
-
-    /**
-     { "data": [
-          {
-            "username": "Eleve1",
-            "transcription_username" : "AdminJulien",
-            "note_type": 0,
-            "content": "My first transcription note",
-            "ptr_start": 20,
-            "ptr_end": 80
-          }
-        ] }
-     */
-
+    console.log("STORE ACTION addNote", newNote);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
-    console.log("auth", config.auth)
     const newNotes = {
-      data: [{ "username": rootState.user.currentUser.username,
-        "transcription_username" : rootState.user.currentUser.username,
-        "note_type": newNote.type_id,
-        "content": newNote.content,
-        "ptr_start": -1,
-        "ptr_end": -1 }]
-    }
-    console.log("new nore", newNotes)
-
-    return axios.post(`/api/1.0/documents/20/transcriptions/notes`, newNotes, config)
-      .then( (response) => {
-        console.log('new note added', response.data)
-        //commit('UPDATE_NOTES', response.data.data.notes)
+      data: [{
+        "username": rootState.user.currentUser.username,
+        "type_id": newNote.type_id,
+        "content": newNote.content
+      }]
+    };
+    return axios.post(`/api/1.0/notes`, newNotes, config)
+      .then( response => {
+        const note = response.data.data;
+        commit('NEW_NOTE', note);
+      })
+  },
+  updateNote ({ commit, getters, rootState }, note) {
+    console.log("STORE ACTION updateNote", note);
+    const config = { auth: { username: rootState.user.authToken, password: undefined }};
+    const theNote = {
+      data: [{
+        "username": rootState.user.currentUser.username,
+        "id": note.id,
+        "type_id": note.type_id,
+        "content": note.content
+      }]
+    };
+    return axios.put(`/api/1.0/notes`, theNote, config)
+      .then( response => {
+        console.log(response.data)
+        const note = response.data.data;
+        commit('UPDATE_NOTE', note);
+      })
+  },
+  deleteNote ({ commit, getters, rootState }, note) {
+    console.log("STORE ACTION updateNote", note);
+    const config = { auth: { username: rootState.user.authToken, password: undefined }};
+    const theNote = {
+      data: [{
+        "username": rootState.user.currentUser.username,
+        "id": note.id,
+        "type_id": note.type_id,
+        "content": note.content
+      }]
+    };
+    return axios.delete(`/api/1.0/notes`, theNote, config)
+      .then( response => {
+        console.log(response.data)
+        const note = response.data.data;
+        commit('UPDATE_NOTE', note);
       })
   }
 
@@ -67,6 +97,7 @@ const actions = {
 const getters = {
 
   notes: state => state.notes,
+  newNote: state => state.newNote,
   getNoteById: (state) => (id) => {
     id = parseInt(id);
     return state.notes.find(note => {

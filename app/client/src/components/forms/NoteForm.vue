@@ -34,7 +34,7 @@
 
 <script>
 
-  import Quill from '../../modules/quill/AdeleQuill';
+  import {getNewQuill} from '../../modules/quill/AdeleQuill';
   import EditorMixins from '../../mixins/EditorMixins'
   import { mapGetters } from 'vuex';
   import ModalForm from './ModalForm';
@@ -67,7 +67,7 @@
     },
     mounted () {
       this.$refs.editor.innerHTML = !!this.$props.note ? this.$props.note.content : '';
-      this.editor = new Quill(this.$refs.editor);
+      this.editor = getNewQuill(this.$refs.editor);
       this.editor.on('selection-change', this.onSelection);
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);

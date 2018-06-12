@@ -1,13 +1,18 @@
 <template>
     <div class="columns">
-        <div class="column is-half">
+        <div class="column is-one-third">
 
             <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
 
         </div>
-        <div class="column is-half">
+        <div class="column is-one-third">
 
             <transcription-editor v-if="!!transcriptionWithNotes" :initialContent="transcriptionWithNotes"/>
+
+        </div>
+        <div class="column is-one-third">
+
+            <translation-editor v-if="!!translationWithNotes" :initialContent="translationWithNotes"/>
 
         </div>
     </div>
@@ -18,12 +23,21 @@
   import { mapGetters } from 'vuex'
   import IIIFMap from '../IIIFMap';
   import TranscriptionEditor from '../editors/TranscriptionEditor'
+  import TranslationEditor from "../editors/TranslationEditor";
 
   export default {
     name: "transcription-edition",
-    components: { IIIFMap,TranscriptionEditor },
+    components: {
+      IIIFMap,
+      TranslationEditor,
+      TranscriptionEditor
+    },
     computed: {
-      ...mapGetters(['manifestURL', 'transcription', 'transcriptionWithNotes'])
+      ...mapGetters(['manifestURL',
+        'transcription',
+        'transcriptionWithNotes',
+        'translationWithNotes'
+      ])
     }
   }
 </script>

@@ -23,17 +23,18 @@ var EditorNotesMixin = {
     },
 
     updateNoteId(newId) {
-      console.log('TranslationEditor.updateNote', newId)
       this.editor.format('note', newId);
       this.selectedNoteId = newId;
       this.closeNoteEdit();
     },
     updateNote(note) {
-      console.log('TranslationEditor.updateNote', note);
-      this.$store.dispatch('addNote', note).then(()=>{
-        console.log('TranslationEditor.updateNote DONE')
-        this.editor.format('note', note.id);
-        this.selectedNoteId = note.id;
+      const isNewNote = this.noteEditMode === 'new';
+      const action = isNewNote ? 'addNote' : 'updateNote';
+      this.$store.dispatch(action, note).then(()=>{
+        if (isNewNote) {
+          this.editor.format('note', this.$store.getters.newNote.id);
+          this.selectedNoteId = this.$store.getters.newNote.id;
+        }
         this.closeNoteEdit();
       })
     },
@@ -69,6 +70,7 @@ var EditorNotesMixin = {
       console.log("closeNoteEdit")
       this.noteEditMode = null;
       this.currentNote = null;
+      this.editor.focus();
     },
     newNoteChoiceOpen() {
       this.defineNewNote = true;

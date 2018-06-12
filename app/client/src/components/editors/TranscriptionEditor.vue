@@ -27,7 +27,7 @@
         <div class="editor-container">
             <div class="quill-editor" ref="editor" spellcheck="false"></div>
             <note-actions
-                v-show="selectedNoteId"
+                v-show="selectedNoteId && this.editor.hasFocus()"
                 refs="noteActions"
                 :style="actionsPosition"
                 :newNote="setNoteEditModeNew"
@@ -73,7 +73,7 @@
 
         <!--<small><pre>{{ delta }}</pre></small>-->
 
-        <div v-html="$store.getters.transcriptionHTML"></div>
+        <!--<div v-html="$store.getters.transcriptionHTML"></div>-->
 
     </div>
 </template>

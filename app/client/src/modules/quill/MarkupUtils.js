@@ -66,6 +66,8 @@ const insertNotes = (text, notes) => {
   })
   return result;
 };
+const stripNotes  = text => text.replace(/<\/?note( id="\d+")?>/gmi, '');
+const stripSegments  = text => text.replace(/<\/?segment>/gmi, '');
 
 const computeNotesPointers  = (htmlWithNotes) => {
 
@@ -85,9 +87,19 @@ const computeNotesPointers  = (htmlWithNotes) => {
   }
   return notes;
 }
+const computeAlignmentPointers  = (htmlWithSegments) => {
+
+  const reg = /<segment><\/segment>/gmi;
+  const splitted  = htmlWithSegments.split(reg);
+  console.log("computeAlignmentPointers", splitted);
+  return splitted.map(seg => seg.length);
+}
 
 export default teiToQuill;
 export {
   insertNotes,
+  stripNotes,
+  stripSegments,
+  computeAlignmentPointers,
   computeNotesPointers,
 };
