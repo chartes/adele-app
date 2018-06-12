@@ -1,49 +1,81 @@
 {% extends 'admin/base.html' %}
 
-{% block content %}
-    <div class="columns">
-        <div class="column is-one-quarter">
-            <section class="section">
-                <div class="container">
-                    <form method="POST" action="{{ url_for('app_bp.documents') }}">
+{% macro nav_pages(nav_urls, current_page) %}
+    {% if nav_urls | length > 1 %}
+        <div class="level nav-pages">
+            <div class="level-left">
+                <p>Pages :</p>
+                <ul class="level">
+                    {% for url in nav_urls %}
+                        <li class="level-item">
+                            <a class="button {% if loop.index != current_page %} is-white {% else %} is-light {% endif %}"
+                               href="{{ url }}">
+                                {{ loop.index }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+{% endmacro %}
 
-                        {% for field in fields %}
-                            <div class="field">
-                                <label class="label" for="{{ field['label'] }}">{{ field['label'] }} : </label>
-                                <div class="control">
-                                    {% if field['type'] == 'select' %}
-                                        <div class="select {% if field['options']['multiple'] %} is-multiple {% endif %}">
-                                            <select name="{{ field['name'] }}"
-                                                    {% if field['options']['multiple'] %}
-                                                        multiple
-                                                        size="{{ field['options']['size'] }}"
-                                                    {% endif %}
-                                            >
-                                                <option value="-1" selected=selected">Tous</option>
-                                                {% for value,label in field['value'] %}
-                                                    <option value="{{ value }}">{{ label }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                        <div class="field ">
+{% block content %}
+    <div class="columns ">
+        <div class="column is-one-quarter" id="find-col">
+            <section class="section has-background-grey-light">
+                <form method="POST" action="{{ url_for('app_bp.documents') }}">
+                    {% for field in fields %}
+                        <div class="field">
+                            <label class="label" for="{{ field['label'] }}">{{ field['label'] }} : </label>
                             <div class="control">
-                                <input type="submit" class="button is-light" value="Chercher"/>
+                                {% if field['type'] == 'select' %}
+                                    <div class="select {% if field['options']['multiple'] %} is-multiple {% endif %}">
+                                        <select name="{{ field['name'] }}"
+                                                {% if field['options']['multiple'] %}
+                                                multiple
+                                                size="{{ field['options']['size'] }}"
+                                                {% endif %} >
+                                            <option value="-1"
+                                                    {% if selected_values[field['name']]|length == 0 or '-1' in selected_values[field['name']] %}selected="selected"{% endif %}>
+                                                Tous
+                                            </option>
+                                            {% for value,label in field['value'] %}
+                                                <option value="{{ value }}"
+                                                        {% if value|string in selected_values[field['name']] %}selected="selected"{% endif %}>
+                                                    {{ label }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
-                    </form>
-                </div>
+                    {% endfor %}
+                    <div class="field is-grouped find-btn-group">
+                        <div class="control">
+                            <input type="submit" class="button is-light" value="Chercher"/>
+                        </div>
+                        <div class="control">
+                            <input type="button" class="button is-text" value="Effacer"/>
+                        </div>
+                    </div>
+
+                </form>
             </section>
         </div>
+
         <div class="column">
             <section class="section">
-                <div class="container">
+                {% if docs | length  == 0 %}
+                    <div class="">
+                        <div class="notification">Aucun résultat.</div>
+                    </div>
+                {% else %}
+                    {{ nav_pages(nav_urls, current_page) }}
                     <div class="columns is-multiline">
                         {% for d in docs %}
-                            <div class="column is-half">
+                            <div class="column is-one-third">
                                 <div class="card">
                                     {% for img in d.images %}
                                         <div class="thumbnail-container has-background-grey-lighter">
@@ -69,7 +101,8 @@
                             </div>
                         {% endfor %}
                     </div>
-                </div>
+                    {{ nav_pages(nav_urls, current_page) }}
+                {% endif %}
             </section>
         </div>
     </div>

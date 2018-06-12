@@ -1,3 +1,5 @@
+import math
+
 import pprint
 from flask import render_template, flash, redirect, url_for, render_template_string, Blueprint, session, current_app, \
     jsonify
@@ -77,8 +79,11 @@ def filter_documents(docs, form_values, field_name, get_doc_values, value_type=s
 
 @app_bp.route('/documents', methods=['GET', 'POST'])
 def documents():
-    docs = Document.query.all()
+    page = request.args.get('page', 1, type=int)
+    if page < 0:
+        page = 1
 
+    docs = Document.query.all()
     fields = [
         {
             "label": "Mode de tradition",
@@ -146,9 +151,8 @@ def documents():
     ]
 
     filtered_docs = docs[::]
-
+    form_values = {}
     if request.method == "POST":
-        form_values = {}
         for field in fields:
             if field['type'] == "select" and field["options"]["multiple"]:
                 form_values[field['name']] = request.form.getlist(field['name'])
@@ -170,7 +174,22 @@ def documents():
         filtered_docs = filter_documents(filtered_docs, form_values, 'district', lambda doc: [i.id for i in doc.districts], value_type=int)
         filtered_docs = filter_documents(filtered_docs, form_values, 'institution', lambda doc: [doc.institution_id], value_type=int)
 
-    return render_template('admin/documents.html', title='Documents - Adele', docs=filtered_docs, fields=fields)
+    nav_urls = []
+    for p in range(0, int(math.floor(len(filtered_docs) / current_app.config['DOC_PER_PAGE'])) + 1):
+        nav_urls.append("%s?page=%s" % (url_for('app_bp.documents'), p+1))
+
+    try:
+        filtered_docs = filtered_docs[0 + (page-1) * current_app.config['DOC_PER_PAGE']: 0 + page * current_app.config['DOC_PER_PAGE']]
+    except IndexError:
+        pass
+
+    return render_template('admin/documents.html',
+                           title='Documents - Adele',
+                           docs=filtered_docs,
+                           fields=fields,
+                           selected_values=form_values,
+                           nav_urls=nav_urls,
+                           current_page=page)
 
 
 @app_bp.route('/admin/documents/<doc_id>')
