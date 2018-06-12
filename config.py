@@ -16,6 +16,8 @@ class Config(object):
     SCSS_STATIC_DIR = os.path.join(basedir, "app/static/css")
     SCSS_ASSET_DIR = os.path.join(basedir, "app/assets/scss")
 
+    DOC_PER_PAGE = 30
+
     CSRF_ENABLED = True
 
     # Flask-User settings
