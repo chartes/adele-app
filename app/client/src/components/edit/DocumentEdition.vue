@@ -58,8 +58,11 @@
     },
     created() {
       console.log('DocumentEdition.mounted')
-      this.$store.dispatch('fetchTranscription');
-      this.$store.dispatch('fetchTranslation');
+      console.log(' $store', this.$store)
+      console.log(' actions', this.$store._actions)
+      console.log(' getters', this.$store.getters)
+      this.$store.dispatch('transcription/fetchTranscription');
+      this.$store.dispatch('translation/fetchTranslation');
     }
   }
 </script>

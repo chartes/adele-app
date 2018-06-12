@@ -34,6 +34,7 @@ const getters = {
 };
 
 const noteTypesModule = {
+  namespaced: true,
   state,
   mutations,
   actions,

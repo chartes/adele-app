@@ -29,8 +29,8 @@ const mutations = {
 
 const actions = {
 
-  fetchNotes ({ commit, getters }, docId) {
-    console.log('fetchNotes', docId, getters.currentUser.id)
+  fetchNotes ({ commit, getters, rootGetters }, docId) {
+    console.log('fetchNotes', docId)
     return axios.get(`/api/1.0/documents/${docId}/notes`)
       .then( (response) => {
         console.log(response)
@@ -108,6 +108,7 @@ const getters = {
 };
 
 const notesModule = {
+  namespaced: true,
   state,
   mutations,
   actions,

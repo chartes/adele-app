@@ -11,8 +11,9 @@ const state = {
   transcriptionWithNotes: undefined,
   transcriptionSaved: false,
   transcriptionHtml: null,
-  shadowQuillElement: document.createElement('div',{ class: 'phantom-quill-transcription'}),
-  shadowQuill: null
+  shadowQuillElement: document.createElement('div',{ class: 'shadow-quill-transcription'}),
+  shadowQuill: null,
+  transcriptionError: false,
 
 };
 
@@ -53,42 +54,19 @@ const mutations = {
 
 const actions = {
 
-  fetchTranscription ({ commit, getters, rootState }) {
-    const doc_id = getters.document.id;
-    const user_id = getters.currentUser.id;
+  fetchTranscription ({ commit, rootGetters }) {
 
     console.log('STORE ACTION fetchTranscription')
 
-    this.dispatch('fetchNoteTypes').then(() => {
-      console.log('   dispatch fetchNoteTypes')
-      return this.dispatch('fetchNotes', getters.document.id);
+    const doc_id = rootGetters['document/document'].id;
+    const user_id = rootGetters['user/currentUser'].id;
+
+
+    this.dispatch('noteTypes/fetchNoteTypes').then(() => {
+      return this.dispatch('notes/fetchNotes', doc_id);
     }).then(() => {
 
-      axios.get(`/api/1.0/documents/${doc_id}/transcriptions/from-user/${rootState.user.currentUser.id}`).then( response => {
-
-        /*const data = {
-          "data": {
-            "content": "Om<ex>n</ex>ib<ex>us</ex> p<ex>re</ex>sentes litt<ex>er</ex>as insp<ex>e</ex>cturis,. . offic<ex>ialis</ex> Belvacen<ex>sis</ex>, sal<ex>u</ex>t<ex>em</ex> in D<ex>om</ex>in<ex>o</ex>.Nov<ex>er</ex>int univ<ex>er</ex>si q<ex>uo</ex>d i<ex>n</ex> n<ex>ost</ex>ra constituti p<ex>re</ex>sentia.",
-            "doc_id": 20,
-            "id": 20,
-            "notes": [
-              {
-                "content": "Juge en mati\u00e8re contentieuse et gracieuse, d\u00e9l\u00e9gu\u00e9 de l\u2019\u00e9v\u00eaque.",
-                "id": 33,
-                "note_type": {
-                  "id": 0,
-                  "label": "TERM"
-                },
-                "ptr_end": 107,
-                "ptr_start": 88,
-                "user_id": "jpilla"
-              }
-            ]
-          }
-        }
-        const transcription = data.data;
-        */
-
+      axios.get(`/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
 
         let transcription = {content : " ", notes: []};
 
@@ -102,15 +80,13 @@ const actions = {
         const notes = transcription.notes;
         const formatted = insertNotes(content, notes);
 
-        //console.log('formatted', formatted)
-
         commit('TRANSCRIPTION_INIT', content)
         commit('UPDATE_TRANSCRIPTION', { raw: transcription, formatted: formatted });
       })
 
     });
   },
-  saveTranscription ({ commit, getters, state, rootState }, transcriptionWithNotes) {
+  /*saveTranscription ({ commit, getters, state, rootState }, transcriptionWithNotes) {
 
     console.log('STORE ACTION saveTranscription');
 
@@ -159,6 +135,23 @@ const actions = {
 
 
   },
+  */
+  saveTranscription ({ commit, rootGetters, state, rootState }) {
+    console.log('saveTranscription');
+    const headerConfig = rootGetters['user/authHeader'];
+    const data = { data: [{
+          "content" :  state.transcriptionHtml,
+          "username": rootState.user.currentUser.username
+        }]};
+    return axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions`, data, headerConfig)
+      .then( response => {
+        console.log('   transcription saved', response);
+
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  },
   transcriptionChanged ({ commit }, deltas) {
     commit('TRANSCRIPTION_ADD_OPERATION', deltas)
     commit('TRANSCRIPTION_SAVED', false)
@@ -176,6 +169,7 @@ const getters = {
 };
 
 const transcriptionModule = {
+  namespaced: true,
   state,
   mutations,
   actions,

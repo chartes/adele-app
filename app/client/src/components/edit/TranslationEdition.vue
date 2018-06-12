@@ -22,7 +22,8 @@
     name: "translation-edition",
     components: { TranslationEditor },
     computed: {
-      ...mapGetters(['transcriptionWithNotes','translationWithNotes'])
+      ...mapGetters('transcription', ['transcriptionWithNotes']),
+      ...mapGetters('translation', ['translationWithNotes'])
     }
   }
 </script>

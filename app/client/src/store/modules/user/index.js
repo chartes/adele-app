@@ -52,6 +52,7 @@ const getters = {
 };
 
 const userModule = {
+  namespaced: true,
   state,
   mutations,
   actions,

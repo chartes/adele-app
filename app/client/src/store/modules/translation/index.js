@@ -49,9 +49,10 @@ const mutations = {
 
 const actions = {
 
-  fetchTranslation ({ commit, getters, rootState }) {
-    const doc_id = getters.document.id;
-    const user_id = getters.currentUser.id;
+  fetchTranslation ({ commit, rootGetters, rootState }) {
+
+    const doc_id = rootGetters['document/document'].id;
+    const user_id = rootGetters['user/currentUser'].id;
 
     console.log('STORE ACTION fetchTranslation')
 
@@ -80,7 +81,6 @@ const actions = {
   saveTranslation ({ commit, getters, rootState }, translationWithNotes) {
 
     console.log('STORE ACTION saveTranslation', translationWithNotes);
-
 
     // Save translation content without notes
 
@@ -115,6 +115,7 @@ const getters = {
 };
 
 const translationModule = {
+  namespaced: true,
   state,
   mutations,
   actions,

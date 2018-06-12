@@ -20,13 +20,12 @@
     components: { DocumentEdition },
     props: ['doc_id', 'auth_token'],
     created () {
-      this.$store.dispatch('getCurrentUser').then(() => {
-        return this.$store.dispatch('getDocument', this.doc_id)
-      });
-      this.$store.dispatch('setAuthToken', this.auth_token)
+      this.$store.dispatch('document/fetchDocument', this.doc_id);
+      this.$store.dispatch('user/setAuthToken', this.auth_token)
+      this.$store.dispatch('user/getCurrentUser');
     },
     computed: {
-      ...mapGetters(['document'])
+      ...mapGetters('document', ['document'])
     }
   }
 </script>

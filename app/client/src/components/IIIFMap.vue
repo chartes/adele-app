@@ -163,7 +163,7 @@
                 const annotations = [];
                 for (let anno of LeafletIIIFAnnotation.getAnnotations()) {
                     const newAnnotation = {
-                        manifest_url: this.$store.getters.manifestURL,
+                        manifest_url: this.$store.getters['document/manifestURL'],
                         img_id: this.page.images[0].resource["@id"],
                         coords: anno.region.coords,
                         content: anno.content

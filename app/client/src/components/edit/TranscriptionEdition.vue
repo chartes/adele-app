@@ -33,11 +33,9 @@
       TranscriptionEditor
     },
     computed: {
-      ...mapGetters(['manifestURL',
-        'transcription',
-        'transcriptionWithNotes',
-        'translationWithNotes'
-      ])
+      ...mapGetters('document', ['manifestURL']),
+      ...mapGetters('transcription', ['transcription', 'transcriptionWithNotes']),
+      ...mapGetters('translation', ['translationWithNotes'])
     }
   }
 </script>
