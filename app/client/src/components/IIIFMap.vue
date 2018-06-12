@@ -172,7 +172,7 @@
                     annotations.push(newAnnotation);
                 }
 
-                const APP_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImlhdCI6MTUyODI4OTgxNiwiZXhwIjoxNTI4Mzc2MjE2fQ.eyJpZCI6MX0.57PrymcHExayizPaq7hSey6jqVTw99z1h15YIKaymtk';
+                const APP_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImlhdCI6MTUyODcwODQyOCwiZXhwIjoxNTI4Nzk0ODI4fQ.eyJpZCI6MX0.oatBMe6Z-7SK8T0QyMBmxeOUnRSCrNrIVrOr9-L-rog';
                 console.log('saveAnnotations');
 
                 const docId = this.$store.getters.document.id;

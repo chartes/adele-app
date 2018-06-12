@@ -39,15 +39,18 @@ class Config(object):
 
 class DevelopmentConfig(Config):
 
+    COPY = False
+
     @staticmethod
     def init_app(app):
-        path = os.path.join('db', 'adele.sqlite')
-        if time() - os.path.getmtime(path) > 3:
-            # get fresh new db
-            with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response, \
-                    open(path, 'wb') as out_file:
-                shutil.copyfileobj(response, out_file)
-                print("** DB ready **")
+        if DevelopmentConfig.COPY:
+            path = os.path.join('db', 'adele.sqlite')
+            if time() - os.path.getmtime(path) > 3:
+                # get fresh new db
+                with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response, \
+                        open(path, 'wb') as out_file:
+                    shutil.copyfileobj(response, out_file)
+                    print("** DB ready **")
 
         app.debug = True
 

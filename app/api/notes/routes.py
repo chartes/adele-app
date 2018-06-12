@@ -42,7 +42,7 @@ def api_add_note(api_version):
     user = current_app.get_current_user()
     response = None
     data = request.get_json()
-    
+
     if "data" in data and response is None:
         data = data["data"]
         if not isinstance(data, list):

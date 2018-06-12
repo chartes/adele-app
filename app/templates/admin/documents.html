@@ -1,34 +1,77 @@
 {% extends 'admin/base.html' %}
 
 {% block content %}
+    <div class="columns">
+        <div class="column is-one-quarter">
+            <section class="section">
+                <div class="container">
+                    <form method="POST" action="{{ url_for('app_bp.documents') }}">
 
-    <section class="section">
-        <div class="container is-fullhd">
-            <div class="columns is-multiline">
-                {% for d in docs %}
-                <div class="column is-one-third">
-                    <div class="card">
-                        <div class="card-image">
-                            <figure class="image is-4by3">
-                                <img src="http://193.48.42.68/loris/adele/dossiers/{{ d.id }}.jpg/full/432,/0/default.jpg"
-                                     width="180px" height="180px"
-                                />
-                            </figure>
-                        </div>
-                        <div class="card-content">
-                            <div class="content">
-                                <p><span class="tag is-light">Dossier {{ d.id }}</span></p>
-                                <p class="title is-6">{{ d.title }}</p>
-                                <p><small>{{ d.subtitle }}</small></p>
+                        {% for field in fields %}
+                            <div class="field">
+                                <label class="label" for="{{ field['label'] }}">{{ field['label'] }} : </label>
+                                <div class="control">
+                                    {% if field['type'] == 'select' %}
+                                        <div class="select {% if field['options']['multiple'] %} is-multiple {% endif %}">
+                                            <select name="{{ field['name'] }}"
+                                                    {% if field['options']['multiple'] %}
+                                                        multiple
+                                                        size="{{ field['options']['size'] }}"
+                                                    {% endif %}
+                                            >
+                                                <option value="-1" selected=selected">Tous</option>
+                                                {% for value,label in field['value'] %}
+                                                    <option value="{{ value }}">{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="field ">
+                            <div class="control">
+                                <input type="submit" class="button is-light" value="Chercher"/>
                             </div>
                         </div>
-                        <footer class="card-footer">
-                            <a href="{{ url_for("app_bp.admin_document_edit", doc_id=d.id) }}" class="card-footer-item">Editer</a>
-                        </footer>
+                    </form>
+                </div>
+            </section>
+        </div>
+        <div class="column">
+            <section class="section">
+                <div class="container">
+                    <div class="columns is-multiline">
+                        {% for d in docs %}
+                            <div class="column is-half">
+                                <div class="card">
+                                    {% for img in d.images %}
+                                        <div class="thumbnail-container has-background-grey-lighter">
+                                            <figure class=" image thumbnail">
+                                                <img src="{{ img.id | replace("full/full", "full/,250") }}"/>
+                                            </figure>
+                                        </div>
+                                    {% endfor %}
+                                    <div class="card-content">
+                                        <div class="content">
+                                            <p><span class="tag is-light">Dossier {{ d.id }}</span></p>
+                                            <p class="title is-6">{{ d.title }}</p>
+                                            <p>
+                                                <small>{{ d.subtitle }}</small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <footer class="card-footer">
+                                        <a href="{{ url_for("app_bp.admin_document_edit", doc_id=d.id) }}"
+                                           class="card-footer-item">Editer</a>
+                                    </footer>
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
-                {% endfor %}
-            </div>
+            </section>
         </div>
-    </section>
+    </div>
+
 {% endblock content %}
