@@ -16,7 +16,7 @@ const mutations = {
 
 const actions = {
 
-  fetchDocument ({ commit }, id) {
+  fetch ({ commit }, id) {
     return axios.get(`/api/1.0/documents/${id}`).then( (response) => {
       commit('UPDATE_DOCUMENT', response.data.data)
     })

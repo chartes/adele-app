@@ -110,8 +110,8 @@
     data() {
       return {
         storeActions: {
-          save: 'saveTranscription',
-          changed: 'transcriptionChanged'
+          save: 'transcription/save',
+          changed: 'transcription/changed'
         },
         delta: null,
         buttons: {

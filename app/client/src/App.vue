@@ -20,9 +20,10 @@
     components: { DocumentEdition },
     props: ['doc_id', 'auth_token'],
     created () {
-      this.$store.dispatch('document/fetchDocument', this.doc_id);
+      this.$store.dispatch('user/getCurrentUser').then(() => {
+        return this.$store.dispatch('document/fetch', this.doc_id)
+      });
       this.$store.dispatch('user/setAuthToken', this.auth_token)
-      this.$store.dispatch('user/getCurrentUser');
     },
     computed: {
       ...mapGetters('document', ['document'])

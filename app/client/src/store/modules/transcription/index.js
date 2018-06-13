@@ -19,7 +19,7 @@ const state = {
 
 const mutations = {
 
-  TRANSCRIPTION_INIT(state, payload) {
+  INIT(state, payload) {
     if (!state.shadowQuill) {
       state.shadowQuillElement.innerHTML = payload;
       state.shadowQuill = new Quill(state.shadowQuillElement);
@@ -27,26 +27,26 @@ const mutations = {
     }
   },
 
-  UPDATE_TRANSCRIPTION (state, payload) {
-    console.log("UPDATE_TRANSCRIPTION")
+  UPDATE (state, payload) {
+    console.log("STORE MUTATION transcription/UPDATE")
     state.transcription = payload.raw;
     state.transcriptionWithNotes = payload.formatted;
     state.transcriptionSaved = true;
   },
-  TRANSCRIPTION_CHANGED (state) {
+  CHANGED (state) {
     // transcription changed and needs to be saved
-    console.log("TRANSCRIPTION_CHANGED")
+    console.log("STORE MUTATION transcription/CHANGED")
     state.transcriptionSaved = false;
   },
-  TRANSCRIPTION_ADD_OPERATION (state, payload) {
+  ADD_OPERATION (state, payload) {
     const filteredDelta = removeNotesFromDelta(payload)
     state.shadowQuill.updateContents(payload);
     state.transcriptionHtml = state.shadowQuillElement.children[0].innerHTML;
-    console.log("TRANSCRIPTION_ADD_OPERATION")
+    console.log("STORE MUTATION transcription/ADD_OPERATION")
   },
-  TRANSCRIPTION_SAVED (state) {
+  SAVED (state) {
     // transcription changed and needs to be saved
-    console.log("TRANSCRIPTION_CHANGED")
+    console.log("STORE MUTATION transcription/CHANGED")
     state.transcriptionSaved = false;
   }
 
@@ -54,16 +54,16 @@ const mutations = {
 
 const actions = {
 
-  fetchTranscription ({ commit, rootGetters }) {
+  fetch ({ commit, rootGetters }) {
 
-    console.log('STORE ACTION fetchTranscription')
+    console.log('STORE ACTION transcription/fetch')
 
     const doc_id = rootGetters['document/document'].id;
     const user_id = rootGetters['user/currentUser'].id;
 
 
-    this.dispatch('noteTypes/fetchNoteTypes').then(() => {
-      return this.dispatch('notes/fetchNotes', doc_id);
+    this.dispatch('noteTypes/fetch').then(() => {
+      return this.dispatch('notes/fetch', doc_id);
     }).then(() => {
 
       axios.get(`/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
@@ -80,8 +80,8 @@ const actions = {
         const notes = transcription.notes;
         const formatted = insertNotes(content, notes);
 
-        commit('TRANSCRIPTION_INIT', content)
-        commit('UPDATE_TRANSCRIPTION', { raw: transcription, formatted: formatted });
+        commit('INIT', content)
+        commit('UPDATE', { raw: transcription, formatted: formatted });
       })
 
     });
@@ -136,25 +136,70 @@ const actions = {
 
   },
   */
-  saveTranscription ({ commit, rootGetters, state, rootState }) {
-    console.log('saveTranscription');
-    const headerConfig = rootGetters['user/authHeader'];
-    const data = { data: [{
-          "content" :  state.transcriptionHtml,
-          "username": rootState.user.currentUser.username
-        }]};
-    return axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions`, data, headerConfig)
-      .then( response => {
-        console.log('   transcription saved', response);
+  save ({dispatch}, transcriptionWithNotes) {
+    console.log('STORE ACTION transcription/save');
 
+    return dispatch('saveContent')
+      .then(reponse => dispatch('saveNotes', transcriptionWithNotes))
+      .then(reponse => dispatch('translation/save', transcriptionWithNotes, {root:true}))
+      .then(function(values) {
+        console.log('all saved', values);
       })
-      .catch(error => {
-        console.log(error);
+      .catch( error => {
+        console.log('something bad happened', error);
+        //dispatch( 'error', { error } )
       });
+
   },
-  transcriptionChanged ({ commit }, deltas) {
-    commit('TRANSCRIPTION_ADD_OPERATION', deltas)
-    commit('TRANSCRIPTION_SAVED', false)
+  saveContent ({ state, rootGetters }) {
+    console.log('STORE ACTION transcription/saveContent');
+    const auth = rootGetters['user/authHeader'];
+    const data = { data: [{
+        "content" : state.transcriptionHtml,
+        "username": rootGetters['user/currentUser'].username
+      }]};
+
+
+    return new Promise( ( resolve, reject ) => {
+      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions`, data, auth)
+        .then( response => {
+          if (response.data.errors) reject(response.data.errors);
+          else resolve( response.data )
+        })
+        .catch( error => {
+          reject( error )
+        });
+    } );
+  },
+  saveNotes ({ commit, rootGetters, state, rootState }, transcriptionWithNotes) {
+
+    // compute notes pointers
+    const sanitizedTranscriptionWithNotes = stripSegments(transcriptionWithNotes);
+    const notes = computeNotesPointers(sanitizedTranscriptionWithNotes);
+    notes.forEach(note => {
+      let found = rootState.notes.notes.find((element) => {
+        return element.id === note.note_id;
+      });
+      note.content = found.content;
+    });
+    console.log('STORE ACTION transcription/saveNotes', notes);
+
+    const auth = rootGetters['user/authHeader'];
+
+    return new Promise( ( resolve, reject ) => {
+      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions/notes`, { data: notes }, auth)
+        .then( response => {
+          resolve( response.data )
+        } )
+        .catch( error => {
+          reject( error )
+          //dispatch( 'error', { error } )
+        } );
+    } );
+  },
+  changed ({ commit }, deltas) {
+    commit('ADD_OPERATION', deltas)
+    commit('SAVED', false)
   }
 
 };

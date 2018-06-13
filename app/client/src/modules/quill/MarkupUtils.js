@@ -71,39 +71,6 @@ const MAPPING_TEI_TO_QUILL = {
   'placeName': { tag: 'placename'},
 };
 
-const testQuillToTEI = `<h1>Titre niveau 1</h1>
-    <h2>Titre niveau 2</h2>
-    <h3>Titre niveau 3</h3>
-    <h4>Titre niveau 4</h4>
-    <h5>Titre niveau 5</h5>
-    <h6>Titre niveau 6</h6>
-    <section>Section</section>
-    <ul>
-      <li>item 1</li>
-      <li>item 2</li>
-      <li>item 3</li>
-    </ul>
-    <br/><br />
-    <p><i>texte en italique et <strong>gras</strong></i> mais aussi <u>souligné</u> 3<sup>e</sup> <smallcaps>smallcaps</smallcaps></p>
-    <blockquote>ceci est un blockquote</blockquote>
-    <p>Ce paragraphe comprend une <q>citation</q> une <persname ref="la personne">personne</persname> et un <placename ref="le lieu">lieu</placename></p>`;
-const testTEIToQuill = `<head type="h1">Titre niveau 1</head>
-    <head type="h2">Titre niveau 2</head>
-    <head type="h3">Titre niveau 3</head>
-    <head type="h4">Titre niveau 4</head>
-    <head type="h5">Titre niveau 5</head>
-    <head type="h6">Titre niveau 6</head>
-    <div>Section</div>
-    <list>
-      <item>item 1</item>
-      <item>item 2</item>
-      <item>item 3</item>
-    </list>
-    <lb></lb><lb></lb>
-    <p><span style="color:#f00">text en couleur</span></p>
-    <p><hi rend="i">texte en italique et <hi rend="b">gras</hi></hi> mais aussi <hi rend="u">souligné</hi> 3<hi rend="sup">e</hi> <hi rend="sc">smallcaps</hi></p>
-    <quote rend="block">ceci est un blockquote</quote>
-    <p>Ce paragraphe comprend une <quote rend="inline">citation</quote> une <persname ref="la personne">personne</persname> et un <placename ref="le lieu">lieu</placename></p>`;
 const teiToQuill = (teiString) => {
 
   const xmlDoc = parser.parseFromString('<doc>'+teiString+'</doc>',"text/xml");
@@ -128,9 +95,6 @@ const quillToTEI = quillString => {
   return str.replace(/<\/?doc([^>]*)>/gi, '');
 
 };
-
-console.log('quillToTEI', quillToTEI(testQuillToTEI));
-console.log('teiToQuill', teiToQuill(testTEIToQuill));
 
 function changeElementName (elt, name) {
   var newElt = document.createElement(name);

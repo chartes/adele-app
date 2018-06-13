@@ -9,16 +9,16 @@ const state = {
 
 const mutations = {
 
-  UPDATE_NOTES (state, notes) {
+  UPDATE_ALL (state, notes) {
     console.log("UPDATE_NOTES");
     state.notes = notes;
   },
-  NEW_NOTE (state, note) {
+  NEW (state, note) {
     state.newNote = note;
     state.notes.push(note);
     console.log("ADD_NEW_NOTE", state.newNote);
   },
-  UPDATE_NOTE (state, note) {
+  UPDATE_ONE (state, note) {
     state.notes.push(note);
     console.log("UPDATE_NOTE", note);
     let foundNote = state.notes.find(n => n.id === note.id);
@@ -29,17 +29,16 @@ const mutations = {
 
 const actions = {
 
-  fetchNotes ({ commit, getters, rootGetters }, docId) {
-    console.log('fetchNotes', docId)
+  fetch ({ commit, getters, rootGetters }, docId) {
+    console.log('STORE ACTION notes/fetch')
     return axios.get(`/api/1.0/documents/${docId}/notes`)
       .then( (response) => {
-        console.log(response)
-        commit('UPDATE_NOTES', response.data.data)
+        commit('UPDATE_ALL', response.data.data)
       }).catch(function(error) {
         console.log(error);
       });
   },
-  addNote ({ commit, getters, rootState }, newNote) {
+  add ({ commit, getters, rootState }, newNote) {
     console.log("STORE ACTION addNote", newNote);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const newNotes = {
@@ -52,10 +51,10 @@ const actions = {
     return axios.post(`/api/1.0/notes`, newNotes, config)
       .then( response => {
         const note = response.data.data;
-        commit('NEW_NOTE', note);
+        commit('NEW', note);
       })
   },
-  updateNote ({ commit, getters, rootState }, note) {
+  update ({ commit, getters, rootState }, note) {
     console.log("STORE ACTION updateNote", note);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theNote = {
@@ -70,10 +69,10 @@ const actions = {
       .then( response => {
         console.log(response.data)
         const note = response.data.data;
-        commit('UPDATE_NOTE', note);
+        commit('UPDATE_ONE', note);
       })
   },
-  deleteNote ({ commit, getters, rootState }, note) {
+  delete ({ commit, getters, rootState }, note) {
     console.log("STORE ACTION updateNote", note);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theNote = {
@@ -88,7 +87,7 @@ const actions = {
       .then( response => {
         console.log(response.data)
         const note = response.data.data;
-        commit('UPDATE_NOTE', note);
+        commit('UPDATE_ONE', note);
       })
   }
 
