@@ -4,7 +4,7 @@
     {% if nav_urls | length > 1 %}
         <div class="level nav-pages">
             <div class="level-left">
-                <p>Pages :</p>
+                <p>Page :</p>
                 <ul class="level">
                     {% for url in nav_urls %}
                         <li class="level-item">
@@ -24,7 +24,7 @@
     <div class="columns ">
         <div class="column is-one-quarter" id="find-col">
             <section class="section has-background-grey-light">
-                <form method="POST" action="{{ url_for('app_bp.documents') }}">
+                <form method="POST" action="{{ url_for('app_bp.documents') }}" id='search-form'>
                     {% for field in fields %}
                         <div class="field">
                             <label class="label" for="{{ field['label'] }}">{{ field['label'] }} : </label>
@@ -57,7 +57,7 @@
                             <input type="submit" class="button is-light" value="Chercher"/>
                         </div>
                         <div class="control">
-                            <input type="button" class="button is-text" value="Effacer"/>
+                            <input type="button" id="reset-search" class="button is-text" value="Effacer"/>
                         </div>
                     </div>
 
@@ -69,7 +69,11 @@
             <section class="section">
                 {% if docs | length  == 0 %}
                     <div class="">
-                        <div class="notification">Aucun résultat.</div>
+                        <article class="message is-info">
+                            <div class="message-body">
+                                <div class="alert alert-info" role="alert">Aucun résultat</div>
+                            </div>
+                        </article>
                     </div>
                 {% else %}
                     {{ nav_pages(nav_urls, current_page) }}
@@ -80,7 +84,7 @@
                                     {% for img in d.images %}
                                         <div class="thumbnail-container has-background-grey-lighter">
                                             <figure class=" image thumbnail">
-                                                <img src="{{ img.id | replace("full/full", "full/,250") }}"/>
+                                                <img src="{{ img.id | replace("full/full", "full/,200") }}"/>
                                             </figure>
                                         </div>
                                     {% endfor %}
@@ -108,3 +112,17 @@
     </div>
 
 {% endblock content %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(
+            <!-- reset the select boxes -->
+            $("#reset-search").click(function () {
+                $("#search-form").find("select").each(function () {
+                    $(this).prop("selectedIndex", 0);
+                });
+            })
+        );
+    </script>
+{% endblock %}
