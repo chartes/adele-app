@@ -27,7 +27,7 @@
                 <form method="POST" action="{{ url_for('app_bp.documents') }}" id='search-form'>
 
                     {% for field in fields %}
-                        <div class="filter">
+                        <div class="filter" id="{{ field['name'] }}">
                             <div class="accordion level">
                                 <label class="label level-left" for="{{ field['name'] }}">{{ field['label'] }}</label>
                                 <i class="fas fa-angle-right level-right"></i>
@@ -38,7 +38,8 @@
                                         <li>
                                             <div class="level entry">
                                                 <div class="level-left panel-item">{{ label }}</div>
-                                                <input type="hidden" value="{{ value }}"/>
+                                                <input name="value" type="hidden" value="{{ value }}"/>
+                                                <input name="label" type="hidden" value="{{ label }}"/>
                                                 <div class="level-right">
                                                     <div class="dot {% if value|string not in selected_values[field['name']] %}is-invisible{% endif %}"></div>
                                                 </div>
@@ -50,27 +51,15 @@
                             </div>
                         </div>
                     {% endfor %}
-
-
-                    <div class="field is-grouped find-btn-group">
-                        <div class="control">
-                            <input type="submit" class="button is-light" value="Chercher"/>
-                        </div>
-                        <div class="control">
-                            <input type="button" id="reset-search" class="button is-text" value="Effacer"/>
-                        </div>
-                    </div>
-
                 </form>
             </section>
-
-
         </div>
 
         <div class="column">
             <section class="section">
+                <div id="tag-cloud" class="field is-grouped is-grouped-multiline"></div>
                 {% if docs | length  == 0 %}
-                    <div class="">
+                    <div>
                         <article class="message is-info">
                             <div class="message-body">
                                 <div class="alert alert-info" role="alert">Aucun résultat</div>
@@ -78,16 +67,30 @@
                         </article>
                     </div>
                 {% else %}
-                    <div id="tag-cloud" class="field is-grouped is-grouped-multiline"></div>
                     {{ nav_pages(nav_urls, current_page) }}
                     <div class="columns is-multiline">
+
+                        {% if docs | length >= 10 %}
+                            {% set col_fmt = 3 %}
+                        {% elif docs | length > 1 %}
+                            {% set col_fmt = 2 %}
+                        {% else %}
+                            {% set col_fmt = 1 %}
+                        {% endif %}
+
                         {% for d in docs %}
-                            <div class="column is-one-third">
+                            <div class="column {% if col_fmt == 3 %}is-one-third{% elif col_fmt == 2 %}is-half{% endif %}">
                                 <div class="card">
                                     {% for img in d.images %}
                                         <div class="thumbnail-container has-background-grey-lighter">
                                             <figure class=" image thumbnail">
-                                                <img src="{{ img.id | replace("full/full", "full/,200") }}"/>
+                                                {% if col_fmt == 3 %}
+                                                    <img src="{{ img.id | replace("full/full", "full/,200") }}"/>
+                                                {% elif col_fmt == 2 %}
+                                                    <img src="{{ img.id | replace("full/full", "full/,300") }}"/>
+                                                {% else %}
+                                                    <img src="{{ img.id | replace("full/full", "full/,500") }}"/>
+                                                {% endif %}
                                             </figure>
                                         </div>
                                     {% endfor %}
@@ -122,42 +125,53 @@
     <script type="text/javascript">
         $(document).ready(function () {
 
-            <!-- reset the select boxes -->
-            $("#reset-search").click(function () {
-                $("#search-form").find("select").each(function () {
-                    $(this).prop("selectedIndex", 0);
-                });
-            });
+            <!-- restore the selected filters & create the tag cloud -->
+            function create_tag_cloud() {
+                $('#tag-cloud').empty();
 
-            <!-- create the tag cloud -->
-            $("#search-form").find(".filter").each(function (i, e) {
+                $("#search-form").find(".filter").each(function (i, e) {
 
-                let selected_values = [];
-                $(this).find('.entry').each(function () {
-                    // an entry is selected if the dot if visible
-                    if (!$(this).find('.dot').hasClass('is-invisible')) {
-                        selected_values.push($(this).find('input[type="hidden"]').val());
-                    }
-                });
+                    let selected_labels = [];
+                    $(this).find('.entry').each(function () {
+                        // an entry is selected if the dot if visible
+                        if (!$(this).find('.dot').hasClass('is-invisible')) {
+                            selected_labels.push($(this).find('input[name="label"]').val());
+                        }
+                    });
 
-                if (selected_values.length > 0) {
-                    let label = $(this).find('label').text();
-                    let tags = "";
-                    for (const value of selected_values) {
-                        tags += ('<span class="tag is-light">' + value + '</span><a class="tag is-delete"></a>');
-                    }
-                    const tag_control = '\
+                    if (selected_labels.length > 0) {
+                        let field_label = $(this).find('label').text();
+                        let tags = "";
+                        for (const entry_label of selected_labels) {
+                            tags += ('<span class="tag is-light">' + entry_label + '</span><a class="tag is-delete"></a>');
+                        }
+                        const tag_control = '\
                     <div class="control">\
                         <div class="tags has-addons">\
-                            <span class="tag is-danger">' + label + '</span>\
+                            <span class="tag is-danger">' + field_label + '</span>\
                             ' + tags + '\
                         </div>\
                     </div>';
 
-                    $('#tag-cloud').append(tag_control);
-                    selected_values
-                }
-            });
+                        $('#tag-cloud').append(tag_control);
+                    }
+                });
+            }
+
+            function populate_find_form() {
+                $("#search-form").find(".filter").each(function (i, e) {
+                    let selected_values = [];
+                    $(this).find('.entry').each(function () {
+                        // an entry is selected if the dot if visible
+                        if (!$(this).find('.dot').hasClass('is-invisible')) {
+                            selected_values.push($(this).find('input[name="value"]').val());
+                        }
+                    });
+                    // populate the hidden form input
+                    const input = $(this).find('input[name="' + $(this).prop("id") + '"]');
+                    $(input).val(selected_values.join(','));
+                });
+            }
 
             <!-- accordion -->
             $('div .accordion').each(function () {
@@ -177,11 +191,15 @@
                     // entries click
                     $(panel).find(".entry").click(function () {
                         $(this).find('.dot').toggleClass("is-invisible");
-                        $(this).unbind("mouseenter mouseleave");
+                        populate_find_form();
+                        $('#search-form').submit();
                     });
                 });
             });
 
+
+            create_tag_cloud();
+            populate_find_form();
         });
     </script>
 {% endblock %}

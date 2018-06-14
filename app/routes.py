@@ -66,7 +66,7 @@ def filter_documents(docs, form_values, field_name, get_doc_values, value_type=s
     :param value_type:
     :return: the doc list without the filtered values
     """
-    if '-1' in form_values[field_name]:
+    if len(form_values[field_name]) == 0:
         return docs
     else:
         filtered_docs = []
@@ -140,10 +140,12 @@ def documents():
         for field in fields:
             values = request.form.get(field['name'])
             if len(values) > 0:
-                values = values.split(',')[:-1]
+                values = values.replace(',', ' ').strip().split(' ')
             else:
                 values = []
             form_values[field['name']] = values
+
+        print('form_values:', form_values)
 
         # filter documents
         pprint.pprint(form_values)
