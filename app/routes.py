@@ -1,12 +1,11 @@
 import math
 
 import pprint
-from flask import render_template, flash, redirect, url_for, render_template_string, Blueprint, session, current_app, \
-    jsonify
+from flask import render_template, flash, redirect, url_for, Blueprint, session, current_app
 from flask_user import login_required
 
-import config
-from app.models import Document, Editor, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
+
+from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
 
 app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
 
@@ -55,7 +54,7 @@ Admin Routes
 @app_bp.route('/')
 @app_bp.route('/admin')
 def admin():
-    return render_template('admin/index.html')
+    return render_template('main/index.html')
 
 
 def filter_documents(docs, form_values, field_name, get_doc_values, value_type=str):
@@ -77,6 +76,7 @@ def filter_documents(docs, form_values, field_name, get_doc_values, value_type=s
                 filtered_docs.append(doc)
     return filtered_docs
 
+
 @app_bp.route('/documents', methods=['GET', 'POST'])
 def documents():
     page = request.args.get('page', 1, type=int)
@@ -88,76 +88,62 @@ def documents():
         {
             "label": "Mode de tradition",
             "name": "tradition",
-            "type":  "select",
-            "options": {"multiple": True, "size": 3},
-            "value": [(trad.id, trad.label) for trad in Tradition.query.all()]
+            "value": sorted([(trad.label, trad.id) for trad in Tradition.query.all()])
         },
         {
             "label": "Type d'acte",
             "name": "acte_type",
-            "type": "select",
-            "options": {"multiple": True, "size": 3},
-            "value": [(act.id, act.label) for act in ActeType.query.all()]
+            "value": sorted([(act.label, act.id) for act in ActeType.query.all()])
         },
         {
             "label": "Langue du document",
             "name": "language",
-            "type":  "select",
-            "options": {"multiple": True, "size": 3},
-            "value": [(lang.code, lang.label) for lang in Language.query.all()]
+            "value": sorted([( lang.label, lang.code) for lang in Language.query.all()])
         },
         {
             "label": "Siècle du document",
             "name": "creation",
-            "type":  "select",
-            "options": {"multiple": True, "size": 3},
-            "value": set([(doc.creation, doc.creation) for doc in docs if doc.creation is not None])
+            "value": sorted(set([(doc.creation, doc.creation) for doc in docs if doc.creation is not None]))
         },
         {
             "label": "Siècle de la copie",
             "name": "copy_cent",
-            "type": "select",
-            "options": {"multiple": True, "size": 3},
-            "value": set([(doc.copy_cent, doc.copy_cent) for doc in docs if doc.copy_cent is not None])
+            "value": sorted(set([(doc.copy_cent, doc.copy_cent) for doc in docs if doc.copy_cent is not None]))
         },
         {
             "label": "Pays",
             "name": "country",
-            "type": "select",
-            "options": {"multiple": True, "size": 3},
-            "value": set([(country.id, country.label) for country in Country.query.all()])
+            "value": sorted([(country.label, country.id) for country in Country.query.all()])
         },
         {
             "label": "Région contemporaine",
             "name": "district",
-            "type": "select",
-            "options": {"multiple": True, "size": 3},
-            "value": set([(district.id, district.label) for district in District.query.all()])
+            "value": sorted([(district.label, district.id) for district in District.query.all()])
         },
         {
             "label": "Institution de conservation",
             "name": "institution",
-            "type": "select",
-            "options": {"multiple": True, "size": 3},
-            "value": set([(instit.id, instit.name) for instit in Institution.query.all()])
+            "value": sorted([(instit.name, instit.id) for instit in Institution.query.all()])
         },
         {
             "label": "Types de commentaires fournis",
             "name": "commentary_type",
-            "type": "select",
-            "options": {"multiple": True, "size": 3},
-            "value": set([(com.id, com.label) for com in CommentaryType.query.all()])
+            "value": sorted([(com.label, com.id) for com in CommentaryType.query.all()])
         },
     ]
 
     filtered_docs = docs[::]
     form_values = {}
     if request.method == "POST":
+        pprint.pprint(request.form)
+        # parse hidden inputs to get the selected values
         for field in fields:
-            if field['type'] == "select" and field["options"]["multiple"]:
-                form_values[field['name']] = request.form.getlist(field['name'])
+            values = request.form.get(field['name'])
+            if len(values) > 0:
+                values = values.split(',')[:-1]
             else:
-                form_values[field['name']] = request.form.get(field['name'])
+                values = []
+            form_values[field['name']] = values
 
         # filter documents
         pprint.pprint(form_values)
@@ -183,7 +169,7 @@ def documents():
     except IndexError:
         pass
 
-    return render_template('admin/documents.html',
+    return render_template('main/documents.html',
                            title='Documents - Adele',
                            docs=filtered_docs,
                            fields=fields,
@@ -198,7 +184,7 @@ def admin_document(doc_id):
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
-    return render_template('admin/document.html', title='Documents - Adele', doc=doc)
+    return render_template('main/document.html', title='Documents - Adele', doc=doc)
 
 
 @app_bp.route('/admin/documents/<doc_id>/edition')
@@ -207,7 +193,7 @@ def admin_document_edit(doc_id):
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
-    return render_template('admin/document_edit.html', title='Document - Adele', doc=doc)
+    return render_template('main/document_edit.html', title='Document - Adele', doc=doc)
 
 
 """

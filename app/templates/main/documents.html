@@ -1,9 +1,9 @@
-{% extends 'admin/base.html' %}
+{% extends 'main/base.html' %}
 
 {% macro nav_pages(nav_urls, current_page) %}
-    {% if nav_urls | length > 1 %}
-        <div class="level nav-pages">
-            <div class="level-left">
+    <div class="level nav-pages">
+        <div class="level-left">
+            {% if nav_urls | length > 1 %}
                 <p>Page :</p>
                 <ul class="level">
                     {% for url in nav_urls %}
@@ -15,9 +15,9 @@
                         </li>
                     {% endfor %}
                 </ul>
-            </div>
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 {% endmacro %}
 
 {% block content %}
@@ -25,33 +25,33 @@
         <div class="column is-one-quarter" id="find-col">
             <section class="section has-background-grey-light">
                 <form method="POST" action="{{ url_for('app_bp.documents') }}" id='search-form'>
+
                     {% for field in fields %}
-                        <div class="field">
-                            <label class="label" for="{{ field['label'] }}">{{ field['label'] }} : </label>
-                            <div class="control">
-                                {% if field['type'] == 'select' %}
-                                    <div class="select {% if field['options']['multiple'] %} is-multiple {% endif %}">
-                                        <select name="{{ field['name'] }}"
-                                                {% if field['options']['multiple'] %}
-                                                multiple
-                                                size="{{ field['options']['size'] }}"
-                                                {% endif %} >
-                                            <option value="-1"
-                                                    {% if selected_values[field['name']]|length == 0 or '-1' in selected_values[field['name']] %}selected="selected"{% endif %}>
-                                                Tous
-                                            </option>
-                                            {% for value,label in field['value'] %}
-                                                <option value="{{ value }}"
-                                                        {% if value|string in selected_values[field['name']] %}selected="selected"{% endif %}>
-                                                    {{ label }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                {% endif %}
+                        <div class="filter">
+                            <div class="accordion level">
+                                <label class="label level-left" for="{{ field['name'] }}">{{ field['label'] }}</label>
+                                <i class="fas fa-angle-right level-right"></i>
+                            </div>
+                            <div class="panel">
+                                <ul>
+                                    {% for label, value in field['value'] %}
+                                        <li>
+                                            <div class="level entry">
+                                                <div class="level-left panel-item">{{ label }}</div>
+                                                <input type="hidden" value="{{ value }}"/>
+                                                <div class="level-right">
+                                                    <div class="dot {% if value|string not in selected_values[field['name']] %}is-invisible{% endif %}"></div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                    <input type="hidden" name="{{ field['name'] }}" value="{% for label, value in field['value'] %}{% if value|string in selected_values[field['name']] %}{{ value }},{% endif %}{% endfor %}"/>
+                                </ul>
                             </div>
                         </div>
                     {% endfor %}
+
+
                     <div class="field is-grouped find-btn-group">
                         <div class="control">
                             <input type="submit" class="button is-light" value="Chercher"/>
@@ -63,6 +63,8 @@
 
                 </form>
             </section>
+
+
         </div>
 
         <div class="column">
@@ -76,6 +78,7 @@
                         </article>
                     </div>
                 {% else %}
+                    <div id="tag-cloud" class="field is-grouped is-grouped-multiline"></div>
                     {{ nav_pages(nav_urls, current_page) }}
                     <div class="columns is-multiline">
                         {% for d in docs %}
@@ -111,18 +114,74 @@
         </div>
     </div>
 
+
 {% endblock content %}
 
 {% block scripts %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script type="text/javascript">
-        $(document).ready(
+        $(document).ready(function () {
+
             <!-- reset the select boxes -->
             $("#reset-search").click(function () {
                 $("#search-form").find("select").each(function () {
                     $(this).prop("selectedIndex", 0);
                 });
-            })
-        );
+            });
+
+            <!-- create the tag cloud -->
+            $("#search-form").find(".filter").each(function (i, e) {
+
+                let selected_values = [];
+                $(this).find('.entry').each(function () {
+                    // an entry is selected if the dot if visible
+                    if (!$(this).find('.dot').hasClass('is-invisible')) {
+                        selected_values.push($(this).find('input[type="hidden"]').val());
+                    }
+                });
+
+                if (selected_values.length > 0) {
+                    let label = $(this).find('label').text();
+                    let tags = "";
+                    for (const value of selected_values) {
+                        tags += ('<span class="tag is-light">' + value + '</span><a class="tag is-delete"></a>');
+                    }
+                    const tag_control = '\
+                    <div class="control">\
+                        <div class="tags has-addons">\
+                            <span class="tag is-danger">' + label + '</span>\
+                            ' + tags + '\
+                        </div>\
+                    </div>';
+
+                    $('#tag-cloud').append(tag_control);
+                    selected_values
+                }
+            });
+
+            <!-- accordion -->
+            $('div .accordion').each(function () {
+                $(this).click(function () {
+                    // head
+                    $(this).toggleClass("active");
+                    $(this).find('.level-right').toggleClass('fa-angle-down').toggleClass('fa-angle-right');
+
+                    // toggle entries display
+                    let panel = $(this).next('.panel');
+                    if ($(panel).css('display') === 'block') {
+                        $(panel).css('display', 'none')
+                    } else {
+                        $(panel).css('display', 'block')
+                    }
+
+                    // entries click
+                    $(panel).find(".entry").click(function () {
+                        $(this).find('.dot').toggleClass("is-invisible");
+                        $(this).unbind("mouseenter mouseleave");
+                    });
+                });
+            });
+
+        });
     </script>
 {% endblock %}

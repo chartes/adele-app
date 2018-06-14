@@ -1,12 +1,19 @@
-{% extends 'admin/base.html' %}
+{% extends 'main/base.html' %}
+
+{% block breadcrumb %}
+    <div class="navbar-item breadcrumb-arrow">
+        <i class="fas fa-angle-right"></i>
+    </div>
+    <div class="navbar-item"><a class="is-text">{{ doc.title }}</a> </div>
+
+{% endblock %}
 
 {% block content %}
 
     <section class="section">
-        <h1>{{ doc.title }} ({{ doc.id }})</h1>
+        <h1 class="title is-size-5">Document {{ doc.id }}</h1>
 
         <div id="app" data-document-id="{{ doc.id }}" data-auth-token="{{ session["auth_token"]|e }}"></div>
-
     </section>
 {% endblock content %}
 

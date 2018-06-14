@@ -1,6 +1,6 @@
 
 .thumbnail-container {
-    width: auto;
+  width: auto;
 }
 
 .thumbnail img {
@@ -9,8 +9,8 @@
   width: auto;
 }
 
-select {
-  width: 380px;
+.columns {
+  margin-top: 0px;
 }
 
 .nav-pages ul {
@@ -21,3 +21,82 @@ select {
   margin-top: 30px;
 }
 
+#tag-cloud {
+  margin-bottom: 20px;
+}
+
+#find-col {
+  padding-right: 0px;
+  background-color: #eee;
+  user-select: none;
+}
+
+#find-col .level:not(:last-child) {
+  margin-bottom: 0px;
+}
+
+#find-col .section {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+/* Style the buttons that are used to open and close the accordion panel */
+#find-col .accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  outline: none;
+  transition: 0.4s;
+}
+
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+#find-col .active, .accordion:hover {
+  background-color: #ccc;
+}
+
+/* Style the accordion panel. Note: hidden by default */
+#find-col .panel {
+  padding: 0;
+  background-color: hsl(0, 0%, 96%);
+  display: none;
+  overflow: hidden;
+}
+
+#find-col .panel:not(:last-child) {
+  margin-bottom: 0px;
+}
+
+#find-col .panel-item {
+  padding: 12px 12px 12px 24px;
+}
+
+#find-col li {
+  color: hsl(0, 0%, 48%);
+  cursor: pointer;
+}
+
+#find-col li:hover {
+  background-color: hsl(348, 100%, 61%);
+  color: hsl(0, 0%, 96%);
+}
+
+.dot {
+  height: 12px;
+  width: 12px;
+  background-color: hsl(348, 100%, 61%);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 18px;
+}
+
+.white-dot {
+  height: 12px;
+  width: 12px;
+  background-color: #eee;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 18px;
+}

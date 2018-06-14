@@ -594,7 +594,7 @@ def api_post_documents_transcriptions_alignments(api_version, doc_id):
                 data = data["data"]
 
                 user = current_app.get_current_user()
-                if user.is_anonymous():
+                if user.is_anonymous:
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Cannot insert data"
                     })

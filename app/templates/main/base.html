@@ -36,35 +36,41 @@
                     </div>
 
                     <div class="navbar-menu">
-                        <a class="navbar-item" href="{{ url_for('app_bp.documents') }}">
-                            <div class="title is-size-5">Adele</div>
+                        <a class="navbar-item breadcrumb-index" href="{{ url_for('app_bp.documents') }}">
+                            <div class="title is-size-5 ">Adele</div>
+
                         </a>
-                        <a class="navbar-item" href="{{ url_for('app_bp.documents') }}">
-                            <div class="is-size-5">Mode d'emploi</div>
-                        </a>
+                        {% block breadcrumb %} {% endblock %}
+
                     </div>
 
                     <div class="navbar-end">
+                        <a class="navbar-item" href="{{ url_for('app_bp.documents') }}">
+                            <div class="is-size-6">Mode d'emploi</div>
+                        </a>
+                        <a class="navbar-item" href="{{ url_for('app_bp.documents') }}">
+                            <div class="is-size-6">Contact</div>
+                        </a>
+
                         {% if current_user and current_user.username %}
                             <div class="navbar-item has-dropdown is-active">
                                 <a class="navbar-link">
-                    <span class="icon">
-                        <i class="fas fa-user-circle"></i>
-                    </span>
+                                    <span class="icon">
+                                        <i class="fas fa-user-circle"></i>
+                                    </span>
                                     <span>{{ current_user.username }}</span>
                                 </a>
-
                                 <div class="navbar-dropdown is-right">
                                     <a class="navbar-item" href="{{ url_for('user.profile') }}">
-                        <span class="icon">
-                            <i class="fas fa-user"></i>
-                        </span>
+                                        <span class="icon">
+                                            <i class="fas fa-user"></i>
+                                        </span>
                                         <span>Profil</span>
                                     </a>
                                     <a class="navbar-item" href="{{ url_for('user.logout') }}">
-                        <span class="icon">
-                            <i class="fas fa-sign-in-alt"></i>
-                        </span>
+                                        <span class="icon">
+                                            <i class="fas fa-sign-in-alt"></i>
+                                        </span>
                                         <span>Déconnexion</span>
                                     </a>
                                 </div>
@@ -74,9 +80,9 @@
                                 <div class="field">
                                     <p class="control">
                                         <a class="button is-primary" href="{{ url_for('app_bp.login_make_token') }}">
-                                  <span class="icon">
-                                    <i class="fas fa-sign-in-alt"></i>
-                                  </span>
+                                            <span class="icon">
+                                                <i class="fas fa-sign-in-alt"></i>
+                                            </span>
                                             <span>Connexion</span>
                                         </a>
                                     </p>
