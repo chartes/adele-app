@@ -46,7 +46,7 @@ snowballstemmer==1.2.1
 Sphinx==1.7.2
 sphinx-rtd-theme==0.3.0
 sphinxcontrib-websupport==1.0.1
-SQLAlchemy==1.2.5
+SQLAlchemy==1.2.8
 urllib3==1.22
 Werkzeug==0.14.1
 WTForms==2.1

@@ -13,8 +13,9 @@
   margin-top: 0px;
 }
 
-.nav-pages ul {
-  margin-left: 20px;
+.nav-pages {
+  margin: auto auto 30px;
+  width: 300px;
 }
 
 .find-btn-group {
@@ -23,6 +24,7 @@
 
 #tag-cloud {
   margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 #find-col {
@@ -39,6 +41,11 @@
   padding-left: 0px;
   padding-right: 0px;
 }
+
+.field.is-grouped {
+  display: block;
+}
+
 /* Style the buttons that are used to open and close the accordion panel */
 #find-col .accordion {
   background-color: #eee;

@@ -1,24 +1,5 @@
 {% extends 'main/base.html' %}
 
-{% macro nav_pages(nav_urls, current_page) %}
-    <div class="level nav-pages">
-        <div class="level-left">
-            {% if nav_urls | length > 1 %}
-                <p>Page :</p>
-                <ul class="level">
-                    {% for url in nav_urls %}
-                        <li class="level-item">
-                            <a class="button {% if loop.index != current_page %} is-white {% else %} is-light {% endif %}"
-                               href="{{ url }}">
-                                {{ loop.index }}
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-    </div>
-{% endmacro %}
 
 {% block content %}
     <div class="columns ">
@@ -41,12 +22,12 @@
                                                 <input name="value" type="hidden" value="{{ value }}"/>
                                                 <input name="label" type="hidden" value="{{ label }}"/>
                                                 <div class="level-right">
-                                                    <div class="dot {% if value|string not in selected_values[field['name']] %}is-invisible{% endif %}"></div>
+                                                    <div class="dot is-invisible"></div>
                                                 </div>
                                             </div>
                                         </li>
                                     {% endfor %}
-                                    <input type="hidden" name="{{ field['name'] }}" value="{% for label, value in field['value'] %}{% if value|string in selected_values[field['name']] %}{{ value }},{% endif %}{% endfor %}"/>
+                                    <input type="hidden" name="{{ field['name'] }}"/>
                                 </ul>
                             </div>
                         </div>
@@ -55,66 +36,7 @@
             </section>
         </div>
 
-        <div class="column">
-            <section class="section">
-                <div id="tag-cloud" class="field is-grouped is-grouped-multiline"></div>
-                {% if docs | length  == 0 %}
-                    <div>
-                        <article class="message is-info">
-                            <div class="message-body">
-                                <div class="alert alert-info" role="alert">Aucun résultat</div>
-                            </div>
-                        </article>
-                    </div>
-                {% else %}
-                    {{ nav_pages(nav_urls, current_page) }}
-                    <div class="columns is-multiline">
-
-                        {% if docs | length >= 10 %}
-                            {% set col_fmt = 3 %}
-                        {% elif docs | length > 1 %}
-                            {% set col_fmt = 2 %}
-                        {% else %}
-                            {% set col_fmt = 1 %}
-                        {% endif %}
-
-                        {% for d in docs %}
-                            <div class="column {% if col_fmt == 3 %}is-one-third{% elif col_fmt == 2 %}is-half{% endif %}">
-                                <div class="card">
-                                    {% for img in d.images %}
-                                        <div class="thumbnail-container has-background-grey-lighter">
-                                            <figure class=" image thumbnail">
-                                                {% if col_fmt == 3 %}
-                                                    <img src="{{ img.id | replace("full/full", "full/,200") }}"/>
-                                                {% elif col_fmt == 2 %}
-                                                    <img src="{{ img.id | replace("full/full", "full/,300") }}"/>
-                                                {% else %}
-                                                    <img src="{{ img.id | replace("full/full", "full/,500") }}"/>
-                                                {% endif %}
-                                            </figure>
-                                        </div>
-                                    {% endfor %}
-                                    <div class="card-content">
-                                        <div class="content">
-                                            <p><span class="tag is-light">Dossier {{ d.id }}</span></p>
-                                            <p class="title is-6">{{ d.title }}</p>
-                                            <p>
-                                                <small>{{ d.subtitle }}</small>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <footer class="card-footer">
-                                        <a href="{{ url_for("app_bp.admin_document_edit", doc_id=d.id) }}"
-                                           class="card-footer-item">Editer</a>
-                                    </footer>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    {{ nav_pages(nav_urls, current_page) }}
-                {% endif %}
-            </section>
-        </div>
+        <div class="column" id="documents-col"></div>
     </div>
 
 
@@ -128,7 +50,6 @@
             <!-- restore the selected filters & create the tag cloud -->
             function create_tag_cloud() {
                 $('#tag-cloud').empty();
-
                 $("#search-form").find(".filter").each(function (i, e) {
 
                     let selected_labels = [];
@@ -148,13 +69,17 @@
                         const tag_control = '\
                     <div class="control">\
                         <div class="tags has-addons">\
-                            <span class="tag is-danger">' + field_label + '</span>\
+                            <span class="tag is-danger">' + field_label + '</span><a class="tag is-delete is-danger"></a>\
                             ' + tags + '\
                         </div>\
                     </div>';
 
                         $('#tag-cloud').append(tag_control);
                     }
+                });
+
+                $('span .tag .is-delete').click(function(){
+                    alert($(this).closest('span').text());
                 });
             }
 
@@ -173,14 +98,27 @@
                 });
             }
 
+            function submit_async() {
+                $.ajax({
+                    url: "{{  url_for("app_bp.document_list") }}",
+                    method: 'POST',
+                    data: $("#search-form").serialize(),
+                    context: document.body
+                }).done(function (data) {
+                    //console.log(data);
+                    $("#documents-col").html(data);
+                    create_tag_cloud();
+                });
+            }
+
             <!-- accordion -->
             $('div .accordion').each(function () {
                 $(this).click(function () {
-                    // head
+                    // panel head
                     $(this).toggleClass("active");
                     $(this).find('.level-right').toggleClass('fa-angle-down').toggleClass('fa-angle-right');
 
-                    // toggle entries display
+                    // toggle entries panel display
                     let panel = $(this).next('.panel');
                     if ($(panel).css('display') === 'block') {
                         $(panel).css('display', 'none')
@@ -192,14 +130,13 @@
                     $(panel).find(".entry").click(function () {
                         $(this).find('.dot').toggleClass("is-invisible");
                         populate_find_form();
-                        $('#search-form').submit();
+                        submit_async();
                     });
                 });
             });
 
 
-            create_tag_cloud();
-            populate_find_form();
+            submit_async();
         });
     </script>
 {% endblock %}

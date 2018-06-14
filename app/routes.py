@@ -1,9 +1,8 @@
 import math
 
 import pprint
-from flask import render_template, flash, redirect, url_for, Blueprint, session, current_app
+from flask import render_template, flash, redirect, url_for, Blueprint, session, current_app, jsonify
 from flask_user import login_required
-
 
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
 
@@ -77,14 +76,8 @@ def filter_documents(docs, form_values, field_name, get_doc_values, value_type=s
     return filtered_docs
 
 
-@app_bp.route('/documents', methods=['GET', 'POST'])
-def documents():
-    page = request.args.get('page', 1, type=int)
-    if page < 0:
-        page = 1
-
-    docs = Document.query.all()
-    fields = [
+def get_document_search_fields(docs):
+    return [
         {
             "label": "Mode de tradition",
             "name": "tradition",
@@ -98,7 +91,7 @@ def documents():
         {
             "label": "Langue du document",
             "name": "language",
-            "value": sorted([( lang.label, lang.code) for lang in Language.query.all()])
+            "value": sorted([(lang.label, lang.code) for lang in Language.query.all()])
         },
         {
             "label": "Siècle du document",
@@ -132,52 +125,83 @@ def documents():
         },
     ]
 
+
+@app_bp.route('/documents')
+def documents():
+    docs = Document.query.all()
+    fields = get_document_search_fields(docs)
+    return render_template('main/documents.html', title='Documents - Adele', fields=fields)
+
+
+@app_bp.route('/documents/list', methods=['POST'])
+def document_list():
+    page = request.args.get('page', 1, type=int)
+    if page < 0:
+        page = 1
+
+    docs = Document.query.all()
+    fields = get_document_search_fields(docs)
+
     filtered_docs = docs[::]
     form_values = {}
+    docs_are_filtered = False
+
     if request.method == "POST":
-        pprint.pprint(request.form)
         # parse hidden inputs to get the selected values
         for field in fields:
             values = request.form.get(field['name'])
             if len(values) > 0:
                 values = values.replace(',', ' ').strip().split(' ')
+                docs_are_filtered = True
             else:
                 values = []
             form_values[field['name']] = values
 
-        print('form_values:', form_values)
-
         # filter documents
-        pprint.pprint(form_values)
-        filtered_docs = filter_documents(filtered_docs, form_values, 'tradition', lambda doc: [i.id for i in doc.traditions])
-        filtered_docs = filter_documents(filtered_docs, form_values, 'language', lambda doc: [i.code for i in doc.languages])
-        filtered_docs = filter_documents(filtered_docs, form_values, 'acte_type', lambda doc: [i.id for i in doc.acte_types], value_type=int)
+        filtered_docs = filter_documents(filtered_docs, form_values, 'tradition',
+                                         lambda doc: [i.id for i in doc.traditions])
+        filtered_docs = filter_documents(filtered_docs, form_values, 'language',
+                                         lambda doc: [i.code for i in doc.languages])
+        filtered_docs = filter_documents(filtered_docs, form_values, 'acte_type',
+                                         lambda doc: [i.id for i in doc.acte_types], value_type=int)
         filtered_docs = filter_documents(filtered_docs, form_values, 'commentary_type',
-                                         lambda doc: [c.type_id for c in Commentary.query.filter(Commentary.doc_id == doc.id).all()],
+                                         lambda doc: [c.type_id for c in
+                                                      Commentary.query.filter(Commentary.doc_id == doc.id).all()],
                                          value_type=int)
-        filtered_docs = filter_documents(filtered_docs, form_values, 'creation', lambda doc: [doc.creation], value_type=int)
-        filtered_docs = filter_documents(filtered_docs, form_values, 'copy_cent', lambda doc: [doc.copy_cent], value_type=int)
+        filtered_docs = filter_documents(filtered_docs, form_values, 'creation', lambda doc: [doc.creation],
+                                         value_type=int)
+        filtered_docs = filter_documents(filtered_docs, form_values, 'copy_cent', lambda doc: [doc.copy_cent],
+                                         value_type=int)
 
-        filtered_docs = filter_documents(filtered_docs, form_values, 'country', lambda doc: [i.id for i in doc.countries], value_type=int)
-        filtered_docs = filter_documents(filtered_docs, form_values, 'district', lambda doc: [i.id for i in doc.districts], value_type=int)
-        filtered_docs = filter_documents(filtered_docs, form_values, 'institution', lambda doc: [doc.institution_id], value_type=int)
+        filtered_docs = filter_documents(filtered_docs, form_values, 'country',
+                                         lambda doc: [i.id for i in doc.countries], value_type=int)
+        filtered_docs = filter_documents(filtered_docs, form_values, 'district',
+                                         lambda doc: [i.id for i in doc.districts], value_type=int)
+        filtered_docs = filter_documents(filtered_docs, form_values, 'institution', lambda doc: [doc.institution_id],
+                                         value_type=int)
 
     nav_urls = []
     for p in range(0, int(math.floor(len(filtered_docs) / current_app.config['DOC_PER_PAGE'])) + 1):
-        nav_urls.append("%s?page=%s" % (url_for('app_bp.documents'), p+1))
+        nav_urls.append("%s?page=%s" % (url_for('app_bp.documents'), p + 1))
 
+    nb_total = len(filtered_docs)
     try:
-        filtered_docs = filtered_docs[0 + (page-1) * current_app.config['DOC_PER_PAGE']: 0 + page * current_app.config['DOC_PER_PAGE']]
+        filtered_docs = filtered_docs[
+                        0 + (page - 1) * current_app.config['DOC_PER_PAGE']: 0 + page * current_app.config[
+                            'DOC_PER_PAGE']]
     except IndexError:
         pass
 
-    return render_template('main/documents.html',
-                           title='Documents - Adele',
-                           docs=filtered_docs,
-                           fields=fields,
-                           selected_values=form_values,
-                           nav_urls=nav_urls,
-                           current_page=page)
+    return render_template(
+            'main/fragments/document_list.html',
+            docs=filtered_docs,
+            fields=fields,
+            selected_values=form_values,
+            nav_urls=nav_urls,
+            nb_total=nb_total,
+            filtered=docs_are_filtered,
+            current_page=page
+    )
 
 
 @app_bp.route('/admin/documents/<doc_id>')
