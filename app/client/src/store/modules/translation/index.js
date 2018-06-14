@@ -15,7 +15,7 @@ const state = {
 
 const mutations = {
 
-  TRANSLATION_INIT(state, payload) {
+  INIT(state, payload) {
     if (!state.shadowQuill) {
       state.shadowQuillElement.innerHTML = payload;
       state.shadowQuill = new Quill(state.shadowQuillElement);
@@ -23,25 +23,25 @@ const mutations = {
     }
   },
 
-  UPDATE_TRANSLATION (state, payload) {
-    console.log("UPDATE_TRANSLATION")
+  UPDATE (state, payload) {
+    //console.log("STORE MUTATION translation/UPDATE")
     state.translation = payload.raw;
     state.translationWithNotes = payload.formatted;
     state.translationSaved = true;
   },
-  TRANSLATION_CHANGED (state) {
+  CHANGED (state) {
     // translation changed and needs to be saved
-    console.log("TRANSLATION_CHANGED")
+    //console.log("STORE MUTATION translation/CHANGED")
     state.translationSaved = false;
   },
-  TRANSLATION_ADD_OPERATION (state, payload) {
+  ADD_OPERATION (state, payload) {
     state.shadowQuill.updateContents(payload);
-    console.log("TRANSLATION_ADD_OPERATION", payload)
+    //console.log("STORE MUTATION translation/ADD_OPERATION", payload)
     state.translationHtml = state.shadowQuillElement.children[0].innerHTML;
   },
-  TRANSLATION_SAVED (state) {
+  SAVED (state) {
     // translation changed and needs to be saved
-    console.log("TRANSLATION_CHANGED")
+    //console.log("STORE MUTATION translation/SAVED", payload);
     state.translationSaved = false;
   }
 
@@ -49,14 +49,14 @@ const mutations = {
 
 const actions = {
 
-  fetchTranslation ({ commit, rootGetters, rootState }) {
+  fetch ({ commit, rootGetters }) {
 
     const doc_id = rootGetters['document/document'].id;
     const user_id = rootGetters['user/currentUser'].id;
 
-    console.log('STORE ACTION fetchTranslation')
+    console.log('STORE ACTION translation/fetch')
 
-    axios.get(`/api/1.0/documents/${doc_id}/translations/from-user/${rootState.user.currentUser.id}`).then( response => {
+    axios.get(`/api/1.0/documents/${doc_id}/translations/from-user/${user_id}`).then( response => {
 
 
       let translation = {content : " ", notes: []};
@@ -65,42 +65,75 @@ const actions = {
         translation = response.data.data;
       }
 
-      console.log("FETCHED TRANSLATION", translation);
-
       const content = translation.content;
       const notes = translation.notes;
       const formatted = insertNotes(content, notes);
 
-      //console.log('formatted', formatted)
-
-      commit('TRANSLATION_INIT', content)
-      commit('UPDATE_TRANSLATION', { raw: translation, formatted: formatted });
+      commit('INIT', content)
+      commit('UPDATE', { raw: translation, formatted: formatted });
     });
 
   },
-  saveTranslation ({ commit, getters, rootState }, translationWithNotes) {
+  save ({ commit, dispatch, getters, rootState }, translationWithNotes) {
 
-    console.log('STORE ACTION saveTranslation', translationWithNotes);
+    console.log('STORE ACTION translation/save', translationWithNotes);
 
-    // Save translation content without notes
+    return dispatch('saveContent')
+      .then(reponse => dispatch('saveNotes', transcriptionWithNotes))
+      .then(function(values) {
+        console.log('all saved', values);
+      })
 
-    // count notes pointers
-    const notes = computeNotesPointers(translationWithNotes);
-    notes.forEach((note) => {
+  },
+  saveContent ({ state, rootGetters }) {
+    console.log('STORE ACTION translation/saveContent');
+    const auth = {}//rootGetters['user/authHeader'];
+    const data = { data: [{
+        "content" :  state.translationHtml,
+        "username": rootGetters['user/currentUser'].username
+      }]};
+
+
+    return new Promise( ( resolve, reject ) => {
+      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/translations`, data, auth)
+        .then( response => {
+          if (response.data.errors) reject(response.data.errors);
+          else resolve( response.data )
+        })
+        .catch( error => {
+          reject( error )
+        });
+    } );
+  },
+  saveNotes ({ commit, rootGetters, state, rootState }, transcriptionWithNotes) {
+
+    // compute notes pointers
+    const sanitizedTranscriptionWithNotes = stripSegments(transcriptionWithNotes);
+    const notes = computeNotesPointers(sanitizedTranscriptionWithNotes);
+    notes.forEach(note => {
       let found = rootState.notes.notes.find((element) => {
         return element.id === note.note_id;
       });
       note.content = found.content;
     });
-    console.log(notes);
+    console.log('STORE ACTION transcription/saveNotes', notes);
 
-    // remove notes
+    const auth = rootGetters['user/authHeader'];
 
-
+    return new Promise( ( resolve, reject ) => {
+      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions/notes`, { data: notes }, auth)
+        .then( response => {
+          resolve( response.data )
+        } )
+        .catch( error => {
+          reject( error )
+          //dispatch( 'error', { error } )
+        } );
+    } );
   },
-  translationChanged ({ commit }, deltas) {
-    commit('TRANSLATION_ADD_OPERATION', deltas)
-    commit('TRANSLATION_SAVED', false)
+  changed ({ commit }, deltas) {
+    commit('ADD_OPERATION', deltas)
+    commit('SAVED', false)
   }
 
 };

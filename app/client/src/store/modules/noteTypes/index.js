@@ -8,7 +8,7 @@ const state = {
 
 const mutations = {
 
-  UPDATE_NOTE_TYPES (state, payload) {
+  UPDATE (state, payload) {
     state.noteTypes = payload;
   }
 
@@ -16,12 +16,12 @@ const mutations = {
 
 const actions = {
 
-  fetchNoteTypes ({ commit }) {
+  fetch ({ commit }) {
     axios.get(`/api/1.0/note-types`).then( response => {
       const respData = response.data.data;
       const isArray = Array.isArray(respData);
       const noteTypes = isArray ? respData : [respData];
-      commit('UPDATE_NOTE_TYPES', noteTypes)
+      commit('UPDATE', noteTypes)
     });
   }
 

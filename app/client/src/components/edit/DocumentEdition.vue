@@ -61,8 +61,8 @@
       console.log(' $store', this.$store)
       console.log(' actions', this.$store._actions)
       console.log(' getters', this.$store.getters)
-      this.$store.dispatch('transcription/fetchTranscription');
-      this.$store.dispatch('translation/fetchTranslation');
+      this.$store.dispatch('transcription/fetch');
+      this.$store.dispatch('translation/fetch');
     }
   }
 </script>

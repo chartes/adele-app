@@ -107,8 +107,8 @@
     data() {
       return {
         storeActions: {
-          save: 'saveTranslation',
-          changed: 'translationChanged'
+          save: 'translation/save',
+          changed: 'translation/changed'
         },
         delta: null,
         buttons: {
