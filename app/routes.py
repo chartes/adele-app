@@ -96,12 +96,12 @@ def get_document_search_fields(docs):
         {
             "label": "Siècle du document",
             "name": "creation",
-            "value": sorted(set([(doc.creation, doc.creation) for doc in docs if doc.creation is not None]))
+            "value": sorted(set([(doc.creation_lab, doc.creation) for doc in docs if doc.creation_lab is not None]))
         },
         {
             "label": "Siècle de la copie",
             "name": "copy_cent",
-            "value": sorted(set([(doc.copy_cent, doc.copy_cent) for doc in docs if doc.copy_cent is not None]))
+            "value": sorted(set([(doc.copy_year, doc.copy_cent) for doc in docs if doc.copy_cent is not None]))
         },
         {
             "label": "Pays",
@@ -130,14 +130,12 @@ def get_document_search_fields(docs):
 def documents():
     docs = Document.query.all()
     fields = get_document_search_fields(docs)
-    return render_template('main/documents.html', title='Documents - Adele', fields=fields)
+    return render_template('main/documents.html', title='Documents - Adele', fields=fields, current_page=1)
 
 
 @app_bp.route('/documents/list', methods=['POST'])
 def document_list():
-    page = request.args.get('page', 1, type=int)
-    if page < 0:
-        page = 1
+    page = int(request.form.get('page'))
 
     docs = Document.query.all()
     fields = get_document_search_fields(docs)
@@ -180,9 +178,9 @@ def document_list():
         filtered_docs = filter_documents(filtered_docs, form_values, 'institution', lambda doc: [doc.institution_id],
                                          value_type=int)
 
-    nav_urls = []
+    nav_uri = []
     for p in range(0, int(math.floor(len(filtered_docs) / current_app.config['DOC_PER_PAGE'])) + 1):
-        nav_urls.append("%s?page=%s" % (url_for('app_bp.documents'), p + 1))
+        nav_uri.append(p + 1)
 
     nb_total = len(filtered_docs)
     try:
@@ -197,7 +195,7 @@ def document_list():
             docs=filtered_docs,
             fields=fields,
             selected_values=form_values,
-            nav_urls=nav_urls,
+        nav_uri=nav_uri,
             nb_total=nb_total,
             filtered=docs_are_filtered,
             current_page=page

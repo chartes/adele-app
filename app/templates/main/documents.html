@@ -6,7 +6,7 @@
         <div class="column is-one-quarter" id="find-col">
             <section class="section has-background-grey-light">
                 <form method="POST" action="{{ url_for('app_bp.documents') }}" id='search-form'>
-
+                    <input type="hidden" name="page" id="page" value="{{ current_page }}"/>
                     {% for field in fields %}
                         <div class="filter" id="{{ field['name'] }}">
                             <div class="accordion level">
@@ -17,7 +17,7 @@
                                 <ul>
                                     {% for label, value in field['value'] %}
                                         <li>
-                                            <div class="level entry">
+                                            <div class="level entry" id="{{ field['name'] }}__{{ value }}">
                                                 <div class="level-left panel-item">{{ label }}</div>
                                                 <input name="value" type="hidden" value="{{ value }}"/>
                                                 <input name="label" type="hidden" value="{{ label }}"/>
@@ -52,24 +52,30 @@
                 $('#tag-cloud').empty();
                 $("#search-form").find(".filter").each(function (i, e) {
 
-                    let selected_labels = [];
+                    let selected_entries = [];
                     $(this).find('.entry').each(function () {
                         // an entry is selected if the dot if visible
                         if (!$(this).find('.dot').hasClass('is-invisible')) {
-                            selected_labels.push($(this).find('input[name="label"]').val());
+                            selected_entries.push({
+                                label: $(this).find('input[name="label"]').val(),
+                                id: $(this).prop('id')
+                            });
                         }
                     });
 
-                    if (selected_labels.length > 0) {
+                    if (selected_entries.length > 0) {
                         let field_label = $(this).find('label').text();
+                        let field_id = $(this).prop('id');
                         let tags = "";
-                        for (const entry_label of selected_labels) {
-                            tags += ('<span class="tag is-light">' + entry_label + '</span><a class="tag is-delete"></a>');
+                        // prepare the entry list
+                        for (const entry of selected_entries) {
+                            tags += ('<span class="tag is-light" id="' + entry.id + '">' + entry.label + '</span><a class="tag is-delete is-delete-entry"></a>');
                         }
+                        // build the tag list
                         const tag_control = '\
                     <div class="control">\
                         <div class="tags has-addons">\
-                            <span class="tag is-danger">' + field_label + '</span><a class="tag is-delete is-danger"></a>\
+                            <span class="tag is-danger" id="' + field_id + '">' + field_label + '</span><a class="tag is-delete is-danger is-delete-panel"></a>\
                             ' + tags + '\
                         </div>\
                     </div>';
@@ -78,8 +84,17 @@
                     }
                 });
 
-                $('span .tag .is-delete').click(function(){
-                    alert($(this).closest('span').text());
+                $('.is-delete-entry').click(function () {
+                    // simulate a click into the search form
+                    $('#' + $(this).prev('.tag').prop('id')).click();
+                });
+
+                $('.is-delete-panel').click(function () {
+                    // deselect all the entries
+                    $('#' + $(this).prev('.tag').prop('id')).find('div.dot').not('.is-invisible').addClass('is-invisible');
+                    // update the hidden inputs
+                    populate_find_form();
+                    submit_async();
                 });
             }
 
@@ -105,9 +120,14 @@
                     data: $("#search-form").serialize(),
                     context: document.body
                 }).done(function (data) {
-                    //console.log(data);
                     $("#documents-col").html(data);
                     create_tag_cloud();
+
+                    $('.pagination-btn').click(function () {
+                        $('#page').val($(this).text());
+                        submit_async();
+                    });
+
                 });
             }
 

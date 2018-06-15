@@ -1,13 +1,12 @@
-{% macro nav_pages(nav_urls, current_page) %}
+{% macro nav_pages(nav_uri, current_page) %}
     <div class="nav-pages">
-            {% if nav_urls | length > 1 %}
+            {% if nav_uri | length > 1 %}
                 <ul class="level">
-                    {% for url in nav_urls %}
+                    {% for url in nav_uri %}
                         <li class="level-item">
-                            <a class="button {% if loop.index != current_page %} is-white {% else %} is-light {% endif %}"
-                               href="{{ url }}">
+                            <div class="pagination-btn button {% if loop.index != current_page %} is-white {% else %} is-light {% endif %}">
                                 {{ loop.index }}
-                            </a>
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>
@@ -36,7 +35,7 @@
             </article>
         </div>
     {% else %}
-        {{ nav_pages(nav_urls, current_page) }}
+        {{ nav_pages(nav_uri, current_page) }}
         <div class="columns is-multiline">
 
             {% if docs | length >= 10 %}
@@ -80,6 +79,6 @@
                 </div>
             {% endfor %}
         </div>
-        {{ nav_pages(nav_urls, current_page) }}
+        {{ nav_pages(nav_uri, current_page) }}
     {% endif %}
 </section>
