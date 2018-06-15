@@ -17,7 +17,7 @@
                                 <ul>
                                     {% for label, value in field['value'] %}
                                         <li>
-                                            <div class="level entry" id="{{ field['name'] }}__{{ value }}">
+                                            <div class="level entry" id="{{ field['name'] }}__{{ value }}__{{ loop.index }}">
                                                 <div class="level-left panel-item">{{ label }}</div>
                                                 <input name="value" type="hidden" value="{{ value }}"/>
                                                 <input name="label" type="hidden" value="{{ label }}"/>
