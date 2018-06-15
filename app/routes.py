@@ -51,8 +51,7 @@ Admin Routes
 
 
 @app_bp.route('/')
-@app_bp.route('/admin')
-def admin():
+def index():
     return render_template('main/index.html')
 
 
@@ -202,6 +201,7 @@ def document_list():
     )
 
 
+# TODO : à débrancher
 @app_bp.route('/admin/documents/<doc_id>')
 def admin_document(doc_id):
     doc = Document.query.filter(Document.id == doc_id).one()
@@ -211,8 +211,8 @@ def admin_document(doc_id):
     return render_template('main/document.html', title='Documents - Adele', doc=doc)
 
 
-@app_bp.route('/admin/documents/<doc_id>/edition')
-def admin_document_edit(doc_id):
+@app_bp.route('/documents/<doc_id>/edition')
+def document_edit(doc_id):
     doc = Document.query.filter(Document.id == doc_id).one()
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
