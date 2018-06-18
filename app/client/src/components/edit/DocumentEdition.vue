@@ -5,23 +5,10 @@
         <tabs>
 
             <tab name="Transcription" :selected="true">
-
-                <h1 class="title">Transcription</h1>
                 <transcription-edition/>
             </tab>
 
-            <tab name="Traduction">
-                <h1 class="title">Traduction</h1>
-                <translation-edition/>
-            </tab>
-
-            <tab name="Alignement">
-                <h1 class="title">Alignement</h1>
-                <alignment-edition/>
-            </tab>
-
             <tab name="Facsimilé">
-                <h1 class="title">Facsimilé</h1>
                 <facsimile-editor></facsimile-editor>
             </tab>
 
@@ -57,12 +44,8 @@
       Tab
     },
     created() {
-      console.log('DocumentEdition.mounted')
-      console.log(' $store', this.$store)
-      console.log(' actions', this.$store._actions)
-      console.log(' getters', this.$store.getters)
       this.$store.dispatch('transcription/fetch');
-      this.$store.dispatch('translation/fetch');
+      //this.$store.dispatch('translation/fetch');
     }
   }
 </script>

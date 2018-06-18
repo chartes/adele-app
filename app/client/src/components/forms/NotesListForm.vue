@@ -8,7 +8,7 @@
     >
         <div class="NoteForm">
             <a class="notes-list-item"
-               v-for="note in $store.getters.notes"
+               v-for="note in notes"
                :key="note.id"
                @click="selectItem(note.id)"
                :class="{ selected: note.id == selected }"
@@ -24,7 +24,8 @@
 
 <script>
 
-    import ModalForm from './ModalForm';
+  import { mapGetters } from 'vuex'
+  import ModalForm from './ModalForm';
 
   export default {
     name: "note-form",
@@ -33,13 +34,13 @@
       ModalForm
     },
     data() {
-      console.log('NoteForm data');
+      console.log('NoteListForm data');
       return {
         selected: null
       }
     },
     mounted () {
-      console.log('NoteForm mounted', this.noteId)
+      console.log('NoteListForm mounted', this.noteId)
       this.selected = this.noteId
     },
     methods: {
@@ -53,6 +54,9 @@
       cancelAction () {
         this.$props.cancel();
       }
+    },
+    computed: {
+      ...mapGetters('notes', ['notes'])
     }
   }
 </script>

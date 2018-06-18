@@ -27,6 +27,7 @@ var EditorMixin = {
       this.editor.on('selection-change', this.onSelection);
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);
+      this.editor.updateContents(getNewDelta().retain(this.editor.getLength(), 'api'))
       this.editorContentElement = editorElement.children[0];
     },
 

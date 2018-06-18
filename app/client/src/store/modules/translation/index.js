@@ -1,47 +1,74 @@
 import axios from 'axios';
 import Quill from '../../../modules/quill/AdeleQuill';
-import TEItoQuill, {insertNotes, computeNotesPointers} from '../../../modules/quill/MarkupUtils'
+import TEItoQuill, {
+  insertNotes, computeNotesPointers, TEIToQuill,
+  insertSegments, stripSegments, quillToTEI, convertLinebreakTEIToQuill, insertNotesAndSegments,
+  convertLinebreakQuillToTEI
+} from '../../../modules/quill/MarkupUtils'
+import {removeFromDelta} from "../../../modules/quill/DeltaUtils";
+
+const translationShadowQuillElement = document.createElement('div');
+const notesShadowQuillElement = document.createElement('div');
+const speechpartsShadowQuillElement = document.createElement('div');
+let translationShadowQuill;
+let notesShadowQuill;
+let speechpartsShadowQuill;
 
 const state = {
 
   translation: undefined,
+  translationContent: undefined,
   translationWithNotes: undefined,
   translationSaved: false,
-  translationHtml: null,
-  shadowQuillElement: document.createElement('div',{ class: 'phantom-quill-translation'}),
-  shadowQuill: null
-
+  translationError: false,
+  translationAlignments: []
 };
 
 const mutations = {
 
   INIT(state, payload) {
     if (!state.shadowQuill) {
-      state.shadowQuillElement.innerHTML = payload;
-      state.shadowQuill = new Quill(state.shadowQuillElement);
-      state.translationHtml = payload;
+      translationShadowQuillElement.innerHTML = payload.content;
+      translationShadowQuill = new Quill(translationShadowQuillElement);
+      state.translationContent = translationShadowQuillElement.children[0].innerHTML;
+      console.log('STORE ACTION translation/INIT')
+
+      notesShadowQuillElement.innerHTML = payload.withNotes;
+      notesShadowQuill = new Quill(notesShadowQuillElement);
+      state.translationWithNotes = notesShadowQuillElement.children[0].innerHTML;
+
     }
   },
-
+  ALIGNMENTS(state, payload) {
+    state.translationAlignments = payload;
+  },
   UPDATE (state, payload) {
-    //console.log("STORE MUTATION translation/UPDATE")
-    state.translation = payload.raw;
-    state.translationWithNotes = payload.formatted;
+    state.translation = payload.translation;
+    state.translationWithNotes = payload.withNotes;
     state.translationSaved = true;
   },
   CHANGED (state) {
     // translation changed and needs to be saved
-    //console.log("STORE MUTATION translation/CHANGED")
     state.translationSaved = false;
   },
   ADD_OPERATION (state, payload) {
-    state.shadowQuill.updateContents(payload);
-    //console.log("STORE MUTATION translation/ADD_OPERATION", payload)
-    state.translationHtml = state.shadowQuillElement.children[0].innerHTML;
+
+    console.log("STORE MUTATION translation/ADD_OPERATION")
+
+    const deltaFilteredForContent = removeFromDelta(payload, ['note','speechpart']);
+    const deltaFilteredForNotes = removeFromDelta(payload, ['segment','speechpart']);
+    const deltaFilteredForSpeechparts = removeFromDelta(payload, ['note','segment']);
+
+    translationShadowQuill.updateContents(deltaFilteredForContent);
+    notesShadowQuill.updateContents(deltaFilteredForNotes);
+
+    state.translationContent = translationShadowQuillElement.children[0].innerHTML;
+    state.translationWithNotes = notesShadowQuillElement.children[0].innerHTML;
+
   },
   SAVED (state) {
     // translation changed and needs to be saved
-    //console.log("STORE MUTATION translation/SAVED", payload);
+    console.log("STORE MUTATION translation/SAVED");
     state.translationSaved = false;
   }
 
@@ -49,14 +76,15 @@ const mutations = {
 
 const actions = {
 
-  fetch ({ commit, rootGetters }) {
+  fetch ({ commit, rootGetters, rootState }) {
 
     const doc_id = rootGetters['document/document'].id;
     const user_id = rootGetters['user/currentUser'].id;
+    const alignments = rootState.transcription.transcriptionAlignments;
 
-    console.log('STORE ACTION translation/fetch')
+    console.log('STORE ACTION translation/fetch',rootState)
 
-    axios.get(`/api/1.0/documents/${doc_id}/translations/from-user/${user_id}`).then( response => {
+    return axios.get(`/api/1.0/documents/${doc_id}/translations/from-user/${user_id}`).then( response => {
 
 
       let translation = {content : " ", notes: []};
@@ -64,22 +92,28 @@ const actions = {
       if (response.data.data && response.data.data.length !== 0) {
         translation = response.data.data;
       }
+      let quillContent = TEIToQuill(translation.content);
+      let content = insertSegments(quillContent, alignments, 'translation');
+      const withNotes = insertNotesAndSegments(quillContent, translation.notes, alignments, 'translation');
 
-      const content = translation.content;
-      const notes = translation.notes;
-      const formatted = insertNotes(content, notes);
+      const data = {
+        translation: translation,
+        content: convertLinebreakTEIToQuill(content),
+        withNotes: convertLinebreakTEIToQuill(withNotes),
+      }
 
-      commit('INIT', content)
-      commit('UPDATE', { raw: translation, formatted: formatted });
+      commit('INIT', data)
+      commit('UPDATE', data);
     });
 
-  },
-  save ({ commit, dispatch, getters, rootState }, translationWithNotes) {
 
-    console.log('STORE ACTION translation/save', translationWithNotes);
+  },
+  save ({ commit, dispatch, getters, rootState }) {
+
+    console.log('STORE ACTION translation/save');
 
     return dispatch('saveContent')
-      .then(reponse => dispatch('saveNotes', transcriptionWithNotes))
+      .then(reponse => dispatch('saveNotes'))
       .then(function(values) {
         console.log('all saved', values);
       })
@@ -87,48 +121,59 @@ const actions = {
   },
   saveContent ({ state, rootGetters }) {
     console.log('STORE ACTION translation/saveContent');
-    const auth = {}//rootGetters['user/authHeader'];
+    const auth = rootGetters['user/authHeader'];
+    const tei = quillToTEI(state.translationContent);
+    const sanitized = stripSegments(tei);
     const data = { data: [{
-        "content" :  state.translationHtml,
+        "content" : sanitized,
         "username": rootGetters['user/currentUser'].username
       }]};
 
-
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/translations`, data, auth)
+      axios.put(`/api/1.0/documents/${state.translation.doc_id}/translations`, data, auth)
         .then( response => {
-          if (response.data.errors) reject(response.data.errors);
+          if (response.data.errors) {
+            console.error("error", response.data.errors);
+            reject(response.data.errors);
+          }
           else resolve( response.data )
         })
         .catch( error => {
+          console.error("error", error)
           reject( error )
         });
     } );
   },
-  saveNotes ({ commit, rootGetters, state, rootState }, transcriptionWithNotes) {
+  saveNotes ({ commit, rootGetters, state, rootState }) {
+
+    console.log('STORE ACTION translation/saveNotes');
 
     // compute notes pointers
-    const sanitizedTranscriptionWithNotes = stripSegments(transcriptionWithNotes);
-    const notes = computeNotesPointers(sanitizedTranscriptionWithNotes);
+    let sanitizedWithNotes = stripSegments(state.translationWithNotes);
+    sanitizedWithNotes = convertLinebreakQuillToTEI(sanitizedWithNotes);
+    const notes = computeNotesPointers(sanitizedWithNotes);
     notes.forEach(note => {
       let found = rootState.notes.notes.find((element) => {
         return element.id === note.note_id;
       });
       note.content = found.content;
     });
-    console.log('STORE ACTION transcription/saveNotes', notes);
 
     const auth = rootGetters['user/authHeader'];
 
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions/notes`, { data: notes }, auth)
+      axios.put(`/api/1.0/documents/${state.translation.doc_id}/translations/notes`, { data: notes }, auth)
         .then( response => {
-          resolve( response.data )
-        } )
+          if (response.data.errors) {
+            console.error("error", response.data.errors);
+            reject(response.data.errors);
+          }
+          else resolve( response.data )
+        })
         .catch( error => {
+          console.error("error", error)
           reject( error )
-          //dispatch( 'error', { error } )
-        } );
+        });
     } );
   },
   changed ({ commit }, deltas) {
@@ -140,11 +185,10 @@ const actions = {
 
 const getters = {
   translation: state => state.translation,
-  translationWithNotes: state => state.translationWithNotes,
   translationContent: state => !!state.translation ? state.translation.content : null,
+  translationWithNotes: state => state.translationWithNotes,
+  translationWithSegments: state => state.translationWithSegments,
   translationIsSaved: state => state.translationSaved,
-  translationHTML: state => state.translationHtml,
-  //translationWithNotes: state =>
 };
 
 const translationModule = {

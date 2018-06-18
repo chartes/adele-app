@@ -71,10 +71,6 @@
 
         <save-bar :action="save"/>
 
-        <!--<small><pre>{{ delta }}</pre></small>-->
-
-        <!--<div v-html="$store.getters.transcriptionHTML"></div>-->
-
     </div>
 </template>
 

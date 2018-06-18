@@ -20,6 +20,43 @@ const filterDeltaForSpeechParts = (delta) => {
   });
   return filteredDelta;
 }
+const removeFromDelta = (delta, arrAttributesToRemove) => {
+  let filteredDelta = new Delta();
+  delta.forEach(function (op) {
+    let newOp = {};
+    let type;
+    if (op.retain) {
+      type = 'retain';
+    } else if (op.insert) {
+      type = 'insert';
+    } else if (op.delete) {
+      type = 'delete';
+    }
+    if (op[type] !== null && typeof op[type] === 'object') {
+      let obj = Object.assign({}, op[type]);
+      arrAttributesToRemove.forEach(attr => {
+        delete obj[attr];
+      });
+      newOp[type] = obj;
+    } else {
+      newOp[type] = op[type];
+    }
+
+    if (op.attributes) {
+      let attribs = Object.assign({}, op.attributes);
+      arrAttributesToRemove.forEach(attr => {
+        delete attribs[attr];
+      });
+      newOp.attributes = attribs;
+    }
+
+    //console.log('newOp', newOp);
+
+    filteredDelta.ops.push(newOp);
+
+  });
+  return filteredDelta;
+}
 
 const removeNotesFromDelta = (delta) => {
   let filteredDelta = new Delta();
@@ -33,5 +70,6 @@ const removeNotesFromDelta = (delta) => {
 export {
   getNewDelta,
   filterDeltaForSpeechParts,
+  removeFromDelta,
   removeNotesFromDelta
 }

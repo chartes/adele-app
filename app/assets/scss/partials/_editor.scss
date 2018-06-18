@@ -2,6 +2,21 @@
   box-sizing: border-box;
 }
 
+@mixin segment {
+  background: cornflowerblue;
+  border-radius: 50%;
+  color: #fff;
+  counter-increment: segment-count;
+  content: counter(segment-count);
+  font-size: 70%;
+  font-weight: bold;
+  width: 25px;
+  height: 25px;
+  line-height: .8;
+  text-align: center;
+  padding-top: 0.7em;
+}
+
 html, body {
   height: 100%;
   margin: 0;
@@ -58,7 +73,6 @@ html, body {
 }
 #editor-container {
   .ql-editor {
-    counter-reset: segment-count 0;
     min-height: 100%;
     height: inherit;
     overflow-y: inherit;
@@ -77,7 +91,7 @@ html, body {
 
 .ql-editor {
 
-  line-height: 1.6;
+  line-height: 1.8;
   counter-reset: segment-count 1;
 
   &:focus {
@@ -101,6 +115,8 @@ html, body {
   }
 }
 .ql-clipboard { display: none; }
+
+/* tags custom */
 
 abbr, ex {
   /*&:before { content: '('}
@@ -133,22 +149,45 @@ speechpart {
   }
 }
 
-segment {
-  display: inline-block;
-  background: cornflowerblue;
-  margin: 0 .5em;
-  padding: 0 .5em;
-  border-radius: 50%;
-  color: #fff;
-  &:before {
-    counter-increment: segment-count;
-    content: counter(segment-count);
+.ql-editor {
+    counter-reset: segment-count 0;
+}
+.ql-editor {
+  segment {
+    display: inline-block;
+    &:before {
+      display: inline-block;
+      margin: 0 .5em;
+      @include segment;
+    }
   }
+  span.br {
+    display: block;
+  }
+   p, l, .segment-bullet {
+    &:before {
+      display: inline-block;
+      margin: 0 .5em 0 0;
+      @include segment;
+    }
+  }
+  /*lb {
+    &:before {
+      content: '\A';
+    }
+
+    &:after {
+      display: inline-block;
+      @include segment;
+    }
+  }*/
 }
 l {
   font-family: Georgia, Times New Roman, serif;
 }
-
+note {
+    text-decoration: underline;
+}
 
 .in-editor-actions, .note-actions {
   z-index: 1000;
@@ -175,9 +214,7 @@ l {
     .button { width: 100%; }
 }
 
-note {
-    text-decoration: underline;
-}
+
 .notes-list-item {
 
     background-color: #fff;

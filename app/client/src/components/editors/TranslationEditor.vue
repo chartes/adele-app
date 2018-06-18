@@ -69,7 +69,6 @@
                 :submit="deleteNote"
         />
 
-        <save-bar :action="save"/>
 
     </div>
 </template>

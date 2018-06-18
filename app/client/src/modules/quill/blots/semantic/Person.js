@@ -13,7 +13,6 @@ let Inline = Quill.import('blots/inline');
 class PersonBlot extends Inline {
 
   static create(data) {
-    console.log("PersonBlot.create", data);
     let node = super.create();
     node.setAttribute('ref', data);
     return node;
@@ -37,7 +36,6 @@ class PersonBlot extends Inline {
   formats() {
     let formats = super.formats();
     formats['person'] = PersonBlot.formats(this.domNode);
-    console.log("PersonBlot.formats", formats['person']);
     return formats;
   }
 }

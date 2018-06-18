@@ -14,14 +14,12 @@ class LocationBlot extends Inline {
 
   static create(data) {
     let node = super.create();
-    console.log("LocationBlot.create", data);
     node.setAttribute('ref', data);
     return node;
   }
 
   static formats(domNode) {
     let ref = domNode.getAttribute('ref');
-    console.log("PersonBlot.formats static", ref);
     return ref || true;
   }
 
@@ -38,7 +36,6 @@ class LocationBlot extends Inline {
   formats() {
     let formats = super.formats();
     formats['location'] = LocationBlot.formats(this.domNode);
-    console.log("PersonBlot.formats", formats['location']);
     return formats;
   }
 }

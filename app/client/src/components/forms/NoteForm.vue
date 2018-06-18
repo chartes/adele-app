@@ -97,7 +97,7 @@
       }
     },
     computed: {
-      ...mapGetters(['noteTypes'])
+      ...mapGetters('noteTypes', ['noteTypes'])
     }
   }
 </script>

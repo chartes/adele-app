@@ -11,7 +11,7 @@ const MAPPING_QUILL_TO_TEI = {
   'section': { tag: 'div'},
   'ul': { tag: 'list'},
   'li': { tag: 'item'},
-  'br': { tag: 'lb'},
+  //'br': { tag: 'lb'},
   'i': { tag: 'hi', attr: 'rend', attrValue:'i'},
   'strong': { tag: 'hi', attr: 'rend', attrValue:'b'},
   'sup': { tag: 'hi', attr: 'rend', attrValue:'sup'},
@@ -42,7 +42,7 @@ const MAPPING_TEI_TO_QUILL = {
   'div': { tag: 'section'},
   'list': { tag: 'ul'},
   'item': { tag: 'li'},
-  'lb': { tag: 'br'},
+  //'lb': { tag: 'br'},
   'hi': {
     mapping: {
       mapping_type: 'attr', // definit la condition en fonction d'un attribut
@@ -71,30 +71,38 @@ const MAPPING_TEI_TO_QUILL = {
   'placeName': { tag: 'placename'},
 };
 
-const teiToQuill = (teiString) => {
+const TEIToQuill = (teiString) => {
 
   const xmlDoc = parser.parseFromString('<doc>'+teiString+'</doc>',"text/xml");
-
   let newDoc;
   newDoc = recurChange(xmlDoc.documentElement, MAPPING_TEI_TO_QUILL);
   let str = xmlSerializer.serializeToString(newDoc);
+  str = str.replace(/<lb><\/lb>/gi, '<lb/>');
   str = str.replace(/<\/?doc([^>]*)>/gi, '');
-  str = str.replace(/<(\/?)persname( ref="[^"]*")?>/gmi, '<$1persName$2>');
-  str = str.replace(/<(\/?)placename( ref="[^"]*")?>/gmi, '<$1placeName$2>');
+  //str = convertLinebreakTEIToQuill(str);
   return str;
 
-}
+};
 
 const quillToTEI = quillString => {
 
   const xmlDoc = parser.parseFromString('<doc>'+quillString+'</doc>',"text/xml");
-
   let newDoc;
   newDoc = recurChange(xmlDoc.documentElement, MAPPING_QUILL_TO_TEI);
   let str = xmlSerializer.serializeToString(newDoc);
-  return str.replace(/<\/?doc([^>]*)>/gi, '');
-
+  str = convertLinebreakQuillToTEI(str);
+  str = str.replace(/<(\/?)persname( ref="[^"]*")?>/gmi, '<$1persName$2>');
+  str = str.replace(/<(\/?)placename( ref="[^"]*")?>/gmi, '<$1placeName$2>');
+  str = str.replace(/<\/?doc([^>]*)>/gi, '');
+  return str;
 };
+
+const convertLinebreakTEIToQuill = str => {
+  return str.replace(/<lb\/?>(<\/lb>)?/gi, '<lb><span class="br"></span><span class="segment-bullet"></span></lb>');
+}
+const convertLinebreakQuillToTEI = str => {
+  return str.replace(/<lb><span class="br"><\/span><span class="segment-bullet"><\/span><\/lb>/gi, '<lb/>');
+}
 
 function changeElementName (elt, name) {
   var newElt = document.createElement(name);
@@ -192,11 +200,81 @@ const insertNotes = (text, notes) => {
   })
   return result;
 };
+const insertSegments = (text, segments, translationOrTranscription) => {
+  const index = translationOrTranscription === 'transcription' ? 0 : 2;
+  const tag = `<segment></segment>`;
+  const tagLength = tag.length;
+  let result = text;
+  let indexCorrection = 0;
+  segments.forEach(segment => {
+    let strAtInsertPoint = result.substr(segment[index] + indexCorrection, 3);
+    if (segment[index] + indexCorrection > 0 && strAtInsertPoint !== '<p>' && strAtInsertPoint !== '<l>' && strAtInsertPoint !== '<lb>') {
+      result = result.insert(segment[index] + indexCorrection, tag);
+      indexCorrection += tagLength;
+    }
+  });
+  return result;
+};
+const insertNotesAndSegments  = (text, notes, segments, translationOrTranscription) => {
+
+  const index = translationOrTranscription === 'transcription' ? 0 : 2;
+  let insertions = [];
+  notes.forEach(note => {
+    insertions.push({index: note.ptr_start, type: 'note_start', note: note});
+    insertions.push({index: note.ptr_end, type: 'note_end'});
+  });
+  segments.forEach(segment => {
+    insertions.push({index: segment[index], type: 'segment'});
+  });
+  insertions.sort((a, b) => { return a.index - b.index; });
+
+  //console.log('')
+  //console.log('insertNotesAndSegments', translationOrTranscription)
+  //console.log('notes', notes)
+  //console.log('segments', segments)
+  //console.log(insertions)
+  //console.log('')
+
+  let result = text;
+  let indexCorrection = 0;
+
+  insertions.forEach(ins => {
+    let insertTag = '';
+    let inserted = false;
+    switch (ins.type) {
+      case 'segment':
+        let strAtInsertPoint = result.substr(ins.index + indexCorrection, 3);
+        inserted = (ins.index + indexCorrection > 0 && strAtInsertPoint !== '<p>' && strAtInsertPoint !== '<l>' && strAtInsertPoint !== '<lb');
+        if (ins.index + indexCorrection > 0 && strAtInsertPoint !== '<p>' && strAtInsertPoint !== '<l>' && strAtInsertPoint !== '<lb') {
+          insertTag = '<segment></segment>';
+        }
+        //console.log(" insert ", ins.type, "@ "+ins.index, `(${ins.index} + ${indexCorrection})`, insertTag, strAtInsertPoint, inserted ? 'OUI' : 'NON');
+        break;
+      case 'note_start':
+        insertTag = `<note id="${ins.note.id}">`;
+        //console.log(" insert ", ins.type, "@ "+ins.index, `(${ins.index} + ${indexCorrection})`, insertTag);
+        inserted = true;
+        break;
+      case 'note_end':
+        insertTag = `</note>`;
+        //console.log(" insert ", ins.type, "@ "+ins.index, `(${ins.index} + ${indexCorrection})`, insertTag);
+        inserted = true;
+        break;
+    }
+    result = result.insert(ins.index + indexCorrection, insertTag);
+    if (inserted) //console.log(" =>", result)
+    indexCorrection += insertTag.length;
+  });
+
+  return result
+}
 const stripNotes  = text => text.replace(/<\/?note( id="\d+")?>/gmi, '');
 const stripSegments  = text => text.replace(/<\/?segment>/gmi, '');
 
 const computeNotesPointers  = (htmlWithNotes) => {
 
+  //console.log("computeNotesPointers:")
+  //console.log(htmlWithNotes)
   const regexpStart = /<note id="(\d+)">/;
   const regexpEnd = /<\/note>/;
   let resStart, resEnd;
@@ -216,14 +294,44 @@ const computeNotesPointers  = (htmlWithNotes) => {
 const computeAlignmentPointers  = (htmlWithSegments) => {
 
   const reg = /<segment><\/segment>/gmi;
-  const splitted  = htmlWithSegments.split(reg);
-  console.log("computeAlignmentPointers", splitted);
-  return splitted.map(seg => seg.length);
+  let splitted  = htmlWithSegments.split(reg);
+  let positions = [];
+  //console.log("computeAlignmentPointers");
+  //console.log(htmlWithSegments);
+  //console.log("   splitted", splitted.length, splitted);
+  let acc = 0;
+  for (let i = 0; i < splitted.length; ++i) {
+    acc += splitted[i].length;
+    positions.push(acc);
+  }
+  //console.log("   segments positions", positions);
+
+  const htmlWithoutSegments = htmlWithSegments.replace(reg, '');
+  //console.log('htmlWithoutSegments', htmlWithoutSegments);
+  let regexp = /<(p|lb?)\/?>/gmi;
+  let res;
+  while ((res = regexp.exec(htmlWithoutSegments)) !== null) {
+    //console.log("BR @", res.index)
+    positions.push(res.index);
+  }
+  positions.sort((a, b) => {
+    return a - b;
+  });
+  let pointers = [];
+  for (let i = 1; i < positions.length; ++i) {
+    pointers.push([positions[i-1], positions[i]])
+  }
+  return pointers;
 }
 
-export default teiToQuill;
 export {
+  quillToTEI,
+  TEIToQuill,
+  convertLinebreakTEIToQuill,
+  convertLinebreakQuillToTEI,
+  insertNotesAndSegments,
   insertNotes,
+  insertSegments,
   stripNotes,
   stripSegments,
   computeAlignmentPointers,

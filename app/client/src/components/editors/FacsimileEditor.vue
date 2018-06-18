@@ -18,7 +18,7 @@
         name: "transcription-editor",
         components: { IIIFMap },
         computed: {
-            ...mapGetters(['manifestURL'])
+            ...mapGetters('document', ['manifestURL'])
         }
     }
 </script>
