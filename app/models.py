@@ -267,13 +267,27 @@ class Editor(db.Model):
         }
 
 
+class ImageZoneType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'label': self.label
+        }
+
+
 class ImageZone(db.Model):
     manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
     img_id = db.Column(db.String, db.ForeignKey('image.id'), primary_key=True)
     zone_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    zone_type_id = db.Column(db.Integer, db.ForeignKey('image_zone_type.id'), primary_key=True)
     coords = db.Column(db.String)
     note = db.Column(db.String)
+
+    zone_type = db.relationship("ImageZoneType", primaryjoin="ImageZoneType.id==ImageZone.zone_type_id", backref=db.backref('image_zones'))
 
     def serialize(self):
         return {
@@ -281,6 +295,7 @@ class ImageZone(db.Model):
             'img_id' : self.img_id,
             'zone_id' : self.zone_id,
             'user_id' : self.user_id,
+            'zone_type': self.zone_type.serialize(),
             'coords' : self.coords,
             'note' : self.note
         }

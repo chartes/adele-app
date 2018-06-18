@@ -1,9 +1,10 @@
 import pprint
+from flask import jsonify
 
 from config import Config
 
 
-def make_annotation_list(list_id, doc_id, annotations):
+def make_annotation_list(list_id, doc_id, annotations, annotation_type):
     """
 
     :param list_id:
@@ -15,7 +16,12 @@ def make_annotation_list(list_id, doc_id, annotations):
         "@context":"http://iiif.io/api/presentation/2/context.json",
         "@id": "http://{0}/dossiers/{1}/list/{2}".format(Config.APP_DOMAIN_NAME, doc_id, list_id),
         "@type": "sc:AnnotationList",
-        "resources": annotations
+        "resources": annotations,
+        "metadata": [
+            {
+                "annotation_type": annotation_type
+            }
+        ],
     }
 
 

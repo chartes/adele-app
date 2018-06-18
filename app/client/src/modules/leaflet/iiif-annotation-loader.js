@@ -24,7 +24,7 @@ const IIIFAnnotationLoader = {
     initialize: function (manifest_data, options = {}) {
         this.manifest = manifest_data;
         this.options = Object.assign(this.options, options);
-        this.annotations = [];
+        this.annotationLists = [];
 
         let canvas = this.getFirstCanvas();
         // get annotation lists urls
@@ -144,26 +144,36 @@ const IIIFAnnotationLoader = {
         return new_annotation;
     },
 
-
     loadAnnotationList: function (list_url) {
         //console.log("Adding list " + list_url);
-        if (!this.annotations[list_url])
-            this.annotations[list_url] = [];
-
+        this.annotationLists[list_url] = {annotation_type: undefined, annotations: []};
         return axios.get(list_url)
             .then(response => {
-                if (response.data.resources)
+
+                for(const m of response.data.metadata) {
+                    if (m["annotation_type"]) {
+                        this.annotationLists[list_url].annotation_type = m["annotation_type"];
+                    }
+                }
+
+                if(!this.annotationLists[list_url].annotation_type){
+                    throw new Error("Annotation type metadata is empty for annotation list " + list_url);
+                }
+
+                if (response.data.resources){
                     for (let annotation of response.data.resources) {
                         let new_annotation = this.parseAnnotation(annotation);
                         if (new_annotation) {
-                            this.annotations[list_url].push(new_annotation);
+                            this.annotationLists[list_url].annotations.push(new_annotation);
                         }
                     }
+                }
             })
             .catch(error => {
-                console.log(error)
+                console.log(error);
             });
-    }
+    },
+
 };
 
 export default IIIFAnnotationLoader;

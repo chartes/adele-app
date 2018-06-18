@@ -1,21 +1,24 @@
-
 const LeafletIIIFAnnotation = {
 
-    ZOOM:2,
+    ZOOM: 2,
 
     resetMouseOverStyle: function () {
         for (let e of document.getElementsByClassName("leaflet-interactive")) {
             e.style.opacity = 0;
             e.style.cursor = "pointer";
-            e.onmouseover = function () { this.style.opacity = 100;};
-            e.onmouseout = function () { this.style.opacity = 0; };
+            e.onmouseover = function () {
+                this.style.opacity = 100;
+            };
+            e.onmouseout = function () {
+                this.style.opacity = 0;
+            };
         }
     },
 
     initialize: function (leaflet_map, featureGroup) {
 
         this.annotations = [];
-
+        this.annotationTypes = {};
         this.map = leaflet_map;
         this.featureGroup = featureGroup;
 
@@ -38,49 +41,57 @@ const LeafletIIIFAnnotation = {
 
     },
 
-    _makeAnnotation: function(layer) {
-          const tooltip = layer.getTooltip();
-           const content = tooltip === undefined ? "" : tooltip.getContent();
-           let coords = [];
-           if (layer instanceof L.Circle) {
-               const c = layer.toGeoJSON().geometry.coordinates;
-               const center = this.map.project([c[1], c[0]], LeafletIIIFAnnotation.ZOOM);
-               coords = [center.x, center.y, layer.getRadius()]
-           } else {
-               // todo instance of L.Rectangle
-               // else polygon
-               for(let c of layer.toGeoJSON().geometry.coordinates ) {
-                   for(let i = 0; i < c.length; i++) {
-                      const point = this.map.project([c[i][1], c[i][0]], LeafletIIIFAnnotation.ZOOM);
-                      coords.push(point.x + "," + point.y);
-                  }
-               }
-           }
+    _makeAnnotation: function (layer) {
+        const tooltip = layer.getTooltip();
+        const content = tooltip === undefined ? "" : tooltip.getContent();
+        let coords = [];
+        if (layer instanceof L.Circle) {
+            const c = layer.toGeoJSON().geometry.coordinates;
+            const center = this.map.project([c[1], c[0]], LeafletIIIFAnnotation.ZOOM);
+            coords = [center.x, center.y, layer.getRadius()]
+        } else {
+            // todo instance of L.Rectangle
+            // else polygon
+            for (let c of layer.toGeoJSON().geometry.coordinates) {
+                for (let i = 0; i < c.length; i++) {
+                    const point = this.map.project([c[i][1], c[i][0]], LeafletIIIFAnnotation.ZOOM);
+                    coords.push(point.x + "," + point.y);
+                }
+            }
+        }
 
-           const annotation = {
-               region : { coords : coords.join(',')},
-               content : content
-           };
-           return annotation
+        if(!layer.annotation_type){
+            layer.annotation_type = this.annotationTypes["transcription"];
+        }
+
+        return {
+            region: {coords: coords.join(',')},
+            content: content,
+            annotation_type: layer.annotation_type
+        };
     },
 
-    getAnnotations: function() {
+    getAnnotations: function () {
         this.annotations = [];
         const _this = this;
-        this.featureGroup.eachLayer(function(layer){
+        this.featureGroup.eachLayer(function (layer) {
             _this.annotations.push(_this._makeAnnotation(layer))
         });
         return this.annotations
     },
 
-    setAnnotations: function(annotations) {
+    setAnnotations: function (annotationLists) {
+        this.featureGroup.clearLayers();
         /*
             let's draw the regions
          */
+        console.log(this.featureGroup.getLayers().length);
+
         const facsimileToolTipOptions = {direction: "center", className: "facsimileToolTip"};
 
-        for (let id in annotations) {
-            for (let annotation of annotations[id]) {
+        for (let listId in annotationLists) {
+            for (let annotation of annotationLists[listId].annotations) {
+
                 let c = annotation.region.coords.split(',');
                 let shape = null;
                 switch (annotation.region.type) {
@@ -99,14 +110,15 @@ const LeafletIIIFAnnotation = {
                         break;
                 }
                 //add the shape & the content to the map
-                this.featureGroup.addLayer(shape);
+
                 shape.bindTooltip(annotation.content, facsimileToolTipOptions);
-                shape.addTo(this.map);
-                //append to the annotations list
-                //this.annotations.push(annotation);
+                shape.annotation_type = annotationLists[listId].annotation_type;
+                this.featureGroup.addLayer(shape);
+                this.annotationTypes[annotationLists[listId].annotation_type.label] = annotationLists[listId].annotation_type;
+                //shape.addTo(this.map);
             }
         }
-
+        console.log(this.featureGroup.getLayers().length);
         this.resetMouseOverStyle();
     }
 };

@@ -90,6 +90,7 @@
                         },
                         //circle: true, // Turns off this drawing tool
                         circlemarker: false,
+                        marker: false,
                         rectangle: {
                             shapeOptions: {
                                 clickable: false
@@ -109,13 +110,21 @@
                 */
                 let saveCallback = this.saveAnnotations;
                 drawControls._toolbars.edit._save = function () {
-                    if (saveCallback()) {
-                        drawControls._toolbars.edit._activeMode.handler.save();
-                    }
-                    else {
-                        // save failed on the server side
-                        console.log("saving annotations has failed on the server side");
-                    }
+
+                    saveCallback().then((response) => {
+                        if (response) {
+                            drawControls._toolbars.edit._activeMode.handler.save();
+                            if (drawControls._toolbars.edit._activeMode) {
+                                drawControls._toolbars.edit._activeMode.handler.disable();
+                            }
+                            console.log("annotations saving succeeded");
+                        }
+                        else {
+                            // save failed on the server side
+                            console.log("saving annotations has failed on the server side");
+                        }
+                    });
+
                     /*if (drawControls._toolbars.edit._activeMode) {
                         drawControls._toolbars.edit._activeMode.handler.disable();
                     }*/
@@ -146,68 +155,90 @@
                     this.removeDrawControls();
                 }
             },
-
-            addAnnotations() {
-                console.log("add annotations");
-                this.annotationsLoader.then(function () {
-                    LeafletIIIFAnnotation.setAnnotations(IIIFAnnotationLoader.annotations);
-                });
-            },
-            saveAnnotations() {
-                /*
-                  - Read annotations from LeafletIIIFAnnotation
-                  - call the API to post the new data
-                  - eventually redraw with correctly updated data from the API side
-                 */
-
-                const annotations = [];
-                for (let anno of LeafletIIIFAnnotation.getAnnotations()) {
+            _saveZones(doc_id, user_id, annotations){
+                const new_annotations = [];
+                for (let anno of annotations) {
                     const newAnnotation = {
                         manifest_url: this.$store.getters['document/manifestURL'],
                         img_id: this.page.images[0].resource["@id"],
                         coords: anno.region.coords,
-                        content: anno.content
+                        content: anno.annotation_type.label === "annotation" ? anno.content : "",
+                        zone_type_id: anno.annotation_type.id
                     };
-                    //console.log(newAnnotation);
-                    annotations.push(newAnnotation);
+                    new_annotations.push(newAnnotation);
                 }
-
-                const APP_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImlhdCI6MTUyODcwODQyOCwiZXhwIjoxNTI4Nzk0ODI4fQ.eyJpZCI6MX0.oatBMe6Z-7SK8T0QyMBmxeOUnRSCrNrIVrOr9-L-rog';
-                console.log('saveAnnotations');
-
-                const docId = this.$store.getters.document.id;
-
-                this.$store.dispatch('getCurrentUser').then(() =>  {
-                    const user_id = this.$store.getters.currentUser.id;
-                    axios.delete(`/api/1.0/documents/${docId}/annotations/from-user/${user_id}`,
-                        {
-                            auth: {username: APP_AUTH_TOKEN, password: undefined}
-                        })
-                        .then((response) => {
-                            console.log("annotations deleted");
-                            axios.post(`/api/1.0/documents/${docId}/annotations`, {"data": annotations},
-                                {
-                                    auth: {username: APP_AUTH_TOKEN, password: undefined}
-                                })
-                                .then((response) => {
-                                    console.log("annotations created")
-                                });
-                        });
-
+                return axios.delete(`/api/1.0/documents/${doc_id}/annotations/from-user/${user_id}`,
+                    this.$store.getters['user/authHeader'])
+                    .then((response) => {
+                        return axios.post(`/api/1.0/documents/${doc_id}/annotations`, {"data": new_annotations},
+                            this.$store.getters['user/authHeader']
+                    );
                 });
-
-
-                return false;
             },
-            removeAnnotations() {
-                console.log("remove annotations");
+            _saveAlignments(doc_id, user_id, annotations) {
+                return axios.delete(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`,
+                    this.$store.getters['user/authHeader'])
+                    .then((response) => {
+                         let data = {
+                             username : "AdminJulien",
+                             manifest_url :  "http://193.48.42.68/adele/iiif/manifests/man20.json",
+                             img_id : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                             alignments : [
+                                {
+                                    "zone_id" : 15,
+                                    "ptr_start": 1,
+                                    "ptr_end": 20
+                                },
+                                {
+                                    "zone_id" : 26,
+                                    "ptr_start": 21,
+                                    "ptr_end": 450
+                                }
+                             ]
+                         };
+                         for (let anno of annotations) {
+                             // TODO
+                         }
+                         return axios.post(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images`, {"data": data},
+                             this.$store.getters['user/authHeader']
+                         );
+                    });
+            },
+            saveAnnotations() {
+                /*
+                  - Read annotations from LeafletIIIFAnnotation
+                  - call the API to post the new data (zones & alignments)
+                  - eventually redraw with correctly updated data from the API side
+                 */
+                const annotations = LeafletIIIFAnnotation.getAnnotations();
+
+                const doc_id = this.$store.getters['document/document'].id;
+                const user_id = this.$store.getters['user/currentUser'].id;
+
+                return this._saveZones(doc_id, user_id, annotations)
+                    .then((response) => {
+                        return this._saveAlignments(doc_id, user_id, annotations)
+                    })
+                    .then((response) => {
+                        console.log("facsimile saved");
+                        return true
+                    });
+            },
+            setAnnotations() {
+                console.log("set annotations");
+                this.annotationsLoader.then(function () {
+                    LeafletIIIFAnnotation.setAnnotations(IIIFAnnotationLoader.annotationLists);
+                });
+            },
+            clearAnnotations() {
+                console.log("clear annotations");
                 this.editableLayers.clearLayers();
             },
             toggleDisplayAnnotations() {
                 if (this.displayAnnotationsMode) {
-                    this.addAnnotations();
+                    this.setAnnotations();
                 } else {
-                    this.removeAnnotations();
+                    this.clearAnnotations();
                 }
             },
 
@@ -222,14 +253,14 @@
         watch: {
             displayAnnotationsMode: function () {
                 if (this.displayAnnotationsMode) {
-                    this.addAnnotations();
+                    this.setAnnotations();
                 } else {
-                    this.removeAnnotations();
+                    this.clearAnnotations();
                 }
             },
             drawMode: function () {
                 if (this.drawMode) {
-                    this.addDrawControls();
+                    this.setDrawControls();
                 } else {
                     this.removeDrawControls();
                 }

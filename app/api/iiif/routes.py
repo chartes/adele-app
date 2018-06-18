@@ -1,3 +1,4 @@
+import pprint
 from flask import url_for, request, current_app
 from requests import HTTPError
 from sqlalchemy import func
@@ -9,7 +10,12 @@ from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
 from app.api.transcriptions.routes import get_reference_transcription
-from app.models import AlignmentImage, ImageZone, Image
+from app.models import AlignmentImage, ImageZone, Image, ImageZoneType
+
+
+TR_ZONE_TYPE = 1
+ANNO_ZONE_TYPE = 2
+
 
 """
 ===========================
@@ -37,6 +43,20 @@ def api_documents_manifest(api_version, doc_id):
         data = json_loads(manifest_data)
         response = APIResponseFactory.make_response(data=data)
 
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest-url')
+def api_documents_manifest_url(api_version, doc_id):
+    try:
+        img = Image.query.filter(Image.doc_id == doc_id).one()
+        url = img.manifest_url
+        response = APIResponseFactory.make_response(data={"manifest_url": url})
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404,
+            "details": "Cannot fetch manifest for the document {0}".format(doc_id)
+        })
     return APIResponseFactory.jsonify(response)
 
 
@@ -163,10 +183,12 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
 
             kargs = {"doc_id": doc_id, "api_version": api_version, "user_id": user_id}
 
+            zone_type = ImageZoneType.query.filter(ImageZoneType.id == ANNO_ZONE_TYPE).one()
+
             if user_id is None:
-                zones = [z for z in img.zones if z.note is not None]
+                zones = [z for z in img.zones if z.zone_type.id == zone_type.id]
             else:
-                zones = [z for z in img.zones if z.note is not None and z.user_id == int(user_id)]
+                zones = [z for z in img.zones if z.zone_type.id and z.user_id == int(user_id)]
 
             for img_zone in zones:
                 kargs["zone_id"] = img_zone.zone_id
@@ -177,7 +199,7 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
                 )
                 annotations.append(new_annotation)
 
-            annotation_list = make_annotation_list("f1", doc_id, annotations)
+            annotation_list = make_annotation_list("f1", doc_id, annotations, zone_type.serialize())
             response = annotation_list
 
     return APIResponseFactory.jsonify(response)
@@ -213,52 +235,61 @@ def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
         })
 
     if response is None:
-        # let's go finding the alignment segments
-        try:
-            json_obj = query_json_endpoint(
+            first_canvas = query_json_endpoint(
                 request,
                 url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
             )
+            if "errors" in first_canvas:
+                response = APIResponseFactory.make_response(errors=first_canvas["errors"])
 
-            if "errors" in json_obj:
-                response = APIResponseFactory.make_response(errors=json_obj["errors"])
-            else:
-                canvas = json_obj["data"]
-                img_json = canvas["images"][0]
+            if response is None:
+                manifest_url = query_json_endpoint(
+                    request,
+                    url_for('api_bp.api_documents_manifest_url', api_version=api_version, doc_id=doc_id)
+                )
+                if "errors" in manifest_url:
+                    response = APIResponseFactory.make_response(errors=manifest_url["errors"])
 
+            if response is None:
+                first_img = first_canvas["data"]["images"][0]
+                manifest_url = manifest_url["data"]["manifest_url"]
                 annotations = []
 
-                img_als = AlignmentImage.query.filter(
-                    AlignmentImage.transcription_id == tr.id,
-                    AlignmentImage.user_id == user_id if user_id is not None else AlignmentImage.user_id
+                # transcription zone type
+                transcription_zone_type = ImageZoneType.query.filter(ImageZoneType.id == TR_ZONE_TYPE).one()
+                zones = ImageZone.query.filter(
+                    ImageZone.manifest_url == manifest_url,
+                    ImageZone.user_id == user_id if user_id is not None else ImageZone.user_id,
+                    ImageZone.zone_type_id == transcription_zone_type.id
                 ).all()
-                for img_al in img_als:
-                    tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
 
-                    kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": img_al.zone_id}
+                for zone in zones:
+                    kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": zone.zone_id}
                     if user_id is not None:
                         kargs["user_id"] = user_id
 
                     res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
 
-                    # TODO: gerer erreur
-                    img_zone = ImageZone.query.filter(
-                        ImageZone.manifest_url == img_al.manifest_url,
-                        ImageZone.img_id == img_al.img_id,
-                        ImageZone.zone_id == img_al.zone_id,
-                        ImageZone.user_id == tr.user_id
-                    ).one()
+                    img_al = AlignmentImage.query.filter(
+                        AlignmentImage.transcription_id == tr.id,
+                        AlignmentImage.user_id == user_id if user_id is not None else AlignmentImage.user_id,
+                        AlignmentImage.manifest_url == zone.manifest_url,
+                        AlignmentImage.img_id == zone.img_id,
+                        AlignmentImage.zone_id == zone.zone_id
+                    ).first()
 
-                    fragment_coords = img_zone.coords
+                    # is there a text segment bound to this image zone?
+                    if img_al is not None:
+                        tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+                    else:
+                        tr_seg = ""
+
                     annotations.append(
-                        make_annotation(img_al.manifest_url, img_json, fragment_coords, res_uri, tr_seg, "text/plain")
+                        make_annotation(manifest_url, first_img, zone.coords, res_uri, tr_seg, "text/plain")
                     )
 
-                annotation_list = make_annotation_list("f2", doc_id, annotations)
+                annotation_list = make_annotation_list("f2", doc_id, annotations, transcription_zone_type.serialize())
                 response = annotation_list
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response()
 
     return APIResponseFactory.jsonify(response)
 
@@ -375,19 +406,6 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
     return APIResponseFactory.jsonify(response)
 
 
-def validate_annotation_data_format(anno):
-    if "content" in anno and "coords" in anno and "manifest_url" in anno and "img_id" in anno:
-        # check type of data and that there is at least 3 coords value (a circle)
-        #print(isinstance(anno["content"], str), isinstance(anno["img_id"]), isinstance(anno["manifest_url"], str),
-        #                                                   len([int(c) for c in anno["coords"].split(",")]))
-        return isinstance(anno["content"], str) and \
-               isinstance(anno["img_id"], str) and \
-               isinstance(anno["manifest_url"], str) and \
-               len(anno["coords"].split(",")) >= 3
-    else:
-        return False
-
-
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations", methods=["POST"])
 @auth.login_required
 def api_post_documents_annotations(api_version, doc_id):
@@ -398,6 +416,7 @@ def api_post_documents_annotations(api_version, doc_id):
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>"
+                "zone_type_id" : 1,
                 "username" : "Eleve1"    (optionnal)
             },
         ...
@@ -407,6 +426,7 @@ def api_post_documents_annotations(api_version, doc_id):
                 "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>"
+                "zone_type_id" : 1,
                 "username" : "Professeur1"  (optionnal)
             }]
         }
@@ -428,12 +448,11 @@ def api_post_documents_annotations(api_version, doc_id):
                 "status": 403, "title": "Access forbidden", "details": "Cannot insert data"
             })
         else:
-            validated_annotations = [a for a in data if validate_annotation_data_format(a)]
             # get the zone_id max
             try:
                 img_zone_max_zone_id = db.session.query(func.max(ImageZone.zone_id)).filter(
-                    ImageZone.manifest_url == validated_annotations[0]["manifest_url"],
-                    ImageZone.img_id == validated_annotations[0]["img_id"]
+                    ImageZone.manifest_url == data[0]["manifest_url"],
+                    ImageZone.img_id == data[0]["img_id"]
                 ).group_by(
                     ImageZone.manifest_url, ImageZone.img_id
                 ).one()
@@ -443,7 +462,7 @@ def api_post_documents_annotations(api_version, doc_id):
                 img_zone_max_zone_id = 1
 
             new_img_zone_ids = []
-            for anno in validated_annotations:
+            for anno in data:
 
                 user_id = user.id
                 # teacher and admin MAY post/put/delete for others
@@ -467,6 +486,7 @@ def api_post_documents_annotations(api_version, doc_id):
                     note=anno["content"],
                     coords=anno["coords"],
                     zone_id=img_zone_max_zone_id,
+                    zone_type_id=anno["zone_type_id"],
                     user_id=user_id
                 )
                 db.session.add(img_zone)
@@ -516,6 +536,7 @@ def api_put_documents_annotations(api_version, doc_id):
                 "zone_id" : 32,
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>",
+                "zone_type_id" : 1,
                 "username": "Eleve1"    (optionnal)
             },
         ...
@@ -526,6 +547,7 @@ def api_put_documents_annotations(api_version, doc_id):
                 "zone_id" : 30
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>",
+                "zone_type_id" : 1,
                 "username": "Professeur1"    (optionnal)
             }]
         }
@@ -545,7 +567,6 @@ def api_put_documents_annotations(api_version, doc_id):
             data = [data]
 
         # find which zones to update
-        validated_annotations = [a for a in data if validate_annotation_data_format(a) and "zone_id" in a]
         img_zones = []
         user = current_app.get_current_user()
         if user.is_anonymous:
@@ -553,7 +574,7 @@ def api_put_documents_annotations(api_version, doc_id):
                 "status": 403, "title": "Access forbidden", "details": "Cannot update data"
             })
         else:
-            for anno in validated_annotations:
+            for anno in data:
 
                 user_id = user.id
                 # teacher and admin MAY post/put/delete for others
@@ -588,9 +609,10 @@ def api_put_documents_annotations(api_version, doc_id):
         if response is None:
             # update the annotations
             for i, (user_id, img_zone) in enumerate(img_zones):
-                anno = validated_annotations[i]
+                anno = data[i]
                 img_zone.coords = anno["coords"]
                 img_zone.note = anno["content"]
+                img_zone.zone_type_id = anno["zone_type_id"]
                 db.session.add(img_zone)
 
             try:
