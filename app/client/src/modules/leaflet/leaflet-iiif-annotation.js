@@ -14,7 +14,14 @@ const LeafletIIIFAnnotation = {
             };
         }
     },
-
+    showShapes: function () {
+        for (let e of document.getElementsByClassName("leaflet-interactive")) {
+            e.style.opacity = 100;
+            e.style.cursor = "pointer";
+            e.onmouseover = null;
+            e.onmouseout = null;
+        }
+    },
     initialize: function (leaflet_map, featureGroup) {
 
         this.annotations = [];
@@ -25,19 +32,13 @@ const LeafletIIIFAnnotation = {
         /*
             Define the mouse :hover style on annotation regions
          */
-        this.map.on('draw:editstart', function (e) {
-            for (let e of document.getElementsByClassName("leaflet-interactive")) {
-                e.style.opacity = 100;
-                e.style.cursor = "pointer";
-                e.onmouseover = null;
-                e.onmouseout = null;
-            }
-        });
+        this.map.on('draw:drawstart', this.showShapes);
+        this.map.on('draw:editstart', this.showShapes);
+        this.map.on('draw:deletestart', this.showShapes);
 
-        let resetMouseOverStyle = this.resetMouseOverStyle;
-        this.map.on('draw:editstop', function (e) {
-            resetMouseOverStyle();
-        });
+        this.map.on('draw:editstop', this.resetMouseOverStyle);
+        this.map.on('draw:deletestop', this.resetMouseOverStyle);
+        this.map.on('draw:drawstop', this.resetMouseOverStyle);
 
     },
 
@@ -60,7 +61,7 @@ const LeafletIIIFAnnotation = {
             }
         }
 
-        if(!layer.annotation_type){
+        if (!layer.annotation_type) {
             layer.annotation_type = this.annotationTypes["transcription"];
         }
 

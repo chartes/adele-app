@@ -34,6 +34,7 @@
         mounted() {
             axios.get(this.manifest)
                 .then(response => {
+                    console.log(response.data.sequences);
                     let page = response.data.sequences[0].canvases[0];
                     this.mapCreate(page);
 
@@ -105,6 +106,113 @@
 
                 let drawControls = new L.Control.Draw(options);
 
+                L.drawLocal = {
+                    draw: {
+                        toolbar: {
+                            actions: {
+                                title: 'Annuler',
+                                text: 'Annuler'
+                            },
+                            finish: {
+                                title: 'Terminer',
+                                text: 'Terminer'
+                            },
+                            undo: {
+                                title: 'Supprimer le dernier point ajouté',
+                                text: 'Supprimer le dernier point ajouté'
+                            },
+                            buttons: {
+                                polyline: 'Ajouter un polyline',
+                                polygon: 'Ajouter un polygone',
+                                rectangle: 'Ajouter un rectangle',
+                                circle: 'Ajouter un cercle',
+                                marker: 'Ajouter un marqueur',
+                                circlemarker: 'Ajouter un marqueur circulaire'
+                            }
+                        },
+                        handlers: {
+                            circle: {
+                                tooltip: {
+                                    start: 'Cliquer et glisser pour dessiner un cercle.'
+                                },
+                                radius: 'Rayon'
+                            },
+                            circlemarker: {
+                                tooltip: {
+                                    start: 'Cliquer sur la carte pour ajouter un marqueur circulaire.'
+                                }
+                            },
+                            marker: {
+                                tooltip: {
+                                    start: 'Cliquer sur la carte pour ajouter un marqueur'
+                                }
+                            },
+                            polygon: {
+                                tooltip: {
+                                    start: 'Cliquer pour commencer à dessiner un polygone',
+                                    cont: 'Cliquer pour continuer ce polygone',
+                                    end: 'Cliquer sur le premier point pour terminer ce polygone.'
+                                }
+                            },
+                            polyline: {
+                                error: '<strong>Error:</strong> shape edges cannot cross!',
+                                tooltip: {
+                                    start: 'Cliquer pour commencer à dessiner une ligne',
+                                    cont: 'Cliquer pour continuer la ligne.',
+                                    end: 'Cliquer le dernier point pour finir la ligne.'
+                                }
+                            },
+                            rectangle: {
+                                tooltip: {
+                                    start: 'Cliquer et glisser pour dessiner un rectangle.'
+                                }
+                            },
+                            simpleshape: {
+                                tooltip: {
+                                    end: 'Relâcher la souris pour finir de dessiner.'
+                                }
+                            }
+                        }
+                    },
+                    edit: {
+                        toolbar: {
+                            actions: {
+                                save: {
+                                    title: 'Sauvegarder les changements',
+                                    text: 'Sauvegarder'
+                                },
+                                cancel: {
+                                    title: 'Annuler les changements apportés',
+                                    text: 'Annnuler'
+                                },
+                                clearAll: {
+                                    title: 'Tout supprimer',
+                                    text: 'Tout supprimer'
+                                }
+                            },
+                            buttons: {
+                                edit: 'Éditer les dessins',
+                                editDisabled: 'Aucun dessin à éditer',
+                                remove: 'Supprimer un dessin',
+                                removeDisabled: 'Aucun dessin à supprimer'
+                            }
+                        },
+                        handlers: {
+                            edit: {
+                                tooltip: {
+                                    text: 'Déplacer les poignées pour éditer les dessins.',
+                                    subtext: 'Cliquer sur le bouton Annuler pour annuler les changements.'
+                                }
+                            },
+                            remove: {
+                                tooltip: {
+                                    text: 'Cliquer sur un dessin pour le supprimer.'
+                                }
+                            }
+                        }
+                    }
+                };
+
                 /*
                     Add the saveAnnotations callbaback
                 */
@@ -124,10 +232,6 @@
                             console.log("saving annotations has failed on the server side");
                         }
                     });
-
-                    /*if (drawControls._toolbars.edit._activeMode) {
-                        drawControls._toolbars.edit._activeMode.handler.disable();
-                    }*/
                 };
 
                 this.drawControls = drawControls;
@@ -155,7 +259,7 @@
                     this.removeDrawControls();
                 }
             },
-            _saveZones(doc_id, user_id, annotations){
+            _saveZones(doc_id, user_id, annotations) {
                 const new_annotations = [];
                 for (let anno of annotations) {
                     const newAnnotation = {
@@ -172,36 +276,36 @@
                     .then((response) => {
                         return axios.post(`/api/1.0/documents/${doc_id}/annotations`, {"data": new_annotations},
                             this.$store.getters['user/authHeader']
-                    );
-                });
+                        );
+                    });
             },
             _saveAlignments(doc_id, user_id, annotations) {
                 return axios.delete(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`,
                     this.$store.getters['user/authHeader'])
                     .then((response) => {
-                         let data = {
-                             username : "AdminJulien",
-                             manifest_url :  "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                             img_id : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-                             alignments : [
+                        let data = {
+                            username: "AdminJulien",
+                            manifest_url: "http://193.48.42.68/adele/iiif/manifests/man20.json",
+                            img_id: "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                            alignments: [
                                 {
-                                    "zone_id" : 15,
+                                    "zone_id": 15,
                                     "ptr_start": 1,
-                                    "ptr_end": 20
+                                    "ptr_end": 89
                                 },
                                 {
-                                    "zone_id" : 26,
-                                    "ptr_start": 21,
-                                    "ptr_end": 450
+                                    "zone_id": 26,
+                                    "ptr_start": 90,
+                                    "ptr_end": 220
                                 }
-                             ]
-                         };
-                         for (let anno of annotations) {
-                             // TODO
-                         }
-                         return axios.post(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images`, {"data": data},
-                             this.$store.getters['user/authHeader']
-                         );
+                            ]
+                        };
+                        for (let anno of annotations) {
+                            // TODO : get alignments ptrs
+                        }
+                        return axios.post(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images`, {"data": data},
+                            this.$store.getters['user/authHeader']
+                        );
                     });
             },
             saveAnnotations() {

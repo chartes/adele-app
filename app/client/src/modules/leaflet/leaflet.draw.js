@@ -2752,12 +2752,12 @@ L.Edit.Circle = L.Edit.CircleMarker.extend({
 
   _resize: function (latlng) {
     var moveLatLng = this._moveMarker.getLatLng();
-
+    let radius;
     // Calculate the radius based on the version
     if (L.GeometryUtil.isVersion07x()) {
-      radius = moveLatLng.distanceTo(latlng);
+       radius = moveLatLng.distanceTo(latlng);
     } else {
-      radius = this._map.distance(moveLatLng, latlng);
+       radius = this._map.distance(moveLatLng, latlng);
     }
     this._shape.setRadius(radius);
 
