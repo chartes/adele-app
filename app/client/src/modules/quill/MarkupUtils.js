@@ -223,8 +223,9 @@ const insertNotesAndSegments  = (text, notes, segments, translationOrTranscripti
     insertions.push({index: note.ptr_start, type: 'note_start', note: note});
     insertions.push({index: note.ptr_end, type: 'note_end'});
   });
+  //console.log(insertions.length, "insertions after", notes.length,"notes")
   segments.forEach(segment => {
-    insertions.push({index: segment[index], type: 'segment'});
+    if (segment[index]) insertions.push({index: segment[index], type: 'segment'});
   });
   insertions.sort((a, b) => { return a.index - b.index; });
 
@@ -273,8 +274,8 @@ const stripSegments  = text => text.replace(/<\/?segment>/gmi, '');
 
 const computeNotesPointers  = (htmlWithNotes) => {
 
-  //console.log("computeNotesPointers:")
-  //console.log(htmlWithNotes)
+  ////console.log("computeNotesPointers:")
+  ////console.log(htmlWithNotes)
   const regexpStart = /<note id="(\d+)">/;
   const regexpEnd = /<\/note>/;
   let resStart, resEnd;
@@ -296,22 +297,22 @@ const computeAlignmentPointers  = (htmlWithSegments) => {
   const reg = /<segment><\/segment>/gmi;
   let splitted  = htmlWithSegments.split(reg);
   let positions = [];
-  //console.log("computeAlignmentPointers");
-  //console.log(htmlWithSegments);
-  //console.log("   splitted", splitted.length, splitted);
+  ////console.log("computeAlignmentPointers");
+  ////console.log(htmlWithSegments);
+  ////console.log("   splitted", splitted.length, splitted);
   let acc = 0;
   for (let i = 0; i < splitted.length; ++i) {
     acc += splitted[i].length;
     positions.push(acc);
   }
-  //console.log("   segments positions", positions);
+  ////console.log("   segments positions", positions);
 
   const htmlWithoutSegments = htmlWithSegments.replace(reg, '');
-  //console.log('htmlWithoutSegments', htmlWithoutSegments);
+  ////console.log('htmlWithoutSegments', htmlWithoutSegments);
   let regexp = /<(p|lb?)\/?>/gmi;
   let res;
   while ((res = regexp.exec(htmlWithoutSegments)) !== null) {
-    //console.log("BR @", res.index)
+    ////console.log("BR @", res.index)
     positions.push(res.index);
   }
   positions.sort((a, b) => {
