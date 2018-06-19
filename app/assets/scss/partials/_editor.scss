@@ -24,10 +24,6 @@ html, body {
   width: 100%;
 }
 
-#app {
-  padding: 2em;
-}
-
 .modal {
     z-index: 1001;
 }
@@ -149,39 +145,38 @@ speechpart {
   }
 }
 
+/* tags custom : segments and line breaks */
 .ql-editor {
-    counter-reset: segment-count 0;
-}
-.ql-editor {
+  counter-reset: segment-count 0;
   segment {
     display: inline-block;
+  }
+  p, l, .segment-bullet, segment {
     &:before {
       display: inline-block;
-      margin: 0 .5em;
-      @include segment;
     }
   }
   span.br {
     display: block;
   }
-   p, l, .segment-bullet {
+}
+#transcription-editor, #translation-editor {
+  segment, p, l, .segment-bullet {
     &:before {
-      display: inline-block;
-      margin: 0 .5em 0 0;
       @include segment;
     }
   }
-  /*lb {
+  segment:before {
+      margin: 0 .5em;
+  }
+  p, l, .segment-bullet {
     &:before {
-      content: '\A';
+      margin: 0 .5em 0 0;
     }
-
-    &:after {
-      display: inline-block;
-      @include segment;
-    }
-  }*/
+  }
 }
+
+
 l {
   font-family: Georgia, Times New Roman, serif;
 }
