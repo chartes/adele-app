@@ -71,18 +71,7 @@ const options = {
           key: 13,
           shiftKey: true,
           handler: function (range) {
-            let currentLeaf = this.quill.getLeaf(range.index)[0];
-            let nextLeaf = this.quill.getLeaf(range.index + 1)[0];
-
             this.quill.insertEmbed(range.index, 'linebreak', true, 'user');
-
-            // Insert a second break if:
-            // At the end of the editor, OR next leaf has a different parent (<p>)
-            /*if (nextLeaf === null || (currentLeaf.parent !== nextLeaf.parent)) {
-              this.quill.insertEmbed(range.index, 'linebreak', true, 'user');
-            }
-            */
-            // Now that we've inserted a line break, move the cursor forward
             this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
           }
         }

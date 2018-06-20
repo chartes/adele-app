@@ -16,5 +16,6 @@ module.exports = {
   'underline'   : require('../../assets/icons/underline.svg'),
   'segment'     : require('../../assets/icons/alignment.svg'),
   'smallcaps'   : require('../../assets/icons/smallcaps.svg'),
+  'speechpart'  : require('../../assets/icons/speechpart.svg'),
   'verse'       : require('../../assets/icons/verse.svg'),
 };
