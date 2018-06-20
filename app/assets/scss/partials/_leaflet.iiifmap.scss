@@ -1,0 +1,18 @@
+
+.leaflet-iiifmap-toolbar {
+  background-image: url('/static/images/spritesheet.svg');
+  background-size: 300px 30px !important;
+}
+
+.leaflet-iiifmap-toolbar-polygon {
+  background-position: -30px 0px !important;
+}
+
+.leaflet-iiifmap-toolbar-rectangle {
+  background-position: -60px 0px !important;
+}
+
+.leaflet-iiifmap-toolbar-circle {
+  background-position: -90px 0px !important;
+}
+

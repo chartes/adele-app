@@ -28,18 +28,6 @@ const LeafletIIIFAnnotation = {
         this.annotationTypes = {};
         this.map = leaflet_map;
         this.featureGroup = featureGroup;
-
-        /*
-            Define the mouse :hover style on annotation regions
-         */
-        this.map.on('draw:drawstart', this.showShapes);
-        this.map.on('draw:editstart', this.showShapes);
-        this.map.on('draw:deletestart', this.showShapes);
-
-        this.map.on('draw:editstop', this.resetMouseOverStyle);
-        this.map.on('draw:deletestop', this.resetMouseOverStyle);
-        this.map.on('draw:drawstop', this.resetMouseOverStyle);
-
     },
 
     _makeAnnotation: function (layer) {
@@ -116,7 +104,8 @@ const LeafletIIIFAnnotation = {
                 shape.annotation_type = annotationLists[listId].annotation_type;
                 this.featureGroup.addLayer(shape);
                 this.annotationTypes[annotationLists[listId].annotation_type.label] = annotationLists[listId].annotation_type;
-                //shape.addTo(this.map);
+                shape.addTo(this.map);
+                shape.on('click', L.DomEvent.stop).on('click', shape.toggleEdit);
             }
         }
         console.log(this.featureGroup.getLayers().length);

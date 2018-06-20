@@ -8,7 +8,8 @@
 <script>
 
     import L from 'leaflet';
-    import '../modules/leaflet/leaflet.draw';
+    import '../modules/leaflet/Leaflet.Editable';
+    import '../modules/leaflet/Path.Drag';
     import '../modules/leaflet/Leaflet.Control.Custom';
     import axios from 'axios';
     import tileLayerIiif from '../modules/leaflet/leaflet-iiif';
@@ -20,7 +21,6 @@
         components: {AMessage},
         name: "iiif-map",
         props: ['manifest', 'drawMode', 'displayAnnotationsMode'],
-
         data() {
             return {
                 map: null,
@@ -32,36 +32,70 @@
         },
 
         mounted() {
+            console.log(this.icons);
+
             axios.get(this.manifest)
                 .then(response => {
-                    console.log(response.data.sequences);
+                    this.handleAPIErrors(response);
+
                     let page = response.data.sequences[0].canvases[0];
                     this.mapCreate(page);
 
+                    this.must_be_saved = false;
                     this.editableLayers = new L.FeatureGroup();
                     this.map.addLayer(this.editableLayers);
-
                     LeafletIIIFAnnotation.initialize(this.map, this.editableLayers);
-                    this.annotationsLoader = IIIFAnnotationLoader.initialize(response.data);
 
+                    this.map.on('editable:enable', LeafletIIIFAnnotation.showShapes);
+                    // only save when changes to the geometry occured
+                    const _this = this;
+                    this.map.on('editable:disable', function () {
+                        //LeafletIIIFAnnotation.resetMouseOverStyle();
+                        /*
+                        if (_this.must_be_saved) {
+                            _this.saveAnnotations().then(function () {
+                                console.log("annotations saved.");
+                                _this._must_be_saved = false;
+                            });
+                        }
+                        */
+                    });
+                    this.map.on('editable:editing', function () {
+                        _this.must_be_saved = true;
+                    });
+                    this.map.on('editable:created', function (e) {
+                        _this.editableLayers.addLayer(e.layer);
+                        e.layer.on('click', L.DomEvent.stop).on('click', e.layer.toggleEdit);
+                    });
+                    // Finally load the annotations
+                    this.annotationsLoader = IIIFAnnotationLoader.initialize(response.data);
+                    // and display them
                     this.toggleDisplayAnnotations();
                     this.toggleDrawControls();
 
-                })
-            /*.catch( error => {
-              console.log(error)
-              this.error = "Impossible de charger le manifeste : <br>" +this.manifest;
-            });*/
+                });
+
         },
 
         methods: {
+
+
+            handleAPIErrors(response) {
+                const error_str = JSON.stringify(response.errors);
+                if (response.errors) {
+                    this.error = error_str;
+                    throw new Error(error_str);
+                }
+            },
+
             mapCreate(page) {
 
                 this.map = L.map(this.$refs.map, {
                     center: [0, 0],
                     crs: L.CRS.Simple,
                     zoom: 0,
-                    attributionControl: false
+                    //attributionControl: false,
+                    editable: true
                 });
 
                 this.page = page;
@@ -73,168 +107,121 @@
 
             createDrawControls() {
 
-                console.log("IIIFMap createDrawControls");
+                const drawingToolsContainer = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
+                const workflowToolsContainer = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
 
-                const options = {
-                    position: 'topright',
-                    draw: {
-                        polyline: false,
-                        polygon: {
-                            allowIntersection: false, // Restricts shapes to simple polygons
-                            drawError: {
-                                color: '#e1e100', // Color the shape will turn when intersects
-                                message: '<strong>Oups !</strong> vous ne pouvez pas dessiner cette forme' // Message that will show when intersect
-                            },
-                            shapeOptions: {
-                                color: '#bada55'
-                            }
-                        },
-                        //circle: true, // Turns off this drawing tool
-                        circlemarker: false,
-                        marker: false,
-                        rectangle: {
-                            shapeOptions: {
-                                clickable: false
-                            }
-                        }
+                L.EditControl = L.Control.extend({
+
+                    options: {
+                        position: 'topright',
+                        callback: null,
+                        kind: '',
+                        title: '',
+                        html: '',
+                        classes: '',
                     },
-                    edit: {
-                        featureGroup: this.editableLayers, //REQUIRED!!
-                        remove: true
-                    }
-                };
 
-                let drawControls = new L.Control.Draw(options);
+                    onAdd: function (map) {
+                        let link = L.DomUtil.create('a', '', drawingToolsContainer);
 
-                L.drawLocal = {
-                    draw: {
-                        toolbar: {
-                            actions: {
-                                title: 'Annuler',
-                                text: 'Annuler'
-                            },
-                            finish: {
-                                title: 'Terminer',
-                                text: 'Terminer'
-                            },
-                            undo: {
-                                title: 'Supprimer le dernier point ajouté',
-                                text: 'Supprimer le dernier point ajouté'
-                            },
-                            buttons: {
-                                polyline: 'Ajouter un polyline',
-                                polygon: 'Ajouter un polygone',
-                                rectangle: 'Ajouter un rectangle',
-                                circle: 'Ajouter un cercle',
-                                marker: 'Ajouter un marqueur',
-                                circlemarker: 'Ajouter un marqueur circulaire'
-                            }
-                        },
-                        handlers: {
-                            circle: {
-                                tooltip: {
-                                    start: 'Cliquer et glisser pour dessiner un cercle.'
-                                },
-                                radius: 'Rayon'
-                            },
-                            circlemarker: {
-                                tooltip: {
-                                    start: 'Cliquer sur la carte pour ajouter un marqueur circulaire.'
-                                }
-                            },
-                            marker: {
-                                tooltip: {
-                                    start: 'Cliquer sur la carte pour ajouter un marqueur'
-                                }
-                            },
-                            polygon: {
-                                tooltip: {
-                                    start: 'Cliquer pour commencer à dessiner un polygone',
-                                    cont: 'Cliquer pour continuer ce polygone',
-                                    end: 'Cliquer sur le premier point pour terminer ce polygone.'
-                                }
-                            },
-                            polyline: {
-                                error: '<strong>Error:</strong> shape edges cannot cross!',
-                                tooltip: {
-                                    start: 'Cliquer pour commencer à dessiner une ligne',
-                                    cont: 'Cliquer pour continuer la ligne.',
-                                    end: 'Cliquer le dernier point pour finir la ligne.'
-                                }
-                            },
-                            rectangle: {
-                                tooltip: {
-                                    start: 'Cliquer et glisser pour dessiner un rectangle.'
-                                }
-                            },
-                            simpleshape: {
-                                tooltip: {
-                                    end: 'Relâcher la souris pour finir de dessiner.'
-                                }
-                            }
+                        link.href = '#';
+                        link.title = this.options.title;
+                        link.innerHTML = this.options.html;
+                        for (let c of this.options.classes) {
+                            L.DomUtil.addClass(link, c);
                         }
-                    },
-                    edit: {
-                        toolbar: {
-                            actions: {
-                                save: {
-                                    title: 'Sauvegarder les changements',
-                                    text: 'Sauvegarder'
-                                },
-                                cancel: {
-                                    title: 'Annuler les changements apportés',
-                                    text: 'Annnuler'
-                                },
-                                clearAll: {
-                                    title: 'Tout supprimer',
-                                    text: 'Tout supprimer'
-                                }
-                            },
-                            buttons: {
-                                edit: 'Éditer les dessins',
-                                editDisabled: 'Aucun dessin à éditer',
-                                remove: 'Supprimer un dessin',
-                                removeDisabled: 'Aucun dessin à supprimer'
-                            }
-                        },
-                        handlers: {
-                            edit: {
-                                tooltip: {
-                                    text: 'Déplacer les poignées pour éditer les dessins.',
-                                    subtext: 'Cliquer sur le bouton Annuler pour annuler les changements.'
-                                }
-                            },
-                            remove: {
-                                tooltip: {
-                                    text: 'Cliquer sur un dessin pour le supprimer.'
-                                }
-                            }
-                        }
+                        L.DomEvent.on(link, 'click', L.DomEvent.stop)
+                            .on(link, 'click', function () {
+                                window.LAYER = this.options.callback.call(map.editTools);
+                            }, this);
+
+                        return drawingToolsContainer;
                     }
-                };
+
+                });
+
+                L.NewPolygonControl = L.EditControl.extend({
+                    options: {
+                        callback: this.map.editTools.startPolygon,
+                        title: 'Ajouter un polygone',
+                        classes: ['leaflet-iiifmap-toolbar', 'leaflet-iiifmap-toolbar-polygon']
+                    }
+                });
+                L.NewRectangleControl = L.EditControl.extend({
+                    options: {
+                        callback: this.map.editTools.startRectangle,
+                        title: 'Ajouter un rectangle',
+                        classes: ['leaflet-iiifmap-toolbar', 'leaflet-iiifmap-toolbar-rectangle']
+                    }
+                });
+                L.NewCircleControl = L.EditControl.extend({
+                    options: {
+                        callback: this.map.editTools.startCircle,
+                        title: 'Ajouter un cercle',
+                        classes: ['leaflet-iiifmap-toolbar', 'leaflet-iiifmap-toolbar-circle']
+                    }
+                });
 
                 /*
-                    Add the saveAnnotations callbaback
+                    Build the Save All button
                 */
-                let saveCallback = this.saveAnnotations;
-                drawControls._toolbars.edit._save = function () {
+                const _this = this;
+                L.SaveAllControl = L.Control.extend({
+                    onAdd: function (map) {
+                        let link = L.DomUtil.create('a', '', workflowToolsContainer),
+                            svg = L.DomUtil.create('a', '', link);
 
-                    saveCallback().then((response) => {
-                        if (response) {
-                            drawControls._toolbars.edit._activeMode.handler.save();
-                            if (drawControls._toolbars.edit._activeMode) {
-                                drawControls._toolbars.edit._activeMode.handler.disable();
-                            }
-                            console.log("annotations saving succeeded");
-                        }
-                        else {
-                            // save failed on the server side
-                            console.log("saving annotations has failed on the server side");
-                        }
-                    });
-                };
+                        link.href = '#';
+                        link.title = 'Sauvegarder';
 
-                this.drawControls = drawControls;
+                        L.DomUtil.addClass(svg, 'fas fa-save fa-lg workflow-tool');
+                        L.DomEvent.on(link, 'click', L.DomEvent.stop)
+                            .on(link, 'click', function () {
+                                // save annotations (if any change occured) then hide zones
+                                if (_this.must_be_saved) {
+                                    _this.saveAnnotations().then(function () {
+                                        _this.editableLayers.eachLayer(function (l) {
+                                            l.disableEdit();
+                                            _this.must_be_saved = false;
+                                        }, this);
+                                    });
+                                } else {
+                                    _this.editableLayers.eachLayer((l) => {
+                                        l.disableEdit();
+                                    });
+                                }
+                                LeafletIIIFAnnotation.resetMouseOverStyle();
+                            }, this);
+
+                        return workflowToolsContainer;
+                    }
+                });
+
+                L.ToggleVisibilityControl = L.Control.extend({
+                    onAdd: function (map) {
+                         let link = L.DomUtil.create('a', '', workflowToolsContainer),
+                            svg = L.DomUtil.create('a', '', link);
+
+                        link.href = '#';
+                        link.title = 'Supprimer une zone';
+
+                        L.DomUtil.addClass(svg, 'fas fa-eraser fa-lg workflow-tool');
+                        L.DomEvent.on(link, 'click', L.DomEvent.stop)
+                            .on(link, 'click', function () {
+
+                            }, this);
+
+                        return workflowToolsContainer;
+                    }
+                });
+
+                this.map.addControl(new L.NewPolygonControl());
+                this.map.addControl(new L.NewRectangleControl());
+                this.map.addControl(new L.NewCircleControl());
+                this.map.addControl(new L.ToggleVisibilityControl());
+                this.map.addControl(new L.SaveAllControl());
+
+                this.drawControls = undefined;
             },
             addDrawControls() {
 
@@ -242,14 +229,14 @@
                     this.createDrawControls();
                 }
 
-                this.map.addControl(this.drawControls);
-                this.map.on(L.Draw.Event.CREATED, this.drawCreatedhandler);
+                //this.map.addControl(this.drawControls);
+                //this.map.on(L.Draw.Event.CREATED, this.drawCreatedhandler);
 
             },
             removeDrawControls() {
 
-                if (this.drawControls) this.map.removeControl(this.drawControls);
-                this.map.off(L.Draw.Event.CREATED, this.drawCreatedhandler);
+                //if (this.drawControls) this.map.removeControl(this.drawControls);
+                //this.map.off(L.Draw.Event.CREATED, this.drawCreatedhandler);
 
             },
             toggleDrawControls() {
@@ -259,7 +246,7 @@
                     this.removeDrawControls();
                 }
             },
-            _saveZones(doc_id, user_id, annotations) {
+            saveZones(doc_id, user_id, annotations) {
                 const new_annotations = [];
                 for (let anno of annotations) {
                     const newAnnotation = {
@@ -274,15 +261,17 @@
                 return axios.delete(`/api/1.0/documents/${doc_id}/annotations/from-user/${user_id}`,
                     this.$store.getters['user/authHeader'])
                     .then((response) => {
+                        this.handleAPIErrors(response);
                         return axios.post(`/api/1.0/documents/${doc_id}/annotations`, {"data": new_annotations},
                             this.$store.getters['user/authHeader']
                         );
                     });
             },
-            _saveAlignments(doc_id, user_id, annotations) {
+            saveAlignments(doc_id, user_id, annotations) {
                 return axios.delete(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`,
                     this.$store.getters['user/authHeader'])
                     .then((response) => {
+                        this.handleAPIErrors(response);
                         let data = {
                             username: "AdminJulien",
                             manifest_url: "http://193.48.42.68/adele/iiif/manifests/man20.json",
@@ -318,13 +307,15 @@
 
                 const doc_id = this.$store.getters['document/document'].id;
                 const user_id = this.$store.getters['user/currentUser'].id;
+                let _must_be_saved = this.must_be_saved;
 
-                return this._saveZones(doc_id, user_id, annotations)
+                return this.saveZones(doc_id, user_id, annotations)
                     .then((response) => {
-                        return this._saveAlignments(doc_id, user_id, annotations)
+                        this.handleAPIErrors(response);
+                        return this.saveAlignments(doc_id, user_id, annotations)
                     })
                     .then((response) => {
-                        console.log("facsimile saved");
+                        this.handleAPIErrors(response);
                         return true
                     });
             },
@@ -345,7 +336,6 @@
                     this.clearAnnotations();
                 }
             },
-
             drawCreatedhandler(e) {
                 console.log("IIIFMap drawCreatedhandler", e, this);
                 let type = e.layerType,
@@ -364,7 +354,7 @@
             },
             drawMode: function () {
                 if (this.drawMode) {
-                    this.setDrawControls();
+                    this.addDrawControls();
                 } else {
                     this.removeDrawControls();
                 }

@@ -813,11 +813,6 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
                         if response is None:
                             try:
                                 for speech_part in data:
-                                    if "note_id" in speech_part:
-                                        note_id = int(speech_part["note_id"])
-                                        Note.query.filter(Note.id == note_id).one()
-                                    else:
-                                        note_id = None
 
                                     part_type = SpeechPartType.query.filter(
                                         SpeechPartType.id == int(speech_part["type_id"])
@@ -829,7 +824,7 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
                                         user_id=user_id,
                                         ptr_start=speech_part["ptr_start"],
                                         ptr_end=speech_part["ptr_end"],
-                                        note_id=note_id
+                                        note=speech_part.get("note")
                                     )
                                     db.session.add(new_al)
 

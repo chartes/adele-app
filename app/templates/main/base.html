@@ -122,12 +122,6 @@
     {% block app_content %}{% endblock %}
 {% endblock %}
 
-<script type="text/javascript">
-    {% if session["auth_token"] %}
-        APP_AUTH_TOKEN = '{{ session["auth_token"]|e }}';
-    {% endif %}
-</script>
-
 {% block scripts %}
 {% endblock %}
 
