@@ -95,6 +95,7 @@
                     crs: L.CRS.Simple,
                     zoom: 0,
                     //attributionControl: false,
+                    zoomControl: false,
                     editable: true
                 });
 
