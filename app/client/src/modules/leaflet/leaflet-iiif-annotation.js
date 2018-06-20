@@ -105,7 +105,6 @@ const LeafletIIIFAnnotation = {
                 this.featureGroup.addLayer(shape);
                 this.annotationTypes[annotationLists[listId].annotation_type.label] = annotationLists[listId].annotation_type;
                 shape.addTo(this.map);
-                shape.on('click', L.DomEvent.stop).on('click', shape.toggleEdit);
             }
         }
         console.log(this.featureGroup.getLayers().length);
