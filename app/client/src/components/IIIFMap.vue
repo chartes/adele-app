@@ -263,6 +263,7 @@
                                 _this.annotationsLoader = IIIFAnnotationLoader.initialize(_this.manifest_data);
                                 LeafletIIIFAnnotation.initialize(_this.map, _this.editableLayers);
                                 _this.setAnnotations();
+
                             }, this);
 
                         return workflowToolsContainer;
@@ -376,6 +377,7 @@
                             _this.onShapeClick(layer)
                         });
                     });
+                    _this.must_be_saved = false;
                 });
             },
             clearAnnotations() {
@@ -393,6 +395,7 @@
                 if (this.drawMode) {
                     if (this.erasing) {
                         this.editableLayers.removeLayer(shape);
+                        this.must_be_saved = true;
                     } else {
                         shape.toggleEdit();
                     }

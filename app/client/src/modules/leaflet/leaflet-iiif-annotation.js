@@ -95,7 +95,7 @@ const LeafletIIIFAnnotation = {
                         shape = L.polygon(pointList);
                         break;
                     case "circle":
-                        shape = L.circle(this.map.unproject([c[0], c[1]], LeafletIIIFAnnotation.ZOOM), {radius: c[2]});
+                        shape = L.circle(this.map.unproject([c[0], c[1]], LeafletIIIFAnnotation.ZOOM), {radius: c[2] * 0.25});
                         break;
                 }
                 //add the shape & the content to the map
