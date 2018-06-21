@@ -37,10 +37,8 @@ const LeafletIIIFAnnotation = {
         if (layer instanceof L.Circle) {
             const c = layer.toGeoJSON().geometry.coordinates;
             const center = this.map.project([c[1], c[0]], LeafletIIIFAnnotation.ZOOM);
-            coords = [center.x, center.y, layer.getRadius()]
+            coords = [center.x, center.y, layer.getRadius() * 4]
         } else {
-            // todo instance of L.Rectangle
-            // else polygon
             for (let c of layer.toGeoJSON().geometry.coordinates) {
                 for (let i = 0; i < c.length; i++) {
                     const point = this.map.project([c[i][1], c[i][0]], LeafletIIIFAnnotation.ZOOM);

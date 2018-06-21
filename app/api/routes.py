@@ -21,8 +21,11 @@ else:
     json_loads = json.loads
 
 
-def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', headers_arg=None):
-    url = "{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url)
+def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', headers_arg=None, direct=False):
+    if direct:
+        url = endpoint_url
+    else:
+        url = "{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url)
 
     headers = {'Content-Type': 'application/json;charset=UTF-8'}
 

@@ -857,7 +857,14 @@ def api_delete_documents_images(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-def get_bbox(coords):
+def get_bbox(coords, max_width, max_height):
+    """
+    Get the bounding box from a coord lists. Clamp the results to max_width, max_height
+    :param coords:
+    :param max_width:
+    :param max_height:
+    :return: (x, y, w, h)
+    """
     if len(coords) % 2 == 0:
         # poly/rect
         min_x, min_y = coords[0], coords[1]
@@ -880,6 +887,25 @@ def get_bbox(coords):
         cx, cy, r = coords
         min_x, min_y = cx - r, cy - r
         width, height = 2*r, 2*r
+
+    # clamp to the image borders
+    if min_x < 0:
+        #width = width + min_x
+        min_x = 0
+    elif min_x > max_width:
+        min_x = max_width - width
+
+    if min_y < 0:
+        #height = height + min_y
+        min_y = 0
+    elif min_y > max_height:
+        min_y = max_height - height
+
+    if min_x + width > max_width:
+        width = max_width - min_x
+    if min_y + height > max_height:
+        height = max_height - min_y
+
     return min_x, min_y, width, height
 
 
@@ -914,14 +940,20 @@ def api_documents_annotation_image_fragments(api_version, doc_id, zone_id=None, 
 
         frag_urls = {}
         for zone in zones:
-            coords = [math.floor(float(c)) for c in zone.coords.split(',')]
-            x, y, w, h = get_bbox(coords)
+
             root_img_url = zone.img_id[:zone.img_id.index('/full')]
-            url = "%s/%i,%i,%i,%i/full/0/default.jpg" % (root_img_url, x, y, w, h)
-            if zone.img_id not in frag_urls:
-                frag_urls[zone.img_id] = [{'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords}]
-            else:
-                frag_urls[zone.img_id].append({'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords})
+            json_obj = query_json_endpoint(request, "%s/info.json" % root_img_url, direct=True)
+
+            coords = [math.floor(float(c)) for c in zone.coords.split(',')]
+            x, y, w, h = get_bbox(coords, max_width=int(json_obj['width']), max_height=int(json_obj['height']))
+
+            if x >= 0 and y >= 0:
+                url = "%s/%i,%i,%i,%i/full/0/default.jpg" % (root_img_url, x, y, w, h)
+
+                if zone.img_id not in frag_urls:
+                    frag_urls[zone.img_id] = [{'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords}]
+                else:
+                    frag_urls[zone.img_id].append({'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords})
 
         response = APIResponseFactory.make_response(data={"fragments": frag_urls})
 
