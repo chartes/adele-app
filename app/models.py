@@ -495,7 +495,7 @@ class User(db.Model, UserMixin):
 
     # User email information
     email = db.Column(db.String(), nullable=False, unique=True)
-    confirmed_at = db.Column(db.DateTime())
+    email_confirmed_at = db.Column('confirmed_at', db.DateTime())
 
     # User information
     active = db.Column('is_active', db.Boolean(), nullable=False, server_default='0')
@@ -507,20 +507,20 @@ class User(db.Model, UserMixin):
             backref=db.backref('users', lazy='dynamic'))
 
     @property
-    def is_teacher(self): return self.has_role("teacher")
+    def is_teacher(self): return self.has_roles("teacher")
 
     @property
-    def is_admin(self): return self.has_role("admin")
+    def is_admin(self): return self.has_roles("admin")
 
     @property
-    def is_student(self): return self.has_role("student")
+    def is_student(self): return self.has_roles("student")
 
     def serialize(self):
         return {
             'id': self.id,
             'username': self.username,
             'email': self.email,
-            'confirmed_at': str(self.confirmed_at).split('.')[0],
+            'email_confirmed_at': str(self.email_confirmed_at).split('.')[0],
             'active': self.active,
             'first_name': self.first_name,
             'last_name': self.last_name,

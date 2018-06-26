@@ -1,10 +1,11 @@
 
 
-from flask import Flask
+from flask import Flask, request
 from flask_mail import Mail
 from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import UserManager, SQLAlchemyAdapter
+from flask_babelex import Babel
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from config import config
@@ -17,13 +18,13 @@ from flask_httpauth import HTTPBasicAuth
 db = SQLAlchemy()
 mail = Mail()
 auth = HTTPBasicAuth()
-
+# Initialize Flask-Babel
+babel = Babel()
 """
 =========================================================
     Override default 401 Reponse with a 403 Response 
 ========================================================
 """
-
 
 def make_json_unauthorized_response():
     resp = APIResponseFactory.jsonify(APIResponseFactory.make_response(errors={
@@ -51,6 +52,13 @@ def create_app(config_name="dev"):
     db.init_app(app)
     mail.init_app(app)
     app.scss = Scss(app)
+    babel.init_app(app)
+
+    # Use the browser's language preferences to select an available translation
+    @babel.localeselector
+    def get_locale():
+        translations = [str(translation) for translation in babel.list_translations()]
+        return request.accept_languages.best_match(translations)
     """
     ========================================================
         Import models
@@ -65,23 +73,36 @@ def create_app(config_name="dev"):
     ========================================================
     """
     class CustomUserManager(UserManager):
+
+        def customize(self, app):
+            self.RegisterFormClass = CustomRegisterForm
+            
+            self.email_manager._render_and_send_email_with_exceptions = self.email_manager._render_and_send_email
+            def with_protection(*args, **kargs):
+                try:
+                    self.email_manager._render_and_send_email_with_exceptions(*args, **kargs)
+                except Exception as e:
+                    print(e)
+            self.email_manager._render_and_send_email = with_protection
+
+
         def hash_password(self, password):
             return generate_password_hash(password.encode('utf-8'))
 
-        def verify_password(self, password, user):
-            return check_password_hash(self.get_password(user), password)
+        def verify_password(self, password, password_hash):
+            return check_password_hash(password_hash, password)
 
     # Register the User model
-    db_adapter = SQLAlchemyAdapter(db, models.User)
+    # db_adapter = SQLAlchemyAdapter(db, models.User)
     # Initialize Flask-User
-    user_manager = CustomUserManager(db_adapter, app, register_form=CustomRegisterForm)
+    user_manager = CustomUserManager(app, db, models.User)
 
     @auth.verify_password
     def verify_password(username_or_token, password):
         user = models.User.verify_auth_token(username_or_token)
         if not user:
             user = models.User.query.filter(models.User.username == username_or_token).first()
-            if not user or not user_manager.verify_password(password, user):
+            if not user or not verify_password(password, user.password):
                 return False
         return True
 

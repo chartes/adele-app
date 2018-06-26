@@ -7,7 +7,7 @@
         {{ field(class_='form-control', **kwargs) }}
         {% if field.errors %}
             {% for e in field.errors %}
-                <p class="help-block">{{ e }}</p>
+                <p class="help is-danger">{{ e }}</p>
             {% endfor %}
         {% endif %}
     </div>
@@ -16,7 +16,7 @@
 {% macro render_checkbox_field(field, label=None) -%}
     {% if not label %}{% set label=field.label.text %}{% endif %}
     <div class="checkbox">
-        <label>
+        <label class="checkbox">
             {{ field(type='checkbox', **kwargs) }} {{ label }}
         </label>
     </div>
@@ -36,7 +36,7 @@
 {% macro render_submit_field(field, label=None, tabindex=None) -%}
     {% if not label %}{% set label=field.label.text %}{% endif %}
     {#<button type="submit" class="form-control btn btn-default btn-primary">{{label}}</button>#}
-    <input type="submit" class="btn btn-default btn-primary" value="{{label}}"
+    <input type="submit" class="button is-link submit" value="{{label}}"
            {% if tabindex %}tabindex="{{ tabindex }}"{% endif %}
            >
 {%- endmacro %}

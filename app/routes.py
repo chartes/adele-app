@@ -34,12 +34,11 @@ User Managment Routes
 
 
 @app_bp.route('/login')
-@login_required
 def login_make_token():
     user = current_app.get_current_user()
-    token = user.generate_auth_token()
-
-    session['auth_token'] = token.decode("utf-8")
+    if not user.is_anonymous:
+        token = user.generate_auth_token()
+        session['auth_token'] = token.decode("utf-8")
     return redirect(url_for('user.login'))
 
 
