@@ -1,9 +1,41 @@
-
+.help {
+  font-size: 1em;
+}
 
 .login-form {
   margin: auto;
   margin-top: 120px;
-  width: 500px;
+}
+
+.login-form  .message {
+  width: 700px;
+  margin: auto;
+}
+.login-form .message-body {
+  width: 460px;
+  margin: auto;
+}
+
+.register-form {
+  margin: auto;
+  margin-top: 120px;
+}
+
+.register-form  .message {
+  width: 800px;
+  margin: auto;
+}
+.register-form .message-body {
+  width: 700px;
+  margin: auto;
+}
+
+.register-form .message-body input {
+  width: 400px;
+}
+
+.register-form .message-body .submit {
+  width: initial;
 }
 
 .column {
@@ -16,4 +48,5 @@
 
 .submit {
   margin-top: 12px;
+  margin-bottom: 12px;
 }
