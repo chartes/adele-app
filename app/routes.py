@@ -9,7 +9,11 @@ from app.models import Document, Language, ActeType, Tradition, Country, Distric
 
 
 def render_template_with_token(*args, **kargs):
-    kargs["auth_token"] =  session['auth_token']
+    user = current_app.get_current_user()
+    if not user.is_anonymous:
+        kargs["auth_token"] = session['auth_token']
+    else:
+        kargs["auth_token"] = ""
     return render_template(*args, **kargs)
 
 """
@@ -43,6 +47,12 @@ def login_make_token():
     if not user.is_anonymous:
         token = user.generate_auth_token()
         session['auth_token'] = token.decode("utf-8")
+    return redirect(url_for('app_bp.index'))
+
+
+@app_bp.route('/logout')
+def logout_delete_token():
+    session['auth_token'] = ""
     return redirect(url_for('app_bp.index'))
 
 

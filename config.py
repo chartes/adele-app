@@ -24,7 +24,7 @@ class Config(object):
 
     # Flask-User settings
     USER_APP_NAME = 'Adele'
-    USER_AFTER_LOGOUT_ENDPOINT = 'app_bp.index'
+    USER_AFTER_LOGOUT_ENDPOINT = 'app_bp.logout_delete_token'
     USER_AFTER_LOGIN_ENDPOINT = 'app_bp.login_make_token'
 
     USER_ENABLE_REGISTER = True
