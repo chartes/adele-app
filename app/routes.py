@@ -8,6 +8,10 @@ from app import app_bp
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
 
 
+def render_template_with_token(*args, **kargs):
+    kargs["auth_token"] =  session['auth_token']
+    return render_template(*args, **kargs)
+
 """
 ---------------------------------
 Test routes
@@ -23,7 +27,7 @@ def align_translation(transcription_id, translation_id):
     else:
         # no result, should raise an error
         alignment = []
-    return render_template('alignment.html', alignment=alignment)
+    return render_template_with_token('alignment.html', alignment=alignment)
 
 
 """
@@ -39,7 +43,7 @@ def login_make_token():
     if not user.is_anonymous:
         token = user.generate_auth_token()
         session['auth_token'] = token.decode("utf-8")
-    return redirect(url_for('user.login'))
+    return redirect(url_for('app_bp.index'))
 
 
 """
@@ -51,7 +55,7 @@ Admin Routes
 
 @app_bp.route('/')
 def index():
-    return render_template('main/index.html')
+    return render_template_with_token('main/index.html')
 
 
 def filter_documents(docs, form_values, field_name, get_doc_values, value_type=str):
@@ -128,7 +132,7 @@ def get_document_search_fields(docs):
 def documents():
     docs = Document.query.all()
     fields = get_document_search_fields(docs)
-    return render_template('main/documents.html', title='Documents - Adele', fields=fields, current_page=1)
+    return render_template_with_token('main/documents.html', title='Documents - Adele', fields=fields, current_page=1)
 
 
 @app_bp.route('/documents/list', methods=['POST'])
@@ -188,7 +192,7 @@ def document_list():
     except IndexError:
         pass
 
-    return render_template(
+    return render_template_with_token(
             'main/fragments/document_list.html',
             docs=filtered_docs,
             fields=fields,
@@ -207,7 +211,7 @@ def admin_document(doc_id):
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
-    return render_template('main/document.html', title='Documents - Adele', doc=doc)
+    return render_template_with_token('main/document.html', title='Documents - Adele', doc=doc)
 
 
 @app_bp.route('/documents/<doc_id>/edition')
@@ -216,7 +220,7 @@ def document_edit(doc_id):
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
-    return render_template('main/document_edit.html', title='Document - Adele', doc=doc)
+    return render_template_with_token('main/document_edit.html', title='Document - Adele', doc=doc)
 
 
 """
