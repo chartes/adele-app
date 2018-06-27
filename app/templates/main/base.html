@@ -23,7 +23,7 @@
             {% block navbar %}
                 <nav class="navbar" role="navigation" aria-label="main navigation">
                     <div class="navbar-brand">
-                        <a class="navbar-item" href="/">
+                        <a class="navbar-item" href="{{ url_for('app_bp.index') }}">
                             <img src="{{ url_for('app_bp.static', filename='images/logo-ecole-nationale-des-chartes-header.png') }}"
                                  alt="École Nationale des Chartes - PSL" height="30">
                         </a>
