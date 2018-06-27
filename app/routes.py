@@ -4,9 +4,9 @@ import pprint
 from flask import render_template, flash, redirect, url_for, Blueprint, session, current_app, jsonify
 from flask_user import login_required
 
+from app import app_bp
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
 
-app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
 
 """
 ---------------------------------

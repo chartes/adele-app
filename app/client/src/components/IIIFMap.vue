@@ -303,17 +303,17 @@
                     };
                     new_annotations.push(newAnnotation);
                 }
-                return axios.delete(`/api/1.0/documents/${doc_id}/annotations/from-user/${user_id}`,
+                return axios.delete(`/adele/api/1.0/documents/${doc_id}/annotations/from-user/${user_id}`,
                     this.$store.getters['user/authHeader'])
                     .then((response) => {
                         this.handleAPIErrors(response);
-                        return axios.post(`/api/1.0/documents/${doc_id}/annotations`, {"data": new_annotations},
+                        return axios.post(`/adele/api/1.0/documents/${doc_id}/annotations`, {"data": new_annotations},
                             this.$store.getters['user/authHeader']
                         );
                     });
             },
             saveAlignments(doc_id, user_id, annotations) {
-                return axios.delete(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`,
+                return axios.delete(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`,
                     this.$store.getters['user/authHeader'])
                     .then((response) => {
                         this.handleAPIErrors(response);
@@ -337,7 +337,7 @@
                         for (let anno of annotations) {
                             // TODO : get alignments ptrs
                         }
-                        return axios.post(`/api/1.0/documents/${doc_id}/transcriptions/alignments/images`, {"data": data},
+                        return axios.post(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/images`, {"data": data},
                             this.$store.getters['user/authHeader']
                         );
                     });

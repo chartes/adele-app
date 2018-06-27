@@ -1,6 +1,6 @@
 
 
-from flask import Flask, request
+from flask import Flask, request, Blueprint
 from flask_mail import Mail
 from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
@@ -20,6 +20,12 @@ mail = Mail()
 auth = HTTPBasicAuth()
 # Initialize Flask-Babel
 babel = Babel()
+
+
+api_bp = Blueprint('api_bp', __name__, template_folder='templates')
+app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
+
+
 """
 =========================================================
     Override default 401 Reponse with a 403 Response 
@@ -76,7 +82,7 @@ def create_app(config_name="dev"):
 
         def customize(self, app):
             self.RegisterFormClass = CustomRegisterForm
-            
+
             self.email_manager._render_and_send_email_with_exceptions = self.email_manager._render_and_send_email
             def with_protection(*args, **kargs):
                 try:
@@ -124,7 +130,10 @@ def create_app(config_name="dev"):
     from app import routes
     from app.api import routes as api_routes
 
-    app.register_blueprint(routes.app_bp)
-    app.register_blueprint(api_routes.api_bp)
+    app_bp.url_prefix = app.config["APP_URL_PREFIX"]
+    api_bp.url_prefix = app.config["APP_URL_PREFIX"]
+
+    app.register_blueprint(app_bp)
+    app.register_blueprint(api_bp)
 
     return app

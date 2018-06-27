@@ -20,11 +20,28 @@ class Config(object):
 
     CSRF_ENABLED = True
 
+    APP_URL_PREFIX = '/adele'
+
     # Flask-User settings
     USER_APP_NAME = 'Adele'
-    USER_AFTER_LOGOUT_ENDPOINT = ''
+    USER_AFTER_LOGOUT_ENDPOINT = 'app_bp.index'
+    USER_AFTER_LOGIN_ENDPOINT = 'app_bp.index'
+
     USER_ENABLE_REGISTER = True
     USER_ENABLE_REMEMBER_ME = True
+
+    USER_CHANGE_PASSWORD_URL = '%s/user/change-password' % APP_URL_PREFIX
+    USER_CHANGE_USERNAME_URL = '%s/user/change-username' % APP_URL_PREFIX
+    USER_CONFIRM_EMAIL_URL = '%s/user/confirm-email/<token>' % APP_URL_PREFIX
+    USER_EDIT_USER_PROFILE_URL = '%s/user/edit_user_profile' % APP_URL_PREFIX
+    USER_EMAIL_ACTION_URL = '%s/user/email/<id>/<action>' % APP_URL_PREFIX
+    USER_FORGOT_PASSWORD_URL = '%s/user/forgot-password' % APP_URL_PREFIX
+    USER_INVITE_USER_URL = '%s/user/invite' % APP_URL_PREFIX
+    USER_LOGIN_URL = '%s/user/sign-in' % APP_URL_PREFIX
+    USER_LOGOUT_URL = '%s/user/sign-out' % APP_URL_PREFIX
+    USER_MANAGE_EMAILS_URL = '%s/user/manage-emails' % APP_URL_PREFIX
+    USER_REGISTER_URL = '%s/user/register' % APP_URL_PREFIX
+    USER_RESEND_EMAIL_CONFIRMATION_URL = '%s/user/resend-email-confirmation' % APP_URL_PREFIX
 
     # Flask-Mail settings
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')

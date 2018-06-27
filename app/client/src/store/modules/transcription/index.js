@@ -103,7 +103,7 @@ const actions = {
     })
     .then(() => {
 
-      return axios.get(`/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
+      return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
 
         let transcription = {content : " ", notes: []};
 
@@ -131,7 +131,7 @@ const actions = {
       });
   },
   fetchAlignments ({commit}, {doc_id, user_id}) {
-    return axios.get(`/api/1.0/documents/${doc_id}/transcriptions/alignments/from-user/${user_id}`).then( response => {
+    return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/from-user/${user_id}`).then( response => {
       // Check if response is 1 alignment or more
       const alignments = response.data.data && Array.isArray(response.data.data[0]) ? response.data.data : [response.data.data]
       commit('ALIGNMENTS', alignments);
@@ -164,7 +164,7 @@ const actions = {
         "username": rootGetters['user/currentUser'].username
       }]};
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions`, data, auth)
+      axios.put(`/adele/api/1.0/documents/${state.transcription.doc_id}/transcriptions`, data, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);
@@ -197,7 +197,7 @@ const actions = {
     const auth = rootGetters['user/authHeader'];
 
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions/notes`, { data: notes }, auth)
+      axios.put(`/adele/api/1.0/documents/${state.transcription.doc_id}/transcriptions/notes`, { data: notes }, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);
@@ -230,7 +230,7 @@ const actions = {
         ptr_list : pointers,
       }};
     return new Promise( ( resolve, reject ) => {
-      axios.post(`/api/1.0/documents/${state.transcription.doc_id}/transcriptions/alignments`, data, auth)
+      axios.post(`/adele/api/1.0/documents/${state.transcription.doc_id}/transcriptions/alignments`, data, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);

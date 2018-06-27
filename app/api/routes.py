@@ -7,13 +7,12 @@ from urllib.request import urlopen, build_opener, Request
 
 from flask import request, Blueprint
 
-from app import auth, db
+from app import auth, db, api_bp
 from app.api.response import APIResponseFactory
 from app.database.alignment.alignment_translation import align_translation
 from app.models import Commentary, User
 
 
-api_bp = Blueprint('api_bp', __name__, template_folder='templates')
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)

@@ -21,7 +21,7 @@ const mutations = {
 const actions = {
 
   getCurrentUser ({ commit }) {
-    return axios.get('/api/1.0/user').then( (response) => {
+    return axios.get('/adele/api/1.0/user').then( (response) => {
       commit('UPDATE_CURRENT_USER', response.data.data)
     })
   },
