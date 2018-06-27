@@ -10,7 +10,7 @@ from app.models import Document, Language, ActeType, Tradition, Country, Distric
 
 def render_template_with_token(*args, **kargs):
     user = current_app.get_current_user()
-    if not user.is_anonymous:
+    if not user.is_anonymous and 'auth_token' in session:
         kargs["auth_token"] = session['auth_token']
     else:
         kargs["auth_token"] = ""
