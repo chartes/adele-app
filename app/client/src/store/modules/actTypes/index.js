@@ -17,7 +17,7 @@ const mutations = {
 const actions = {
 
   fetch ({ commit }) {
-    axios.get(`/api/1.0/acte-types`).then( response => {
+    axios.get(`/adele/api/1.0/acte-types`).then( response => {
       const respData = response.data.data;
       const isArray = Array.isArray(respData);
       const actTypes = isArray ? respData : [respData];

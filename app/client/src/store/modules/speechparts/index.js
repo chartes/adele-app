@@ -31,7 +31,7 @@ const actions = {
 
   fetch ({ commit, getters, rootGetters }, docId) {
     console.log('STORE ACTION notes/fetch')
-    return axios.get(`/api/1.0/documents/${docId}/notes`)
+    return axios.get(`/adele/api/1.0/documents/${docId}/notes`)
       .then( (response) => {
         commit('UPDATE_ALL', response.data.data)
       }).catch(function(error) {
@@ -48,7 +48,7 @@ const actions = {
         "content": newSpeechpart.content
       }]
     };
-    return axios.post(`/api/1.0/notes`, newSpeechparts, config)
+    return axios.post(`/adele/api/1.0/notes`, newSpeechparts, config)
       .then( response => {
         const note = response.data.data;
         commit('NEW', note);
@@ -65,7 +65,7 @@ const actions = {
         "content": note.content
       }]
     };
-    return axios.put(`/api/1.0/notes`, theSpeechpart, config)
+    return axios.put(`/adele/api/1.0/notes`, theSpeechpart, config)
       .then( response => {
         console.log(response.data)
         const note = response.data.data;
@@ -83,7 +83,7 @@ const actions = {
         "content": note.content
       }]
     };
-    return axios.delete(`/api/1.0/notes`, theSpeechpart, config)
+    return axios.delete(`/adele/api/1.0/notes`, theSpeechpart, config)
       .then( response => {
         console.log(response.data)
         const note = response.data.data;

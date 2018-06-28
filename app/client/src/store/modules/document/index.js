@@ -26,7 +26,7 @@ const actions = {
     })
   },
   fetchAll ({ commit }, id) {
-    return axios.get(`/api/1.0/documents`).then( (response) => {
+    return axios.get(`/adele/api/1.0/documents`).then( (response) => {
       commit('UPDATE_DOCUMENT', response.data.data)
     })
   }

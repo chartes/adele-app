@@ -19,7 +19,7 @@ const mutations = {
 const actions = {
 
   fetch ({ commit }) {
-    axios.get(`/api/1.0/editors`).then( response => {
+    axios.get(`/adele/api/1.0/editors`).then( response => {
       const respData = response.data.data;
       const isArray = Array.isArray(respData);
       const editors = isArray ? respData : [respData];

@@ -75,7 +75,6 @@
         if (!this.selectedItems) return;
         this.items = this.selectedItems.map (it => ({...it}));
         this.ids = this.items.map (it => it[this.optionIdField]);
-        console.log("=> ", this.items)
       },
       displayList () {
         this.listVisible = true;
