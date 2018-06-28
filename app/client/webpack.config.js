@@ -76,8 +76,9 @@ module.exports = {
     noInfo: true,
     overlay: true,
     proxy: {
-      '/': {
+      '/adele': {
         target: 'http://localhost:5000',
+        publicPath: '/adele/static/js/',
         changeOrigin: true
   }
 }

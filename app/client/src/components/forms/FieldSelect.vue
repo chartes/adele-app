@@ -51,7 +51,7 @@
     },
     watch: {
       selected () {
-        console.log('watch selected', this.selected)
+        this.val = this.$props.selected
       }
     },
     computed: {

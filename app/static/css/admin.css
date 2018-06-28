@@ -1189,132 +1189,135 @@ l {
     .field-multiselect .multiselect-actions {
       position: relative; }
 
-.thumbnail-container {
-  width: auto; }
+.save-button {
+  transition: all 0.5s; }
 
-  .thumbnail img {
-    margin: auto;
-    padding: 16px;
+  .thumbnail-container {
     width: auto; }
 
-    .columns {
-      margin-top: 0px; }
+    .thumbnail img {
+      margin: auto;
+      padding: 16px;
+      width: auto; }
 
-      .nav-pages {
-        margin: auto auto 30px;
-        width: 300px; }
+      .columns {
+        margin-top: 0px; }
 
-        .find-btn-group {
-          margin-top: 30px; }
+        .nav-pages {
+          margin: auto auto 30px;
+          width: 300px; }
 
-          #tag-cloud {
-            margin-bottom: 20px;
-            margin-top: 20px; }
+          .find-btn-group {
+            margin-top: 30px; }
 
-            #find-col {
-              padding-right: 0px;
-              background-color: #eee;
-              user-select: none; }
+            #tag-cloud {
+              margin-bottom: 20px;
+              margin-top: 20px; }
 
-              #find-col .level:not(:last-child) {
-                margin-bottom: 0px; }
+              #find-col {
+                padding-right: 0px;
+                background-color: #eee;
+                user-select: none; }
 
-                #find-col .section {
-                  padding-left: 0px;
-                  padding-right: 0px; }
+                #find-col .level:not(:last-child) {
+                  margin-bottom: 0px; }
 
-                  .field.is-grouped {
-                    display: block; }
+                  #find-col .section {
+                    padding-left: 0px;
+                    padding-right: 0px; }
 
-                    #find-col .accordion {
-                      background-color: #eee;
-                      color: #444;
-                      cursor: pointer;
-                      padding: 18px;
-                      width: 100%;
-                      text-align: left;
-                      border: none;
-                      outline: none;
-                      transition: 0.4s; }
+                    .field.is-grouped {
+                      display: block; }
 
-                      #find-col .active, .accordion:hover {
-                        background-color: #ccc; }
+                      #find-col .accordion {
+                        background-color: #eee;
+                        color: #444;
+                        cursor: pointer;
+                        padding: 18px;
+                        width: 100%;
+                        text-align: left;
+                        border: none;
+                        outline: none;
+                        transition: 0.4s; }
 
-                        #find-col .panel {
-                          padding: 0;
-                          background-color: whitesmoke;
-                          display: none;
-                          overflow: hidden; }
+                        #find-col .active, .accordion:hover {
+                          background-color: #ccc; }
 
-                          #find-col .panel:not(:last-child) {
-                            margin-bottom: 0px; }
+                          #find-col .panel {
+                            padding: 0;
+                            background-color: whitesmoke;
+                            display: none;
+                            overflow: hidden; }
 
-                            #find-col .panel-item {
-                              padding: 12px 12px 12px 24px; }
+                            #find-col .panel:not(:last-child) {
+                              margin-bottom: 0px; }
 
-                              #find-col li {
-                                color: #7a7a7a;
-                                cursor: pointer; }
+                              #find-col .panel-item {
+                                padding: 12px 12px 12px 24px; }
 
-                                #find-col li:hover {
-                                  background-color: #ff3860;
-                                  color: whitesmoke; }
+                                #find-col li {
+                                  color: #7a7a7a;
+                                  cursor: pointer; }
 
-                                  .dot {
-                                    height: 12px;
-                                    width: 12px;
+                                  #find-col li:hover {
                                     background-color: #ff3860;
-                                    border-radius: 50%;
-                                    display: inline-block;
-                                    margin-right: 18px; }
+                                    color: whitesmoke; }
 
-                                    .white-dot {
+                                    .dot {
                                       height: 12px;
                                       width: 12px;
-                                      background-color: #eee;
+                                      background-color: #ff3860;
                                       border-radius: 50%;
                                       display: inline-block;
                                       margin-right: 18px; }
 
-                                      .help {
-                                        font-size: 1em; }
+                                      .white-dot {
+                                        height: 12px;
+                                        width: 12px;
+                                        background-color: #eee;
+                                        border-radius: 50%;
+                                        display: inline-block;
+                                        margin-right: 18px; }
 
-                                        .login-form {
-                                          margin: auto;
-                                          margin-top: 120px; }
+                                        .help {
+                                          font-size: 1em; }
 
-                                          .login-form .message {
-                                            width: 700px;
-                                            margin: auto; }
+                                          .login-form {
+                                            margin: auto;
+                                            margin-top: 120px; }
 
-                                            .login-form .message-body {
-                                              width: 460px;
+                                            .login-form .message {
+                                              width: 700px;
                                               margin: auto; }
 
-                                              .register-form {
-                                                margin: auto;
-                                                margin-top: 120px; }
+                                              .login-form .message-body {
+                                                width: 460px;
+                                                margin: auto; }
 
-                                                .register-form .message {
-                                                  width: 800px;
-                                                  margin: auto; }
+                                                .register-form {
+                                                  margin: auto;
+                                                  margin-top: 120px; }
 
-                                                  .register-form .message-body {
-                                                    width: 700px;
+                                                  .register-form .message {
+                                                    width: 800px;
                                                     margin: auto; }
 
-                                                    .register-form .message-body input {
-                                                      width: 400px; }
+                                                    .register-form .message-body {
+                                                      width: 700px;
+                                                      margin: auto; }
 
-                                                      .register-form .message-body .submit {
-                                                        width: initial; }
+                                                      .register-form .message-body input {
+                                                        width: 400px; }
 
-                                                        .column {
-                                                          padding-bottom: 0.25em; }
+                                                        .register-form .message-body .submit {
+                                                          width: initial; }
 
-                                                          .submit-group {
-                                                            margin-top: 18px; }
+                                                          .column {
+                                                            padding-bottom: 0.25em; }
 
-                                                            .submit {
-                                                              margin-top: 12px;
-                                                              margin-bottom: 12px; }
+                                                            .submit-group {
+                                                              margin-top: 18px; }
+
+                                                              .submit {
+                                                                margin-top: 12px;
+                                                                margin-bottom: 12px; }

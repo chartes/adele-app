@@ -10,6 +10,7 @@ const state = {
 const mutations = {
 
   UPDATE_DOCUMENT (state, payload) {
+    console.log('UPDATE_DOCUMENT', payload);
     state.document = payload;
   },
   UPDATE_ALL (state, payload) {
@@ -23,6 +24,24 @@ const actions = {
   fetch ({ commit }, id) {
     return axios.get(`/adele/api/1.0/documents/${id}`).then( (response) => {
       commit('UPDATE_DOCUMENT', response.data.data)
+    })
+  },
+  save ({ commit }, data) {
+    return new Promise( ( resolve, reject ) => {
+      axios.put(`/adele/api/1.0/documents`)
+        .then(response => {
+          if (response.data.errors) {
+            console.error("error", response.data.errors);
+            reject(response.data.errors);
+          } else {
+            commit('UPDATE_DOCUMENT', response.data.data)
+            resolve(response.data)
+          }
+        })
+        .catch(error => {
+          console.error("error", error)
+          reject(error)
+        });
     })
   },
   fetchAll ({ commit }, id) {

@@ -49,6 +49,9 @@
       },
       optionsList: {
         type: Array
+      },
+      onChange: {
+        type: Function, required: true
       }
     },
     directives: {
@@ -59,17 +62,18 @@
     },
     mounted () {
       this.updateAllItems();
-      console.log('optionsList', this.optionsList)
     },
     methods: {
       addItem (item) {
         this.items.push(item);
         this.ids.push(item[this.optionIdField]);
         this.hideList();
+        this.onChange(this.items);
       },
       deleteItem (itemId) {
         this.items = this.items.filter (it => it[this.optionIdField] !== itemId);
         this.ids = this.items.map (it => it[this.optionIdField]);
+        this.onChange(this.items);
       },
       updateAllItems () {
         if (!this.selectedItems) return;

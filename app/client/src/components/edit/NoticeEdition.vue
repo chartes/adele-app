@@ -1,5 +1,5 @@
 <template>
-    <form action="">
+    <form>
         <div class="columns">
 
 
@@ -57,7 +57,7 @@
                         </div>
                     </div>
                 </div>
-                <field-select :options="centuries" label="Siècle de la copie" :onChange="()=>{}"/>
+                <field-select :options="centuries" :selected="form.copy_cent" label="Siècle de la copie" :onChange="onChangeCentury"/>
 
                 <hr>
 
@@ -94,12 +94,12 @@
 
             <div class="column is-half">
 
-                <field-multiselect :label="'Pays :'" :optionsList="countries" :selectedItems="form.countries"/>
-                <field-multiselect :label="'District(s) :'" :optionsList="districts" :selectedItems="form.districts"/>
-                <field-multiselect :label="'Type(s) d\'acte(s) :'" :optionsList="actTypes" :selectedItems="form.acte_types"/>
-                <field-multiselect :label="'Tradition(s) :'" :optionsList="traditions" :selectedItems="form.traditions"/>
-                <field-multiselect :label="'Langage(s) :'" :optionIdField="'code'" :optionsList="languages" :selectedItems="form.languages"/>
-                <field-multiselect :label="'Éditeur(s) :'" :optionLabelField="'name'" :optionsList="editors" :selectedItems="form.editors"/>
+                <field-multiselect :label="'Pays :'" :optionsList="countries" :selectedItems="form.countries" :onChange="onChangeCountries"/>
+                <field-multiselect :label="'District(s) :'" :optionsList="districts" :selectedItems="form.districts" :onChange="onChangeDistricts"/>
+                <field-multiselect :label="'Type(s) d\'acte(s) :'" :optionsList="actTypes" :selectedItems="form.acte_types" :onChange="onChangeActTypes"/>
+                <field-multiselect :label="'Tradition(s) :'" :optionsList="traditions" :selectedItems="form.traditions" :onChange="onChangeTraditions"/>
+                <field-multiselect :label="'Langage(s) :'" :optionIdField="'code'" :optionsList="languages" :selectedItems="form.languages" :onChange="onChangeLanguages"/>
+                <field-multiselect :label="'Éditeur(s) :'" :optionLabelField="'name'" :optionsList="editors" :selectedItems="form.editors" :onChange="onChangeEditors"/>
 
             </div>
 
@@ -109,7 +109,7 @@
 
         <div class="columns">
             <div class="column">
-                <button class="button is-primary" type="submit">Enregistrer les modifications</button>
+                <save-button :status="status" :text="'Enregistrer les modifications'" :action="submit"/>
             </div>
         </div>
 
@@ -124,9 +124,11 @@
   import EditorMixins from '../../mixins/EditorMixins';
   import EditorButton from "../editors/EditorButton";
   import FieldMultiselect from "../forms/FieldMultiselect";
+  import SaveButton from "../ui/SaveButton";
 
   export default {
     components: {
+      SaveButton,
       FieldMultiselect,
       EditorButton,
       FieldSelect},
@@ -136,6 +138,7 @@
 
     data () {
       return {
+        status: '',
         form: {
         },
         centuries: [
@@ -171,24 +174,43 @@
       this.$store.dispatch('languages/fetch');
       this.$store.dispatch('traditions/fetch');
 
-      this.$refs.editor.innerHTML = '';
+      this.$refs.editor.innerHTML = this.document.argument;
       this.editor = getNewQuill(this.$refs.editor);
       this.editor.on('selection-change', this.onSelection);
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);
       this.textLength = this.editor.getLength();
 
-      this.form = Object.assign({}, this.document)
-      console.log('data', this.form)
+      this.form = Object.assign({}, this.document);
     },
     methods: {
+
+      submit () {
+        let data = Object.assign({}, this.form);
+        data.acte_types = this.form.acte_types.map(item => item.id);
+        data.countries = this.form.countries.map(item => item.id);
+        data.districts = this.form.districts.map(item => item.id);
+        data.languages = this.form.languages.map(item => item.code);
+        data.traditions = this.form.traditions.map(item => item.id);
+        console.log('submit', data);
+        this.status = 'saving';
+
+        this.$store.dispatch('document/save', data).then(response => {
+          console.log('doc saved', response);
+          this.status = 'success';
+        }).catch(e => {
+          console.log('error', e);
+          this.status = 'error';
+        })
+
+      },
 
       onSelectChange(typeId) {
         this.form.type_id = typeId;
       },
       onTextChange() {
         this.textLength = this.editor.getLength();
-        this.form.content = this.$refs.editor.childNodes[0].innerHTML;
+        this.form.argument = this.$refs.editor.childNodes[0].innerHTML;
       },
       onSelection(range) {
         if (range) {
@@ -196,10 +218,40 @@
           this.updateButtons(formats);
         }
       },
+
+      onChangeCountries (countries) {
+        console.log('onChangeCountries', countries);
+        this.form.countries = countries;
+      },
+      onChangeDistricts (districts) {
+        console.log('onChangeDistricts', districts);
+        this.form.districts = districts;
+      },
+      onChangeActTypes (actTypes) {
+        console.log('onChangeActTypes', actTypes);
+        this.form.acte_types = actTypes;
+      },
+      onChangeTraditions (traditions) {
+        console.log('onChangeTraditions', traditions);
+        this.form.traditions = traditions;
+      },
+      onChangeLanguages (languages) {
+        console.log('onChangeLanguages', languages);
+        this.form.languages = languages;
+      },
+      onChangeEditors (editors) {
+        console.log('onChangeEditors', editors);
+        this.form.editors = editors;
+      },
+      onChangeCentury (century) {
+        console.log('onChangeCentury', century);
+        this.form.copy_cent = century;
+      },
     },
 
     computed: {
       institutionId () {
+        console.log('institutionId',  this.form.institution)
         return this.form.institution ? this.form.institution.id : null;
       },
       ...mapGetters('institutions', ['institutionsSelect']),
