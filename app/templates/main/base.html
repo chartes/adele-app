@@ -23,7 +23,7 @@
             {% block navbar %}
                 <nav class="navbar" role="navigation" aria-label="main navigation">
                     <div class="navbar-brand">
-                        <a class="navbar-item" href="/">
+                        <a class="navbar-item" href="{{ url_for('app_bp.index') }}">
                             <img src="{{ url_for('app_bp.static', filename='images/logo-ecole-nationale-des-chartes-header.png') }}"
                                  alt="École Nationale des Chartes - PSL" height="30">
                         </a>
@@ -64,7 +64,7 @@
                                     <span>{{ current_user.username }}</span>
                                 </a>
                                 <div class="navbar-dropdown is-right">
-                                    <a class="navbar-item" href="{{ url_for('user.profile') }}">
+                                    <a class="navbar-item" href="{{ url_for('user.edit_user_profile') }}">
                                         <span class="icon">
                                             <i class="fas fa-user"></i>
                                         </span>
@@ -82,7 +82,7 @@
                             <div class="navbar-item">
                                 <div class="field">
                                     <p class="control">
-                                        <a class="button is-primary" href="{{ url_for('app_bp.login_make_token') }}">
+                                        <a class="button is-primary" href="{{ url_for('user.login') }}">
                                             <span class="icon">
                                                 <i class="fas fa-sign-in-alt"></i>
                                             </span>
@@ -121,15 +121,10 @@
 {% endblock %}
 
 {% block content %}
+
     {# application content needs to be provided in the app_content block #}
     {% block app_content %}{% endblock %}
 {% endblock %}
-
-<script type="text/javascript">
-    {% if session["auth_token"] %}
-        APP_AUTH_TOKEN = '{{ session["auth_token"]|e }}';
-    {% endif %}
-</script>
 
 {% block scripts %}
 {% endblock %}

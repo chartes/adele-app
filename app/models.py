@@ -57,24 +57,21 @@ class AlignmentDiscours(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     ptr_start = db.Column(db.Integer, primary_key=True)
     ptr_end = db.Column(db.Integer, primary_key=True)
-    note_id = db.Column(db.Integer, db.ForeignKey('note.id'))
+    note = db.Column(db.Text)
 
     transcription = db.relationship("Transcription")
     speech_part_type = db.relationship("SpeechPartType")
     user = db.relationship("User")
-    note = db.relationship("Note")
 
     def serialize(self):
-        al = {
+        return {
             'transcription_id': self.transcription_id,
             'speech_part_type': self.speech_part_type.serialize(),
             'user_id': self.user_id,
             'ptr_start': self.ptr_start,
             'ptr_end': self.ptr_end,
+            'note' : self.note
         }
-        if self.note is not None:
-            al["note"] = self.note.serialize()
-        return al
 
 
 class AlignmentImage(db.Model):
@@ -413,7 +410,7 @@ class SpeechPartType(db.Model):
             'id': self.id,
             'label': self.label,
             'language': self.language.serialize(),
-            'definition': self.definition
+            'definition': self.definition if self.definition else ''
         }
 
 
@@ -499,7 +496,7 @@ class User(db.Model, UserMixin):
 
     # User email information
     email = db.Column(db.String(), nullable=False, unique=True)
-    confirmed_at = db.Column(db.DateTime())
+    email_confirmed_at = db.Column('confirmed_at', db.DateTime())
 
     # User information
     active = db.Column('is_active', db.Boolean(), nullable=False, server_default='0')
@@ -511,20 +508,20 @@ class User(db.Model, UserMixin):
             backref=db.backref('users', lazy='dynamic'))
 
     @property
-    def is_teacher(self): return self.has_role("teacher")
+    def is_teacher(self): return self.has_roles("teacher")
 
     @property
-    def is_admin(self): return self.has_role("admin")
+    def is_admin(self): return self.has_roles("admin")
 
     @property
-    def is_student(self): return self.has_role("student")
+    def is_student(self): return self.has_roles("student")
 
     def serialize(self):
         return {
             'id': self.id,
             'username': self.username,
             'email': self.email,
-            'confirmed_at': str(self.confirmed_at).split('.')[0],
+            'email_confirmed_at': str(self.email_confirmed_at).split('.')[0],
             'active': self.active,
             'first_name': self.first_name,
             'last_name': self.last_name,

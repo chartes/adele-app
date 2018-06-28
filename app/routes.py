@@ -4,9 +4,17 @@ import pprint
 from flask import render_template, flash, redirect, url_for, Blueprint, session, current_app, jsonify
 from flask_user import login_required
 
+from app import app_bp
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
 
-app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
+
+def render_template_with_token(*args, **kargs):
+    user = current_app.get_current_user()
+    if not user.is_anonymous and 'auth_token' in session:
+        kargs["auth_token"] = session['auth_token']
+    else:
+        kargs["auth_token"] = ""
+    return render_template(*args, **kargs)
 
 """
 ---------------------------------
@@ -23,7 +31,7 @@ def align_translation(transcription_id, translation_id):
     else:
         # no result, should raise an error
         alignment = []
-    return render_template('alignment.html', alignment=alignment)
+    return render_template_with_token('alignment.html', alignment=alignment)
 
 
 """
@@ -34,13 +42,18 @@ User Managment Routes
 
 
 @app_bp.route('/login')
-@login_required
 def login_make_token():
     user = current_app.get_current_user()
-    token = user.generate_auth_token()
+    if not user.is_anonymous:
+        token = user.generate_auth_token()
+        session['auth_token'] = token.decode("utf-8")
+    return redirect(url_for('app_bp.index'))
 
-    session['auth_token'] = token.decode("utf-8")
-    return redirect(url_for('user.login'))
+
+@app_bp.route('/logout')
+def logout_delete_token():
+    session['auth_token'] = ""
+    return redirect(url_for('app_bp.index'))
 
 
 """
@@ -52,7 +65,7 @@ Admin Routes
 
 @app_bp.route('/')
 def index():
-    return render_template('main/index.html')
+    return render_template_with_token('main/index.html')
 
 
 def filter_documents(docs, form_values, field_name, get_doc_values, value_type=str):
@@ -129,7 +142,7 @@ def get_document_search_fields(docs):
 def documents():
     docs = Document.query.all()
     fields = get_document_search_fields(docs)
-    return render_template('main/documents.html', title='Documents - Adele', fields=fields, current_page=1)
+    return render_template_with_token('main/documents.html', title='Documents - Adele', fields=fields, current_page=1)
 
 
 @app_bp.route('/documents/list', methods=['POST'])
@@ -189,7 +202,7 @@ def document_list():
     except IndexError:
         pass
 
-    return render_template(
+    return render_template_with_token(
             'main/fragments/document_list.html',
             docs=filtered_docs,
             fields=fields,
@@ -208,7 +221,7 @@ def admin_document(doc_id):
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
-    return render_template('main/document.html', title='Documents - Adele', doc=doc)
+    return render_template_with_token('main/document.html', title='Documents - Adele', doc=doc)
 
 
 @app_bp.route('/documents/<doc_id>/edition')
@@ -217,7 +230,7 @@ def document_edit(doc_id):
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
-    return render_template('main/document_edit.html', title='Document - Adele', doc=doc)
+    return render_template_with_token('main/document_edit.html', title='Document - Adele', doc=doc)
 
 
 """

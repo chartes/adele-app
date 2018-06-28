@@ -148,6 +148,7 @@
 
                     // entries click
                     $(panel).find(".entry").click(function () {
+                        $('#page').val(1);
                         $(this).find('.dot').toggleClass("is-invisible");
                         populate_find_form();
                         submit_async();

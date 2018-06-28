@@ -84,7 +84,7 @@ const actions = {
 
     console.log('STORE ACTION translation/fetch',rootState)
 
-    return axios.get(`/api/1.0/documents/${doc_id}/translations/from-user/${user_id}`).then( response => {
+    return axios.get(`/adele/api/1.0/documents/${doc_id}/translations/from-user/${user_id}`).then( response => {
 
 
       let translation = {content : " ", notes: []};
@@ -130,7 +130,7 @@ const actions = {
       }]};
 
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/api/1.0/documents/${state.translation.doc_id}/translations`, data, auth)
+      axios.put(`/adele/api/1.0/documents/${state.translation.doc_id}/translations`, data, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);
@@ -162,7 +162,7 @@ const actions = {
     const auth = rootGetters['user/authHeader'];
 
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/api/1.0/documents/${state.translation.doc_id}/translations/notes`, { data: notes }, auth)
+      axios.put(`/adele/api/1.0/documents/${state.translation.doc_id}/translations/notes`, { data: notes }, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);

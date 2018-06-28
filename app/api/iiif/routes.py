@@ -1,3 +1,5 @@
+import math
+
 import pprint
 from flask import url_for, request, current_app
 from requests import HTTPError
@@ -12,10 +14,8 @@ from app.api.routes import query_json_endpoint, json_loads, api_bp
 from app.api.transcriptions.routes import get_reference_transcription
 from app.models import AlignmentImage, ImageZone, Image, ImageZoneType
 
-
 TR_ZONE_TYPE = 1
 ANNO_ZONE_TYPE = 2
-
 
 """
 ===========================
@@ -235,61 +235,61 @@ def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
         })
 
     if response is None:
-            first_canvas = query_json_endpoint(
+        first_canvas = query_json_endpoint(
+            request,
+            url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+        )
+        if "errors" in first_canvas:
+            response = APIResponseFactory.make_response(errors=first_canvas["errors"])
+
+        if response is None:
+            manifest_url = query_json_endpoint(
                 request,
-                url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+                url_for('api_bp.api_documents_manifest_url', api_version=api_version, doc_id=doc_id)
             )
-            if "errors" in first_canvas:
-                response = APIResponseFactory.make_response(errors=first_canvas["errors"])
+            if "errors" in manifest_url:
+                response = APIResponseFactory.make_response(errors=manifest_url["errors"])
 
-            if response is None:
-                manifest_url = query_json_endpoint(
-                    request,
-                    url_for('api_bp.api_documents_manifest_url', api_version=api_version, doc_id=doc_id)
+        if response is None:
+            first_img = first_canvas["data"]["images"][0]
+            manifest_url = manifest_url["data"]["manifest_url"]
+            annotations = []
+
+            # transcription zone type
+            transcription_zone_type = ImageZoneType.query.filter(ImageZoneType.id == TR_ZONE_TYPE).one()
+            zones = ImageZone.query.filter(
+                ImageZone.manifest_url == manifest_url,
+                ImageZone.user_id == user_id if user_id is not None else ImageZone.user_id,
+                ImageZone.zone_type_id == transcription_zone_type.id
+            ).all()
+
+            for zone in zones:
+                kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": zone.zone_id}
+                if user_id is not None:
+                    kargs["user_id"] = user_id
+
+                res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
+
+                img_al = AlignmentImage.query.filter(
+                    AlignmentImage.transcription_id == tr.id,
+                    AlignmentImage.user_id == user_id if user_id is not None else AlignmentImage.user_id,
+                    AlignmentImage.manifest_url == zone.manifest_url,
+                    AlignmentImage.img_id == zone.img_id,
+                    AlignmentImage.zone_id == zone.zone_id
+                ).first()
+
+                # is there a text segment bound to this image zone?
+                if img_al is not None:
+                    tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+                else:
+                    tr_seg = ""
+
+                annotations.append(
+                    make_annotation(manifest_url, first_img, zone.coords, res_uri, tr_seg, "text/plain")
                 )
-                if "errors" in manifest_url:
-                    response = APIResponseFactory.make_response(errors=manifest_url["errors"])
 
-            if response is None:
-                first_img = first_canvas["data"]["images"][0]
-                manifest_url = manifest_url["data"]["manifest_url"]
-                annotations = []
-
-                # transcription zone type
-                transcription_zone_type = ImageZoneType.query.filter(ImageZoneType.id == TR_ZONE_TYPE).one()
-                zones = ImageZone.query.filter(
-                    ImageZone.manifest_url == manifest_url,
-                    ImageZone.user_id == user_id if user_id is not None else ImageZone.user_id,
-                    ImageZone.zone_type_id == transcription_zone_type.id
-                ).all()
-
-                for zone in zones:
-                    kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": zone.zone_id}
-                    if user_id is not None:
-                        kargs["user_id"] = user_id
-
-                    res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
-
-                    img_al = AlignmentImage.query.filter(
-                        AlignmentImage.transcription_id == tr.id,
-                        AlignmentImage.user_id == user_id if user_id is not None else AlignmentImage.user_id,
-                        AlignmentImage.manifest_url == zone.manifest_url,
-                        AlignmentImage.img_id == zone.img_id,
-                        AlignmentImage.zone_id == zone.zone_id
-                    ).first()
-
-                    # is there a text segment bound to this image zone?
-                    if img_al is not None:
-                        tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
-                    else:
-                        tr_seg = ""
-
-                    annotations.append(
-                        make_annotation(manifest_url, first_img, zone.coords, res_uri, tr_seg, "text/plain")
-                    )
-
-                annotation_list = make_annotation_list("f2", doc_id, annotations, transcription_zone_type.serialize())
-                response = annotation_list
+            annotation_list = make_annotation_list("f2", doc_id, annotations, transcription_zone_type.serialize())
+            response = annotation_list
 
     return APIResponseFactory.jsonify(response)
 
@@ -853,5 +853,108 @@ def api_delete_documents_images(api_version, doc_id):
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Cannot delete data", "details": str(e)
             })
+
+    return APIResponseFactory.jsonify(response)
+
+
+def get_bbox(coords, max_width, max_height):
+    """
+    Get the bounding box from a coord lists. Clamp the results to max_width, max_height
+    :param coords:
+    :param max_width:
+    :param max_height:
+    :return: (x, y, w, h)
+    """
+    if len(coords) % 2 == 0:
+        # poly/rect
+        min_x, min_y = coords[0], coords[1]
+        max_x, max_y = coords[0], coords[1]
+        for i in range(0, len(coords)-1, 2):
+            # X stuff
+            if coords[i] < min_x:
+                min_x = coords[i]
+            elif coords[i] > max_x:
+                max_x = coords[i]
+            # Y stuff
+            if coords[i+1] < min_y:
+                min_y = coords[i+1]
+            elif coords[i+1] > max_y:
+                max_y = coords[i+1]
+        width = abs(max_x - min_x)
+        height = abs(max_y - min_y)
+    else:
+        # circle
+        cx, cy, r = coords
+        min_x, min_y = cx - r, cy - r
+        width, height = 2*r, 2*r
+
+    # clamp to the image borders
+    if min_x < 0:
+        #width = width + min_x
+        min_x = 0
+    elif min_x > max_width:
+        min_x = max_width - width
+
+    if min_y < 0:
+        #height = height + min_y
+        min_y = 0
+    elif min_y > max_height:
+        min_y = max_height - height
+
+    if min_x + width > max_width:
+        width = max_width - min_x
+    if min_y + height > max_height:
+        height = max_height - min_y
+
+    return min_x, min_y, width, height
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/fragments/from-user/<user_id>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/fragments/<zone_id>/from-user/<user_id>")
+def api_documents_annotation_image_fragments(api_version, doc_id, zone_id=None, user_id=None):
+    """
+    Fragment urls points to the IIIF Image API url of the area of an image
+    :param api_version:
+    :param doc_id:
+    :param zone_id:
+    :param user_id:
+    :return: return a list of fragments (zone_id, coords, fragment_url) indexed by their img_id in a dict
+    """
+
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_bp.api_documents_manifest_url', api_version=api_version, doc_id=doc_id)
+    )
+
+    if "errors" in json_obj:
+        response = APIResponseFactory.make_response(errors=json_obj["errors"])
+    else:
+        manifest_url = json_obj["data"]["manifest_url"]
+        if zone_id is None:
+            zone_id = ImageZone.zone_id
+        zones = ImageZone.query.filter(
+            ImageZone.zone_id == zone_id,
+            ImageZone.manifest_url == manifest_url,
+            ImageZone.user_id == user_id
+        ).all()
+
+        frag_urls = {}
+        for zone in zones:
+
+            root_img_url = zone.img_id[:zone.img_id.index('/full')]
+            json_obj = query_json_endpoint(request, "%s/info.json" % root_img_url, direct=True)
+
+            coords = [math.floor(float(c)) for c in zone.coords.split(',')]
+            x, y, w, h = get_bbox(coords, max_width=int(json_obj['width']), max_height=int(json_obj['height']))
+
+            if x >= 0 and y >= 0:
+                url = "%s/%i,%i,%i,%i/full/0/default.jpg" % (root_img_url, x, y, w, h)
+
+                if zone.img_id not in frag_urls:
+                    frag_urls[zone.img_id] = [{'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords}]
+                else:
+                    frag_urls[zone.img_id].append({'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords})
+
+        response = APIResponseFactory.make_response(data={"fragments": frag_urls})
 
     return APIResponseFactory.jsonify(response)

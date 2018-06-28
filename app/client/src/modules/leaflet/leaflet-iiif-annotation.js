@@ -28,18 +28,6 @@ const LeafletIIIFAnnotation = {
         this.annotationTypes = {};
         this.map = leaflet_map;
         this.featureGroup = featureGroup;
-
-        /*
-            Define the mouse :hover style on annotation regions
-         */
-        this.map.on('draw:drawstart', this.showShapes);
-        this.map.on('draw:editstart', this.showShapes);
-        this.map.on('draw:deletestart', this.showShapes);
-
-        this.map.on('draw:editstop', this.resetMouseOverStyle);
-        this.map.on('draw:deletestop', this.resetMouseOverStyle);
-        this.map.on('draw:drawstop', this.resetMouseOverStyle);
-
     },
 
     _makeAnnotation: function (layer) {
@@ -49,10 +37,8 @@ const LeafletIIIFAnnotation = {
         if (layer instanceof L.Circle) {
             const c = layer.toGeoJSON().geometry.coordinates;
             const center = this.map.project([c[1], c[0]], LeafletIIIFAnnotation.ZOOM);
-            coords = [center.x, center.y, layer.getRadius()]
+            coords = [center.x, center.y, layer.getRadius() * 4]
         } else {
-            // todo instance of L.Rectangle
-            // else polygon
             for (let c of layer.toGeoJSON().geometry.coordinates) {
                 for (let i = 0; i < c.length; i++) {
                     const point = this.map.project([c[i][1], c[i][0]], LeafletIIIFAnnotation.ZOOM);
@@ -107,7 +93,7 @@ const LeafletIIIFAnnotation = {
                         shape = L.polygon(pointList);
                         break;
                     case "circle":
-                        shape = L.circle(this.map.unproject([c[0], c[1]], LeafletIIIFAnnotation.ZOOM), {radius: c[2]});
+                        shape = L.circle(this.map.unproject([c[0], c[1]], LeafletIIIFAnnotation.ZOOM), {radius: c[2] * 0.25});
                         break;
                 }
                 //add the shape & the content to the map
@@ -116,7 +102,7 @@ const LeafletIIIFAnnotation = {
                 shape.annotation_type = annotationLists[listId].annotation_type;
                 this.featureGroup.addLayer(shape);
                 this.annotationTypes[annotationLists[listId].annotation_type.label] = annotationLists[listId].annotation_type;
-                //shape.addTo(this.map);
+                shape.addTo(this.map);
             }
         }
         console.log(this.featureGroup.getLayers().length);
