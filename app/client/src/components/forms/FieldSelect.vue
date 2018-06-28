@@ -2,15 +2,16 @@
     <div class="field">
         <p class="control">
             <label class="label">{{ label }}</label>
-            <span class="select">
+            <span class="select" :class="isLoading">
                 <select v-model="val" @change="onChange(val)">
-                    <option disabled value="">Choisissez</option>
                     <option
+                            v-if="hasOptions"
                             v-for="opt in options"
                             :key="opt.id"
                             :value="opt.id"
-                            :selected="opt.id == selected"
-                    >{{ opt.label }}</option>
+                            :selected="optionSelected"
+                            v-html="opt.label"
+                    ></option>
                 </select>
             </span>
         </p>
@@ -36,18 +37,30 @@
       }
     },
     data() {
-      console.log("select", this.$props)
       return {
-        val: this.$props.selected || this.$props.options[0].id
+        val: this.$props.selected || null
       }
     },
     mounted(){
-      this.$props.onChange(this.val);
+      this.onChange(this.val);
     },
     methods: {
-      onSelChange() {
-        console.log("select change", this.val)
+      optionSelected (optId) {
+        return optId === this.selected;
       }
+    },
+    watch: {
+      selected () {
+        console.log('watch selected', this.selected)
+      }
+    },
+    computed: {
+      hasOptions () {
+        return this.options && this.options.length > 0;
+      },
+      isLoading () {
+        return !(this.options && this.options.length > 0) ? 'is-loading': false;
+      },
     }
   }
 </script>

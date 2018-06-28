@@ -2,52 +2,21 @@
     <div class="note-actions">
         <div class="field">
             <p class="control">
-                <a class="button is-primary" @click="newAction">
-                    <span class="icon is-small">
-                        <i class="fas fa-plus"></i>
-                    </span>
-                    <span>Lier à une nouvelle note</span>
-                </a>
-            </p>
-        </div>
-        <div class="field">
-            <p class="control">
-                <a class="button is-info" @click="updateLinkAction">
-                    <span class="icon is-small">
-                        <i class="fas fa-link"></i>
-                    </span>
-                    <span>Lier à une note existante</span>
-                </a>
-            </p>
-        </div>
-        <div class="field">
-            <p class="control">
-                <a class="button is-link" @click="unlinkAction">
-                    <span class="icon is-small">
-                        <i class="fas fa-unlink"></i>
-                    </span>
-                    <span>Supprimer le lien vers la note</span>
-                </a>
-            </p>
-        </div>
-        <div class="field">
-            <p class="control">
                 <a class="button is-warning" @click="editAction">
                   <span class="icon is-small">
                     <i class="fas fa-edit"></i>
                   </span>
-                    <span>Éditer la note</span>
+                    <span>Éditer la partie du discours</span>
                 </a>
             </p>
         </div>
-        <hr>
         <div class="field">
             <p class="control">
                 <a class="button is-danger" @click="deleteAction">
                     <span class="icon is-small">
                         <i class="fas fa-trash"></i>
                     </span>
-                    <span>Supprimer la note</span>
+                    <span>Supprimer la partie du discours</span>
                 </a>
             </p>
         </div>

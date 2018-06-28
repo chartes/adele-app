@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="editor-container">
-            <div class="quill-editor" ref="editor" spellcheck="false"></div>
+            <div class="quill-editor" id="transcription-editor" ref="editor" spellcheck="false"></div>
             <note-actions
                 v-show="selectedNoteId && this.editor.hasFocus()"
                 refs="noteActions"
@@ -58,6 +58,7 @@
             :cancel="cancelTextfieldForm"/>
         <note-form
                 v-if="noteEditMode == 'new' || noteEditMode == 'edit'"
+                :title="noteEditMode == 'new' ? 'nouvelle note' : 'Éditer la note'"
                 :note="currentNote"
                 :noteId="selectedNoteId"
                 :submit="updateNote"
@@ -141,6 +142,7 @@
     },
 
     computed: {
+
     }
   }
 </script>

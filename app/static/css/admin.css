@@ -1156,6 +1156,42 @@ l {
       .notes-list-item:not(:last-child) {
         margin-bottom: 0.75rem; }
 
+.select, select {
+  transition: all 3s; }
+
+  .field-multiselect .add-item .fa-plus {
+    color: #fff; }
+    .field-multiselect .add-item .fa-circle {
+      color: #dbdbdb; }
+      .field-multiselect .add-item:hover .fa-circle {
+        color: #7a7a7a;
+        fill: #7a7a7a; }
+  .field-multiselect .unselected-item {
+    background-color: #fff;
+    color: #4a4a4a;
+    display: block;
+    padding: 0.5rem;
+    font-size: 0.8em;
+    border: 2px solid transparent; }
+    .field-multiselect .unselected-item .content {
+      font-size: 60%; }
+      .field-multiselect .unselected-item.selected,
+      .field-multiselect .unselected-item:hover,
+      .field-multiselect .unselected-item:focus {
+        border-color: #23d160; }
+        .field-multiselect .unselected-item:not(:last-child) {
+          margin-bottom: 0.75rem; }
+  .field-multiselect .box {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: content-box;
+    max-height: 195px;
+    overflow: auto;
+    z-index: 1; }
+    .field-multiselect .multiselect-actions {
+      position: relative; }
+
 .thumbnail-container {
   width: auto; }
 

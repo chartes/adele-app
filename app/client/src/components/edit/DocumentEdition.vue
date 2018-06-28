@@ -4,7 +4,7 @@
 
         <tabs>
 
-            <tab name="Transcription" :selected="true">
+            <tab name="Édition" :selected="true">
                 <transcription-edition/>
             </tab>
 
@@ -13,7 +13,12 @@
             </tab>
 
             <tab name="Parties du discours">
-                <h1 class="title">Parties du discours</h1>
+                <speechparts-edition/>
+            </tab>
+
+            <tab name="Notice">
+                <h1>Notice</h1>
+                <notice-edition/>
             </tab>
 
         </tabs>
@@ -31,11 +36,17 @@
   import TranscriptionEdition from './TranscriptionEdition';
   import TranslationEdition from "./TranslationEdition";
   import AlignmentEdition from "./AlignmentEdition";
+  import SpeechpartsEditor from "../editors/SpeechpartsEditor";
+  import SpeechpartsEdition from "./SpeechpartsEdition";
+  import NoticeEdition from "./NoticeEdition";
 
   export default {
     name: "document-edition",
 
     components: {
+      NoticeEdition,
+      SpeechpartsEdition,
+      SpeechpartsEditor,
       AlignmentEdition,
       TranslationEdition,
       FacsimileEditor,
@@ -51,5 +62,26 @@
 </script>
 
 <style scoped>
-
+    .slide-to-left-enter-active {
+        transition: all .3s ease;
+    }
+    .slide-to-left-leave-active {
+        transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+    }
+    .slide-to-left-enter, .slide-to-left-leave-to
+        /* .slide-fade-leave-active below version 2.1.8 */ {
+        transform: translateX(30%);
+        opacity: 0;
+    }
+    .slide-to-right-enter-active {
+        transition: all .3s ease;
+    }
+    .slide-to-right-leave-active {
+        transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+    }
+    .slide-to-right-enter, .slide-to-left-leave-to
+        /* .slide-fade-leave-active below version 2.1.8 */ {
+        transform: translateX(30%);
+        opacity: 0;
+    }
 </style>

@@ -1,0 +1,52 @@
+.select, select {
+  transition: all 3s;
+}
+
+
+.field-multiselect {
+  .add-item {
+    .fa-plus {
+      color: #fff;
+    }
+    .fa-circle {
+      color: #dbdbdb;
+    }
+    &:hover {
+      .fa-circle {
+        color: rgb(122,122,122);
+        fill: rgb(122,122,122);
+      }
+    }
+  }
+
+  .unselected-item {
+
+      background-color: #fff;
+      color: #4a4a4a;
+      display: block;
+      padding: .5rem;
+      font-size: .8em;
+      border: 2px solid transparent;
+
+      .content { font-size: 60% }
+      &.selected, &:hover, &:focus {
+          border-color: #23d160;
+      }
+      &:not(:last-child) {
+          margin-bottom: .75rem;
+      }
+  }
+
+  .box {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: content-box;
+    max-height: 195px;
+    overflow: auto;
+    z-index: 1;
+  }
+  .multiselect-actions {
+    position: relative;
+  }
+}
