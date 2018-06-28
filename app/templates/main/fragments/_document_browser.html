@@ -1,0 +1,46 @@
+{% macro nav_pages(nav_uri, current_page) %}
+    <div class="nav-pages">
+        {% if nav_uri | length > 1 %}
+            <ul class="level">
+                {% for url in nav_uri %}
+                    <li class="level-item">
+                        <div class="pagination-btn button {% if loop.index != current_page %} is-white {% else %} is-light {% endif %}">
+                            {{ loop.index }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+
+<section class="section">
+    <div id="display-mode"></div>
+    {% if nb_total > 0 and filtered %}
+        <div class="is-size-6">
+            {% if nb_total == 1 %}
+                <h1>{{ nb_total }} document trouvé.</h1>
+            {% else %}
+                <h1>{{ nb_total }} documents trouvés.</h1>
+            {% endif %}
+        </div>
+    {% endif %}
+    <div id="tag-cloud" class="field is-grouped is-grouped-multiline"></div>
+    {% if nb_total == 0 %}
+        <div>
+            <article class="message is-info">
+                <div class="message-body">
+                    <div class="alert alert-info" role="alert">Aucun résultat</div>
+                </div>
+            </article>
+        </div>
+    {% else %}
+        {{ nav_pages(nav_uri, current_page) }}
+        {% from 'main/fragments/_document_table.html' import document_table %}
+        {% from 'main/fragments/_document_list.html' import document_list %}
+        <!-- {{  document_list(docs) }} -->
+        {{  document_table(docs) }}
+        {{ nav_pages(nav_uri, current_page) }}
+    {% endif %}
+</section>

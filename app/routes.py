@@ -22,7 +22,7 @@ Test routes
 ---------------------------------
 """
 
-
+"""
 @app_bp.route('/test/alignments/translation/<transcription_id>/<translation_id>')
 def align_translation(transcription_id, translation_id):
     res = align_translation(transcription_id, translation_id)
@@ -32,11 +32,11 @@ def align_translation(transcription_id, translation_id):
         # no result, should raise an error
         alignment = []
     return render_template_with_token('alignment.html', alignment=alignment)
-
+"""
 
 """
 ---------------------------------
-User Managment Routes
+User related routes
 ---------------------------------
 """
 
@@ -58,7 +58,7 @@ def logout_delete_token():
 
 """
 ---------------------------------
-Admin Routes
+Generic routes
 ---------------------------------
 """
 
@@ -67,6 +67,26 @@ Admin Routes
 def index():
     return render_template_with_token('main/index.html')
 
+
+@app_bp.route('/dashboard')
+def dashboard():
+    return render_template_with_token('main/dashboard/user_dashboard.html')
+
+
+@app_bp.route('/dashboard/manual')
+def manual():
+    return render_template_with_token('main/dashboard/manual.html')
+
+
+@app_bp.route('/contact')
+def contact():
+    return render_template_with_token('main/contact.html')
+
+"""
+---------------------------------
+Document related routes
+---------------------------------
+"""
 
 def filter_documents(docs, form_values, field_name, get_doc_values, value_type=str):
     """
@@ -145,7 +165,7 @@ def documents():
     return render_template_with_token('main/documents.html', title='Documents - Adele', fields=fields, current_page=1)
 
 
-@app_bp.route('/documents/list', methods=['POST'])
+@app_bp.route('/documents/browse', methods=['POST'])
 def document_list():
     page = int(request.form.get('page'))
 
@@ -203,11 +223,11 @@ def document_list():
         pass
 
     return render_template_with_token(
-            'main/fragments/document_list.html',
+            'main/fragments/_document_browser.html',
             docs=filtered_docs,
             fields=fields,
             selected_values=form_values,
-        nav_uri=nav_uri,
+            nav_uri=nav_uri,
             nb_total=nb_total,
             filtered=docs_are_filtered,
             current_page=page
@@ -215,7 +235,7 @@ def document_list():
 
 
 # TODO : à débrancher
-@app_bp.route('/admin/documents/<doc_id>')
+@app_bp.route('/documents/<doc_id>')
 def admin_document(doc_id):
     doc = Document.query.filter(Document.id == doc_id).one()
     if doc is None:
@@ -233,9 +253,14 @@ def document_edit(doc_id):
     return render_template_with_token('main/document_edit.html', title='Document - Adele', doc=doc)
 
 
+@app_bp.route('/dashboard/documents')
+def dashboard_documents():
+    return render_template_with_token('main/dashboard/documents.html')
+
+
 """
 ---------------------------------
-API Routes
+API routes
 ---------------------------------
 """
 

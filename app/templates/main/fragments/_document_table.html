@@ -1,0 +1,42 @@
+{% macro document_table(docs) -%}
+    <div class="columns is-multiline">
+        {% if docs | length >= 10 %}
+            {% set col_fmt = 3 %}
+        {% elif docs | length > 1 %}
+            {% set col_fmt = 2 %}
+        {% else %}
+            {% set col_fmt = 1 %}
+        {% endif %}
+
+        {% for d in docs %}
+            <div class="column {% if col_fmt == 3 %}is-one-third{% elif col_fmt == 2 %}is-half{% endif %}">
+                <a href="{{ url_for("app_bp.document_edit", doc_id=d.id) }}">
+                    <div class="card document-card" id="card-{{ d.id }}">
+                        {% for img in d.images %}
+                            <div class="thumbnail-container has-background-grey-lighter">
+                                <figure class=" image thumbnail">
+                                    {% if col_fmt == 3 %}
+                                        <img src="{{ img.id | replace("full/full", "full/,200") }}"/>
+                                    {% elif col_fmt == 2 %}
+                                        <img src="{{ img.id | replace("full/full", "full/,300") }}"/>
+                                    {% else %}
+                                        <img src="{{ img.id | replace("full/full", "full/,500") }}"/>
+                                    {% endif %}
+                                </figure>
+                            </div>
+                        {% endfor %}
+                        <div class="card-content">
+                            <div class="content">
+                                <p><span class="tag is-light">Dossier {{ d.id }}</span></p>
+                                <p class="title is-6">{{ d.title }}</p>
+                                <p>
+                                    <small>{{ d.subtitle }}</small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{%- endmacro %}

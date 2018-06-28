@@ -21,7 +21,7 @@
     <section class="hero is-light">
         <div class="hero-head">
             {% block navbar %}
-                <nav class="navbar" role="navigation" aria-label="main navigation">
+                <nav class="navbar is-light" role="navigation" aria-label="main navigation">
                     <div class="navbar-brand">
                         <a class="navbar-item" href="{{ url_for('app_bp.index') }}">
                             <img src="{{ url_for('app_bp.static', filename='images/logo-ecole-nationale-des-chartes-header.png') }}"
@@ -38,36 +38,56 @@
                     <div class="navbar-menu">
                         <a class="navbar-item breadcrumb-index" href="{{ url_for('app_bp.documents') }}">
                             <div class="title is-size-5 ">Adele</div>
-
                         </a>
                         {% block breadcrumb %} {% endblock %}
-
                     </div>
 
                     <div class="navbar-end">
                         <a class="navbar-item" href="{{ url_for('app_bp.documents') }}">
-                            <div class="is-size-6">Mode d'emploi</div>
-                        </a>
-                        <a class="navbar-item" href="{{ url_for('app_bp.documents') }}">
                             <div class="is-size-6">Contact</div>
                         </a>
-
-                        {% if current_user and current_user.username %}
-                            <div class="navbar-item has-dropdown is-active">
-                                <a class="navbar-link">
+                        {% if not current_user.is_anonymous %}
+                            <div id="user-menu" class="navbar-item has-dropdown">
+                                <a class="navbar-link ">
                                     <span class="icon">
                                         <i class="fas fa-user-circle"></i>
                                     </span>
                                     <span>{{ current_user.username }}</span>
                                 </a>
-                                <div class="navbar-dropdown is-right">
-                                    <a class="navbar-item" href="{{ url_for('user.edit_user_profile') }}">
+                                <div id="user-dropdown" class="navbar-dropdown is-right">
+                                    <!--
+                                    <a id="profile-item" class="navbar-item"
+                                       href="{{ url_for('user.edit_user_profile') }}">
                                         <span class="icon">
                                             <i class="fas fa-user"></i>
                                         </span>
                                         <span>Profil</span>
                                     </a>
-                                    <a class="navbar-item" href="{{ url_for('user.logout') }}">
+                                    -->
+                                    <a id="mydocs-item" class="navbar-item"
+                                       href="{{ url_for('app_bp.dashboard') }}">
+                                        <span class="icon">
+                                            <i class="fas fa-folder"></i>
+                                        </span>
+                                        <span>Tableau de bord</span>
+                                    </a>
+                                    <a id="mydocs-item" class="navbar-item"
+                                       href="{{ url_for('app_bp.dashboard_documents') }}">
+                                        <span class="icon">
+                                            <i class="fas fa-file-alt"></i>
+                                        </span>
+                                        <span>Mes documents</span>
+                                    </a>
+                                    <!--
+                                    <a id="manual-item" class="navbar-item"
+                                       href="{{ url_for('app_bp.documents') }}">
+                                        <span class="icon">
+                                            <i class="fas fa-book"></i>
+                                        </span>
+                                        <span>Mode d'emploi</span>
+                                    </a>
+                                    -->
+                                    <a id="logout-item" class="navbar-item" href="{{ url_for('user.logout') }}">
                                         <span class="icon">
                                             <i class="fas fa-sign-in-alt"></i>
                                         </span>
@@ -98,19 +118,17 @@
 {% endblock %}
 
 {% block flash_messages %}
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <section class="section">
-                <div class="container is-fullhd">
-                    <article class="message is-danger">
+                <div class="container is-fullhd">{% for category, message in messages %}
+                    <article class="message {% if category == 'success' %}is-info{% else %}is-warning{% endif %}">
                         <div class="message-body">
                             <ul>
-                                {% for message in messages %}
-                                    <li class="alert alert-info" role="alert">{{ message }}</li>
-                                {% endfor %}
+                                <li role="alert">{{ message }}</li>
                             </ul>
                         </div>
-                    </article>
+                    </article> {% endfor %}
                 </div>
             </section>
         {% endif %}
@@ -122,6 +140,39 @@
     {# application content needs to be provided in the app_content block #}
     {% block app_content %}{% endblock %}
 {% endblock %}
+
+ {% if not current_user.is_anonymous %}
+<script type="text/javascript">
+
+    function close_user_menu() {
+        const userMenu = document.getElementById('user-menu');
+        const userDropdown = document.getElementById('user-dropdown');
+        userDropdown.style.display = 'none';
+        userMenu.classList.remove('is_active');
+    }
+
+    function toggle_user_menu() {
+        const userMenu = document.getElementById('user-menu');
+        const userDropdown = document.getElementById('user-dropdown');
+        userDropdown.style.display = (userDropdown.style.display === 'none') ? 'block' : 'none';
+        userMenu.classList.toggle('is_active');
+    }
+
+    document.addEventListener("DOMContentLoaded", function (event) {
+        document.onclick = close_user_menu;
+        document.getElementById('user-dropdown').style.display = 'none';
+        document.getElementById('user-menu').addEventListener('click', function (e) {
+            toggle_user_menu();
+            if (e) {
+                e.stopPropagation();
+            }
+            else {
+                window.event.cancelBubble = true;
+            }
+        });
+    });
+</script>
+{% endif %}
 
 {% block scripts %}
 {% endblock %}

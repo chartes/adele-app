@@ -107,3 +107,17 @@
   display: inline-block;
   margin-right: 18px;
 }
+
+#document-list {
+  margin: auto;
+  width: 95%;
+
+  table:hover {
+    cursor: pointer;
+  }
+
+  img{
+    padding-left: 0px;
+  }
+}
+
