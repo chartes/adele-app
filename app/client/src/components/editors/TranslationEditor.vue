@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="editor-container">
-            <div class="quill-editor" ref="editor" spellcheck="false"></div>
+            <div class="quill-editor" id="translation-editor" ref="editor" spellcheck="false"></div>
             <note-actions
                 v-show="selectedNoteId"
                 refs="noteActions"

@@ -262,6 +262,7 @@ class Editor(db.Model):
 
     def serialize(self):
         return {
+            'id': self.id,
             'ref': self.ref,
             'name': self.name
         }

@@ -27,6 +27,7 @@ const state = {
   transcription: undefined,
   transcriptionContent: undefined,
   transcriptionWithNotes: undefined,
+  transcriptionWithSpeechparts: undefined,
   transcriptionSaved: false,
   transcriptionError: false,
   transcriptionAlignments: []
@@ -46,6 +47,10 @@ const mutations = {
       notesShadowQuill = new Quill(notesShadowQuillElement);
       state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
 
+      speechpartsShadowQuillElement.innerHTML = payload.withSpeechparts;
+      speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement);
+      state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
+
     }
   },
   ALIGNMENTS(state, payload) {
@@ -55,6 +60,7 @@ const mutations = {
     console.log("STORE MUTATION transcription/UPDATE")
     state.transcription = payload.transcription;
     state.transcriptionWithNotes = payload.withNotes;
+    state.transcriptionWithSpeechparts = payload.withSpeechparts;
     state.transcriptionSaved = true;
   },
   CHANGED (state) {
@@ -64,17 +70,19 @@ const mutations = {
   },
   ADD_OPERATION (state, payload) {
 
-    console.log("STORE MUTATION transcription/ADD_OPERATION")
+    console.log("STORE MUTATION transcription/ADD_OPERATION", payload)
 
     const deltaFilteredForContent = removeFromDelta(payload, ['note','speechpart']);
     const deltaFilteredForNotes = removeFromDelta(payload, ['segment','speechpart']);
-    const deltaFilteredForSpeechparts = removeFromDelta(payload, ['note','segment']);
+    const deltaFilteredForSpeechparts = removeFromDelta(payload, ['note']);
 
     transcriptionShadowQuill.updateContents(deltaFilteredForContent);
     notesShadowQuill.updateContents(deltaFilteredForNotes);
+    speechpartsShadowQuill.updateContents(deltaFilteredForSpeechparts);
 
     state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
+    state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
 
   },
   SAVED (state) {
@@ -96,6 +104,8 @@ const actions = {
 
 
     this.dispatch('noteTypes/fetch').then(() => {
+      return this.dispatch('speechpartTypes/fetch', doc_id);
+    }).then(() => {
       return this.dispatch('notes/fetch', doc_id);
     })
     .then(() => {
@@ -119,7 +129,9 @@ const actions = {
           transcription: transcription,
           content: convertLinebreakTEIToQuill(content),
           withNotes: convertLinebreakTEIToQuill(withNotes),
+          withSpeechparts: convertLinebreakTEIToQuill(content),
         }
+        console.warn("ne pas oublier de mettre les vraies parties")
 
         commit('INIT', data)
         commit('UPDATE', data);

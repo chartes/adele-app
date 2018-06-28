@@ -18,12 +18,6 @@
                 <p><a href="#" @click.prevent="debug.content=!debug.content">Content</a></p>
                 <small v-if="debug.content" v-text="transcriptionContent"></small>
 
-                <p><a href="#" @click.prevent="debug.notes=!debug.notes">Notes</a></p>
-                <small v-if="debug.notes" v-text="transcriptionWithNotes"></small>
-
-                <p><a href="#" @click.prevent="debug.align=!debug.align">Align</a></p>
-                <small v-if="debug.align" v-text="transcriptionWithSegments"></small>
-
                 <p><a href="#" @click.prevent="debug.speechparts=!debug.speechparts">Speechparts</a></p>
                 <small v-if="debug.speechparts" v-text="transcriptionWithSpeechparts"></small>
 
@@ -99,7 +93,7 @@
         return false;
       },
       ...mapGetters('document', ['manifestURL']),
-      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSegments', 'transcriptionWithSpeechparts']),
+      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts']),
       ...mapGetters('translation', ['translationWithNotes'])
     }
   }

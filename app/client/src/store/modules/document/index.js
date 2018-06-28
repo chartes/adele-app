@@ -2,7 +2,8 @@ import axios from 'axios';
 
 const state = {
 
-  document: undefined
+  document: undefined,
+  documents: [],
 
 };
 
@@ -10,6 +11,9 @@ const mutations = {
 
   UPDATE_DOCUMENT (state, payload) {
     state.document = payload;
+  },
+  UPDATE_ALL (state, payload) {
+    state.documents = payload;
   }
 
 };
@@ -18,6 +22,11 @@ const actions = {
 
   fetch ({ commit }, id) {
     return axios.get(`/api/1.0/documents/${id}`).then( (response) => {
+      commit('UPDATE_DOCUMENT', response.data.data)
+    })
+  },
+  fetchAll ({ commit }, id) {
+    return axios.get(`/api/1.0/documents`).then( (response) => {
       commit('UPDATE_DOCUMENT', response.data.data)
     })
   }
