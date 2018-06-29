@@ -1,5 +1,12 @@
 <template>
-    <div>
+    <div id="transcription-edition" :class="isNight">
+
+        <transition name="fade">
+            <div id="joke" v-if="nbCols === 0">
+                <img id="astronaut" src="/adele/static/images/astronaut.svg"/>
+            </div>
+        </transition>
+
         <p class="has-text-right is-size-7" style="margin-bottom: 1em">
             <span class="tag">
             Affichage : &nbsp;&nbsp;&nbsp;
@@ -80,17 +87,24 @@
       }
     },
     computed: {
-      columnSize () {
+
+      nbCols () {
         let size = 0;
         if (this.visibility.image) size++;
         if (this.visibility.transcription) size++;
         if (this.visibility.translation) size++;
-        if (size == 2) {
+        return size;
+      },
+      columnSize () {
+        if (this.nbCols == 2) {
           return 'is-half'
-        } else if (size == 3) {
+        } else if (this.nbCols == 3) {
           return 'is-one-third'
         }
         return false;
+      },
+      isNight () {
+        return this.nbCols ? 'is-night' : '';
       },
       ...mapGetters('document', ['manifestURL']),
       ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts']),
@@ -100,5 +114,32 @@
 </script>
 
 <style scoped>
-
+    #joke {
+        background: #000 url(/adele/static/images/solar-system.svg) no-repeat 50% 50%;
+        background-size: cover;
+    }
+    #astronaut {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        animation: astronaut-rotation 5s infinite linear;
+    }
+    .fade-enter-active {
+        transition: all 1s ease;
+    }
+    .fade-leave-active {
+        transition: all .5s ease;
+    }
+    .fade-enter, .fade-leave-to {
+        opacity: 0;
+    }
+    @keyframes astronaut-rotation {
+        0% {
+            transform: translate(-50%, -50%) rotate(-30deg);
+        }
+        100% {
+            transform: translate(-50%, -50%) rotate(330deg);
+        }
+    }
 </style>

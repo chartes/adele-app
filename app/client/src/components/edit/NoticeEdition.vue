@@ -199,10 +199,8 @@
         this.status = 'saving';
 
         this.$store.dispatch('document/save', data).then(response => {
-          console.log('doc saved', response);
           this.status = 'success';
         }).catch(e => {
-          console.log('error', e);
           this.status = 'error';
         })
 
@@ -251,7 +249,6 @@
         this.form.copy_cent = century;
       },
       onChangeInstitution (institutionId) {
-        console.log('onChangeInstitution', institutionId);
         this.form.institution = this.institutionsSelect.find(i =>  i.id === institutionId);
       },
     },

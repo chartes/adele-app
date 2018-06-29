@@ -1,10 +1,10 @@
 import Quill from 'quill';
-import NoteBlot from "./Note";
 
 let Inline = Quill.import('blots/inline');
 
 class SpeechpartBlot extends Inline {
   static create(data) {
+    console.log('SpeechpartBlot.create', data)
     let node = super.create();
     node.setAttribute('id', data);
     return node;
@@ -27,7 +27,7 @@ class SpeechpartBlot extends Inline {
 
   formats() {
     let formats = super.formats();
-    formats['speechpart'] = NoteBlot.formats(this.domNode);
+    formats['speechpart'] = SpeechpartBlot.formats(this.domNode);
     return formats;
   }
 }

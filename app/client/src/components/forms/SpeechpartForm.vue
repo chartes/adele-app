@@ -4,11 +4,11 @@
             :title="title"
             :cancel="cancelAction"
             :submit="submitAction"
-            :valid="textLength > 1"
+            :valid="true"
             :submittin="null"
     >
         <div class="SpeechpartForm">
-            <form @submit.prevent="">
+            <form>
                 <field-select :label="'Type'" :options="speechpartTypes" :onChange="onSelectChange"/>
                 <div class="field">
                     <p class="control">
@@ -42,17 +42,17 @@
   import EditorButton from '../editors/EditorButton.vue';
 
   export default {
-    name: "note-form",
+    name: "speechpart-form",
     mixins: [EditorMixins],
     components: {
       EditorButton,
       FieldSelect,
       ModalForm
     },
-    props: ['title', 'noteId', 'note', 'cancel', 'submit'],
+    props: ['title', 'speechpartId', 'speechpart', 'cancel', 'submit'],
     data() {
       return {
-        form: Object.assign({}, this.note),
+        form: {},
         textLength: 0,
         editor: null,
         buttons: {
@@ -66,12 +66,14 @@
       }
     },
     mounted () {
-      this.$refs.editor.innerHTML = !!this.$props.note ? this.$props.note.content : '';
+      this.$refs.editor.innerHTML = !!this.$props.speechpart ? this.$props.speechpart.note ? this.$props.speechpart.note: '' : '';
       this.editor = getNewQuill(this.$refs.editor);
       this.editor.on('selection-change', this.onSelection);
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);
       this.textLength = this.editor.getLength();
+      this.form = Object.assign({}, this.speechpart);
+      console.log("SpeechpartForm.mounted", this.form, this.speechpart)
     },
     methods: {
 
@@ -80,7 +82,7 @@
       },
       onTextChange () {
         this.textLength = this.editor.getLength();
-        this.form.content = this.$refs.editor.childNodes[0].innerHTML;
+        this.form.note = this.$refs.editor.childNodes[0].innerHTML;
       },
       onSelection (range) {
         if (range) {

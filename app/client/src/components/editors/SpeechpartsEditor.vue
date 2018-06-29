@@ -14,8 +14,8 @@
 
             <speechpart-form
                     v-if="speechpartEditMode == 'new' || speechpartEditMode == 'edit'"
-                    :note="currentSpeechpart"
-                    :noteId="selectedSpeechpartId"
+                    :speechpart="currentSpeechpart"
+                    :speechpartId="selectedSpeechpartId"
                     :submit="updateSpeechpart"
                     :cancel="closeSpeechpartEdit"
             />
@@ -26,6 +26,7 @@
 
 <script>
 
+  import { mapGetters } from 'vuex';
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
   import InEditorActions from './InEditorActions';
@@ -93,13 +94,15 @@
         }
       },
 
-      updateSpeechpart(note) {
-        const isNewSpeechpart = this.noteEditMode === 'new';
-        const action = isNewSpeechpart ? 'addSpeechpart' : 'updateSpeechpart';
-        this.$store.dispatch(action, note).then(()=>{
+      updateSpeechpart(sp) {
+        const isNewSpeechpart = this.speechpartEditMode === 'new';
+        const action = isNewSpeechpart ? 'add' : 'update';
+        console.log('updateSpeechpart', sp, action)
+        this.$store.dispatch('speechparts/'+action, sp).then(()=>{
           if (isNewSpeechpart) {
-            this.editor.format('note', this.$store.getters.newSpeechpart.id);
-            this.selectedSpeechpartId = this.$store.getters.newSpeechpart.id;
+            console.log('editor set format', this.newSpeechpart.id);
+            this.editor.format('speechpart', this.newSpeechpart.id);
+            this.selectedSpeechpartId = this.newSpeechpart.id;
           }
           this.closeSpeechpartEdit();
         })
@@ -110,11 +113,13 @@
       },
       setSpeechpartEditModeNew() {
         this.speechpartEditMode = 'new';
+        this.currentSpeechpart = { transcription_id: this.transcription.id };
+        console.log("setSpeechpartEditModeNew", this.transcription.id, this.currentSpeechpart);
         this.newSpeechpartChoiceClose();
       },
       setSpeechpartEditModeEdit() {
         this.speechpartEditMode = 'edit';
-        this.currentSpeechpart = this.$store.getters.getSpeechpartById(this.selectedSpeechpartId)
+        this.currentSpeechpart = this.$store.getters.getSpeechpartById(this.selectedSpeechpartId);
       },
 
       newSpeechpartChoiceOpen() {
@@ -145,7 +150,6 @@
         if (!this.editor.hasFocus()) return;
         console.log(event.keyCode)
         if (event.keyCode < 37 || event.keyCode > 40) {
-          console.log('prevent')
           event.preventDefault();
         }
       }
@@ -157,7 +161,9 @@
         console.log('isSpeechpartButtonActive')
         const cond = this.editorHasFocus && this.buttons.speechpart;
         return cond;
-      }
+      },
+      ...mapGetters('transcription', ['transcription']),
+      ...mapGetters('speechparts', ['newSpeechpart'])
     }
   }
 </script>

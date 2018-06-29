@@ -39,19 +39,26 @@ const actions = {
       });
   },
   add ({ commit, getters, rootState }, newSpeechpart) {
-    console.log("STORE ACTION addSpeechpart", newSpeechpart);
+    console.log("STORE ACTION addSpeechpart", newSpeechpart, rootState);
+    const docId = rootState.document.document.id;
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const newSpeechparts = {
-      data: [{
-        "username": rootState.user.currentUser.username,
-        "type_id": newSpeechpart.type_id,
-        "content": newSpeechpart.content
-      }]
+      data: {
+        username : rootState.user.currentUser.username,
+        speech_parts : [{
+          type_id : newSpeechpart.type_id,
+          ptr_start: -1,
+          ptr_end: -1,
+          note: newSpeechpart.note,
+        }]
+      }
     };
-    return axios.post(`/adele/api/1.0/notes`, newSpeechparts, config)
+
+    return axios.post(`/adele/api/1.0/documents/${docId}/transcriptions/alignments/discours`, newSpeechparts, config)
       .then( response => {
-        const note = response.data.data;
-        commit('NEW', note);
+        const speechpart = response.data.data;
+        console.log("STORE ACTION addSpeechpart saved", response)
+        commit('NEW', speechpart);
       })
   },
   update ({ commit, getters, rootState }, note) {
