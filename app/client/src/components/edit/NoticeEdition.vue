@@ -61,7 +61,7 @@
 
                 <hr>
 
-                <field-select :options="institutionsSelect" :selected="institutionId" label="Institution de conservation" :onChange="()=>{}"/>
+                <field-select :options="institutionsSelect" :selected="institutionId" label="Institution de conservation" :onChange="onChangeInstitution"/>
                 <div class="field">
                     <label class="label">Pressmark</label>
                     <div class="field-body">
@@ -182,16 +182,19 @@
       this.textLength = this.editor.getLength();
 
       this.form = Object.assign({}, this.document);
+
+      console.log('this.$store.getters[\'institutions/getInstitutionById\']', this.$store.getters['institutions/getInstitutionById'])
     },
     methods: {
 
       submit () {
         let data = Object.assign({}, this.form);
         data.acte_types = this.form.acte_types.map(item => item.id);
-        data.countries = this.form.countries.map(item => item.id);
-        data.districts = this.form.districts.map(item => item.id);
-        data.languages = this.form.languages.map(item => item.code);
-        data.traditions = this.form.traditions.map(item => item.id);
+        data.country_id = this.form.countries.map(item => item.id);
+        data.district_id = this.form.districts.map(item => item.id);
+        data.language_code = this.form.languages.map(item => item.code);
+        data.tradition_id = this.form.traditions.map(item => item.id);
+        data.institution_id = data.institution.id;
         console.log('submit', data);
         this.status = 'saving';
 
@@ -247,6 +250,10 @@
         console.log('onChangeCentury', century);
         this.form.copy_cent = century;
       },
+      onChangeInstitution (institutionId) {
+        console.log('onChangeInstitution', institutionId);
+        this.form.institution = this.institutionsSelect.find(i =>  i.id === institutionId);
+      },
     },
 
     computed: {
@@ -258,9 +265,9 @@
       ...mapState('actTypes', ['actTypes']),
       ...mapState('countries', ['countries']),
       ...mapState('districts', ['districts']),
+      ...mapState('document', ['document']),
       ...mapState('editors', ['editors']),
       ...mapState('languages', ['languages']),
-      ...mapState('document', ['document']),
       ...mapState('traditions', ['traditions']),
     }
   }

@@ -26,9 +26,12 @@ const actions = {
       commit('UPDATE_DOCUMENT', response.data.data)
     })
   },
-  save ({ commit }, data) {
+  save ({ commit, rootGetters }, data) {
+
+    const auth = rootGetters['user/authHeader'];
+
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/adele/api/1.0/documents`)
+      axios.put(`/adele/api/1.0/documents`, { data: data }, auth)
         .then(response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);

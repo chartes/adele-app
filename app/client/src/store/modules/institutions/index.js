@@ -33,6 +33,9 @@ const getters = {
     const options = state.institutions.map(i =>  ({ id: i.id, label: i.name }))
     options.unshift({ id: null, label: 'Non définie' });
     return options;
+  },
+  getInstitutionById: (state, id) => {
+    return state.institutions.find(i =>  i.id === id);
   }
 
 };

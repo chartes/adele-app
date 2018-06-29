@@ -4,7 +4,7 @@
 
         <tabs>
 
-            <tab name="Édition!!!" :selected="true">
+            <tab name="Édition" :selected="true">
                 <transcription-edition/>
             </tab>
 

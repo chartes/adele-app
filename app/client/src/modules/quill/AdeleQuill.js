@@ -21,7 +21,7 @@ import Verse from './blots/editorial/Verse';
 import NoteBlot from './blots/editorial/Note';
 import List from 'quill/formats/list';
 
-import SpeechpartBlot from './blots/SpeechpartBlot';
+import SpeechpartBlot from './blots/editorial/SpeechpartBlot';
 
 Quill.register(LineBreak, true);
 
