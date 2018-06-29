@@ -1195,109 +1195,100 @@ l {
 .save-button {
   transition: all 0.25s; }
 
-  #joke {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -1;
-    background: #000; }
+  .thumbnail-container {
+    width: auto; }
 
-    .thumbnail-container {
+    .thumbnail img {
+      margin: auto;
+      padding: 16px;
       width: auto; }
 
-      .thumbnail img {
-        margin: auto;
-        padding: 16px;
-        width: auto; }
+      .columns {
+        margin-top: 0px; }
 
-        .columns {
-          margin-top: 0px; }
+        .nav-pages {
+          margin: auto auto 30px;
+          width: 300px; }
 
-          .nav-pages {
-            margin: auto auto 30px;
-            width: 300px; }
+          .find-btn-group {
+            margin-top: 30px; }
 
-            .find-btn-group {
-              margin-top: 30px; }
+            #tag-cloud {
+              margin-bottom: 20px;
+              margin-top: 20px; }
 
-              #tag-cloud {
-                margin-bottom: 20px;
-                margin-top: 20px; }
+              #find-col {
+                padding-right: 0px;
+                background-color: #eee;
+                user-select: none; }
 
-                #find-col {
-                  padding-right: 0px;
-                  background-color: #eee;
-                  user-select: none; }
+                #find-col .level:not(:last-child) {
+                  margin-bottom: 0px; }
 
-                  #find-col .level:not(:last-child) {
-                    margin-bottom: 0px; }
+                  #find-col .section {
+                    padding-left: 0px;
+                    padding-right: 0px; }
 
-                    #find-col .section {
-                      padding-left: 0px;
-                      padding-right: 0px; }
+                    .field.is-grouped {
+                      display: block; }
 
-                      .field.is-grouped {
-                        display: block; }
+                      #find-col .accordion {
+                        background-color: #eee;
+                        color: #444;
+                        cursor: pointer;
+                        padding: 18px;
+                        width: 100%;
+                        text-align: left;
+                        border: none;
+                        outline: none;
+                        transition: 0.4s; }
 
-                        #find-col .accordion {
-                          background-color: #eee;
-                          color: #444;
-                          cursor: pointer;
-                          padding: 18px;
-                          width: 100%;
-                          text-align: left;
-                          border: none;
-                          outline: none;
-                          transition: 0.4s; }
+                        #find-col .active, .accordion:hover {
+                          background-color: #ccc; }
 
-                          #find-col .active, .accordion:hover {
-                            background-color: #ccc; }
+                          #find-col .panel {
+                            padding: 0;
+                            background-color: whitesmoke;
+                            display: none;
+                            overflow: hidden; }
 
-                            #find-col .panel {
-                              padding: 0;
-                              background-color: whitesmoke;
-                              display: none;
-                              overflow: hidden; }
+                            #find-col .panel:not(:last-child) {
+                              margin-bottom: 0px; }
 
-                              #find-col .panel:not(:last-child) {
-                                margin-bottom: 0px; }
+                              #find-col .panel-item {
+                                padding: 12px 12px 12px 24px; }
 
-                                #find-col .panel-item {
-                                  padding: 12px 12px 12px 24px; }
+                                #find-col li {
+                                  color: #7a7a7a;
+                                  cursor: pointer; }
 
-                                  #find-col li {
-                                    color: #7a7a7a;
-                                    cursor: pointer; }
+                                  #find-col li:hover {
+                                    background-color: #ff3860;
+                                    color: whitesmoke; }
 
-                                    #find-col li:hover {
+                                    .dot {
+                                      height: 12px;
+                                      width: 12px;
                                       background-color: #ff3860;
-                                      color: whitesmoke; }
+                                      border-radius: 50%;
+                                      display: inline-block;
+                                      margin-right: 18px; }
 
-                                      .dot {
+                                      .white-dot {
                                         height: 12px;
                                         width: 12px;
-                                        background-color: #ff3860;
+                                        background-color: #eee;
                                         border-radius: 50%;
                                         display: inline-block;
                                         margin-right: 18px; }
 
-                                        .white-dot {
-                                          height: 12px;
-                                          width: 12px;
-                                          background-color: #eee;
-                                          border-radius: 50%;
-                                          display: inline-block;
-                                          margin-right: 18px; }
-
-                                          #document-list {
-                                            margin: auto;
-                                            width: 95%; }
-                                            #document-list table:hover {
-                                              cursor: pointer; }
-                                              #document-list img {
-                                                padding-left: 0px; }
+                                        #document-list {
+                                          margin: auto;
+                                          width: 95%; }
+                                          #document-list table:hover {
+                                            cursor: pointer; }
+                                            #document-list img {
+                                              padding-left: 0px; }
 
 .help {
   font-size: 1em; }

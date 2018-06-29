@@ -3,7 +3,8 @@ import axios from "axios/index";
 const state = {
 
   currentUser: undefined,
-  authToken: undefined
+  authToken: undefined,
+  author: undefined,
 
 };
 

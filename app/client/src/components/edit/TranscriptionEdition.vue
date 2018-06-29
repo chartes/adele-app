@@ -117,6 +117,12 @@
     #joke {
         background: #000 url(/adele/static/images/solar-system.svg) no-repeat 50% 50%;
         background-size: cover;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
     }
     #astronaut {
         position: absolute;
