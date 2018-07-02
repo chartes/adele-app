@@ -54,7 +54,9 @@ const LeafletIIIFAnnotation = {
         return {
             region: {coords: coords.join(',')},
             content: content,
-            annotation_type: layer.annotation_type
+            annotation_type: layer.annotation_type,
+            canvas_id : layer.canvas_id,
+            img_id : layer.img_id
         };
     },
 
@@ -98,6 +100,8 @@ const LeafletIIIFAnnotation = {
                 }
                 //add the shape & the content to the map
 
+                shape.canvas_id = annotation.canvas_id;
+                shape.img_id = annotation.img_id;
                 shape.bindTooltip(annotation.content, facsimileToolTipOptions);
                 shape.annotation_type = annotationLists[listId].annotation_type;
                 this.featureGroup.addLayer(shape);

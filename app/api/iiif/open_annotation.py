@@ -80,6 +80,7 @@ def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
     :return:
     """
     img_service_id = img["resource"]["service"]["@id"]
+    img_full = img["resource"]["@id"]
 
     coords = fragment_coords.split(",")
 
@@ -106,7 +107,7 @@ def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
             "@type": "sc:Manifest"
         },
         "full": {
-          "@id": img_service_id,
+          "@id": img_full,
           "@type": "dctypes:Image"
         },
         "selector": {

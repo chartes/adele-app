@@ -99,9 +99,19 @@
                     editable: true
                 });
 
-                this.page = page;
+                this.page = page; //canvas
                 this.baseLayer = tileLayerIiif(this.page.images[0].resource.service['@id'] + '/info.json')
                     .addTo(this.map);
+
+                // build a map of canvas ids and img ids
+                this.canvases = [];
+                this.images = [];
+                for(let c of this.manifest_data.sequences[0].canvases) {
+                    this.canvases.push(c["@id"]);
+                    this.images.push(c.images[0].resource['@id']);
+                }
+                console.log(this.canvases);
+                console.log(this.images);
             },
 
             createDrawControls() {
@@ -296,7 +306,8 @@
                 for (let anno of annotations) {
                     const newAnnotation = {
                         manifest_url: this.$store.getters['document/manifestURL'],
-                        img_id: this.page.images[0].resource["@id"],
+                        img_idx: this.images.indexOf(anno.img_id),
+                        canvas_idx: this.canvases.indexOf(anno.canvas_id),
                         coords: anno.region.coords,
                         content: anno.annotation_type.label === "annotation" ? anno.content : "",
                         zone_type_id: anno.annotation_type.id
@@ -320,7 +331,8 @@
                         let data = {
                             username: "AdminJulien",
                             manifest_url: "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                            img_id: "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                            img_idx: 0,
+                            canvas_idx: 0,
                             alignments: [
                                 {
                                     "zone_id": 15,
@@ -353,13 +365,15 @@
                 const doc_id = this.$store.getters['document/document'].id;
                 const user_id = this.$store.getters['user/currentUser'].id;
                 let _must_be_saved = this.must_be_saved;
-
+                console.log(_must_be_saved);
                 return this.saveZones(doc_id, user_id, annotations)
                     .then((response) => {
+                        console.log(response);
                         this.handleAPIErrors(response);
                         return this.saveAlignments(doc_id, user_id, annotations)
                     })
                     .then((response) => {
+                        console.log(response);
                         this.handleAPIErrors(response);
                         return true
                     });

@@ -106,7 +106,9 @@ const IIIFAnnotationLoader = {
                 3) SVG element  : oa:SpecificResource
                 4) ??
              */
-            var region = null;
+            let region = null;
+            let canvas_id = null;
+            let img_id = null;
             if (annotation.on["@type"] === "oa:SpecificResource") {
                 if (annotation.on.selector) {
                     // assume that if it's a string then it's a single value
@@ -123,11 +125,15 @@ const IIIFAnnotationLoader = {
                         }
                     }
                 }
+                canvas_id = annotation.on.on;
+                img_id = annotation.on.full["@id"];
             }
             else if (typeof annotation.on === "string" && annotation.on.indexOf("xywh=") !== 0) {
                 // case 1
                 let i = annotation.on.indexOf("xywh=");
                 region = {coords: annotation.on.substr(i+5, annotation.on.length), type: "rect"}
+                canvas_id = annotation.on.substr(0, i-1);
+                img_id = 999;
             }
 
             // dont add coords if there is none
@@ -139,6 +145,11 @@ const IIIFAnnotationLoader = {
                     region: region
                 });
             }
+
+            new_annotation = Object.assign(new_annotation, {
+                canvas_id: canvas_id,
+                img_id: img_id,
+            });
 
         }
         return new_annotation;
