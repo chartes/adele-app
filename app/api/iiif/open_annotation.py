@@ -1,5 +1,5 @@
 import pprint
-from flask import jsonify
+from flask import jsonify, current_app
 
 from config import Config
 
@@ -7,14 +7,16 @@ from config import Config
 def make_annotation_list(list_id, doc_id, annotations, annotation_type):
     """
 
+    :param annotation_type:
     :param list_id:
     :param doc_id:
     :param annotations:
     :return:
     """
+    url = "%s%s" % (current_app.config["APP_DOMAIN_NAME"], current_app.config["APP_URL_PREFIX"])
     return {
-        "@context":"http://iiif.io/api/presentation/2/context.json",
-        "@id": "http://{0}/dossiers/{1}/list/{2}".format(Config.APP_DOMAIN_NAME, doc_id, list_id),
+        "@context": "http://iiif.io/api/presentation/2/context.json",
+        "@id": "http://{0}/api/1.0/documents/{1}/{2}s/list/{3}".format(url, doc_id, annotation_type.get('label'), list_id),
         "@type": "sc:AnnotationList",
         "resources": annotations,
         "metadata": [
@@ -25,9 +27,10 @@ def make_annotation_list(list_id, doc_id, annotations, annotation_type):
     }
 
 
-def make_specific_rectangular_resource(manifest_url, img, rect_coords):
+def make_specific_rectangular_resource(manifest_url, canvas_url, img, rect_coords):
     """
 
+    :param canvas_url:
     :param manifest_url:
     :param img:
     :param rect_coords:
@@ -60,15 +63,17 @@ def make_specific_rectangular_resource(manifest_url, img, rect_coords):
             "@context": "http://iiif.io/api/annex/openannotation/context.json",
             "@type": "iiif:ImageApiSelector",
             "region": rect_coords
-        }
+        },
+        "on": canvas_url
     }
 
     return res
 
 
-def make_specific_svg_resource(manifest_url, img, fragment_coords):
+def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
     """
 
+    :param canvas_url:
     :param manifest_url:
     :param img:
     :param fragment_coords:
@@ -107,15 +112,17 @@ def make_specific_svg_resource(manifest_url, img, fragment_coords):
         "selector": {
           "@type":["oa:SvgSelector","cnt:ContentAsText"],
           "chars": svg_data
-        }
+        },
+        "on": canvas_url
     }
 
     return res
 
 
-def make_annotation(manifest_url, img, fragment_coords, res_uri, content, format="text/plain"):
+def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, format="text/plain"):
     """
 
+    :param canvas_url:
     :param manifest_url:
     :param img:
     :param fragment_coords:
@@ -125,15 +132,15 @@ def make_annotation(manifest_url, img, fragment_coords, res_uri, content, format
     :return:
     """
     if len(fragment_coords.split(",")) == 4:
-        specific_resource = make_specific_rectangular_resource(manifest_url, img, fragment_coords)
+        specific_resource = make_specific_rectangular_resource(manifest_url, canvas_url, img, fragment_coords)
     else:
-        specific_resource = make_specific_svg_resource(manifest_url, img, fragment_coords)
+        specific_resource = make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords)
 
     anno = {
         "@type": "oa:Annotation",
         "motivation": "sc:painting",
         "resource": {
-            "@type":"cnt:ContentAsText",
+            "@type": "cnt:ContentAsText",
             "chars": content,
             "format": format
         },

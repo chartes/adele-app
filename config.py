@@ -65,6 +65,7 @@ class DevelopmentConfig(Config):
     COPY = False
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
+    APP_DOMAIN_NAME = "dev.chartes.psl.eu"
 
     MAIL_USERNAME = 'adele@chartes.psl.eu'
     USER_EMAIL_SENDER_NAME = 'Adele'

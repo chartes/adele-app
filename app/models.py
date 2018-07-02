@@ -52,11 +52,12 @@ class ActeType(db.Model):
 
 
 class AlignmentDiscours(db.Model):
-    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
-    speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    ptr_start = db.Column(db.Integer, primary_key=True)
-    ptr_end = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'))
+    speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    ptr_start = db.Column(db.Integer)
+    ptr_end = db.Column(db.Integer)
     note = db.Column(db.Text)
 
     transcription = db.relationship("Transcription")
@@ -65,12 +66,13 @@ class AlignmentDiscours(db.Model):
 
     def serialize(self):
         return {
+            'id': self.id,
             'transcription_id': self.transcription_id,
             'speech_part_type': self.speech_part_type.serialize(),
             'user_id': self.user_id,
             'ptr_start': self.ptr_start,
             'ptr_end': self.ptr_end,
-            'note' : self.note
+            'note': self.note
         }
 
 
@@ -78,7 +80,8 @@ class AlignmentImage(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
     manifest_url = db.Column(db.String, db.ForeignKey('image_zone.manifest_url'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    img_id = db.Column(db.Integer, db.ForeignKey('image_zone.img_id'), primary_key=True)
+    canvas_idx = db.Column(db.Integer, db.ForeignKey('image_zone.canvas_idx'), primary_key=True)
+    img_idx = db.Column(db.Integer, db.ForeignKey('image_zone.img_idx'), primary_key=True)
     zone_id = db.Column(db.Integer, db.ForeignKey('image_zone.zone_id'), primary_key=True)
     ptr_transcription_start = db.Column(db.Integer)
     ptr_transcription_end = db.Column(db.Integer)
@@ -88,7 +91,8 @@ class AlignmentImage(db.Model):
             'transcription_id': self.transcription_id,
             'manifest_url': self.manifest_url,
             'user_id': self.user_id,
-            'img_id': self.img_id,
+            'canvas_idx': self.canvas_idx,
+            'img_idx': self.canvas_idx,
             'zone_id': self.zone_id,
             'ptr_start': self.ptr_transcription_start,
             'ptr_end': self.ptr_transcription_end
@@ -278,7 +282,8 @@ class ImageZoneType(db.Model):
 
 class ImageZone(db.Model):
     manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
-    img_id = db.Column(db.String, db.ForeignKey('image.id'), primary_key=True)
+    canvas_idx = db.Column(db.Integer, db.ForeignKey('image.canvas_idx'), primary_key=True)
+    img_idx = db.Column(db.Integer, db.ForeignKey('image.img_idx'), primary_key=True)
     zone_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     zone_type_id = db.Column(db.Integer, db.ForeignKey('image_zone_type.id'), primary_key=True)
@@ -290,7 +295,8 @@ class ImageZone(db.Model):
     def serialize(self):
         return {
             'manifest_url': self.manifest_url,
-            'img_id' : self.img_id,
+            'canvas_idx' : self.canvas_idx,
+            'img_idx' : self.img_idx,
             'zone_id' : self.zone_id,
             'user_id' : self.user_id,
             'zone_type': self.zone_type.serialize(),
@@ -299,18 +305,43 @@ class ImageZone(db.Model):
         }
 
 
-class Image(db.Model):
-    manifest_url = db.Column(db.String, primary_key=True)
-    id = db.Column(db.String, primary_key=True)
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
-
-    zones = db.relationship("ImageZone",
-                            primaryjoin=(ImageZone.img_id==id and ImageZone.manifest_url==manifest_url),
-                            cascade="all, delete-orphan")
+class ImageUrl(db.Model):
+    manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
+    canvas_idx = db.Column(db.Integer,  db.ForeignKey('image.canvas_idx'), primary_key=True)
+    img_idx = db.Column(db.Integer,  db.ForeignKey('image.img_idx'), primary_key=True)
+    img_url = db.Column(db.String)
 
     def serialize(self):
         return {
-            'id': self.id,
+            'manifest_url': self.manifest_url,
+            'canvas_idx': self.canvas_idx,
+            'img_idx': self.img_idx,
+            'img_url': self.img_url
+        }
+
+
+class Image(db.Model):
+    manifest_url = db.Column(db.String, primary_key=True)
+    canvas_idx = db.Column(db.Integer,  primary_key=True)
+    img_idx = db.Column(db.Integer,  primary_key=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+
+    zones = db.relationship("ImageZone",
+                            primaryjoin="and_(ImageZone.manifest_url == Image.manifest_url, ImageZone.canvas_idx == Image.canvas_idx, ImageZone.img_idx == Image.img_idx)",
+                            cascade="all, delete-orphan")
+    _image_url = db.relationship("ImageUrl",
+                                 primaryjoin="and_(ImageUrl.manifest_url == Image.manifest_url,ImageUrl.canvas_idx == Image.canvas_idx, ImageUrl.img_idx == Image.img_idx)",
+                                 uselist=False,
+                                 cascade="all, delete-orphan")
+
+    @property
+    def url(self):
+        return self._image_url.img_url
+
+    def serialize(self):
+        return {
+            'canvas_idx': self.canvas_idx,
+            'img_idx': self.img_idx,
             'doc_id': self.doc_id,
             'manifest_url': self.manifest_url,
             'zones': [
@@ -321,7 +352,8 @@ class Image(db.Model):
                     "note": z.note
 
                 } for z in self.zones
-            ]
+            ],
+            'url': self.url
         }
 
 

@@ -16,7 +16,7 @@
                         {% for img in d.images %}
                             <div class="thumbnail-container has-background-grey-lighter">
                                 <figure class=" thumbnail">
-                                    <img src="{{ img.id | replace("full/full", "full/,40") }}"/>
+                                    <img src="{{ img.image_url | replace("full/full", "full/,40") }}"/>
                                 </figure>
                             </div>
                         {% endfor %}
@@ -39,9 +39,18 @@
         $(document).ready(function () {
             $("#document-list tr").click(function () {
                 const target = $(this).find("input");
-                if (target) {
+                if (target.length > 0) {
                     window.location.href = $(target).val();
                 }
+            });
+
+
+            $('#document-list-table th:nth-child(1)').click(function() {
+               sortTable(0);
+            });
+
+            $('#document-list-table th:nth-child(2)').click(function() {
+               sortTable(1);
             });
         });
     </script>
@@ -53,6 +62,7 @@
             switching = true;
             // Set the sorting direction to ascending:
             dir = "asc";
+            console.log("hello");
             /* Make a loop that will continue until
             no switching has been done: */
             while (switching) {

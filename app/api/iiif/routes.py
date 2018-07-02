@@ -26,20 +26,14 @@ ANNO_ZONE_TYPE = 2
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest')
 def api_documents_manifest(api_version, doc_id):
-    no_result = False
-    try:
-        img = Image.query.filter(Image.doc_id == doc_id).one()
-        manifest_data = urlopen(img.manifest_url).read()
-    except NoResultFound:
-        no_result = True
-        manifest_data = "{}"
-
-    if no_result:
+    img = Image.query.filter(Image.doc_id == doc_id).first()
+    if img is None:
         response = APIResponseFactory.make_response(errors={
             "status": 404,
             "details": "Cannot fetch manifest for the document {0}".format(doc_id)
         })
     else:
+        manifest_data = urlopen(img.manifest_url).read()
         data = json_loads(manifest_data)
         response = APIResponseFactory.make_response(data=data)
 
@@ -60,6 +54,7 @@ def api_documents_manifest_url(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
+"""
 @api_bp.route("/api/<api_version>/documents/<doc_id>/first-canvas")
 def api_documents_first_canvas(api_version, doc_id):
     json_obj = query_json_endpoint(
@@ -82,6 +77,58 @@ def api_documents_first_canvas(api_version, doc_id):
             })
 
     return APIResponseFactory.jsonify(response)
+"""
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/canvas/<canvas_name>")
+def api_documents_canvas(api_version, doc_id, canvas_name):
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id)
+    )
+
+    if "errors" in json_obj:
+        response = APIResponseFactory.make_response(errors=[
+            json_obj["errors"],
+            {"title": "Cannot fetch manifest for the document {0}".format(doc_id)}
+        ])
+    else:
+        response = None
+        sequence = json_obj["data"]
+        for c in sequence["canvases"]:
+            if c["@id"].endswith("/" + canvas_name):
+                response = APIResponseFactory.make_response(data=c)
+                break
+    if response is None:
+        response = APIResponseFactory.make_response(errors={
+            "title": "Canvas '{1}' not found in manifest for document {0}".format(doc_id, canvas_name)
+        })
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/first-sequence")
+def api_documents_first_sequence(api_version, doc_id):
+    json_obj = query_json_endpoint(
+        request,
+        url_for('api_bp.api_documents_manifest', api_version=api_version, doc_id=doc_id)
+    )
+
+    if "errors" in json_obj:
+        response = APIResponseFactory.make_response(errors=[
+            json_obj["errors"],
+            {"title": "Cannot fetch manifest for the document {0}".format(doc_id)}
+        ])
+    else:
+        try:
+            canvas = json_obj["data"]["sequences"][0]
+            response = APIResponseFactory.make_response(data=canvas)
+        except (IndexError, KeyError):
+            response = APIResponseFactory.make_response(errors={
+                "title": "Sequence not found in manifest for document {0}".format(doc_id)
+            })
+
+    return APIResponseFactory.jsonify(response)
 
 
 """
@@ -101,45 +148,45 @@ def api_documents_annotations(api_version, doc_id):
     """
     json_obj = query_json_endpoint(
         request,
-        url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+        url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id)
     )
 
     if "errors" in json_obj:
         response = APIResponseFactory.make_response(errors=json_obj["errors"])
     else:
-        canvas = json_obj["data"]
+        sequence = json_obj["data"]
         new_annotation_list = []
+        for canvas in sequence["canvases"]:
+            if "otherContent" in canvas:
+                op = build_opener()
+                op.addheaders = [("Content-type", "text/plain")]
+                # for each annotation list reference in the manifest, make a new annotation list
+                for oc in [oc for oc in canvas["otherContent"] if oc["@type"] == "sc:AnnotationList"]:
+                    # make a call to api_documents_manifest_annotations_list
+                    try:
+                        resp = op.open(oc["@id"], timeout=10).read()
+                    except HTTPError as e:
+                        response = APIResponseFactory.make_response(
+                            errors={"details": str(e),
+                                    "title": "The annotation list {0} cannot be reached".format(oc["@id"]),
+                                    "status": 404}
+                        )
+                        return APIResponseFactory.jsonify(response)
 
-        if "otherContent" in canvas:
-            op = build_opener()
-            op.addheaders = [("Content-type", "text/plain")]
-            # for each annotation list reference in the manifest, make a new annotation list
-            for oc in [oc for oc in canvas["otherContent"] if oc["@type"] == "sc:AnnotationList"]:
-                # make a call to api_documents_manifest_annotations_list
-                try:
-                    resp = op.open(oc["@id"], timeout=10).read()
-                except HTTPError as e:
-                    response = APIResponseFactory.make_response(
-                        errors={"details": str(e),
-                                "title": "The annotation list {0} cannot be reached".format(oc["@id"]),
-                                "status": 404}
-                    )
-                    return APIResponseFactory.jsonify(response)
-
-                resp = json_loads(resp)
-                if "errors" in resp:
-                    return resp
-                else:
-                    new_annotation_list.append(resp)
+                    resp = json_loads(resp)
+                    if "errors" in resp:
+                        return resp
+                    else:
+                        new_annotation_list.append(resp)
 
         response = APIResponseFactory.make_response(data=new_annotation_list)
 
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>/list")
-def api_documents_annotations_list(api_version, doc_id, user_id=None):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list/<canvas_name>")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>/list/<canvas_name>")
+def api_documents_annotations_list(api_version, doc_id, canvas_name, user_id=None):
     """
 
     :param user_id:
@@ -169,15 +216,35 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
     if response is None:
         json_obj = query_json_endpoint(
             request,
-            url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+            url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id,
+                    canvas_name=canvas_name)
         )
 
         if "errors" in json_obj:
             response = APIResponseFactory.make_response(errors=json_obj["errors"])
         else:
-            canvas = json_obj["data"]
-            img = Image.query.filter(Image.doc_id == doc_id).one()
-            # TODO s'il n'y a pas d'image dans le manifest
+            sequence = json_obj["data"]
+            canvas = None
+            for c_idx, c in enumerate(sequence["canvases"]):
+                if c["@id"].endswith("/" + canvas_name):
+                    canvas_idx, canvas = c_idx, c
+                    break
+
+            if canvas is None:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "details": "Canvas %s not found" % canvas_name
+                })
+                return APIResponseFactory.jsonify(response)
+
+            json_obj = query_json_endpoint(
+                request,
+                url_for('api_bp.api_documents_manifest_url', api_version=api_version, doc_id=doc_id)
+            )
+            manifest_url = json_obj["data"].get("manifest_url")
+
+            # TODO s'il y a plusieurs images dans un canvas
+            img = Image.query.filter(Image.manifest_url == manifest_url, Image.doc_id == doc_id,
+                                     Image.canvas_idx == canvas_idx).first()
             img_json = canvas["images"][0]
             annotations = []
 
@@ -195,7 +262,8 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
                 res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
                 fragment_coords = img_zone.coords
                 new_annotation = make_annotation(
-                    img_zone.manifest_url, img_json, fragment_coords, res_uri, img_zone.note, format="text/plain"
+                    img_zone.manifest_url, canvas["@id"], img_json, fragment_coords, res_uri, img_zone.note,
+                    format="text/plain"
                 )
                 annotations.append(new_annotation)
 
@@ -205,9 +273,9 @@ def api_documents_annotations_list(api_version, doc_id, user_id=None):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/list')
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>/list')
-def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/list/<canvas_name>')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>/list/<canvas_name>')
+def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=None):
     """
     Fetch transcription segments formated as a sc:AnnotationList
     :param user_id:
@@ -235,33 +303,48 @@ def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
         })
 
     if response is None:
-        first_canvas = query_json_endpoint(
+        json_obj = query_json_endpoint(
             request,
-            url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+            url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id,
+                    canvas_name=canvas_name)
         )
-        if "errors" in first_canvas:
-            response = APIResponseFactory.make_response(errors=first_canvas["errors"])
 
-        if response is None:
+        if "errors" in json_obj:
+            response = APIResponseFactory.make_response(errors=json_obj["errors"])
+        else:
+            sequence = json_obj["data"]
+            canvas = None
+            for c_idx, c in enumerate(sequence["canvases"]):
+                if c["@id"].endswith("/" + canvas_name):
+                    canvas_idx, canvas = c_idx, c
+                    break
+
+            if canvas is None:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 404, "details": "Canvas %s not found" % canvas_name
+                })
+                return APIResponseFactory.jsonify(response)
+
             manifest_url = query_json_endpoint(
                 request,
                 url_for('api_bp.api_documents_manifest_url', api_version=api_version, doc_id=doc_id)
             )
-            if "errors" in manifest_url:
-                response = APIResponseFactory.make_response(errors=manifest_url["errors"])
+            manifest_url = manifest_url["data"]
 
-        if response is None:
-            first_img = first_canvas["data"]["images"][0]
-            manifest_url = manifest_url["data"]["manifest_url"]
+            first_img = canvas["images"][0]
+            manifest_url = manifest_url["manifest_url"]
             annotations = []
 
             # transcription zone type
+            # TODO s'il y a plusieurs images dans un canvas
+            img = Image.query.filter(Image.manifest_url == manifest_url, Image.doc_id == doc_id,
+                                     Image.canvas_idx == canvas_idx).first()
             transcription_zone_type = ImageZoneType.query.filter(ImageZoneType.id == TR_ZONE_TYPE).one()
-            zones = ImageZone.query.filter(
-                ImageZone.manifest_url == manifest_url,
-                ImageZone.user_id == user_id if user_id is not None else ImageZone.user_id,
-                ImageZone.zone_type_id == transcription_zone_type.id
-            ).all()
+
+            if user_id is None:
+                zones = [z for z in img.zones if z.zone_type.id == transcription_zone_type.id]
+            else:
+                zones = [z for z in img.zones if z.zone_type.id and z.user_id == int(user_id)]
 
             for zone in zones:
                 kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": zone.zone_id}
@@ -274,7 +357,8 @@ def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
                     AlignmentImage.transcription_id == tr.id,
                     AlignmentImage.user_id == user_id if user_id is not None else AlignmentImage.user_id,
                     AlignmentImage.manifest_url == zone.manifest_url,
-                    AlignmentImage.img_id == zone.img_id,
+                    AlignmentImage.canvas_idx == zone.canvas_idx,
+                    AlignmentImage.img_idx == zone.img_idx,
                     AlignmentImage.zone_id == zone.zone_id
                 ).first()
 
@@ -285,7 +369,7 @@ def api_documents_transcriptions_list(api_version, doc_id, user_id=None):
                     tr_seg = ""
 
                 annotations.append(
-                    make_annotation(manifest_url, first_img, zone.coords, res_uri, tr_seg, "text/plain")
+                    make_annotation(manifest_url, canvas["@id"], first_img, zone.coords, res_uri, tr_seg, "text/plain")
                 )
 
             annotation_list = make_annotation_list("f2", doc_id, annotations, transcription_zone_type.serialize())
@@ -335,18 +419,17 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
     if response is None:
         json_obj = query_json_endpoint(
             request,
-            url_for('api_bp.api_documents_first_canvas', api_version=api_version, doc_id=doc_id)
+            url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id)
         )
 
         if "errors" in json_obj:
             response = APIResponseFactory.make_response(errors=json_obj["errors"])
         else:
-            canvas = json_obj["data"]
+            sequence = json_obj["data"]
             try:
                 img = Image.query.filter(Image.doc_id == doc_id).one()
                 # select annotations zones
                 img_zone = ImageZone.query.filter(
-                    ImageZone.img_id == img.id,
                     ImageZone.zone_id == zone_id,
                     ImageZone.manifest_url == img.manifest_url,
                     ImageZone.user_id == user_id
@@ -389,17 +472,18 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id, user_id=None):
                         "status": 404,
                         "title": "This transcription zone has no text fragment attached to it".format(doc_id)
                     })
-
         # else it is a mere image note
         else:
             note_content = img_zone.note
 
         if response is None:
             # TODO: gerer erreur si pas d'image dans le canvas
-            img_json = canvas["images"][0]
+            canvas = sequence["canvases"][img_zone.canvas_idx]
+            img_json = canvas["images"][img_zone.img_idx]
             fragment_coords = img_zone.coords
-
-            new_annotation = make_annotation(img.manifest_url, img_json, fragment_coords, res_uri, note_content,
+            new_annotation = make_annotation(img.manifest_url, canvas["@id"], img_json, fragment_coords,
+                                             res_uri,
+                                             note_content,
                                              format="text/plain")
             response = new_annotation
 
@@ -413,7 +497,8 @@ def api_post_documents_annotations(api_version, doc_id):
         {
             "data" : [{
                 "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "canvas_idx" : 0,
+                "img_idx" : 0,
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>"
                 "zone_type_id" : 1,
@@ -423,7 +508,8 @@ def api_post_documents_annotations(api_version, doc_id):
             },
             {
                 "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "canvas_idx" : 0,
+                "img_idx" : 0,
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>"
                 "zone_type_id" : 1,
@@ -452,9 +538,10 @@ def api_post_documents_annotations(api_version, doc_id):
             try:
                 img_zone_max_zone_id = db.session.query(func.max(ImageZone.zone_id)).filter(
                     ImageZone.manifest_url == data[0]["manifest_url"],
-                    ImageZone.img_id == data[0]["img_id"]
+                    ImageZone.img_idx == data[0]["img_idx"],
+                    ImageZone.canvas_idx == data[0]["canvas_idx"],
                 ).group_by(
-                    ImageZone.manifest_url, ImageZone.img_id
+                    ImageZone.manifest_url, ImageZone.canvas_idx, ImageZone.img_idx
                 ).one()
                 img_zone_max_zone_id = img_zone_max_zone_id[0] + 1
             except NoResultFound:
@@ -463,7 +550,6 @@ def api_post_documents_annotations(api_version, doc_id):
 
             new_img_zone_ids = []
             for anno in data:
-
                 user_id = user.id
                 # teacher and admin MAY post/put/delete for others
                 if (user.is_teacher or user.is_admin) and "username" in anno:
@@ -482,7 +568,8 @@ def api_post_documents_annotations(api_version, doc_id):
                 # INSERT data but dont commit yet
                 img_zone = ImageZone(
                     manifest_url=anno["manifest_url"],
-                    img_id=anno["img_id"],
+                    canvas_idx=anno["canvas_idx"],
+                    img_idx=anno["img_idx"],
                     note=anno["content"],
                     coords=anno["coords"],
                     zone_id=img_zone_max_zone_id,
@@ -532,7 +619,8 @@ def api_put_documents_annotations(api_version, doc_id):
         {
             "data" : [{
                 "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "canvas_idx" : 0,
+                "img_idx" : 0,
                 "zone_id" : 32,
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>",
@@ -543,8 +631,9 @@ def api_put_documents_annotations(api_version, doc_id):
             },
             {
                 "manifest_url" : "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
-                "zone_id" : 30
+                "canvas_idx" : 0,
+                "img_idx" : 0,
+                "zone_id" : 30,
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>",
                 "zone_type_id" : 1,
@@ -594,7 +683,8 @@ def api_put_documents_annotations(api_version, doc_id):
                     img_zone = ImageZone.query.filter(
                         ImageZone.zone_id == anno["zone_id"],
                         ImageZone.manifest_url == anno["manifest_url"],
-                        ImageZone.img_id == anno["img_id"],
+                        ImageZone.img_idx == anno["img_idx"],
+                        ImageZone.canvas_idx == anno["canvas_idx"],
                         ImageZone.user_id == user_id
                     ).one()
                     img_zones.append((user_id, img_zone))
@@ -671,50 +761,36 @@ def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None)
                 "status": 403, "title": "Access forbidden"
             })
 
-    json_obj = query_json_endpoint(
-        request,
-        url_for('api_bp.api_documents_manifest', api_version=api_version, doc_id=doc_id)
-    )
+    img = Image.query.filter(Image.doc_id == doc_id).first()
+    if zone_id is None:
+        zone_id = ImageZone.zone_id
 
-    if "errors" in json_obj:
-        response = APIResponseFactory.make_response(errors=json_obj["errors"])
-    else:
-        manifest = json_obj["data"]
+    try:
+        img_zones = ImageZone.query.filter(
+            ImageZone.zone_id == zone_id,
+            ImageZone.manifest_url == img.manifest_url,
+            ImageZone.user_id == user_id
+        ).all()
+        for img_zone in img_zones:
+            db.session.delete(img_zone)
+    except NoResultFound as e:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404,
+            "title": "Image zone not found".format(zone_id),
+            "details": "Cannot delete image zone: {0}".format(str(e))
+        })
 
-        if zone_id is None:
-            img_id = ImageZone.img_id
-            zone_id = ImageZone.zone_id
-        else:
-            # TODO c'est pas ouf
-            img_id = manifest["sequences"][0]["canvases"][0]["images"][0]["resource"]["@id"]
-
+    if response is None:
         try:
-            img_zones = ImageZone.query.filter(
-                ImageZone.zone_id == zone_id,
-                ImageZone.manifest_url == manifest["@id"],
-                ImageZone.img_id == img_id,
-                ImageZone.user_id == user_id
-            ).all()
-            for img_zone in img_zones:
-                db.session.delete(img_zone)
-        except NoResultFound as e:
+            db.session.commit()
+        except Exception as e:
             response = APIResponseFactory.make_response(errors={
-                "status": 404,
-                "title": "Image zone not found".format(zone_id),
-                "details": "Cannot delete image zone: {0}".format(str(e))
+                "status": 403, "title": "Cannot delete data", "details": str(e)
             })
 
+        # the DELETE is OK, respond with no data
         if response is None:
-            try:
-                db.session.commit()
-            except Exception as e:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot delete data", "details": str(e)
-                })
-
-            # the DELETE is OK, respond with no data
-            if response is None:
-                response = APIResponseFactory.make_response()
+            response = APIResponseFactory.make_response()
 
     return APIResponseFactory.jsonify(response)
 
@@ -723,10 +799,7 @@ def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None)
 def api_documents_images(api_version, doc_id):
     images = Image.query.filter(Image.doc_id == doc_id).all()
 
-    response = APIResponseFactory.make_response(data=[{
-        "manifest_url": img.manifest_url,
-        "id": img.id
-    } for img in images])
+    response = APIResponseFactory.make_response(data=[img.serialize() for img in images])
 
     return APIResponseFactory.jsonify(response)
 
@@ -738,7 +811,8 @@ def api_post_documents_images(api_version, doc_id):
     {
         "data" : {
             "manifest_url" : "http://my.manifests/man1.json",
-            "id": "http://image/iiif/1/full/full/0/default.jpg"
+            "canvas_idx": 0,
+            "img_idx": 0,
         }
     }
     :param api_version:
@@ -761,27 +835,26 @@ def api_post_documents_images(api_version, doc_id):
             data = [data]
 
         new_images = []
-
-        images_before = query_json_endpoint(
-            request,
-            url_for("api_bp.api_documents_images", api_version=api_version, doc_id=doc_id)
-        )
-
-        if "data" in images_before:
-            if not isinstance(images_before["data"], list):
-                manifest_url = images_before["data"]["manifest_url"]
-            else:
-                manifest_url = images_before["data"][0]["manifest_url"]
-        else:
-            manifest_url = None
-
         try:
             for img_data in data:
-                if manifest_url is not None and img_data["manifest_url"] != manifest_url:
-                    raise ValueError("Only one manifest per document is allowed")
-
-                new_img = Image(manifest_url=img_data["manifest_url"], id=img_data["id"], doc_id=doc_id)
+                new_img = Image(manifest_url=img_data["manifest_url"],
+                                canvas_idx=img_data["canvas_idx"],
+                                img_idx=img_data["img_idx"],
+                                doc_id=doc_id)
                 db.session.add(new_img)
+
+                json_obj = query_json_endpoint(
+                    request,
+                    url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id)
+                )
+                canvas = json_obj["data"]["canvases"][img_data["canvas_idx"]]
+                img_url = canvas["images"][img_data["img_idx"]]["@id"]
+                new_img_url = Image(manifest_url=img_data["manifest_url"],
+                                canvas_idx=img_data["canvas_idx"],
+                                img_idx=img_data["img_idx"],
+                                img_url=img_url)
+                db.session.add(new_img_url)
+
                 new_images.append(new_img)
         except KeyError:
             response = APIResponseFactory.make_response(errors={
@@ -795,7 +868,6 @@ def api_post_documents_images(api_version, doc_id):
             db.session.rollback()
 
         if response is None:
-
             try:
                 db.session.commit()
             except Exception as e:
@@ -809,22 +881,7 @@ def api_post_documents_images(api_version, doc_id):
                     url_for("api_bp.api_documents_images", api_version=api_version, doc_id=doc_id)
                 )
 
-                if not isinstance(images_before["data"], list):
-                    images_before = [images_before["data"]]
-                else:
-                    images_before = images_before["data"]
-
-                if not isinstance(images_after["data"], list):
-                    images_after = [images_after["data"]]
-                else:
-                    images_after = images_after["data"]
-
-                images_before = [(img["manifest_url"], img["id"]) for img in images_before]
-                created_images = [{
-                    "manifest_url": img["manifest_url"], "id": img["id"]
-                } for img in images_after if (img["manifest_url"], img["id"]) not in images_before]
-
-                response = APIResponseFactory.make_response(data=created_images)
+                response = APIResponseFactory.make_response(data=images_after["data"])
 
     return APIResponseFactory.jsonify(response)
 
@@ -869,34 +926,34 @@ def get_bbox(coords, max_width, max_height):
         # poly/rect
         min_x, min_y = coords[0], coords[1]
         max_x, max_y = coords[0], coords[1]
-        for i in range(0, len(coords)-1, 2):
+        for i in range(0, len(coords) - 1, 2):
             # X stuff
             if coords[i] < min_x:
                 min_x = coords[i]
             elif coords[i] > max_x:
                 max_x = coords[i]
             # Y stuff
-            if coords[i+1] < min_y:
-                min_y = coords[i+1]
-            elif coords[i+1] > max_y:
-                max_y = coords[i+1]
+            if coords[i + 1] < min_y:
+                min_y = coords[i + 1]
+            elif coords[i + 1] > max_y:
+                max_y = coords[i + 1]
         width = abs(max_x - min_x)
         height = abs(max_y - min_y)
     else:
         # circle
         cx, cy, r = coords
         min_x, min_y = cx - r, cy - r
-        width, height = 2*r, 2*r
+        width, height = 2 * r, 2 * r
 
     # clamp to the image borders
     if min_x < 0:
-        #width = width + min_x
+        # width = width + min_x
         min_x = 0
     elif min_x > max_width:
         min_x = max_width - width
 
     if min_y < 0:
-        #height = height + min_y
+        # height = height + min_y
         min_y = 0
     elif min_y > max_height:
         min_y = max_height - height
