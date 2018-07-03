@@ -42,15 +42,15 @@ def api_documents_manifest(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest-url')
 def api_documents_manifest_url(api_version, doc_id):
-    try:
-        img = Image.query.filter(Image.doc_id == doc_id).one()
-        url = img.manifest_url
-        response = APIResponseFactory.make_response(data={"manifest_url": url})
-    except NoResultFound:
+    img = Image.query.filter(Image.doc_id == doc_id).first()
+    if img is None:
         response = APIResponseFactory.make_response(errors={
             "status": 404,
             "details": "Cannot fetch manifest for the document {0}".format(doc_id)
         })
+    else:
+        url = img.manifest_url
+        response = APIResponseFactory.make_response(data={"manifest_url": url})
     return APIResponseFactory.jsonify(response)
 
 

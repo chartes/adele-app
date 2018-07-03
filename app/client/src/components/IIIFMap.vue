@@ -106,14 +106,70 @@
                 // build a map of canvas ids and img ids
                 this.canvases = [];
                 this.images = [];
-                for(let c of this.manifest_data.sequences[0].canvases) {
+                for (let c of this.manifest_data.sequences[0].canvases) {
                     this.canvases.push(c["@id"]);
                     this.images.push(c.images[0].resource['@id']);
                 }
                 console.log(this.canvases);
                 console.log(this.images);
-            },
 
+                if (this.canvases.length > 1) {
+                    this.addPaginationControls();
+                }
+            },
+            addPaginationControls() {
+
+                let thumbnails = '';
+                for (let img_id of this.images) {
+                    const thumbnail_url = img_id.replace("full/full", "full/,80");
+                    thumbnails += '<div class="column"><img src="'+ thumbnail_url +'"/></div>';
+                }
+
+                L.control.custom({
+                    id:'facsimile-pagination-control',
+                    position: 'bottomleft',
+                    content: '<div class="facsimile-pagination columns">' +
+                    thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                        thumbnails +
+                    '</div>',
+                    classes: '',
+                    style:
+                        {
+                            padding: '0px 0 0 0',
+                            cursor: 'pointer',
+                        },
+                    datas:
+                        {
+                            'foo': 'bar',
+                        },
+                    events:
+                        {
+                            click: function (data) {
+                                console.log('wrapper div element clicked');
+                                console.log(data);
+                            },
+                            dblclick: function (data) {
+                                console.log('wrapper div element dblclicked');
+                                console.log(data);
+                            },
+                            contextmenu: function (data) {
+                                console.log('wrapper div element contextmenu');
+                                console.log(data);
+                            },
+                        }
+                }).addTo(this.map);
+            },
             createDrawControls() {
 
                 const drawingToolsContainer = L.DomUtil.create('div', 'leaflet-control leaflet-bar');

@@ -86,7 +86,7 @@ const IIIFAnnotationLoader = {
     ,
     parseAnnotation: function (annotation) {
         //console.log("Adding resource " + annotation.resource["@id"]);
-        let new_annotation = null;
+        let new_annotation = null
         if (annotation["@type"] === "oa:Annotation" && annotation["motivation"] === "sc:painting") {
             new_annotation = {
                 "id": annotation.resource["@id"]
@@ -170,7 +170,7 @@ const IIIFAnnotationLoader = {
                 if(!this.annotationLists[list_url].annotation_type){
                     throw new Error("Annotation type metadata is empty for annotation list " + list_url);
                 }
-
+                console.log(response.data);
                 if (response.data.resources){
                     for (let annotation of response.data.resources) {
                         let new_annotation = this.parseAnnotation(annotation);

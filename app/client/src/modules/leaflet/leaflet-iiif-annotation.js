@@ -31,8 +31,6 @@ const LeafletIIIFAnnotation = {
     },
 
     _makeAnnotation: function (layer) {
-        const tooltip = layer.getTooltip();
-        const content = tooltip === undefined ? "" : tooltip.getContent();
         let coords = [];
         if (layer instanceof L.Circle) {
             const c = layer.toGeoJSON().geometry.coordinates;
@@ -53,7 +51,7 @@ const LeafletIIIFAnnotation = {
 
         return {
             region: {coords: coords.join(',')},
-            content: content,
+            content: layer.content,
             annotation_type: layer.annotation_type,
             canvas_id : layer.canvas_id,
             img_id : layer.img_id
@@ -98,11 +96,14 @@ const LeafletIIIFAnnotation = {
                         shape = L.circle(this.map.unproject([c[0], c[1]], LeafletIIIFAnnotation.ZOOM), {radius: c[2] * 0.25});
                         break;
                 }
-                //add the shape & the content to the map
 
+                //add the shape & the content to the map
                 shape.canvas_id = annotation.canvas_id;
                 shape.img_id = annotation.img_id;
-                shape.bindTooltip(annotation.content, facsimileToolTipOptions);
+                shape.content = annotation.content;
+                if (annotation.content && annotation.content.length > 0) {
+                    shape.bindTooltip(annotation.content, facsimileToolTipOptions);
+                }
                 shape.annotation_type = annotationLists[listId].annotation_type;
                 this.featureGroup.addLayer(shape);
                 this.annotationTypes[annotationLists[listId].annotation_type.label] = annotationLists[listId].annotation_type;

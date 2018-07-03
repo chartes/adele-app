@@ -175,7 +175,7 @@ def document_list():
     filtered_docs = docs[::]
     form_values = {}
     docs_are_filtered = False
-
+    pprint.pprint(request.form)
     if request.method == "POST":
         # parse hidden inputs to get the selected values
         for field in fields:
