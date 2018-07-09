@@ -27,6 +27,45 @@ def api_documents(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/publish')
+def api_documents_publish(api_version, doc_id):
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+        user = current_app.get_current_user()
+        if user.is_anonymous or not (user.is_teacher or user.is_admin):
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+        else:
+            doc.is_published = True
+            db.session.commit()
+            response = APIResponseFactory.make_response(data=doc.serialize())
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/unpublish')
+def api_documents_unpublish(api_version, doc_id):
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+        user = current_app.get_current_user()
+        if user.is_anonymous or not (user.is_teacher or user.is_admin):
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+        else:
+            doc.is_published = False
+            db.session.commit()
+            response = APIResponseFactory.make_response(data=doc.serialize())
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+    return APIResponseFactory.jsonify(response)
+
 @api_bp.route('/api/<api_version>/documents')
 def api_documents_id_list(api_version):
     try:

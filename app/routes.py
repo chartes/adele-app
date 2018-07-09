@@ -3,6 +3,7 @@ import math
 import pprint
 from flask import render_template, flash, redirect, url_for, Blueprint, session, current_app, jsonify
 from flask_user import login_required
+from sqlalchemy.sql.operators import is_
 
 from app import app_bp
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
@@ -169,7 +170,15 @@ def documents():
 def document_list():
     page = int(request.form.get('page'))
 
-    docs = Document.query.all()
+    user = current_app.get_current_user()
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        docs = Document.query.filter(Document.is_published.is_(True)).all()
+        for d in docs:
+            print(d.id, d.is_published)
+    else:
+        docs = Document.query.all()
+        for d in docs:
+            print(d.id, d.is_published)
     fields = get_document_search_fields(docs)
 
     filtered_docs = docs[::]
@@ -246,7 +255,11 @@ def admin_document(doc_id):
 
 @app_bp.route('/documents/<doc_id>/edition')
 def document_edit(doc_id):
-    doc = Document.query.filter(Document.id == doc_id).one()
+    user = current_app.get_current_user()
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        doc = Document.query.filter(Document.is_published.is_(True)).first()
+    else:
+        doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))

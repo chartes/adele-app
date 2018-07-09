@@ -204,6 +204,8 @@ class Document(db.Model):
     argument = db.Column(db.Text())
     date_insert = db.Column(db.String())
     date_update = db.Column(db.String())
+    date_closing = db.Column(db.String())
+    is_published = db.Column(db.Boolean())
     institution_id = db.Column(db.Integer(), db.ForeignKey("institution.id"))
 
     # Relationships #
@@ -245,6 +247,8 @@ class Document(db.Model):
             'argument': self.argument,
             'date_insert': self.date_insert,
             'date_update': self.date_update,
+            'date_closing': self.date_closing,
+            'is_published': self.is_published,
             'institution': self.institution.serialize() if self.institution is not None else None,
             'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
