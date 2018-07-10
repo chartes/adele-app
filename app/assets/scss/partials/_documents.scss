@@ -116,8 +116,17 @@
     cursor: pointer;
   }
 
-  img{
+  img {
     padding-left: 0px;
   }
+
+  .thumbnail-container {
+    left: 0px;
+    width: 150px;
+  }
+
 }
 
+.content figure {
+  margin-left: 0px;
+}

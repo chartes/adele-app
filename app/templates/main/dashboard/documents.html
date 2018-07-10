@@ -5,11 +5,84 @@
     <section class="section">
         <div class="container is-fluid">
             <div class="content">
-                <h1>Documents</h1>
-                <p>Aenean euismod risus turpis, at commodo neque dictum eget. Nullam pretium suscipit sagittis. Proin ac consectetur metus, quis ultrices nisl. Morbi a laoreet sem. Pellentesque interdum libero diam, facilisis pulvinar mi aliquam at. Nullam accumsan tortor ex, ac dictum velit aliquam non. Sed scelerisque odio eu purus accumsan tincidunt. Curabitur facilisis turpis ex, a rhoncus nunc faucibus vitae. Nam id diam id magna dictum molestie eget eu est. Nulla ac sapien auctor, sodales tortor in, vulputate urna. Curabitur ut ultrices augue. Praesent ultrices commodo rhoncus. Nullam ullamcorper nibh a congue imperdiet. Sed ultricies ligula posuere nibh egestas, et ultricies magna dignissim.</p>
-                <p>Quisque dignissim metus sed ante sollicitudin mollis vel vitae ligula. Fusce bibendum felis justo, vitae suscipit dolor vestibulum eget. In quam quam, dictum vel dolor non, tempor ullamcorper augue. Vivamus scelerisque posuere eros nec dignissim. Aliquam vulputate tincidunt erat ut malesuada. Quisque posuere, lorem in elementum convallis, diam tortor facilisis lacus, non tempus leo ante in diam. Proin non ex mi. Duis lacinia, eros at condimentum tincidunt, risus eros porttitor mi, vel fringilla diam tortor sit amet ipsum. Nulla commodo quam cursus justo gravida porttitor. Aenean vitae sem nec risus semper fringilla ac non dui. Curabitur aliquet pulvinar nisi non euismod. Aliquam bibendum tristique massa, luctus placerat leo condimentum faucibus. Aliquam lorem odio, rutrum vitae molestie eu, interdum eu massa.</p>
+                <div>
+
+                    <div class="section">
+                        <h1>Mes documents </h1>
+
+                        <a class="button" style="margin-top: 20px; margin-bottom: 20px;">
+                            <span class="icon"><i class="fas fa-plus-square"></i> </span>
+                            <span>Nouveau document</span>
+                        </a>
+                        <p>
+                            Les documents publiés sont visibles par le grand public, tandis que ceux qui sont non publiés ne sont accessibles que par les personnes autorisées.
+                        </p>
+                        {% from 'main/fragments/_document_management_list.html' import document_list %}
+                        {{  document_list(docs, current_user) }}
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
 {% endblock content %}
+
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('app_bp.static', filename='css/pikaday.css') }}">
+    <script defer src="{{ url_for('app_bp.static', filename='js/pikaday.js') }}"></script>
+     <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            /*
+            $("#document-list tr").click(function () {
+                const target = $(this).find("input");
+                if (target.length > 0) {
+                    window.location.href = $(target).val();
+                }
+            });
+            */
+            $('#document-list-table th:nth-child(1)').click(function() {
+               sortTable("document-list-table", 0);
+            });
+
+            $('#document-list-table th:nth-child(2)').click(function() {
+               sortTable("document-list-table", 1);
+            });
+
+            $('#document-list-table th:nth-child(3)').click(function() {
+               sortTable("document-list-table", 2);
+            });
+
+            $('#document-list-table th:nth-child(4)').click(function() {
+               sortTable("document-list-table", 3);
+            });
+
+            const datepickers = [];
+            $('.date-picker').each(function() {
+                datepickers.push(
+                    new Pikaday(
+                    {
+                        field: $(this)[0],
+                        firstDay: 1,
+                        format: 'DD/MM/YYYY',
+                        i18n: {
+                            previousMonth : 'Mois précédent',
+                            nextMonth     : 'Mois Suivant',
+                            months        : ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet',
+                                             'Août','Septembre','Octobre','Novembre','Decembre'],
+                            weekdays      : ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
+                            weekdaysShort : ['Dim', 'Lun','Mar','Mer','Jeu','Ven','Sam']
+                        },
+                        minDate: new Date(),
+                        maxDate: new Date(2030, 12, 31),
+                        yearRange: [2018,2030]
+                    })
+                );
+            });
+
+
+        });
+    </script>
+{% endblock scripts %}

@@ -36,6 +36,10 @@ association_document_linked_to_document = db.Table('document_linked_to_document'
     db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
     db.Column('linked_doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
 )
+association_whitelist_has_user = db.Table('whitelist_has_user',
+    db.Column('whitelist_id', db.Integer, db.ForeignKey('whitelist.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+)
 
 
 class ActeType(db.Model):
@@ -207,8 +211,13 @@ class Document(db.Model):
     date_closing = db.Column(db.String())
     is_published = db.Column(db.Boolean())
     institution_id = db.Column(db.Integer(), db.ForeignKey("institution.id"))
+    user_id = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    whitelist_id = db.Column(db.Integer(), db.ForeignKey("whitelist.id"))
 
     # Relationships #
+    whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id", backref=db.backref('documents'))
+    user = db.relationship("User", primaryjoin="Document.user_id==User.id", backref=db.backref('documents'))
+
     images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document')
     institution = db.relationship("Institution", primaryjoin="Document.institution_id==Institution.id", backref=db.backref('documents'))
     acte_types = db.relationship(ActeType,
@@ -237,8 +246,9 @@ class Document(db.Model):
     def serialize(self):
         return {
             'id': self.id,
+            'user_id': self.id,
             'title': self.title,
-            'subtitle' : self.subtitle,
+            'subtitle': self.subtitle,
             'creation': self.creation,
             'creation_lab': self.creation_lab,
             'copy_year': self.copy_year,
@@ -580,3 +590,28 @@ class User(db.Model, UserMixin):
         user = User.query.get(data['id'])
         return user
 
+    def documents_i_can_edit(self):
+        all_docs = Document.query.all()
+        docs = []
+        if self.is_anonymous:
+            return []
+        if self.is_admin:
+            docs = all_docs
+        else:
+            for doc in all_docs:
+                if doc.user_id == self.id or (doc.whitelist and self in doc.whitelist.users):
+                    docs.append(doc)
+        return docs
+
+class Whitelist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String(), nullable=False, server_default='Whitelist')
+
+    users = db.relationship("User", secondary=association_whitelist_has_user, backref=db.backref('whitelists'))
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'label': self.label,
+            'users' : [u.serialize() for u in self.users]
+        }

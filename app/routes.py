@@ -1,9 +1,9 @@
 import math
 
 import pprint
-from flask import render_template, flash, redirect, url_for, Blueprint, session, current_app, jsonify
-from flask_user import login_required
-from sqlalchemy.sql.operators import is_
+from flask import render_template, flash, redirect, url_for, session, current_app
+from sqlalchemy.sql.elements import or_
+from sqlalchemy.testing import in_
 
 from app import app_bp
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
@@ -69,19 +69,31 @@ def index():
     return render_template_with_token('main/index.html')
 
 
+@app_bp.route('/contact')
+def contact():
+    return render_template_with_token('main/contact.html')
+
+
 @app_bp.route('/dashboard')
 def dashboard():
     return render_template_with_token('main/dashboard/user_dashboard.html')
 
 
+@app_bp.route('/dashboard/documents')
+def dashboard_documents():
+    user = current_app.get_current_user()
+    docs = user.documents_i_can_edit()
+    return render_template_with_token('main/dashboard/documents.html', docs=docs, current_user=user)
+
+
 @app_bp.route('/dashboard/manual')
-def manual():
+def dashboard_manual():
     return render_template_with_token('main/dashboard/manual.html')
 
 
-@app_bp.route('/contact')
-def contact():
-    return render_template_with_token('main/contact.html')
+@app_bp.route('/dashboard/manage-users')
+def dashboard_manage_users():
+    return render_template_with_token('main/dashboard/manage_users.html')
 
 """
 ---------------------------------
@@ -173,12 +185,9 @@ def document_list():
     user = current_app.get_current_user()
     if user.is_anonymous or not (user.is_teacher or user.is_admin):
         docs = Document.query.filter(Document.is_published.is_(True)).all()
-        for d in docs:
-            print(d.id, d.is_published)
     else:
         docs = Document.query.all()
-        for d in docs:
-            print(d.id, d.is_published)
+
     fields = get_document_search_fields(docs)
 
     filtered_docs = docs[::]
@@ -266,9 +275,6 @@ def document_edit(doc_id):
     return render_template_with_token('main/document_edit.html', title='Document - Adele', doc=doc)
 
 
-@app_bp.route('/dashboard/documents')
-def dashboard_documents():
-    return render_template_with_token('main/dashboard/documents.html')
 
 
 """
