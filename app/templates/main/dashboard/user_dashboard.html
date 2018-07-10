@@ -11,7 +11,7 @@
                         <li><a href="{{url_for('user.edit_user_profile')}}">Mon profil</a></li>
                         <li><a href="{{url_for('app_bp.dashboard_documents')}}">Mes documents</a></li>
                         {% if current_user.is_admin or current_user.is_teacher %}
-                        <li><a href="{{url_for('app_bp.dashboard_manage_users')}}">Comptes utilisateurs</a></li>
+                        <li><a href="{{url_for('app_bp.dashboard_manage_users')}}">Gestion des utilisateurs</a></li>
                         {% endif %}
                         <li><a href="{{url_for('app_bp.dashboard_manual')}}">Mode d'emploi</a></li>
                     </ul>

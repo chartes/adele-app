@@ -5,11 +5,151 @@
     <section class="section">
         <div class="container is-fluid">
             <div class="content">
-                <h1>Gestion des comptes utilisateurs</h1>
-                <p>Aenean euismod risus turpis, at commodo neque dictum eget. Nullam pretium suscipit sagittis. Proin ac consectetur metus, quis ultrices nisl. Morbi a laoreet sem. Pellentesque interdum libero diam, facilisis pulvinar mi aliquam at. Nullam accumsan tortor ex, ac dictum velit aliquam non. Sed scelerisque odio eu purus accumsan tincidunt. Curabitur facilisis turpis ex, a rhoncus nunc faucibus vitae. Nam id diam id magna dictum molestie eget eu est. Nulla ac sapien auctor, sodales tortor in, vulputate urna. Curabitur ut ultrices augue. Praesent ultrices commodo rhoncus. Nullam ullamcorper nibh a congue imperdiet. Sed ultricies ligula posuere nibh egestas, et ultricies magna dignissim.</p>
-                <p>Quisque dignissim metus sed ante sollicitudin mollis vel vitae ligula. Fusce bibendum felis justo, vitae suscipit dolor vestibulum eget. In quam quam, dictum vel dolor non, tempor ullamcorper augue. Vivamus scelerisque posuere eros nec dignissim. Aliquam vulputate tincidunt erat ut malesuada. Quisque posuere, lorem in elementum convallis, diam tortor facilisis lacus, non tempus leo ante in diam. Proin non ex mi. Duis lacinia, eros at condimentum tincidunt, risus eros porttitor mi, vel fringilla diam tortor sit amet ipsum. Nulla commodo quam cursus justo gravida porttitor. Aenean vitae sem nec risus semper fringilla ac non dui. Curabitur aliquet pulvinar nisi non euismod. Aliquam bibendum tristique massa, luctus placerat leo condimentum faucibus. Aliquam lorem odio, rutrum vitae molestie eu, interdum eu massa.</p>
+                <h1>Gestion des utilisateurs</h1>
+                <div class="section">
+                    <h2>Gestion des utilisateurs et des liste d'utilisateurs</h2>
+                    <p>Créez des utilisateurs pour ensuite les assigner à une liste.</p>
+
+                    <div class="user-management" style="margin-top: 32px;">
+                        <div class="columns is-5">
+                            <div class="column">
+                                <div class="field is-horizontal">
+                                    <div class="field has-addons">
+                                            <p class="control">
+                                                <a class="button is-primary">
+                                                      Créer un utilisateur
+                                                </a>
+                                            </p>
+                                            <p class="control">
+                                                <input class="input" type="text" placeholder="john.doe@chartes.psl.eu">
+                                            </p>
+                                    </div>
+                                </div>
+                                <!-- filled through ajax calls -->
+                                <div id="users-table-container" style="margin-bottom: .75rem;"></div>
+                                <div class="field is-pulled-right">
+                                        <p class="control">
+                                            <a class="button is-danger">
+                                              Supprimer l'utilisateur
+                                            </a>
+                                        </p>
+                                </div>
+                            </div>
+                            <div class="column is-2">
+                                <div class="tile is-ancestor">
+                                    <div class="tile is-parent is-vertical">
+                                        <div class="tile">
+                                            <div style="height:80px;"></div>
+                                        </div>
+                                        <div class="tile is-child">
+                                            <div class="button is-primary" style="width:40px;height: 60px; margin-left:43%;">
+                                                <i class="fas fa-arrow-right" ></i>
+                                            </div>
+                                        </div>
+                                        <div class="tile is-child">
+                                            <div class="button is-primary" style="width:40px;height: 60px; margin-left:43%">
+                                                <i class="fas fa-arrow-left" ></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-5">
+                                <div class="field is-horizontal">
+                                    <div class="field has-addons">
+                                            <p class="control">
+                                                <a class="button is-static">
+                                                  Listes existantes
+                                                </a>
+                                            </p>
+                                            <p class="control">
+                                              <div class="select">
+                                                <select id="select-userlist">
+                                                  {% for user_list in user_lists %}
+                                                  <option value="{{ user_list.id }}">{{ user_list.label }}</option>
+                                                  {% endfor %}
+                                                </select>
+                                              </div>
+                                            </p>
+                                    </div>
+                                    <div class="field has-addons" style="margin-left: 20px;">
+                                            <p class="control">
+                                                <a class="button is-primary">
+                                                      Créer une liste
+                                                </a>
+                                            </p>
+                                            <p class="control">
+                                                <input class="input" type="text" placeholder="Ex: 'Master 2: 2019'">
+                                            </p>
+                                    </div>
+
+                                </div>
+                                <!-- filled through ajax calls -->
+                                <div id="userlist-table-container" style="margin-bottom: .75rem;"></div>
+                                 <div class="field is-pulled-right">
+                                        <p class="control">
+                                            <a class="button is-danger">
+                                              Supprimer la liste
+                                            </a>
+                                        </p>
+                                 </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="section">
+                   <h2>Assigner les listes d'utilisateur aux documents</h2>
+                   <p>Affectez une liste à un document pour donner le droit d'édition aux utilisateurs concernés.</p>
+
+                    {% from 'main/fragments/_document_userlist_management.html' import document_list %}
+                    {{  document_list(docs, user_lists, current_user) }}
+
+                </div>
             </div>
         </div>
     </section>
 
 {% endblock content %}
+
+{% block scripts %}
+   <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
+   <script type="text/javascript">
+       $(document).ready(function () {
+
+            $("#select-userlist").change(function() {
+
+                 // populate the user_list list
+                 const list_id = $("#select-userlist option:selected").val();
+                 $.ajax({
+                        url: "{{ url_for('app_bp.dashboard_manage_users_list', list_id='') }}" + list_id,
+                        method: 'GET',
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader (
+                                "Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                        },
+                        context: document.body
+                    }).done(function (data) {
+                        $("#userlist-table-container").html(data);
+                 });
+
+                 // then populate the user list
+                 $.ajax({
+                        url: "{{ url_for('app_bp.dashboard_manage_users_users', list_id='') }}" + list_id,
+                        method: 'GET',
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader (
+                                "Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                        },
+                        context: document.body
+                    }).done(function (data) {
+                        $("#users-table-container").html(data);
+                 });
+            });
+
+            $("#select-userlist option:last-child").prop("selected", true).change();
+
+       });
+   </script>
+
+{% endblock scripts %}

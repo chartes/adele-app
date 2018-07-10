@@ -2,11 +2,11 @@ import math
 
 import pprint
 from flask import render_template, flash, redirect, url_for, session, current_app
-from sqlalchemy.sql.elements import or_
-from sqlalchemy.testing import in_
+from flask_user import login_required, roles_required
 
 from app import app_bp
-from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType
+from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType, \
+    Whitelist
 
 
 def render_template_with_token(*args, **kargs):
@@ -74,12 +74,21 @@ def contact():
     return render_template_with_token('main/contact.html')
 
 
+"""
+---------------------------------
+Dashboard routes
+---------------------------------
+"""
+
+
 @app_bp.route('/dashboard')
+@login_required
 def dashboard():
     return render_template_with_token('main/dashboard/user_dashboard.html')
 
 
 @app_bp.route('/dashboard/documents')
+@login_required
 def dashboard_documents():
     user = current_app.get_current_user()
     docs = user.documents_i_can_edit()
@@ -87,19 +96,59 @@ def dashboard_documents():
 
 
 @app_bp.route('/dashboard/manual')
+@login_required
 def dashboard_manual():
     return render_template_with_token('main/dashboard/manual.html')
 
 
+@app_bp.route('/dashboard/manage-users/userlist/<list_id>')
+@roles_required(['admin', 'teacher'])
+@login_required
+def dashboard_manage_users_list(list_id):
+    user_list = Whitelist.query.filter(Whitelist.id == list_id).first()
+    return render_template_with_token(
+        'main/fragments/_manage_users_list.html',
+        user_list=user_list
+    )
+
+
+@app_bp.route('/dashboard/manage-users/users/<list_id>')
+@roles_required(['admin', 'teacher'])
+@login_required
+def dashboard_manage_users_users(list_id):
+    user_list = Whitelist.query.filter(Whitelist.id == list_id).first()
+    users = User.query.filter(User.id.notin_([u.id for u in user_list.users])).all()
+
+    return render_template_with_token(
+        'main/fragments/_manage_users.html',
+        users=users
+    )
+
+
 @app_bp.route('/dashboard/manage-users')
+@roles_required(['admin', 'teacher'])
 def dashboard_manage_users():
-    return render_template_with_token('main/dashboard/manage_users.html')
+    user = current_app.get_current_user()
+    docs = user.documents_i_can_edit()
+    user_lists = Whitelist.query.all()
+    if len(user_lists) > 0:
+        selected_user_list = 0
+    else:
+        selected_user_list = -1
+    return render_template_with_token(
+        'main/dashboard/manage_users.html',
+        user_lists=user_lists,
+        selected_user_list=selected_user_list,
+        docs=docs
+    )
+
 
 """
 ---------------------------------
 Document related routes
 ---------------------------------
 """
+
 
 def filter_documents(docs, form_values, field_name, get_doc_values, value_type=str):
     """

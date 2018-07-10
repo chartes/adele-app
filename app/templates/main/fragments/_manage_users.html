@@ -1,0 +1,18 @@
+<table class="table is-hoverable">
+    <thead>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Email</th>
+    </thead>
+    <tbody>
+        {% if users %}
+            {% for user in users %}
+                <tr>
+                    <td>{{user.last_name}}</td>
+                    <td>{{user.first_name}}</td>
+                    <td>{{user.email}}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
