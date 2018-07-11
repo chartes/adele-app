@@ -4,7 +4,7 @@ from flask import Flask, request, Blueprint
 from flask_mail import Mail
 from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
-from flask_user import UserManager, SQLAlchemyAdapter
+from flask_user import UserManager, user_sent_invitation, user_registered
 from flask_babelex import Babel
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -31,6 +31,7 @@ app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folde
     Override default 401 Reponse with a 403 Response 
 ========================================================
 """
+
 
 def make_json_unauthorized_response():
     resp = APIResponseFactory.jsonify(APIResponseFactory.make_response(errors={
@@ -79,11 +80,11 @@ def create_app(config_name="dev"):
     ========================================================
     """
     class CustomUserManager(UserManager):
-
         def customize(self, app):
             self.RegisterFormClass = CustomRegisterForm
-
+            self.UserInvitationClass = models.UserInvitation
             self.email_manager._render_and_send_email_with_exceptions = self.email_manager._render_and_send_email
+
             def with_protection(*args, **kargs):
                 try:
                     self.email_manager._render_and_send_email_with_exceptions(*args, **kargs)
@@ -91,17 +92,16 @@ def create_app(config_name="dev"):
                     print(e)
             self.email_manager._render_and_send_email = with_protection
 
-
         def hash_password(self, password):
             return generate_password_hash(password.encode('utf-8'))
 
         def verify_password(self, password, password_hash):
             return check_password_hash(password_hash, password)
 
-    # Register the User model
-    # db_adapter = SQLAlchemyAdapter(db, models.User)
     # Initialize Flask-User
-    user_manager = CustomUserManager(app, db, models.User)
+    user_manager = CustomUserManager(app, db,
+                                     UserClass=models.User,
+                                     UserInvitationClass=models.UserInvitation)
 
     @auth.verify_password
     def verify_password(username_or_token, password):
@@ -111,6 +111,19 @@ def create_app(config_name="dev"):
             if not user or not verify_password(password, user.password):
                 return False
         return True
+
+    @user_registered.connect_via(app)
+    def after_registered_hook(sender, user, user_invitation):
+        print("USER %s REGISTERED" % user.serialize())
+        default_role = models.Role.query.filter(models.Role.name == 'student').first()
+        user.roles.append(default_role)
+        db.session.commit()
+        print("USER %s gains '%s' role " % (user.serialize(), default_role.serialize()))
+
+
+    @user_sent_invitation.connect_via(app)
+    def after_invitation_hook(sender, **extra):
+        print("USER SENT INVITATION: ", extra)
 
     """
     ========================================================

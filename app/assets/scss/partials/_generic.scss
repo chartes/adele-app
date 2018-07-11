@@ -19,3 +19,21 @@
 #user-menu a {
   width: 200px;
 }
+
+.message-section  {
+  ul {
+    list-style-type: none !important;
+    margin: 0 !important;
+  }
+}
+
+#user-messages {
+  p {
+    .control {
+          margin-bottom: 0px;
+    }
+  }
+  .message-body {
+    padding: 0.4em 1.5em;
+  }
+}

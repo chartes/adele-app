@@ -1,5 +1,7 @@
 {% extends 'main/base.html' %}
 
+{% block flash_messages %}
+{% endblock %}
 
 {% block content %}
     <div class="columns ">
@@ -46,6 +48,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
+
+            $(".message-section").css('display', 'none');
 
             <!-- restore the selected filters & create the tag cloud -->
             function create_tag_cloud() {
@@ -114,6 +118,7 @@
             }
 
             function submit_async() {
+                $(".message-section").css('display', 'none');
                 $.ajax({
                     url: "{{  url_for("app_bp.document_list") }}",
                     method: 'POST',
@@ -127,7 +132,10 @@
                         $('#page').val($(this).text());
                         submit_async();
                     });
-
+                    // move messages to the central column && show them
+                    $(".message-section").prependTo("#documents-col");
+                    $(".message-section").css('display', 'block');
+                    $(".message-section .container").removeClass('container');
                 });
             }
 
@@ -155,8 +163,6 @@
                     });
                 });
             });
-
-
 
             submit_async();
         });

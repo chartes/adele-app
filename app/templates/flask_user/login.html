@@ -6,7 +6,7 @@
     <div class="container">
 
         <form action="" method="POST" class="login-form" role="form">
-
+            <input type="hidden" name="next" value="{{request.referrer}}"/>
             <div class="message">
                 {{ form.hidden_tag() }}
                 <div class="message-header">{% trans %}Sign in{% endtrans %}</div>

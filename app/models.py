@@ -553,6 +553,11 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=association_user_has_role,
             backref=db.backref('users', lazy='dynamic'))
 
+    #def __init__(self, *args, **kwargs):
+    #    super(User, self).__init__(*args, **kwargs)
+    #    self.roles.append(Role.query.filter(Role.name == 'student').first())
+    #    db.session.commit()
+
     @property
     def is_teacher(self): return self.has_roles("teacher")
 
@@ -602,6 +607,16 @@ class User(db.Model, UserMixin):
                 if doc.user_id == self.id or (doc.whitelist and self in doc.whitelist.users):
                     docs.append(doc)
         return docs
+
+
+class UserInvitation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    # UserInvitation email information. The collation='NOCASE' is required
+    # to search case insensitively when USER_IFIND_MODE is 'nocase_collation'.
+    email = db.Column(db.String(255, collation='NOCASE'), nullable=False)
+    # save the user of the invitee
+    invited_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
 
 class Whitelist(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,0 +1,29 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="message-section">
+            {% if last_msg_only %}
+                 <div class="">
+                 {% set category=messages[-1][0] %}
+                 {% set message=messages[-1][1] %}
+                    <article class="message {% if category == 'success' %}is-info{% else %}is-warning{% endif %}">
+                        <div class="message-body">
+                            <ul>
+                                <li role="alert">{{ message }}</li>
+                            </ul>
+                        </div>
+                    </article>
+                </div>
+            {% else %}
+                <div class="">{% for category, message in messages %}
+                    <article class="message {% if category == 'success' %}is-info{% else %}is-warning{% endif %}">
+                        <div class="message-body">
+                            <ul>
+                                <li role="alert">{{ message }}</li>
+                            </ul>
+                        </div>
+                    </article> {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endwith %}

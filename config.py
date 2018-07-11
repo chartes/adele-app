@@ -25,10 +25,14 @@ class Config(object):
     # Flask-User settings
     USER_APP_NAME = 'Adele'
     USER_AFTER_LOGOUT_ENDPOINT = 'app_bp.logout_delete_token'
-    USER_AFTER_LOGIN_ENDPOINT = 'app_bp.login_make_token'
+    USER_AFTER_INVITE_ENDPOINT = 'app_bp.after_invite'
+    USER_AFTER_REGISTER_ENDPOINT = 'app_bp.index'
 
     USER_ENABLE_REGISTER = True
-    USER_ENABLE_REMEMBER_ME = True
+    USER_ENABLE_REMEMBER_ME = False
+    USER_ENABLE_INVITE_USER = True
+    USER_REQUIRE_INVITATION = True
+    USER_AUTO_LOGIN_AFTER_CONFIRM = True
 
     USER_CHANGE_PASSWORD_URL = '%s/user/change-password' % APP_URL_PREFIX
     USER_CHANGE_USERNAME_URL = '%s/user/change-username' % APP_URL_PREFIX
@@ -69,7 +73,7 @@ class DevelopmentConfig(Config):
 
     MAIL_USERNAME = 'adele@chartes.psl.eu'
     USER_EMAIL_SENDER_NAME = 'Adele'
-    USER_EMAIL_SENDER_EMAIL = 'adele@chartes.psl.eu>'
+    USER_EMAIL_SENDER_EMAIL = 'adele@chartes.psl.eu'
     MAIL_SERVER = 'smtp.chartes.psl.eu'
     MAIL_PORT = 465
     MAIL_USE_SSL = 1

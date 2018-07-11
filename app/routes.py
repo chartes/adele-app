@@ -1,8 +1,9 @@
 import math
 
 import pprint
-from flask import render_template, flash, redirect, url_for, session, current_app
+from flask import render_template, flash, redirect, url_for, session, current_app, get_flashed_messages
 from flask_user import login_required, roles_required
+from flask_user.forms import InviteUserForm
 
 from app import app_bp
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType, \
@@ -11,11 +12,14 @@ from app.models import Document, Language, ActeType, Tradition, Country, Distric
 
 def render_template_with_token(*args, **kargs):
     user = current_app.get_current_user()
-    if not user.is_anonymous and 'auth_token' in session:
+    if not user.is_anonymous:
+        token = user.generate_auth_token()
+        session['auth_token'] = token.decode("utf-8")
         kargs["auth_token"] = session['auth_token']
     else:
         kargs["auth_token"] = ""
     return render_template(*args, **kargs)
+
 
 """
 ---------------------------------
@@ -57,6 +61,12 @@ def logout_delete_token():
     return redirect(url_for('app_bp.index'))
 
 
+@app_bp.route('/user/after-invite')
+@roles_required(['admin', 'teacher'])
+def after_invite():
+    return "OK"
+
+
 """
 ---------------------------------
 Generic routes
@@ -72,6 +82,21 @@ def index():
 @app_bp.route('/contact')
 def contact():
     return render_template_with_token('main/contact.html')
+
+
+@app_bp.route('/flash-messages/<last_msg_only>')
+def get_flash_messages(last_msg_only=None):
+    last_msg_only = last_msg_only is not None
+    return render_template('main/fragments/_flash_messages.html', last_msg_only=last_msg_only)
+
+
+@app_bp.route('/flash-messages/<last_msg_only>', methods=['POST'])
+@login_required
+def set_flash_messages(last_msg_only=None):
+    data = request.get_json()
+    for d in data["messages"]:
+        flash(d["message"], d["category"])
+    return ""
 
 
 """
@@ -139,7 +164,8 @@ def dashboard_manage_users():
         'main/dashboard/manage_users.html',
         user_lists=user_lists,
         selected_user_list=selected_user_list,
-        docs=docs
+        docs=docs,
+        invite_form=InviteUserForm()
     )
 
 
@@ -242,7 +268,7 @@ def document_list():
     filtered_docs = docs[::]
     form_values = {}
     docs_are_filtered = False
-    pprint.pprint(request.form)
+    #pprint.pprint(request.form)
     if request.method == "POST":
         # parse hidden inputs to get the selected values
         for field in fields:
@@ -322,8 +348,6 @@ def document_edit(doc_id):
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
     return render_template_with_token('main/document_edit.html', title='Document - Adele', doc=doc)
-
-
 
 
 """

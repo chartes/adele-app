@@ -1,5 +1,4 @@
 from flask import request, current_app
-from flask_login import AnonymousUserMixin
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import auth, db
@@ -145,7 +144,7 @@ def api_post_users_roles(api_version, user_id):
 
 @api_bp.route('/api/<api_version>/users/<user_id>', methods=['DELETE'])
 @auth.login_required
-def api_delete_users(api_version, user_id):
+def api_delete_user(api_version, user_id):
     response = None
     user = current_app.get_current_user()
     if user.is_anonymous or (not user.is_teacher and not user.is_admin):
