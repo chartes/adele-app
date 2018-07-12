@@ -749,13 +749,14 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
                     {
                         "type_id" : 1,
                         "ptr_start": 1,
-                        "ptr_end": 20
+                        "ptr_end": 20,
+                        "note": "aaa"
                     },
                     {
                         "type_id" : 2,
                         "ptr_start": 21,
                         "ptr_end": 450,
-                        "note_id": 33
+                        "note": "bb"
                     }
                 ]
             }
@@ -833,6 +834,116 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
                                 db.session.rollback()
                                 response = APIResponseFactory.make_response(errors={
                                     "status": 403, "title": "Cannot insert data", "details": str(e)
+                                })
+
+                            if response is None:
+                                json_obj = query_json_endpoint(
+                                    request,
+                                    url_for(
+                                        "api_bp.api_documents_transcriptions_alignments_discours",
+                                        api_version=api_version,
+                                        doc_id=doc_id,
+                                        user_id=user_id
+                                    ),
+                                    user=user
+                                )
+                                if "data" in json_obj:
+                                    response = APIResponseFactory.make_response(data=json_obj["data"])
+                                else:
+                                    response = APIResponseFactory.make_response(data=json_obj["errors"])
+        else:
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Data is malformed"
+            })
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours', methods=['PUT'])
+@auth.login_required
+def api_put_documents_transcriptions_alignments_discours(api_version, doc_id):
+    """
+        {
+            "data": {
+                "id" : 1,
+                "username" : "Eleve1",
+                "speech_parts" : [
+                    {
+                        "type_id" : 1,
+                        "ptr_start": 1,
+                        "ptr_end": 20,
+                        "note": "aaa"
+                    },
+                    {
+                        "type_id" : 2,
+                        "ptr_start": 21,
+                        "ptr_end": 450,
+                        "note": "aaa"
+                    }
+                ]
+            }
+        }
+
+        If user_id is None: get the reference translation (if any) to find the alignment
+        :param api_version:
+        :param doc_id:
+        :return:
+        """
+    response = None
+
+    transcription = get_reference_transcription(doc_id)
+
+    if transcription is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Reference transcription not found"
+        })
+    else:
+        if response is None:
+            data = request.get_json()
+            if "data" in data and "speech_parts" in data["data"]:
+                data = data["data"]
+
+                user = current_app.get_current_user()
+
+                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username):
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403, "title": "Access forbidden"
+                    })
+
+                if response is None:
+                    user_id = user.id
+                    # teachers and admins can put/post/delete on others behalf
+                    if (user.is_teacher or user.is_admin) and "username" in data:
+                        user = current_app.get_user_from_username(data["username"])
+                        if user is not None:
+                            user_id = user.id
+
+                    # let's make the new alignments from the data
+                    if response is None:
+                        al_id = data.get("id")
+                        if not isinstance(data["speech_parts"], list):
+                            data = [data["speech_parts"]]
+                        else:
+                            data = data["speech_parts"]
+
+                        if response is None:
+                            try:
+                                for speech_part in data:
+
+                                    part_type = SpeechPartType.query.filter(
+                                        SpeechPartType.id == int(speech_part["type_id"])
+                                    ).one()
+
+                                    al = AlignmentDiscours.query.filter(AlignmentDiscours.id == int(al_id)).first()
+                                    al.ptr_start = speech_part['ptr_start']
+                                    al.ptr_end = speech_part['ptr_end']
+                                    al.type_id = part_type.id
+                                    al.note = speech_part['note']
+
+                                db.session.commit()
+                            except Exception as e:
+                                db.session.rollback()
+                                response = APIResponseFactory.make_response(errors={
+                                    "status": 403, "title": "Cannot update data", "details": str(e)
                                 })
 
                             if response is None:
