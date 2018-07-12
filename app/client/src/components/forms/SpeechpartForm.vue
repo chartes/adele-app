@@ -9,7 +9,7 @@
     >
         <div class="SpeechpartForm">
             <form>
-                <field-select :label="'Type'" :options="speechpartTypes" :onChange="onSelectChange"/>
+                <field-select :label="'Type'" :selected="form.type_id" :options="speechpartTypes" :onChange="onSelectChange"/>
                 <div class="field">
                     <p class="control">
                         <label class="label">Contenu</label>
@@ -66,6 +66,7 @@
       }
     },
     mounted () {
+        console.log("speechPartForm.mounted", this.speechpart)
       this.$refs.editor.innerHTML = !!this.$props.speechpart ? this.$props.speechpart.note ? this.$props.speechpart.note: '' : '';
       this.editor = getNewQuill(this.$refs.editor);
       this.editor.on('selection-change', this.onSelection);
@@ -73,7 +74,9 @@
       this.editor.on('text-change', this.onTextChange);
       this.textLength = this.editor.getLength();
       this.form = Object.assign({}, this.speechpart);
-      console.log("SpeechpartForm.mounted", this.form, this.speechpart)
+      this.form.type_id = this.speechpart.speech_part_type ? this.speechpart.speech_part_type.id : 0;
+
+      console.log("SpeechpartForm.mounted", this.form)
     },
     methods: {
 

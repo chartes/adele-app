@@ -598,7 +598,10 @@
                                                                                                                                                                                                                                                                     .facsimile-pagination {
                                                                                                                                                                                                                                                                       position: relative;
                                                                                                                                                                                                                                                                       white-space: nowrap;
-                                                                                                                                                                                                                                                                      margin: 0.5em 0 1em 0; }
+                                                                                                                                                                                                                                                                      margin: 0.5em 0 1em 0;
+                                                                                                                                                                                                                                                                      min-width: 100%;
+                                                                                                                                                                                                                                                                      text-align: center;
+                                                                                                                                                                                                                                                                      width: max-content; }
                                                                                                                                                                                                                                                                       .facsimile-pagination .iiif-thumbnail {
                                                                                                                                                                                                                                                                         margin: 0 0.5em;
                                                                                                                                                                                                                                                                         position: relative;
@@ -1109,16 +1112,12 @@ smallcaps {
 
   speechpart {
     border-bottom: 3px solid #ccc; }
-    speechpart:nth-child(5n) {
-      border-color: cornflowerblue; }
-      speechpart:nth-child(5n+1) {
-        border-color: coral; }
-        speechpart:nth-child(5n+2) {
-          border-color: darkgoldenrod; }
-          speechpart:nth-child(5n+3) {
-            border-color: lightseagreen; }
-            speechpart:nth-child(5n+4) {
-              border-color: rebeccapurple; }
+    speechpart:nth-child(2n) {
+      border-color: cornflowerblue;
+      background-color: rgba(100, 149, 237, 0.2); }
+      speechpart:nth-child(2n+1) {
+        border-color: coral;
+        background-color: rgba(255, 127, 80, 0.2); }
 
 .ql-editor {
   counter-reset: segment-count 0; }
@@ -1159,14 +1158,15 @@ l {
   note {
     text-decoration: underline; }
 
-    .in-editor-actions, .note-actions {
+    .in-editor-actions, .note-actions, .speechpart-actions, .new-speechpart-actions {
       z-index: 1000;
       position: absolute;
       transform: translateX(-50%);
       background: #fff;
       padding: 0.5em;
       box-shadow: rgba(0, 0, 0, 0.3) 2px 3px 5px; }
-      .in-editor-actions::before, .note-actions::before {
+      .in-editor-actions::before, .note-actions::before, .speechpart-actions::before,
+      .new-speechpart-actions::before {
         content: '';
         position: absolute;
         top: 0;
@@ -1177,7 +1177,8 @@ l {
         background: #fff;
         z-index: -1; }
 
-.note-actions .button, .new-note-actions .button {
+.note-actions .button, .new-note-actions .button, .speechpart-actions .button,
+.new-speechpart-actions .button {
   width: 100%; }
 
 .notes-list-item {

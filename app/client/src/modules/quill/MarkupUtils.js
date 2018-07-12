@@ -206,7 +206,9 @@ const insertSegments = (text, segments, translationOrTranscription) => {
   const tagLength = tag.length;
   let result = text;
   let indexCorrection = 0;
+  console.log('insertSegments', segments)
   segments.forEach(segment => {
+    console.log('insertSegments', segment)
     let strAtInsertPoint = result.substr(segment[index] + indexCorrection, 3);
     if (segment[index] + indexCorrection > 0 && strAtInsertPoint !== '<p>' && strAtInsertPoint !== '<l>' && strAtInsertPoint !== '<lb>') {
       result = result.insert(segment[index] + indexCorrection, tag);

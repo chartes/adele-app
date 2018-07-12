@@ -12,7 +12,7 @@ var EditorNotesMixin = {
   methods: {
 
     onNoteSelected (note, range) {
-      console.log("onNoteSelected", note, range.index, range.length)
+     //console.log("onNoteSelected", note, range.index, range.length)
 
       if (!range.length) return;
       this.selectedNoteId = note;
@@ -39,12 +39,12 @@ var EditorNotesMixin = {
       })
     },
     unlinkNote() {
-      console.log('unlinkNote')
+     //console.log('unlinkNote')
       this.editor.format('note', false);
       this.selectedNoteId = null;
     },
     deleteNote() {
-      console.log('deleteNote')
+     //console.log('deleteNote')
       // TODO delete note
       this.editor.format('note', false);
       this.selectedNoteId = null;
@@ -67,7 +67,7 @@ var EditorNotesMixin = {
       this.currentNote = this.$store.getters['notes/getNoteById'](this.selectedNoteId)
     },
     closeNoteEdit() {
-      console.log("closeNoteEdit")
+     //console.log("closeNoteEdit")
       this.noteEditMode = null;
       this.currentNote = null;
       this.editor.focus();

@@ -128,20 +128,13 @@ smallcaps {
 speechpart {
   border-bottom: 3px solid #ccc;
 
-  &:nth-child(5n) {
+  &:nth-child(2n) {
     border-color: cornflowerblue;
+    background-color: rgba(100,149,237,.2);
   }
-  &:nth-child(5n+1) {
+  &:nth-child(2n+1) {
      border-color: coral;
-  }
-  &:nth-child(5n+2) {
-    border-color: darkgoldenrod;
-  }
-  &:nth-child(5n+3) {
-    border-color: lightseagreen;
-  }
-  &:nth-child(5n+4) {
-    border-color: rebeccapurple;
+     background-color: rgba(255,127,80,.2);
   }
 }
 
@@ -184,7 +177,7 @@ note {
     text-decoration: underline;
 }
 
-.in-editor-actions, .note-actions {
+.in-editor-actions, .note-actions, .speechpart-actions, .new-speechpart-actions {
   z-index: 1000;
   position: absolute;
   transform: translateX(-50%);
@@ -205,7 +198,7 @@ note {
   }
 
 }
-.note-actions, .new-note-actions {
+.note-actions, .new-note-actions,.speechpart-actions, .new-speechpart-actions {
     .button { width: 100%; }
 }
 
