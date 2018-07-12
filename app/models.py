@@ -266,7 +266,8 @@ class Document(db.Model):
             'districts': [di.serialize() for di in self.districts],
             'editors': [ed.serialize() for ed in self.editors],
             'languages': [lg.serialize() for lg in self.languages],
-            'traditions': [tr.serialize() for tr in self.traditions]
+            'traditions': [tr.serialize() for tr in self.traditions],
+            'whitelist': self.whitelist.serialize() if self.whitelist is not None else None
         }
 
 
@@ -628,5 +629,5 @@ class Whitelist(db.Model):
         return {
             'id': self.id,
             'label': self.label,
-            'users' : [u.serialize() for u in self.users]
+            'users': [u.serialize() for u in self.users]
         }
