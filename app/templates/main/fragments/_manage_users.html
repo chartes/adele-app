@@ -1,5 +1,6 @@
 <table class="table is-hoverable">
     <thead>
+        <th style="display: none"></th>
         <th>Nom</th>
         <th>Prénom</th>
         <th>Email</th>
@@ -7,7 +8,8 @@
     <tbody>
         {% if users %}
             {% for user in users %}
-                <tr>
+                <tr class="user-row user">
+                    <td style="display: none">{{user.id}}</td>
                     <td>{% if user.last_name %}{{user.last_name}}{%else%} - {% endif %}</td>
                     <td>{% if user.last_name %}{{user.first_name}}{%else%} - {% endif %}</td>
                     <td>{{user.email}}</td>

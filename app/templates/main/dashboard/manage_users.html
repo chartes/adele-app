@@ -16,13 +16,13 @@
                     <h2>Gestion des utilisateurs et des liste d'utilisateurs</h2>
                     <p>Créez des utilisateurs pour ensuite les assigner à une liste.</p>
 
-                    <div class="user-management" style="margin-top: 32px;">
+                    <div id="user-management">
                         <div class="columns is-5">
                             <div class="column">
                                 <div class="field is-horizontal">
                                     <div class="field has-addons">
                                             <p class="control">
-                                                <a id="add-user" class="button is-primary">
+                                                <a id="invite-user" class="button is-primary">
                                                       Inviter un utilisateur
                                                 </a>
                                             </p>
@@ -31,16 +31,16 @@
                                                 <input id="new-user-email" class="input" type="text" placeholder="john.doe@chartes.psl.eu">
                                             </p>
                                     </div>
-                                    <div class="field" style="height: 30px; margin-left: 12px">
+                                    <div class="field user-messages">
                                             <div id="user-messages"></div>
                                     </div>
                                 </div>
                                 <!-- filled through ajax calls -->
 
-                                <div id="users-table-container" style="margin-bottom: .75rem;"></div>
+                                <div id="users-table-container"></div>
                                 <div class="field is-pulled-right">
                                         <p class="control">
-                                            <a id="del-user" class="button is-danger">
+                                            <a id="del-user" class="button is-danger delete-btn">
                                               Supprimer l'utilisateur
                                             </a>
                                         </p>
@@ -50,15 +50,15 @@
                                 <div class="tile is-ancestor">
                                     <div class="tile is-parent is-vertical">
                                         <div class="tile">
-                                            <div style="height:140px;"></div>
+                                            <div id="empty-tile"></div>
                                         </div>
                                         <div class="tile is-child">
-                                            <div class="button is-primary" style="width:40px;height: 60px; margin-left:43%;">
+                                            <div class="button is-primary arrow-btn" id="right-arrow">
                                                 <i class="fas fa-arrow-right" ></i>
                                             </div>
                                         </div>
                                         <div class="tile is-child">
-                                            <div class="button is-primary" style="width:40px;height: 60px; margin-left:43%">
+                                            <div class="button is-primary arrow-btn" id="left-arrow">
                                                 <i class="fas fa-arrow-left" ></i>
                                             </div>
                                         </div>
@@ -75,7 +75,7 @@
                                             </p>
                                             <p class="control">
                                               <div class="select">
-                                                <select id="select-userlist">
+                                                <select id="select-userlist" class="select-userlist">
                                                   {% for user_list in user_lists %}
                                                   <option value="{{ user_list.id }}">{{ user_list.label }}</option>
                                                   {% endfor %}
@@ -83,23 +83,23 @@
                                               </div>
                                             </p>
                                     </div>
-                                    <div class="field has-addons" style="margin-left: 20px;">
+                                    <div class="field has-addons" id="field-add-userlist">
                                             <p class="control">
-                                                <a class="button is-primary">
+                                                <a class="button is-primary" id="add-userlist">
                                                       Créer une liste
                                                 </a>
                                             </p>
                                             <p class="control">
-                                                <input class="input" type="text" placeholder="Ex: 'Master 2: 2019'">
+                                                <input id="new-userlist-name" class="input" type="text" placeholder="Ex: 'Master 2: 2019'">
                                             </p>
                                     </div>
 
                                 </div>
                                 <!-- filled through ajax calls -->
-                                <div id="userlist-table-container" style="margin-bottom: .75rem;"></div>
+                                <div id="userlist-table-container"></div>
                                  <div class="field is-pulled-right">
                                         <p class="control">
-                                            <a class="button is-danger">
+                                            <a id="delete-userlist" class="button is-danger delete-btn">
                                               Supprimer la liste
                                             </a>
                                         </p>
@@ -125,6 +125,7 @@
 
 {% block scripts %}
    <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
+
    <script type="text/javascript">
        $(document).ready(function () {
 
@@ -160,8 +161,11 @@
                 }
 
             }
-
-            $("#add-user").click(function() {
+            
+            /*
+                
+             */
+            $("#invite-user").click(function() {
                 const new_email = $("#new-user-email").val();
                 if (new_email.length > 0) {
                     const csrf_token =  $("#csrf_token").val();
@@ -217,17 +221,133 @@
                         context: document.body
                     }).done(function (data) {
                         $("#users-table-container").html(data);
+                        /*
+                            Select users on click
+                        */
+                        $('.user-row').click(function(){
+                            if ($(this).hasClass('user')) {
+                                $('.userlist').removeClass('is-selected');
+                            }
+                            else {
+                                $('.user').removeClass('is-selected');
+                            }
+                           $(this).toggleClass("is-selected");
+                        });
                  });
             }
 
 
-
+            /*
+                Populate the user/userlist tables
+             */
             $("#select-userlist").change(function() {
                 populate_userlist_list();
                 populate_user_list();
             });
-
+            /*
+                Default select the last userlist
+             */
             $("#select-userlist option:last-child").prop("selected", true).change();
+
+            /*
+                Add user to a userlist
+             */
+            $('#right-arrow').click(function() {
+               let emails_to_add_to_userlist = [] ;
+               $('.user-row.user.is-selected td:last-child').each(function() {
+                   emails_to_add_to_userlist.push($(this).text());
+               });
+               if (emails_to_add_to_userlist.length > 0) {
+                    const whitelist_id = $('#select-userlist option:selected').val();
+                    $.ajax({
+                       url: "{{ url_for('api_bp.add_user_to_whitelist', api_version='1.0') }}",
+                       method: 'POST',
+                       contentType: "application/json",
+                       data:  JSON.stringify({data: {emails: emails_to_add_to_userlist, whitelist_id: whitelist_id}}),
+                       beforeSend: function (xhr) {
+                           xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                       }
+                    }).done(function(data) {
+                        console.log("users added to userlist");
+                        populate_userlist_list();
+                        populate_user_list();
+                    });
+               }
+            });
+            /*
+                remove user from a userlist
+             */
+            $('#left-arrow').click(function() {
+               let user_ids_to_remove = [] ;
+               $('.user-row.userlist.is-selected td:first-child').each(function() {
+                   user_ids_to_remove.push($(this).text());
+               });
+               const whitelist_id = $('#select-userlist option:selected').val();
+               for (let user_id of user_ids_to_remove) {
+                   let url = "{{ url_for('api_bp.remove_user_from_whitelist', api_version='1.0', user_id='USER_ID_PLACEHOLDER', whitelist_id='WHITELIST_ID_PLACEHOLDER') }}";
+                   url = url.replace("USER_ID_PLACEHOLDER", user_id);
+                   url = url.replace("WHITELIST_ID_PLACEHOLDER", whitelist_id);
+                   $.ajax({
+                       url: url,
+                       method: 'DELETE',
+                       beforeSend: function (xhr) {
+                           xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                       }
+                   }).done(function(data) {
+                        console.log("users removed from userlist");
+                        populate_userlist_list();
+                        populate_user_list();
+                   });
+               }
+            });
+
+            /*
+                Add a new userlist
+             */
+            $('#add-userlist').click(function() {
+                const new_userlist_name = $('#new-userlist-name').val();
+                if (new_userlist_name.length > 0) {
+                    $.ajax({
+                       url: "{{ url_for('api_bp.add_whitelist', api_version='1.0') }}",
+                       method: 'POST',
+                       contentType: "application/json",
+                       data:  JSON.stringify({data: {whitelist_name: new_userlist_name}}),
+                       beforeSend: function (xhr) {
+                           xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                       }
+                    }).done(function(data) {
+                        console.log(data);
+                        // add the new userlist to the different select inputs
+                        const id = data["data"]["whitelist"]["id"];
+                        const label = data["data"]["whitelist"]["label"];
+                        $(".select-userlist").append("<option value='"+ id +"'>"+ label +"</option>");
+                        $("#select-userlist option:last-child").prop("selected", true).change();
+                        // empty the userlist input
+                        $('#new-userlist-name').val('');
+                    });
+                }
+            });
+
+            /*
+                Delete the selected userlist
+             */
+            $('#delete-userlist').click(function() {
+                const whitelist_id = $
+                let url = "{{ url_for('api_bp.delete_whitelist', api_version='1.0', whitelist_id='WHITELIST_ID_PLACEHOLDER') }}";
+                url = url.replace("WHITELIST_ID_PLACEHOLDER", whitelist_id);
+                $.ajax({
+                    url: url,
+                    method: 'DELETE',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                    }
+                }).done(function() {
+                    console.log("delete userlist");
+                    populate_userlist_list();
+                    populate_user_list();
+                });
+            });
+
 
        });
    </script>

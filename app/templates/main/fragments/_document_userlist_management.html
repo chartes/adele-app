@@ -33,7 +33,7 @@
                     <td>
                         <p class="control">
                             <div class="select">
-                                <select >
+                                <select class="select-userlist">
                                     {% for whitelist in whitelists %}
                                     <option value="{{whitelist.id}}"
                                             {%- if d.whitelist and d.whitelist.id == whitelist.id %}
