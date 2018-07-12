@@ -39,6 +39,9 @@
   position: relative;
   white-space: nowrap;
   margin: 0.5em 0 1em 0;
+  min-width: 100%;
+  text-align: center;
+  width: max-content;
 
   .iiif-thumbnail {
     margin: 0 0.5em;

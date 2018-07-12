@@ -1,5 +1,5 @@
 <template>
-    <div class="note-actions">
+    <div class="speechpart-actions">
         <div class="field">
             <p class="control">
                 <a class="button is-warning" @click="editAction">
@@ -25,45 +25,45 @@
 
 <script>
   export default {
-    name: "note-actions",
+    name: "speechpart-actions",
     props: {
       edit: {
         type: Function,
         required: true
       },
-      newNote: {
+      /*newSpeechpart: {
         type: Function,
         required: true
-      },
+      },*/
       delete: {
         type: Function,
         required: true
       },
-      updateLink: {
+      /*updateLink: {
         type: Function,
         required: true
       },
       unlink: {
         type: Function,
         required: true
-      }
+      }*/
     },
     methods: {
-      newAction () {
-        this.$props.newNote();
-      },
       deleteAction () {
         this.$props.delete();
       },
       editAction () {
         this.$props.edit();
       },
+      /*newAction () {
+        this.$props.newNote();
+      },
       unlinkAction () {
         this.$props.unlink();
       },
       updateLinkAction () {
         this.$props.updateLink();
-      }
+      }*/
     }
   }
 </script>

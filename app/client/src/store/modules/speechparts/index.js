@@ -2,27 +2,27 @@ import axios from "axios/index";
 
 const state = {
 
-  notes: [],
+  speechparts: [],
   newSpeechpart: false,
 
 };
 
 const mutations = {
 
-  UPDATE_ALL (state, notes) {
-    console.log("UPDATE_SPEECHPARTS");
-    state.notes = notes;
+  UPDATE_ALL (state, speechparts) {
+    console.log("speechpart UPDATE_ALL");
+    state.speechparts = speechparts;
   },
-  NEW (state, note) {
-    state.newSpeechpart = note;
-    state.notes.push(note);
-    console.log("ADD_NEW_SPEECHPART", state.newSpeechpart);
+  NEW (state, speechpart) {
+    state.newSpeechpart = speechpart;
+    state.speechparts.push(speechpart);
+    console.log("speechpart NEW", state.newSpeechpart);
   },
-  UPDATE_ONE (state, note) {
-    state.notes.push(note);
-    console.log("UPDATE_SPEECHPART", note);
-    let foundSpeechpart = state.notes.find(n => n.id === note.id);
-    console.log('foundSpeechpart', foundSpeechpart)
+  UPDATE_ONE (state, speechpart) {
+    state.speechparts.push(speechpart);
+    console.log("speechpart UPDATE_ONE", speechpart);
+    let foundSpeechpart = state.speechparts.find(n => n.id === speechpart.id);
+    console.log('speechpart foundSpeechpart', foundSpeechpart)
   }
 
 };
@@ -30,8 +30,8 @@ const mutations = {
 const actions = {
 
   fetch ({ commit, getters, rootGetters }, docId) {
-    console.log('STORE ACTION notes/fetch')
-    return axios.get(`/adele/api/1.0/documents/${docId}/notes`)
+    console.log('STORE ACTION speechparts/fetch')
+    return axios.get(`/adele/api/1.0/documents/${docId}/speechparts`)
       .then( (response) => {
         commit('UPDATE_ALL', response.data.data)
       }).catch(function(error) {
@@ -39,7 +39,7 @@ const actions = {
       });
   },
   add ({ commit, getters, rootState }, newSpeechpart) {
-    console.log("STORE ACTION addSpeechpart", newSpeechpart, rootState);
+    console.log("STORE ACTION speechparts/add", newSpeechpart, rootState);
     const docId = rootState.document.document.id;
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const newSpeechparts = {
@@ -57,44 +57,44 @@ const actions = {
     return axios.post(`/adele/api/1.0/documents/${docId}/transcriptions/alignments/discours`, newSpeechparts, config)
       .then( response => {
         const speechpart = response.data.data;
-        console.log("STORE ACTION addSpeechpart saved", response)
+        console.log("STORE ACTION speechparts/add saved", response)
         commit('NEW', speechpart);
       })
   },
-  update ({ commit, getters, rootState }, note) {
-    console.log("STORE ACTION updateSpeechpart", note);
+  update ({ commit, getters, rootState }, speechpart) {
+    console.log("STORE ACTION speechparts/update", speechpart);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theSpeechpart = {
       data: [{
         "username": rootState.user.currentUser.username,
-        "id": note.id,
-        "type_id": note.type_id,
-        "content": note.content
+        "id": speechpart.id,
+        "type_id": speechpart.type_id,
+        "content": speechpart.content
       }]
     };
-    return axios.put(`/adele/api/1.0/notes`, theSpeechpart, config)
+    return axios.put(`/adele/api/1.0/speechparts`, theSpeechpart, config)
       .then( response => {
         console.log(response.data)
-        const note = response.data.data;
-        commit('UPDATE_ONE', note);
+        const speechpart = response.data.data;
+        commit('UPDATE_ONE', speechpart);
       })
   },
-  delete ({ commit, getters, rootState }, note) {
-    console.log("STORE ACTION updateSpeechpart", note);
+  delete ({ commit, getters, rootState }, speechpart) {
+    console.log("STORE ACTION speechparts/delete", speechpart);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theSpeechpart = {
       data: [{
         "username": rootState.user.currentUser.username,
-        "id": note.id,
-        "type_id": note.type_id,
-        "content": note.content
+        "id": speechpart.id,
+        "type_id": speechpart.type_id,
+        "content": speechpart.content
       }]
     };
-    return axios.delete(`/adele/api/1.0/notes`, theSpeechpart, config)
+    return axios.delete(`/adele/api/1.0/speechparts`, theSpeechpart, config)
       .then( response => {
         console.log(response.data)
-        const note = response.data.data;
-        commit('UPDATE_ONE', note);
+        const speechpart = response.data.data;
+        commit('UPDATE_ONE', speechpart);
       })
   }
 
