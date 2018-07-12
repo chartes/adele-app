@@ -122,13 +122,13 @@
                 let thumbnails = '';
                 for (let img_id of this.images) {
                     const thumbnail_url = img_id.replace("full/full", "full/,80");
-                    thumbnails += '<div class="column"><img src="'+ thumbnail_url +'"/></div>';
+                    thumbnails += '<div class="iiif-thumbnail"><img src="'+ thumbnail_url +'"/></div>';
                 }
 
                 L.control.custom({
                     id:'facsimile-pagination-control',
                     position: 'bottomleft',
-                    content: '<div class="facsimile-pagination columns">' +
+                    content: '<div class="facsimile-pagination">' +
                     thumbnails +
                         thumbnails +
                         thumbnails +

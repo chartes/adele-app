@@ -19,10 +19,10 @@
             list-style-type: none !important;
             margin: 0 !important; }
 
-#user-messages p.control {
+#user-messages p .control {
   margin-bottom: 0px; }
-  #user-messages .message-body {
-    padding: 0.4em 1.5em; }
+#user-messages .message-body {
+  padding: 0.4em 1.5em; }
 
 .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow,
 .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas,
@@ -590,20 +590,34 @@
                                                                                                                                                                                                                                                                   color: inherit !important; }
 
                                                                                                                                                                                                                                                                   #facsimile-pagination-control {
-                                                                                                                                                                                                                                                                    overflow: auto;
-                                                                                                                                                                                                                                                                    overflow-y: hidden; }
+                                                                                                                                                                                                                                                                    overflow: scroll;
+                                                                                                                                                                                                                                                                    overflow-y: hidden;
+                                                                                                                                                                                                                                                                    width: 100%;
+                                                                                                                                                                                                                                                                    margin: 0; }
 
-                                                                                                                                                                                                                                                                    .facsimile-pagination .column {
-                                                                                                                                                                                                                                                                      padding: 0.25em;
-                                                                                                                                                                                                                                                                      width: 80px;
-                                                                                                                                                                                                                                                                      flex-basis: initial;
-                                                                                                                                                                                                                                                                      flex-grow: initial;
-                                                                                                                                                                                                                                                                      flex-shrink: initial; }
+                                                                                                                                                                                                                                                                    .facsimile-pagination {
+                                                                                                                                                                                                                                                                      position: relative;
+                                                                                                                                                                                                                                                                      white-space: nowrap;
+                                                                                                                                                                                                                                                                      margin: 0.5em 0 1em 0; }
+                                                                                                                                                                                                                                                                      .facsimile-pagination .iiif-thumbnail {
+                                                                                                                                                                                                                                                                        margin: 0 0.5em;
+                                                                                                                                                                                                                                                                        position: relative;
+                                                                                                                                                                                                                                                                        display: inline-block;
+                                                                                                                                                                                                                                                                        height: 80px; }
+                                                                                                                                                                                                                                                                        .facsimile-pagination .iiif-thumbnail img {
+                                                                                                                                                                                                                                                                          max-width: none;
+                                                                                                                                                                                                                                                                          max-height: 100%;
+                                                                                                                                                                                                                                                                          width: auto; }
+                                                                                                                                                                                                                                                                          .facsimile-pagination .iiif-thumbnail:first-child {
+                                                                                                                                                                                                                                                                            margin-left: 1em; }
+                                                                                                                                                                                                                                                                            .facsimile-pagination .iiif-thumbnail:last-child {
+                                                                                                                                                                                                                                                                              margin-right: 1em; }
 
 .leaflet-control-attribution {
   display: none; }
 
   .leaflet-left.leaflet-bottom {
+    width: 100%;
     background-color: rgba(5, 5, 5, 0.3); }
 
     .leaflet-tooltip.facsimileToolTip {
