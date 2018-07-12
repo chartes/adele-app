@@ -4,6 +4,7 @@ venv
 db
 adele.sqlite
 .idea
+*.pyc
 
 # Frontend directories and files
 

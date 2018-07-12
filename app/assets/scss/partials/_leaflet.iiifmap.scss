@@ -26,19 +26,36 @@
 
 
 #facsimile-pagination-control {
-overflow: auto;
-overflow-y: hidden;
-
+  overflow: scroll;
+  overflow-y: hidden;
+  width: 100%;
+  margin: 0;
 }
+
+
+
 .facsimile-pagination {
 
+  position: relative;
+  white-space: nowrap;
+  margin: 0.5em 0 1em 0;
 
-  .column {
-    padding: 0.25em;
-    width: 80px;
-    flex-basis: initial;
-    flex-grow: initial;
-    flex-shrink: initial;
+  .iiif-thumbnail {
+    margin: 0 0.5em;
+    position: relative;
+    display: inline-block;
+    height: 80px;
+    img {
+      max-width: none;
+      max-height: 100%;
+      width: auto;
+    }
+    &:first-child {
+      margin-left: 1em;
+    }
+    &:last-child {
+      margin-right: 1em;
+    }
   }
 
 }
@@ -48,6 +65,6 @@ overflow-y: hidden;
 }
 
 .leaflet-left.leaflet-bottom {
-  //width: 100% ;
+  width: 100% ;
   background-color: rgba(5, 5, 5 , 0.3);
 }
