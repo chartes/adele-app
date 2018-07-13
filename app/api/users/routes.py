@@ -5,7 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp
-from app.models import User, Role, Whitelist
+from app.models import User, Role, Whitelist, Document
 
 """
 ===========================
@@ -356,7 +356,12 @@ def delete_whitelist(api_version, whitelist_id):
     if response is None:
         try:
             whitelist = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
-            db.session.remove(whitelist)
+            # unbind the associated documents
+            associated_docs = Document.query.filter(Document.whitelist_id == whitelist.id).all()
+            for doc in associated_docs:
+                doc.whitelist_id = None
+            # then delete the whitelist
+            db.session.delete(whitelist)
             db.session.commit()
             response = APIResponseFactory.make_response(data=[])
         except Exception as e:

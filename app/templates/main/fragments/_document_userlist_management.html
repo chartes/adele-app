@@ -14,6 +14,7 @@
                     <td>
                         <input type="hidden" value="{{ url_for("app_bp.document_edit", doc_id=d.id) }}"/>
                         <span class="tag is-light">Dossier {{ d.id }}</span>
+                        <input type="hidden" name="doc-id" value="{{ d.id }}"/>
                         {% for img in d.images %}
                             <div class="thumbnail-container has-background-grey-lighter">
                                 <figure class=" thumbnail">

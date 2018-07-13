@@ -1,7 +1,7 @@
 import math
 
 import pprint
-from flask import render_template, flash, redirect, url_for, session, current_app, get_flashed_messages
+from flask import render_template, flash, redirect, url_for, session, current_app, get_flashed_messages, abort
 from flask_user import login_required, roles_required
 from flask_user.forms import InviteUserForm
 
@@ -116,7 +116,7 @@ def dashboard():
 @login_required
 def dashboard_documents():
     user = current_app.get_current_user()
-    docs = user.documents_i_can_edit()
+    docs = user.documents_i_can_edit
     return render_template_with_token('main/dashboard/documents.html', docs=docs, current_user=user)
 
 
@@ -154,7 +154,7 @@ def dashboard_manage_users_users(list_id):
 @roles_required(['admin', 'teacher'])
 def dashboard_manage_users():
     user = current_app.get_current_user()
-    docs = user.documents_i_can_edit()
+    docs = user.documents_i_can_edit
     user_lists = Whitelist.query.all()
     if len(user_lists) > 0:
         selected_user_list = 0
@@ -268,7 +268,7 @@ def document_list():
     filtered_docs = docs[::]
     form_values = {}
     docs_are_filtered = False
-    #pprint.pprint(request.form)
+
     if request.method == "POST":
         # parse hidden inputs to get the selected values
         for field in fields:
@@ -327,26 +327,34 @@ def document_list():
     )
 
 
-# TODO : à débrancher
 @app_bp.route('/documents/<doc_id>')
-def admin_document(doc_id):
-    doc = Document.query.filter(Document.id == doc_id).one()
+def view_document(doc_id):
+    doc = Document.query.filter(Document.id == doc_id, Document.is_published.is_(True)).first()
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
-    return render_template_with_token('main/document.html', title='Documents - Adele', doc=doc)
+
+    user = current_app.get_current_user()
+    can_edit = doc in user.documents_i_can_edit
+
+    return render_template_with_token('main/document.html', title='Documents - Adele', doc=doc, can_edit=can_edit)
 
 
 @app_bp.route('/documents/<doc_id>/edition')
+@login_required
 def document_edit(doc_id):
     user = current_app.get_current_user()
     if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        doc = Document.query.filter(Document.is_published.is_(True)).first()
+        doc = Document.query.first()
     else:
         doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
+
+    if not doc in user.documents_i_can_edit:
+        abort(403)
+
     return render_template_with_token('main/document_edit.html', title='Document - Adele', doc=doc)
 
 

@@ -11,7 +11,8 @@
 {# ** Login form ** #}
 <form action="{{ url_for('user.login') }}" method="POST" class="form" role="form">
     {{ login_form.hidden_tag() }}
-
+<input type="hidden" name="next"
+                value="{% if request.referrer %}{{request.referrer}}{% else %}{{urlfor("app_bp.index")}}{% endif %}"/>
     {# Username or Email #}
     {% set field = login_form.username if user_manager.USER_ENABLE_USERNAME else login_form.email %}
     {{ render_field(field, tabindex=110) }}

@@ -11,7 +11,7 @@
         {% for d in docs %}
 
             <div class="column {% if col_fmt == 3 %}is-one-third{% elif col_fmt == 2 %}is-half{% endif %}">
-                <a href="{{ url_for("app_bp.document_edit", doc_id=d.id) }}">
+                <a href="{{ url_for("app_bp.view_document", doc_id=d.id) }}">
                     <div class="card document-card" id="card-{{ d.id }}">
                         {% for img in d.images %}
                             <div class="thumbnail-container has-background-grey-lighter">

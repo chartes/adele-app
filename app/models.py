@@ -596,6 +596,7 @@ class User(db.Model, UserMixin):
         user = User.query.get(data['id'])
         return user
 
+    @property
     def documents_i_can_edit(self):
         all_docs = Document.query.all()
         docs = []
