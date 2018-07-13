@@ -1,4 +1,5 @@
 from flask import current_app
+from flask_login import AnonymousUserMixin
 from flask_user import UserMixin
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -532,6 +533,11 @@ class Translation(db.Model):
             ]
         }
 
+
+class AnonymousUser(AnonymousUserMixin):
+    @property
+    def documents_i_can_edit(self):
+        return []
 
 # Define the User data model
 class User(db.Model, UserMixin):
