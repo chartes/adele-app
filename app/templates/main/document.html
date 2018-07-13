@@ -3,9 +3,9 @@
 {% block content %}
 
     <section class="section">
-        <div class="container is-fullhd">
+        <div class="view-container is-fullhd">
             <div class="columns">
-                <div class="column">
+                <div class="column is-4">
                     <figure class="image">
                         <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" />
                     </figure>
@@ -128,19 +128,28 @@
                         </div>
 
                     <div class="tab-content" id="tab-transcription">
-                        <p class="content" id="transcription-container">
-                               {{ transcription }}
-                        </p>
+                        <p class="content" id="transcription-container"></p>
+                        <p class="content" id="translation-container"></p>
+                        <p class="content" id="transcription-alignment-container"></p>
                     </div>
                     <div class="tab-content" id="tab-commentaries">
+                         <p class="content" id="commentaries-container"></p>
                     </div>
                     <div class="tab-content" id="tab-speech-parts">
+                        <p class="content" id="speech-parts-container"></p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 {% endblock content %}
+
+{% block breadcrumb %}
+    <div class="navbar-item breadcrumb-arrow">
+        <i class="fas fa-angle-right"></i>
+    </div>
+    <div class="navbar-item"><a class="is-text">{{ doc.title }}</a> </div>
+{% endblock %}
 
 {% block scripts %}
    <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
@@ -165,12 +174,90 @@
                $.ajax({
                    url: url
                }).done(function (data) {
-
-                   $('#transcription-container').html(data.data.content);
+                   if (!data.errors){
+                       $('#transcription-container').html(data.data.content);
+                   }
                });
            }
 
+           function load_translation(){
+               let url = "{{ url_for('api_bp.api_documents_translations_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   console.log(data);
+                   if (!data.errors){
+                       $('#translation-container').html(data.data.content);
+                   }
+               });
+           }
+
+           function load_transcription_alignment(){
+               let url = "{{ url_for('api_bp.api_documents_transcriptions_alignments_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   console.log(data);
+                   if (!data.errors){
+                       //$('#transcription-alignment-container').html(data.data.toString());
+                   }
+               });
+           }
+
+
+
+           function load_commentaries(){
+               let url = "{{ url_for('api_bp.api_commentary_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+
+               function make_commentary(com) {
+                   c = "<div id='commentary-"+ com.id +"'>" +
+                       "    <div class='title'>" + com.type.label + "</div>" +
+                       "    <p>" + com.content + "</p>"
+                       "</div>";
+                   return c;
+               }
+
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   console.log(data);
+                   if (!data.errors){
+                       for (let com of data.data) {
+                           $('#commentaries-container').append(
+                               make_commentary(com)
+                           );
+                       }
+                   }
+               });
+           }
+
+           function load_speech_parts(){
+               let url = "{{ url_for('api_bp.api_documents_transcriptions_alignments_discours_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   console.log("speech parts");
+                   console.log(data);
+                   if (!data.errors){
+                       $('#speech-parts-container').html(data.data.toString());
+                   }
+               });
+           }
+
+
+           /*
+                Load data & select the notice tab;
+            */
            load_transcription();
+           load_translation();
+           load_transcription_alignment();
+           load_commentaries();
+           load_speech_parts();
+
            go_to_tab('tab-notice');
        });
    </script>

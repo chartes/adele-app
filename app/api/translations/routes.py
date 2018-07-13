@@ -20,16 +20,11 @@ def get_reference_translation(doc_id):
     :param doc_id:
     :return:
     """
-    translation = None
-    try:
-        translations = Translation.query.filter(doc_id == Translation.doc_id).all()
-        for tr in translations:
-            user = User.query.filter(User.id == tr.user_id).first()
-            if user.is_teacher:
-                translation = tr
-                break
-    except NoResultFound:
-        pass
+    doc = Document.query.filter(Document.id == doc_id).first()
+    translation = Translation.query.filter(
+        doc_id == Translation.doc_id,
+        doc.user_id == Translation.user_id
+    ).first()
 
     return translation
 

@@ -22,17 +22,11 @@ def get_reference_transcription(doc_id):
     :param doc_id:
     :return:
     """
-    transcription = None
-    try:
-        transcriptions = Transcription.query.filter(doc_id == Transcription.doc_id).all()
-        for tr in transcriptions:
-            user = User.query.filter(User.id == tr.user_id).first()
-            if user.is_teacher:
-                transcription = tr
-                break
-    except NoResultFound:
-        pass
-
+    doc = Document.query.filter(Document.id == doc_id).first()
+    transcription = Transcription.query.filter(
+        doc_id == Transcription.doc_id,
+        doc.user_id == Transcription.user_id
+    ).first()
     return transcription
 
 
@@ -470,33 +464,33 @@ def api_documents_transcriptions_alignments_reference(api_version, doc_id):
     :param user_id:
     :return:
     """
-    response = None
-
     transcription = get_reference_transcription(doc_id)
 
     if transcription is None:
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Reference transcription not found"
         })
+        return APIResponseFactory.jsonify(response)
 
     translation = get_reference_translation(doc_id)
 
-    if translation is None and response is None:
+    if translation is None:
         response = APIResponseFactory.make_response(errors={
             "status": 404, "title": "Reference translation not found"
         })
-    else:
-        alignments = AlignmentTranslation.query.filter(
-            AlignmentTranslation.transcription_id == transcription.id,
-            AlignmentTranslation.translation_id == translation.id
-        ).all()
+        return APIResponseFactory.jsonify(response)
 
-        ptrs = [
-            (a.ptr_transcription_start, a.ptr_transcription_end, a.ptr_translation_start, a.ptr_translation_end)
-            for a in alignments
-        ]
+    alignments = AlignmentTranslation.query.filter(
+        AlignmentTranslation.transcription_id == transcription.id,
+        AlignmentTranslation.translation_id == translation.id
+    ).all()
 
-        response = APIResponseFactory.make_response(data=ptrs)
+    ptrs = [
+        (a.ptr_transcription_start, a.ptr_transcription_end, a.ptr_translation_start, a.ptr_translation_end)
+        for a in alignments
+    ]
+
+    response = APIResponseFactory.make_response(data=ptrs)
 
     return APIResponseFactory.jsonify(response)
 
@@ -599,7 +593,8 @@ def api_post_documents_transcriptions_alignments(api_version, doc_id):
                         "status": 403, "title": "Cannot insert data"
                     })
                 else:
-                    if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
+                    if not (user.is_teacher or user.is_admin) and "username" in data and data[
+                        "username"] != user.username:
                         response = APIResponseFactory.make_response(errors={
                             "status": 403, "title": "Access forbidden"
                         })
@@ -783,7 +778,8 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
 
                 user = current_app.get_current_user()
 
-                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username):
+                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data[
+                    "username"] != user.username):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Access forbidden"
                     })
@@ -805,16 +801,15 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
                             data = data["speech_parts"]
 
                         # DELETE the old data
-                        #for old_al in AlignmentDiscours.query.filter(
+                        # for old_al in AlignmentDiscours.query.filter(
                         #        AlignmentDiscours.transcription_id == transcription.id,
                         #        AlignmentDiscours.user_id == user_id
-                        #).all():
-                        #db.session.delete(old_al)
+                        # ).all():
+                        # db.session.delete(old_al)
 
                         if response is None:
                             try:
                                 for speech_part in data:
-
                                     part_type = SpeechPartType.query.filter(
                                         SpeechPartType.id == int(speech_part["type_id"])
                                     ).one()
@@ -904,7 +899,8 @@ def api_put_documents_transcriptions_alignments_discours(api_version, doc_id):
 
                 user = current_app.get_current_user()
 
-                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username):
+                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data[
+                    "username"] != user.username):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Access forbidden"
                     })
@@ -928,7 +924,6 @@ def api_put_documents_transcriptions_alignments_discours(api_version, doc_id):
                         if response is None:
                             try:
                                 for speech_part in data:
-
                                     part_type = SpeechPartType.query.filter(
                                         SpeechPartType.id == int(speech_part["type_id"])
                                     ).one()
@@ -986,8 +981,8 @@ def api_documents_transcriptions_alignments_discours_reference(api_version, doc_
 
     if response is None:
         alignments = AlignmentDiscours.query.filter(
-             AlignmentDiscours.transcription_id == transcription.id,
-             AlignmentDiscours.user_id == transcription.user_id
+            AlignmentDiscours.transcription_id == transcription.id,
+            AlignmentDiscours.user_id == transcription.user_id
         ).all()
 
         response = APIResponseFactory.make_response(data=[al.serialize() for al in alignments])
@@ -995,7 +990,8 @@ def api_documents_transcriptions_alignments_discours_reference(api_version, doc_
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours/from-user/<user_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours/from-user/<user_id>',
+              methods=['DELETE'])
 @auth.login_required
 def api_delete_documents_transcriptions_alignments_discours(api_version, doc_id, user_id=None):
     """
@@ -1178,7 +1174,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                         "status": 403, "title": "Access forbidden"
                     })
 
-                if not("manifest_url" in data and "img_id" in data):
+                if not ("manifest_url" in data and "img_id" in data):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Data is malformed"
                     })
@@ -1200,17 +1196,16 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
 
                         # DELETE the old data
                         for old_al in AlignmentImage.query.filter(
-                            AlignmentImage.transcription_id == transcription.id,
-                            AlignmentImage.user_id == int(user_id),
-                            AlignmentImage.manifest_url == data["manifest_url"],
-                            AlignmentImage.img_id == data["img_id"]
+                                AlignmentImage.transcription_id == transcription.id,
+                                AlignmentImage.user_id == int(user_id),
+                                AlignmentImage.manifest_url == data["manifest_url"],
+                                AlignmentImage.img_id == data["img_id"]
                         ).all():
                             db.session.delete(old_al)
 
                         if response is None:
                             try:
                                 for alignment in alignments:
-
                                     zone = ImageZone.query.filter(
                                         ImageZone.zone_id == int(alignment["zone_id"]),
                                         ImageZone.manifest_url == data["manifest_url"],
@@ -1258,7 +1253,8 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/images/from-user/<user_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/images/from-user/<user_id>',
+              methods=['DELETE'])
 @auth.login_required
 def api_delete_documents_transcriptions_alignments_images(api_version, doc_id, user_id=None):
     """
@@ -1308,4 +1304,3 @@ def api_delete_documents_transcriptions_alignments_images(api_version, doc_id, u
                     })
 
     return APIResponseFactory.jsonify(response)
-
