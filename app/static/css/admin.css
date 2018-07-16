@@ -26,6 +26,15 @@
 #user-messages .message-body {
   padding: 0.4em 1.5em; }
 
+.visibility-tags {
+  margin-bottom: 0px !important; }
+  .visibility-tags span p {
+    padding-right: 6px; }
+    .visibility-tags span a {
+      padding: 3px; }
+      .visibility-tags span a span {
+        padding: 3px; }
+
 .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow,
 .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas,
 .leaflet-zoom-box, .leaflet-image-layer, .leaflet-layer {

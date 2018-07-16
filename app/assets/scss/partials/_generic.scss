@@ -38,3 +38,18 @@
     padding: 0.4em 1.5em;
   }
 }
+
+.visibility-tags {
+   margin-bottom: 0px !important;
+  span {
+    p {
+      padding-right: 6px;
+    }
+    a {
+      padding: 3px;
+      span {
+        padding: 3px;
+      }
+    }
+  }
+}
