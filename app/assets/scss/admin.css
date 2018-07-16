@@ -49,6 +49,23 @@
   padding: 3px;
 }
 
+#commentaries-toc {
+  width: 50%;
+  margin-bottom: 50px;
+}
+#commentaries-toc tr:hover {
+  cursor: pointer;
+}
+
+.commentary {
+  margin-top: 12px;
+  margin-bottom: 24px;
+}
+.commentary p {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #dbdbdb;
+}
+
 /* required styles */
 .leaflet-pane,
 .leaflet-tile,

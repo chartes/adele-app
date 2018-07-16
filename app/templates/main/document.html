@@ -1,10 +1,8 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
-
     <section class="section">
         <div class="view-container is-fullhd">
-
             <div class="tags visibility-tags">
                 <span class="tag is-light">Dossier {{ doc.id }}</span>
 
@@ -23,6 +21,7 @@
                     <figure class="image">
                         <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" />
                     </figure>
+                    <div id="iiif-map"></div>
                 </div>
                 <div class="column" id="text-col">
                     <div class="tabs">
@@ -155,6 +154,7 @@
                         </div>
                     </div>
                     <div class="tab-content" id="tab-commentaries">
+                        <div class="content" id="commentaries-toc"></div>
                          <p class="content" id="commentaries-container"></p>
                     </div>
                     <div class="tab-content" id="tab-speech-parts">
@@ -177,6 +177,16 @@
    <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
    <script type="text/javascript">
        $(document).ready(function () {
+
+           /*
+           $.ajax({
+                  url: '{#url_for('api_bp.api_documents_manifest_url', api_version='1.0', doc_id=doc.id)#}'
+              }).done(function (data) {
+                  if (!data.errors){
+                      const iiif_map = LeafletIIIFMap.initialize('iiif-map', manifest);
+                  }
+           });
+           */
 
            function go_to_tab(tab_id) {
                $('.tab-content').hide();
@@ -221,6 +231,7 @@
                    if (!data.errors){
                        $('#transcription-container').html(data.data.content);
                         load_translation();
+                        load_speech_parts();
                    }
                });
            }
@@ -266,9 +277,9 @@
                url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
 
                function make_commentary(com) {
-                   c = "<div id='commentary-"+ com.id +"'>" +
-                       "    <div class='title'>" + com.type.label + "</div>" +
-                       "    <p>" + com.content + "</p>"
+                   c = "<div class='commentary' id='commentary-"+ com.id +"'>" +
+                       "    <div class='title is-5'>Commentaire " + com.type.label.toLowerCase() + "</div>" +
+                       "    <p>" + com.content + "</p>" +
                        "</div>";
                    return c;
                }
@@ -276,12 +287,37 @@
                $.ajax({
                    url: url
                }).done(function (data) {
-                   console.log(data);
                    if (!data.errors){
-                       for (let com of data.data) {
-                           $('#commentaries-container').append(
-                               make_commentary(com)
-                           );
+                       if (data.data.length > 0) {
+                            /*
+                                make TOC
+                             */
+                            let toc = "<div class='title is-3'>Sommaire</div>" +
+                                      "<table class='table is-hoverable'><tbody>";
+                            for (let com of data.data) {
+                                toc += "<tr><td><a href='#commentary-" + com.id + "'>Commentaire " + com.type.label.toLowerCase() + "</a></td></tr>"
+                            }
+                            toc += "</tbody></table>";
+
+                            $('#commentaries-toc').html(toc);
+                            /*
+                                write commentaries
+                             */
+                           for (let com of data.data) {
+                               $('#commentaries-container').append(
+                                   make_commentary(com)
+                               );
+                           }
+
+                           /*
+                               bind TOC anchors
+                            */
+                           $('#commentaries-toc td').each(function(){
+                               $(this).click(function() {
+                                   console.log($(this).find('a:first').prop('href'));
+                                   window.location.href = $(this).find('a').prop('href');
+                               });
+                           });
                        }
                    }
                });
@@ -296,7 +332,12 @@
                    console.log("speech parts");
                    console.log(data);
                    if (!data.errors){
-                       $('#speech-parts-container').html(data.data.toString());
+                       const transcription = $('#transcription-container').html();
+                       $('#speech-parts-container').html(transcription);
+
+                       for (const sp of data.data) {
+                           console.log(sp.speech_part_type.label);
+                       }
                    }
                });
            }
@@ -304,9 +345,8 @@
            /*
                 Load data & select the notice tab;
             */
-           load_transcription();
+           load_transcription(); // also load translation & speech-parts
            load_commentaries();
-           load_speech_parts();
 
            go_to_tab('tab-notice');
 
@@ -407,6 +447,7 @@
 
            $('#transcription-container').css('display', 'none');
            $('#translation-container').css('display', 'none');
+
        });
    </script>
 {% endblock %}

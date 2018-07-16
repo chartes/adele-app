@@ -35,6 +35,19 @@
       .visibility-tags span a span {
         padding: 3px; }
 
+#commentaries-toc {
+  width: 50%;
+  margin-bottom: 50px; }
+  #commentaries-toc tr:hover {
+    cursor: pointer; }
+
+.commentary {
+  margin-top: 12px;
+  margin-bottom: 24px; }
+  .commentary p {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dbdbdb; }
+
 .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow,
 .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas,
 .leaflet-zoom-box, .leaflet-image-layer, .leaflet-layer {
