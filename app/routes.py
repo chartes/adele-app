@@ -83,6 +83,7 @@ def contact():
     return render_template_with_token('main/contact.html')
 
 
+@app_bp.route('/flash-messages/')
 @app_bp.route('/flash-messages/<last_msg_only>')
 def get_flash_messages(last_msg_only=None):
     last_msg_only = last_msg_only is not None

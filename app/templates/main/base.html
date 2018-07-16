@@ -121,7 +121,7 @@
 {% block flash_messages %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <section class="section message-section">
+            <section class="message-section">
                 <div class="container is-fullhd">{% for category, message in messages %}
                     <article class="message {% if category == 'success' %}is-info{% else %}is-warning{% endif %}">
                         <div class="message-body">
@@ -137,8 +137,6 @@
 {% endblock %}
 
 {% block content %}
-
-    {# application content needs to be provided in the app_content block #}
     {% block app_content %}{% endblock %}
 {% endblock %}
 

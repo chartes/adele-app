@@ -122,15 +122,23 @@
                             </ul>
                         </div>
 
-                        <p><a href="#" class="button is-light">Editer les métadonnées</a></p>
-
-                        <hr>
                         </div>
 
                     <div class="tab-content" id="tab-transcription">
-                        <p class="content" id="transcription-container"></p>
-                        <p class="content" id="translation-container"></p>
-                        <p class="content" id="transcription-alignment-container"></p>
+                        <p class="content" id="transcription-container" style="display:none"></p>
+                        <p class="content" id="translation-container"  style="display:none"></p>
+                        <div class="" id="transcription-alignment-container">
+                            <table id="alignment-table" class="table is-striped is-fullwidth">
+                                <thead>
+                                    <tr>
+                                        <th>Transcription</th>
+                                        <th>Traduction </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="tab-content" id="tab-commentaries">
                          <p class="content" id="commentaries-container"></p>
@@ -176,6 +184,7 @@
                }).done(function (data) {
                    if (!data.errors){
                        $('#transcription-container').html(data.data.content);
+                        load_translation();
                    }
                });
            }
@@ -189,6 +198,7 @@
                    console.log(data);
                    if (!data.errors){
                        $('#translation-container').html(data.data.content);
+                        load_transcription_alignment();
                    }
                });
            }
@@ -201,12 +211,23 @@
                }).done(function (data) {
                    console.log(data);
                    if (!data.errors){
-                       //$('#transcription-alignment-container').html(data.data.toString());
+                       const translation = $('#translation-container').html();
+                       const transcription = $('#transcription-container').html();
+
+                       for (const al of data.data) {
+                           const al_trc = transcription.substr(al[0], al[1]-al[0]);
+                           const al_trl = translation.substr(al[2], al[3]-al[2]);
+                           //$('#transcription-alignment-container').html(data.data.toString());
+                           //todo
+                           console.log(al);
+                           console.log(al_trc.length);
+                           $('#alignment-table tbody').append(
+                               '<tr><td>'+ al_trc +'</td><td>'+ al_trl +'</td></tr>'
+                           );
+                       }
                    }
                });
            }
-
-
 
            function load_commentaries(){
                let url = "{{ url_for('api_bp.api_commentary_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
@@ -248,13 +269,10 @@
                });
            }
 
-
            /*
                 Load data & select the notice tab;
             */
            load_transcription();
-           load_translation();
-           load_transcription_alignment();
            load_commentaries();
            load_speech_parts();
 
