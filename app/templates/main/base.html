@@ -72,6 +72,7 @@
                                         </span>
                                         <span>Tableau de bord</span>
                                     </a>
+                                    {% if current_user.is_teacher or current_user.is_admin %}
                                     <a id="mydocs-item" class="navbar-item"
                                        href="{{ url_for('app_bp.dashboard_manage_users') }}">
                                         <span class="icon">
@@ -79,6 +80,7 @@
                                         </span>
                                         <span>Utilisateurs</span>
                                     </a>
+                                    {% endif %}
                                     <a id="mydocs-item" class="navbar-item"
                                        href="{{ url_for('app_bp.dashboard_documents') }}">
                                         <span class="icon">
