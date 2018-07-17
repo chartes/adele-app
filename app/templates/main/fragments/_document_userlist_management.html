@@ -1,6 +1,6 @@
 {% macro document_list(docs, whitelists, current_user) -%}
     <div id="document-list">
-        <table id="document-list-table" class="table is-striped is-hoverable is-fullwidth">
+        <table id="document-list-table" class="table is-striped is-fullwidth">
             <thead>
             <tr>
                 <th>Document</th>
@@ -35,6 +35,7 @@
                         <p class="control">
                             <div class="select">
                                 <select class="select-userlist">
+                                    <option value="-1">Aucune liste</option>
                                     {% for whitelist in whitelists %}
                                     <option value="{{whitelist.id}}"
                                             {%- if d.whitelist and d.whitelist.id == whitelist.id %}

@@ -1,0 +1,18 @@
+{% macro manifest_validation() %}
+    <div id="modal-manifest-validation" class="modal">
+        <div class="modal-background close-modal-manifest-validation"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Document <span id="manifest-validation-doc-id"></span> : choix du manifeste IIIF</p>
+                <button class="delete close-modal-manifest-validation" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+
+            </section>
+            <footer class="modal-card-foot">
+                <button id="confirm-userlist-delete" class="button is-primary">Valider</button>
+                <button class="button close-modal-manifest-validation">Annuler</button>
+            </footer>
+        </div>
+    </div>
+{% endmacro %}

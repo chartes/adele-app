@@ -1,4 +1,4 @@
-{% macro document_table(docs) -%}
+{% macro document_table(current_user, docs) -%}
     <div class="columns is-multiline">
         {% if docs | length >= 10 %}
             {% set col_fmt = 3 %}
@@ -28,7 +28,12 @@
                         {% endfor %}
                         <div class="card-content">
                             <div class="content">
-                                <p><span class="tag is-light">Dossier {{ d.id }}</span></p>
+                                <p>
+                                    <div class="tags">
+                                        <span class="tag is-light">Dossier {{ d.id }}</span>
+                                        {% if not d.is_published and not current_user.is_anonymous  %} <span class="tag is-warning">Non publié</span> {% endif %}
+                                    </div>
+                                </p>
                                 <p class="title is-6">{{ d.title }}</p>
                                 <p>
                                     <small>{{ d.subtitle }}</small>

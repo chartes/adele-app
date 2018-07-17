@@ -1,0 +1,18 @@
+{% macro document_delete() %}
+    <div id="modal-document-delete" class="modal">
+        <div class="modal-background close-document_delete"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Document <span id="manifest-validation-doc-id"></span></p>
+                <button class="delete close-document_delete" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <h1>Attention</h1>
+            </section>
+            <footer class="modal-card-foot">
+                <button id="confirm-userlist-delete" class="button is-danger">Supprimer le document</button>
+                <button class="button close-document_delete">Annuler</button>
+            </footer>
+        </div>
+    </div>
+{% endmacro %}

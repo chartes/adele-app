@@ -73,21 +73,19 @@
                                         <span>Tableau de bord</span>
                                     </a>
                                     <a id="mydocs-item" class="navbar-item"
+                                       href="{{ url_for('app_bp.dashboard_manage_users') }}">
+                                        <span class="icon">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                        <span>Utilisateurs</span>
+                                    </a>
+                                    <a id="mydocs-item" class="navbar-item"
                                        href="{{ url_for('app_bp.dashboard_documents') }}">
                                         <span class="icon">
                                             <i class="fas fa-file-alt"></i>
                                         </span>
                                         <span>Mes documents</span>
                                     </a>
-                                    <!--
-                                    <a id="manual-item" class="navbar-item"
-                                       href="{{ url_for('app_bp.documents') }}">
-                                        <span class="icon">
-                                            <i class="fas fa-book"></i>
-                                        </span>
-                                        <span>Mode d'emploi</span>
-                                    </a>
-                                    -->
                                     <a id="logout-item" class="navbar-item" href="{{ url_for('user.logout') }}">
                                         <span class="icon">
                                             <i class="fas fa-sign-in-alt"></i>

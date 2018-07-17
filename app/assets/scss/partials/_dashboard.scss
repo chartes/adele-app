@@ -26,8 +26,21 @@
   }
 
   .user-row:hover {
-  cursor: pointer;
-}
+    cursor: pointer;
+  }
 }
 
-
+#document-list-table {
+  td {
+    vertical-align: middle;
+  }
+  .checkbox{
+    margin: 40% 30% !important;
+  }
+  .date-picker {
+    width: 180px;
+  }
+  .pick-manifest {
+    margin-right: 20px;
+  }
+}

@@ -41,7 +41,7 @@
                                 <div class="field is-pulled-right">
                                         <p class="control">
                                             <a id="del-user" class="button is-danger delete-btn">
-                                              Supprimer l'utilisateur
+                                              Désactiver le compte de l'utilisateur
                                             </a>
                                         </p>
                                 </div>
@@ -401,6 +401,31 @@
                     populate_user_list();
                     $("#select-userlist option:last-child").prop("selected", true).change();
                     $("#modal-confirm-userlist-delete").toggleClass("is-active");
+                });
+            });
+
+            /*
+                Change the userlist of a document
+            */
+            $('#document-list-table .select-userlist').change(function() {
+                const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
+                const userlist_id = $(this).find(':selected').val();
+
+                let url = "{{ url_for('api_bp.api_change_documents_whitelist', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+                url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    contentType: "application/json",
+                    data:  JSON.stringify({data: {whitelist_id: userlist_id}}),
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                    }
+                }).done(function() {
+                    if (!data.errors) {
+                        const new_userlist = data.data.whitelist;
+                        console.log(new_userlist);
+                    }
                 });
             });
 

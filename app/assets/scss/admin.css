@@ -18,7 +18,10 @@
 }
 
 #user-menu a {
-  width: 200px;
+  width: 220px;
+}
+#user-menu span {
+  margin-right: 10px;
 }
 
 .message-section {
@@ -64,6 +67,23 @@
 .commentary p {
   padding-bottom: 12px;
   border-bottom: 1px solid #dbdbdb;
+}
+
+.edit-document, .delete-document {
+  font-size: medium !important;
+  text-decoration: none !important;
+}
+.edit-document p, .delete-document p {
+  margin-left: 6px !important;
+}
+
+.is-invisible {
+  height: 0px;
+}
+
+#text-col .edit-document {
+  margin: auto;
+  margin-right: 14px;
 }
 
 /* required styles */
@@ -1777,9 +1797,6 @@ note {
   margin: auto;
   width: 95%;
 }
-#document-list table:hover {
-  cursor: pointer;
-}
 #document-list img {
   padding-left: 0px;
 }
@@ -1875,6 +1892,19 @@ note {
 }
 #user-management .user-row:hover {
   cursor: pointer;
+}
+
+#document-list-table td {
+  vertical-align: middle;
+}
+#document-list-table .checkbox {
+  margin: 40% 30% !important;
+}
+#document-list-table .date-picker {
+  width: 180px;
+}
+#document-list-table .pick-manifest {
+  margin-right: 20px;
 }
 
 /*# sourceMappingURL=admin.css.map */

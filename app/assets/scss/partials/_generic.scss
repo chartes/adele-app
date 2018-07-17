@@ -16,11 +16,16 @@
   padding-bottom: 12px;
 }
 
-#user-menu a {
-  width: 200px;
+#user-menu {
+  a {
+    width: 220px;
+  }
+  span {
+    margin-right: 10px;
+  }
 }
 
-.message-section  {
+.message-section {
   ul {
     list-style-type: none !important;
     margin: 0 !important;
@@ -31,7 +36,7 @@
 #user-messages {
   p {
     .control {
-          margin-bottom: 0px;
+      margin-bottom: 0px;
     }
   }
   .message-body {
@@ -40,7 +45,7 @@
 }
 
 .visibility-tags {
-   margin-bottom: 0px !important;
+  margin-bottom: 0px !important;
   span {
     p {
       padding-right: 6px;
@@ -70,3 +75,23 @@
     border-bottom: 1px solid #dbdbdb;
   }
 }
+
+.edit-document, .delete-document {
+  font-size: medium !important;
+  text-decoration: none !important;;
+  p {
+    margin-left: 6px !important;;
+  }
+}
+
+.is-invisible {
+  height: 0px;
+}
+
+#text-col {
+  .edit-document {
+    margin: auto;
+    margin-right: 14px;
+  }
+}
+

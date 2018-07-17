@@ -1,12 +1,13 @@
 import datetime
 
 from flask import request, url_for, current_app
+from flask_user import roles_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
-from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition
+from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist
 
 """
 ===========================
@@ -28,6 +29,8 @@ def api_documents(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/publish')
+@auth.login_required
+@roles_required(["admin", "teacher"])
 def api_documents_publish(api_version, doc_id):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
@@ -48,6 +51,8 @@ def api_documents_publish(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unpublish')
+@roles_required(["admin", "teacher"])
+@auth.login_required
 def api_documents_unpublish(api_version, doc_id):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
@@ -66,6 +71,7 @@ def api_documents_unpublish(api_version, doc_id):
         })
     return APIResponseFactory.jsonify(response)
 
+
 @api_bp.route('/api/<api_version>/documents')
 def api_documents_id_list(api_version):
     try:
@@ -81,6 +87,7 @@ def api_documents_id_list(api_version):
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST', 'PUT'])
 @auth.login_required
+@roles_required(["admin", "teacher"])
 def api_post_documents(api_version):
     """
     {
@@ -274,6 +281,7 @@ def api_post_documents(api_version):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['DELETE'])
 @auth.login_required
+@roles_required(["admin", "teacher"])
 def api_delete_documents(api_version, doc_id):
 
     response = None
@@ -304,5 +312,78 @@ def api_delete_documents(api_version, doc_id):
 
         if response is None:
             response = APIResponseFactory.make_response(data=[])
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])
+@auth.login_required
+@roles_required(["admin", "teacher"])
+def api_change_documents_whitelist(api_version, doc_id):
+
+    user = current_app.get_current_user()
+
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+        return APIResponseFactory.jsonify(response)
+
+    data = request.get_json()
+    data = data.get('data')
+
+    doc = Document.query.filter(Document.id == doc_id).first()
+
+    try:
+        new_white_list_id = int(data.get('whitelist_id'))
+        if new_white_list_id == -1:
+            new_white_list_id = None
+        else:
+            wl = Whitelist.query.filter(Whitelist.id == new_white_list_id).first()
+            if wl is None:
+                raise Exception("Whitelist does not exist")
+        doc.whitelist_id = new_white_list_id
+        db.session.commit()
+    except Exception as e:
+        print(e)
+
+    response = APIResponseFactory.make_response(data=doc.serialize())
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
+@auth.login_required
+@roles_required(["admin", "teacher"])
+def api_change_documents_closing_date(api_version, doc_id):
+
+    user = current_app.get_current_user()
+
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+        return APIResponseFactory.jsonify(response)
+
+    data = request.get_json()
+    data = data.get('data')
+
+    doc = Document.query.filter(Document.id == doc_id).first()
+
+    try:
+        new_closing_date = data.get('closing_date')
+        if not new_closing_date or len(new_closing_date) == 0:
+            new_closing_date = None
+        else:
+            new_closing_date = datetime.datetime.strptime(new_closing_date, '%d/%m/%Y')
+            new_closing_date = new_closing_date.strftime('%Y-%m-%d %H:%M:%S')
+
+        doc.date_closing = new_closing_date
+        db.session.commit()
+
+    except Exception as e:
+        print(e)
+
+    response = APIResponseFactory.make_response(data=doc.serialize())
 
     return APIResponseFactory.jsonify(response)

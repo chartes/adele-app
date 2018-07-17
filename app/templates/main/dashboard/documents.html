@@ -6,16 +6,21 @@
         <div class="container is-fluid">
             <div class="content">
                 <div>
-
+                    <h1>Gérer mes documents </h1>
                     <div class="section">
-                        <h1>Mes documents </h1>
-
+                        <h2>Ajouter un nouveau document</h2>
                         <a class="button" style="margin-top: 20px; margin-bottom: 20px;">
                             <span class="icon"><i class="fas fa-plus-square"></i> </span>
                             <span>Nouveau document</span>
                         </a>
+                        <p>Ajouter un nouveau document </p>
+                    </div>
+                    <div class="section">
+                        <h2>Documents éditables</h2>
                         <p>
-                            Les documents publiés sont visibles par le grand public, tandis que ceux qui sont non publiés ne sont accessibles que par les personnes autorisées.
+                            Les documents publiés sont visibles par le grand public, tandis que ceux non publiés ne sont accessibles que par les personnes autorisées par la liste d'utilisateurs du document.
+                            <br>
+                            La date limite de modification empêche les étudiants d'éditer le document après la date en question.
                         </p>
                         {% from 'main/fragments/_document_management_list.html' import document_list %}
                         {{  document_list(docs, current_user) }}
@@ -75,14 +80,74 @@
                             weekdays      : ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
                             weekdaysShort : ['Dim', 'Lun','Mar','Mer','Jeu','Ven','Sam']
                         },
-                        minDate: new Date(),
+                        minDate: new Date(2018, 1, 1),
                         maxDate: new Date(2030, 12, 31),
                         yearRange: [2018,2030]
                     })
                 );
+
+                $(this).change(function() {
+                    // only trigger when the value has a date format (dd/mm/yyyy) or when the field is empty
+                    const input_val = $(this).val().trim();
+                    if (input_val.length === 0 || input_val.match(/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)) {
+                        const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
+
+                        let url = "{{ url_for('api_bp.api_change_documents_closing_date', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+                        url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+                        $.ajax({
+                            url: url,
+                            method: 'POST',
+                            contentType: "application/json",
+                            data:  JSON.stringify({data: {closing_date: input_val}}),
+                            beforeSend: function (xhr) {
+                                xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                            }
+                        }).done(function(data) {
+                            if (data.errors) {
+                                $(this).val("");
+                            }
+                        });
+                    }
+
+                });
             });
 
+            $('input[name="publish-checkbox"]').change(function() {
+                const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
+                let publish_url = "{{ url_for('api_bp.api_documents_publish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+                let unpublish_url = "{{ url_for('api_bp.api_documents_unpublish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
 
+                url = $(this).prop('checked') ? publish_url : unpublish_url;
+                url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                    }
+                }).done(function(data) {
+                    if (!data.errors) {
+                        console.log("the document has been published")
+                    }
+                });
+            });
+
+            $(".pick-manifest").click(function() {
+                $('#modal-manifest-validation').toggleClass("is-active");
+            });
+
+            $('.close-modal-manifest-validation').click(function(){
+                $("#modal-manifest-validation").toggleClass("is-active");
+            });
+
+            $(".delete-document").click(function() {
+                $('#modal-document-delete').toggleClass("is-active");
+            });
+
+            $('.close-document_delete').click(function(){
+                $("#modal-document-delete").toggleClass("is-active");
+            });
         });
     </script>
 {% endblock scripts %}

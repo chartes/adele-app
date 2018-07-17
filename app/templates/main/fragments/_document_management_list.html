@@ -1,12 +1,17 @@
 {% macro document_list(docs, current_user) -%}
     <div id="document-list">
-        <table id="document-list-table" class="table is-striped is-hoverable is-fullwidth">
+        <table id="document-list-table" class="table is-striped  is-fullwidth">
             <thead>
             <tr>
-                <th>Document</th>
+                <th>Document </th>
                 <th>Titre</th>
+                {% if current_user.is_admin or current_user.is_teacher %}
+                <th>Manifeste IIIF</th>
+                {% endif %}
                 <th>Date limite de modification</th>
+                {% if current_user.is_admin or current_user.is_teacher %}
                 <th>Publié</th>
+                {% endif %}
                 <!-- edit button -->
                 <th></th>
                 <!-- delete button -->
@@ -18,6 +23,7 @@
                 <tr>
                     <td>
                         <input type="hidden" value="{{ url_for("app_bp.document_edit", doc_id=d.id) }}"/>
+                        <input type="hidden" name="doc-id" value="{{ d.id }}"/>
                         <span class="tag is-light">Dossier {{ d.id }}</span>
                         {% for img in d.images %}
                             <div class="thumbnail-container has-background-grey-lighter">
@@ -35,31 +41,40 @@
                         </p>
                         <div class="is-invisible sort-criteria">{{ d.title }}</div>
                     </td>
-                     <td>
+                    {% if current_user.is_admin or current_user.is_teacher %}
+                    <td><div class="button is-light pick-manifest">http://to.my/manifest.json</div></td>
+                    {% endif %}
+                    <td>
                         <input type="text" class="date-picker sort-criteria"
                          {% if d.date_closing %}
-                            value="{{ date_closing }}"
+                            value="{{ d.date_closing|date }}"
                          {% endif %}
                          {% if not (current_user.is_admin or current_user.is_teacher) %} disabled {% endif %}/>
-                        <div class="is-invisible sort-criteria">{{ date_closing }}</div>
+                        <div class="is-invisible sort-criteria">{{ d.date_closing|date }}</div>
 
                     </td>
+                    {% if current_user.is_admin or current_user.is_teacher %}
                     <td>
                         <label class="checkbox">
-                          <input type="checkbox" class="sort-criteria" value="{{ d.is_published }}"
-                            {% if not (current_user.is_admin or current_user.is_teacher) %} disabled {% endif %}>
+                          <input type="checkbox" name="publish-checkbox" class="sort-criteria" {% if d.is_published %} checked {% endif%}>
                         </label>
                         <div class="is-invisible sort-criteria">{{ d.is_published }}</div>
                     </td>
-                    <td><i class="fas fa-edit" style="margin-left: 4px"></i></td>
+                    {% endif %}
+                    <td><a class="button tag is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=d.id)}}"><i class="fas fa-edit"></i><p>Éditer</p></a></td>
                     {% if current_user.is_admin or current_user.is_teacher %}
-                    <td><i class="fas fa-trash-alt" style="color: #c60000; margin-left: 4px"></i></td>
+                    <td><a class="button tag is-danger delete-document"><i class="fas fa-trash-alt"></i><p>Supprimer</p></a></td>
                     {% endif %}
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% from 'main/fragments/_manifest_validation.html' import manifest_validation %}
+    {{  manifest_validation() }}
+    {% from 'main/fragments/_document_delete.html' import document_delete %}
+    {{  document_delete() }}
 
     {% include 'main/fragments/_sort_table_script.html' %}
 {%- endmacro %}

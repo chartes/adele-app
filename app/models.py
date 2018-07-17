@@ -1,3 +1,4 @@
+import datetime
 from flask import current_app
 from flask_login import AnonymousUserMixin
 from flask_user import UserMixin
@@ -613,7 +614,21 @@ class User(db.Model, UserMixin):
         else:
             for doc in all_docs:
                 if doc.user_id == self.id or (doc.whitelist and self in doc.whitelist.users):
-                    docs.append(doc)
+                    if self.is_teacher:
+                        docs.append(doc)
+                    else:
+                        if doc.date_closing:
+                            # check the closing date
+                            now = datetime.datetime.now()
+                            doc_closing_time = datetime.datetime.strptime(doc.date_closing, '%Y-%m-%d %H:%M:%S')
+                            if now > doc_closing_time:
+                                pass
+                                #print("document edition is closed")
+                            else:
+                                docs.append(doc)
+                            pass
+                        else:
+                            docs.append(doc)
         return docs
 
 

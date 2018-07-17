@@ -27,7 +27,7 @@
                     <div class="tabs">
                         <ul>
                         {% if can_edit %}
-                        <li><a class="button tag is-primary" href="{{url_for('app_bp.document_edit', doc_id=doc.id)}}">Éditer</a></li>
+                        <li><a class="button tag is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=doc.id)}}"><i class="fas fa-edit"></i><p>Éditer</p></a></li>
                         {% endif %}
                         <li class="tab is-active"><input type="hidden" value="tab-notice"/><a>Notice</a></li>
                         <li class="tab"><input type="hidden" value="tab-transcription"/><a>Transcription</a></li>

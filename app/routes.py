@@ -1,6 +1,6 @@
 import math
 
-from flask import render_template, flash, redirect, url_for, session, current_app, get_flashed_messages, abort
+from flask import render_template, flash, redirect, url_for, session, current_app, abort
 from flask_user import login_required, roles_required
 from flask_user.forms import InviteUserForm
 
@@ -258,7 +258,7 @@ def document_list():
     page = int(request.form.get('page'))
 
     user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous:
         docs = Document.query.filter(Document.is_published.is_(True)).all()
     else:
         docs = Document.query.all()
@@ -323,18 +323,23 @@ def document_list():
             nav_uri=nav_uri,
             nb_total=nb_total,
             filtered=docs_are_filtered,
-            current_page=page
+            current_page=page,
+            current_user=user
     )
 
 
 @app_bp.route('/documents/<doc_id>')
 def view_document(doc_id):
-    doc = Document.query.filter(Document.id == doc_id, Document.is_published.is_(True)).first()
+    user = current_app.get_current_user()
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is not None:
+        if user.is_anonymous and not doc.is_published:
+            doc = None
+
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
 
-    user = current_app.get_current_user()
     can_edit = doc in user.documents_i_can_edit
 
     return render_template_with_token('main/document.html', title='Documents - Adele', doc=doc, can_edit=can_edit)
@@ -344,10 +349,9 @@ def view_document(doc_id):
 @login_required
 def document_edit(doc_id):
     user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        doc = Document.query.first()
-    else:
+    if not user.is_anonymous:
         doc = Document.query.filter(Document.id == doc_id).first()
+
     if doc is None:
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
