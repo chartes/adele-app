@@ -387,3 +387,38 @@ def api_change_documents_closing_date(api_version, doc_id):
     response = APIResponseFactory.make_response(data=doc.serialize())
 
     return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/add', methods=['POST'])
+@auth.login_required
+@roles_required(["admin", "teacher"])
+def api_add_document(api_version):
+
+    user = current_app.get_current_user()
+
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+        return APIResponseFactory.jsonify(response)
+
+    response = None
+
+    data = request.get_json()
+    data = data["data"]
+
+    kwargs = {
+        "title" : data.get('title'),
+        "subtitle": data.get('subtitle'),
+        "user_id": user.id,
+        "is_published" : 0,
+    }
+
+    new_doc = Document(**kwargs)
+    db.session.add(new_doc)
+    db.session.commit()
+    print(new_doc.id)
+
+    response = APIResponseFactory.make_response(data=new_doc.serialize())
+
+    return APIResponseFactory.jsonify(response)

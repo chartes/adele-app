@@ -1,153 +1,340 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
+<section class="section">
+    <div class="container is-fluid">
+        <div class="content">
+            <div>
+                <h1>Mes Documents</h1>
+                <div class="section">
+                    <p>
+                        Les documents apparaissant dans cette section sont ceux pour lesquels vous possedez le droit d'édition.
+                    </p>
+                    <p>
+                        Les documents publiés sont visibles par le grand public, tandis que ceux non publiés ne sont accessibles que par les personnes autorisées par la liste d'utilisateurs du document.
+                        <br>
+                        La date limite de modification empêche les étudiants d'éditer le document après la date en question.
+                    </p>
 
-    <section class="section">
-        <div class="container is-fluid">
-            <div class="content">
-                <div>
-                    <h1>Gérer mes documents </h1>
+                    <!-- Filled by async requests -->
+                    <div id="document-list"></div>
+
+                    {% if current_user.is_admin or current_user.is_teacher %}
                     <div class="section">
                         <h2>Ajouter un nouveau document</h2>
-                        <a class="button" style="margin-top: 20px; margin-bottom: 20px;">
-                            <span class="icon"><i class="fas fa-plus-square"></i> </span>
-                            <span>Nouveau document</span>
-                        </a>
-                        <p>Ajouter un nouveau document </p>
+                        <p>Le document nouvellement crée apparaîtra dans le tableau ci-dessus et pourra être édité avant publication.</p>
+                        <div id="add-document-form">
+                            <div class="field">
+                                <label class="label">Titre</label>
+                                <div class="control">
+                                    <input id="new-doc-title" class="input" type="text" placeholder="Acte sous le sceau de ...">
+                                </div>
+                                <p id="help-doc-title" class="help is-danger is-invisible">Le titre du document ne peut pas être vide</p>
+                            </div>
+                            <div class="field">
+                                <label class="label">Sous-titre</label>
+                                <div class="control">
+                                    <input id="new-doc-subtitle" class="input" type="text" placeholder="Vente à l’abbaye Saint-Germer-de-Fly ... ">
+                                </div>
+                                <p id="help-doc-subtitle" class="help is-danger is-invisible">Le sous-titre du document ne peut pas être vide</p>
+                            </div>
+                            <div class="field">
+                                <label class="label">Manifeste IIIF</label>
+                                <p>Le manifeste IIIF contient les images relatives au document</p>
+                                <div class="control">
+                                    <div id="submit-add-document" class="button is-light" style="margin-bottom: 20px;">
+                                        <span class="icon"><i class="fas fa-plus-square"></i></span>
+                                        <span>Importer un manifeste IIIF</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <div id="add-document" class="button is-primary" style="margin-top: 20px; margin-bottom: 20px;">
+                                        <span class="icon"><i class="fas fa-plus-square"></i></span>
+                                        <span>Ajouter le document</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="section">
-                        <h2>Documents éditables</h2>
-                        <p>
-                            Les documents publiés sont visibles par le grand public, tandis que ceux non publiés ne sont accessibles que par les personnes autorisées par la liste d'utilisateurs du document.
-                            <br>
-                            La date limite de modification empêche les étudiants d'éditer le document après la date en question.
-                        </p>
-                        {% from 'main/fragments/_document_management_list.html' import document_list %}
-                        {{  document_list(docs, current_user) }}
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
+{% from 'main/fragments/_manifest_validation.html' import manifest_validation %}
+{{  manifest_validation() }}
 
 {% endblock content %}
 
 
 {% block scripts %}
-    <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('app_bp.static', filename='css/pikaday.css') }}">
-    <script defer src="{{ url_for('app_bp.static', filename='js/pikaday.js') }}"></script>
-     <script src="{{ url_for('app_bp.static', filename='js/moment.min.js') }}"></script>
-    <script type="text/javascript">
-        $(document).ready(function () {
-            /*
-            $("#document-list tr").click(function () {
-                const target = $(this).find("input");
-                if (target.length > 0) {
-                    window.location.href = $(target).val();
+<script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('app_bp.static', filename='css/pikaday.css') }}">
+<script defer src="{{ url_for('app_bp.static', filename='js/pikaday.js') }}"></script>
+<script src="{{ url_for('app_bp.static', filename='js/moment.min.js') }}"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        function load_document_list() {
+            const doc_list_url = '{{ url_for('app_bp.dashboard_document_list') }}';
+            $.ajax({
+                url: doc_list_url,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                }
+            }).done(function(data) {
+                    if (!data.errors) {
+                        $('#document-list').html(data);
+                        /*
+                            Table sort criteriae
+                        */
+                        for (let th_idx=1; th_idx <= 5; th_idx++){
+                            $('#document-list-table th:nth-child('+th_idx+')').click(function() {
+                                sortTable("document-list-table", th_idx-1);
+
+                                $(this).find('.fa-sort-down,.fa-sort-up').toggleClass('fa-sort-down fa-sort-up');
+                            });
+                        }
+
+                         /*
+                            "Closing date" date picker
+                         */
+                        const datepickers = [];
+                        $('.date-picker').each(function() {
+                            datepickers.push(
+                                new Pikaday(
+                                {
+                                    field: $(this)[0],
+                                    firstDay: 1,
+                                    format: 'DD/MM/YYYY',
+                                    i18n: {
+                                        previousMonth : 'Mois précédent',
+                                        nextMonth     : 'Mois Suivant',
+                                        months        : ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet',
+                                                         'Août','Septembre','Octobre','Novembre','Decembre'],
+                                        weekdays      : ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
+                                        weekdaysShort : ['Dim', 'Lun','Mar','Mer','Jeu','Ven','Sam']
+                                    },
+                                    minDate: new Date(2018, 1, 1),
+                                    maxDate: new Date(2030, 12, 31),
+                                    yearRange: [2018,2030]
+                                })
+                            );
+
+                            $(this).change(function() {
+                                // only trigger when the value has a date format (dd/mm/yyyy) or when the field is empty
+                                const input_val = $(this).val().trim();
+                                if (input_val.length === 0 || input_val.match(/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)) {
+                                    const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
+
+                                    let url = "{{ url_for('api_bp.api_change_documents_closing_date', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+                                    url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+                                    $.ajax({
+                                        url: url,
+                                        method: 'POST',
+                                        contentType: "application/json",
+                                        data:  JSON.stringify({data: {closing_date: input_val}}),
+                                        beforeSend: function (xhr) {
+                                            xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                                        }
+                                    }).done(function(data) {
+                                        if (data.errors) {
+                                            $(this).val("");
+                                        }
+                                    });
+                                }
+
+                            });
+                        });
+                        /*
+                            "Publish/Unpublish" chechbox
+                         */
+                        $('input[name="publish-checkbox"]').change(function() {
+                            const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
+                            let publish_url = "{{ url_for('api_bp.api_documents_publish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+                            let unpublish_url = "{{ url_for('api_bp.api_documents_unpublish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+
+                            url = $(this).prop('checked') ? publish_url : unpublish_url;
+                            url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+
+                            $.ajax({
+                                url: url,
+                                method: 'GET',
+                                beforeSend: function (xhr) {
+                                    xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                                }
+                            }).done(function(data) {
+                                if (!data.errors) {
+                                    console.log("the document has been published")
+                                }
+                            });
+                        });
+                        /*
+                            modal panels
+                         */
+                        $(".edit-manifest-info").click(function() {
+                            $('#modal-manifest-validation').toggleClass("is-active");
+                            go_to_tab($('.tabs li')[0], 'tab-url');
+                        });
+
+                        $('.close-modal-manifest-validation').click(function(){
+                            $("#modal-manifest-validation").toggleClass("is-active");
+                        });
+
+                        $(".delete-document").click(function() {
+                            $('#modal-document-delete').toggleClass("is-active");
+                        });
+
+                        $('.close-document_delete').click(function(){
+                            $("#modal-document-delete").toggleClass("is-active");
+                        });
+
                 }
             });
-            */
-            $('#document-list-table th:nth-child(1)').click(function() {
-               sortTable("document-list-table", 0);
-            });
+        }
 
-            $('#document-list-table th:nth-child(2)').click(function() {
-               sortTable("document-list-table", 1);
-            });
+        /*
+            Initialize the document liste
+         */
+        load_document_list();
 
-            $('#document-list-table th:nth-child(3)').click(function() {
-               sortTable("document-list-table", 2);
-            });
+        /*
+            Manifest validator
+        */
+        function reset_form(){
+           $('#confirm-manifest-validation').prop("disabled", true);
+           $('#manifest-validation-errors').empty();
+           $('#manifest-validation-info').empty();
+        }
 
-            $('#document-list-table th:nth-child(4)').click(function() {
-               sortTable("document-list-table", 3);
-            });
+        function go_to_tab(tab, content_id) {
+            $('#modal-manifest-validation').find('.tab').hide();
+            $('.tabs li').removeClass('is-active');
 
-            const datepickers = [];
-            $('.date-picker').each(function() {
-                datepickers.push(
-                    new Pikaday(
-                    {
-                        field: $(this)[0],
-                        firstDay: 1,
-                        format: 'DD/MM/YYYY',
-                        i18n: {
-                            previousMonth : 'Mois précédent',
-                            nextMonth     : 'Mois Suivant',
-                            months        : ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet',
-                                             'Août','Septembre','Octobre','Novembre','Decembre'],
-                            weekdays      : ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
-                            weekdaysShort : ['Dim', 'Lun','Mar','Mer','Jeu','Ven','Sam']
-                        },
-                        minDate: new Date(2018, 1, 1),
-                        maxDate: new Date(2030, 12, 31),
-                        yearRange: [2018,2030]
-                    })
-                );
+            $('#' + content_id).show();
+            $(tab).addClass('is-active');
 
-                $(this).change(function() {
-                    // only trigger when the value has a date format (dd/mm/yyyy) or when the field is empty
-                    const input_val = $(this).val().trim();
-                    if (input_val.length === 0 || input_val.match(/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)) {
-                        const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
+            reset_form();
+        }
 
-                        let url = "{{ url_for('api_bp.api_change_documents_closing_date', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
-                        url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
-                        $.ajax({
-                            url: url,
-                            method: 'POST',
-                            contentType: "application/json",
-                            data:  JSON.stringify({data: {closing_date: input_val}}),
-                            beforeSend: function (xhr) {
-                                xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
-                            }
-                        }).done(function(data) {
-                            if (data.errors) {
-                                $(this).val("");
-                            }
-                        });
-                    }
+        $('.tabs li').each(function(i, e) {
+           const li = $(this);
+           $(this).click(function() {
+               go_to_tab(li, $('.tab')[i].id);
+           }) ;
+        });
 
-                });
-            });
+        $('#confirm-manifest-validation').click(function() {
+           //TODO : changer le contenu du TD,
+           //       + maj manifest_url côté backend
+           load_document_list();
+        });
 
-            $('input[name="publish-checkbox"]').change(function() {
-                const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
-                let publish_url = "{{ url_for('api_bp.api_documents_publish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
-                let unpublish_url = "{{ url_for('api_bp.api_documents_unpublish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+        $('#input-manifest-filename').change(function() {
+           $('#manifest-filename').html($(this).val());
+        });
 
-                url = $(this).prop('checked') ? publish_url : unpublish_url;
-                url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+        $('#validate-manifest-url').click(function(){
 
+           reset_form();
+
+           const manifest_url = $('#manifest-url').val();
+           if (manifest_url.length > 0) {
+              const validator_url = "http://iiif.io/api/presentation/validator/service/validate?format=json&version=2.1&url=" + manifest_url;
+               $.ajax({
+                    url : validator_url
+               }).done(function(data) {
+                   console.log(data);
+
+                   if (data.okay) {
+
+                       if (data.warnings && data.warnings.length > 0) {
+                           let msg = "" +
+                           "<article class='message is-warning'>" +
+                               "<div class='message-header'><p>Attention</p></div>" +
+                               "<div class='message-body'>";
+                                for (let w of data.warnings) {
+                                    msg += "<p>" + w + "</p>"
+                                }
+                           msg +="</div>" +
+                           "</article>";
+                           $('#manifest-validation-info').append(msg);
+                       }
+                       $('#confirm-manifest-validation').prop("disabled", false);
+                   } else {
+                       $('#manifest-validation-errors').html(
+                           "<article class='message is-danger'>" +
+                               "<div class='message-header'><p>Erreur de validation</p></div>" +
+                               "<div class='message-body'>" +
+                                   data.error +
+                               "</div>" +
+                           "</article>"
+                       );
+                   }
+               });
+           }
+
+        });
+
+        /*
+            Add document form
+         */
+        {% if current_user.is_admin or current_user.is_teacher %}
+        $('#add-document').click(function() {
+
+            const new_title = $('#new-doc-title').val();
+            const new_subtitle = $('#new-doc-subtitle').val();
+            let manifest_url = null;
+            let errors = false;
+
+            if (new_title.length === 0) {
+                $('#help-doc-title').removeClass('is-invisible');
+                $('#new-doc-title').addClass('is-danger');
+                errors = true;
+            } else {
+                $('#help-doc-title').addClass('is-invisible');
+                $('#new-doc-title').removeClass('is-danger');
+            }
+
+            if (new_subtitle.length === 0) {
+                $('#help-doc-subtitle').removeClass('is-invisible');
+                $('#new-doc-subtitle').addClass('is-danger');
+                errors = true;
+            } else {
+                $('#help-doc-subtitle').addClass('is-invisible');
+                $('#new-doc-subtitle').removeClass('is-danger');
+            }
+
+            if (!errors) {
+                let new_doc = {
+                    title : new_title,
+                    subtitle : new_subtitle,
+                    manifest_url : manifest_url
+                };
+                const add_new_doc_url = '{{ url_for("api_bp.api_add_document", api_version="1.0") }}';
                 $.ajax({
-                    url: url,
-                    method: 'GET',
+                    url: add_new_doc_url,
+                    method: 'POST',
+                    contentType: "application/json",
+                    data:  JSON.stringify({data: new_doc}),
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
                     }
                 }).done(function(data) {
                     if (!data.errors) {
-                        console.log("the document has been published")
+                        load_document_list();
                     }
                 });
-            });
 
-            $(".pick-manifest").click(function() {
-                $('#modal-manifest-validation').toggleClass("is-active");
-            });
+            }
 
-            $('.close-modal-manifest-validation').click(function(){
-                $("#modal-manifest-validation").toggleClass("is-active");
-            });
-
-            $(".delete-document").click(function() {
-                $('#modal-document-delete').toggleClass("is-active");
-            });
-
-            $('.close-document_delete').click(function(){
-                $("#modal-document-delete").toggleClass("is-active");
-            });
         });
-    </script>
+        {% endif %}
+    });
+</script>
 {% endblock scripts %}
+

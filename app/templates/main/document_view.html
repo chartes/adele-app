@@ -183,7 +183,7 @@
                   url: '{#url_for('api_bp.api_documents_manifest_url', api_version='1.0', doc_id=doc.id)#}'
               }).done(function (data) {
                   if (!data.errors){
-                      const iiif_map = LeafletIIIFMap.initialize('iiif-map', manifest);
+                      const iiif_map = LeafletIiifmap.initialize('iiif-map', manifest);
                   }
            });
            */

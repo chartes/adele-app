@@ -120,6 +120,14 @@ def dashboard_documents():
     return render_template_with_token('main/dashboard/documents.html', docs=docs, current_user=user)
 
 
+@app_bp.route('/dashboard/document-list')
+@login_required
+def dashboard_document_list():
+    user = current_app.get_current_user()
+    docs = user.documents_i_can_edit
+    return render_template_with_token('main/fragments/_document_management_list.html', docs=docs, current_user=user)
+
+
 @app_bp.route('/dashboard/manual')
 @login_required
 def dashboard_manual():
@@ -167,6 +175,13 @@ def dashboard_manage_users():
         docs=docs,
         invite_form=InviteUserForm()
     )
+
+
+@app_bp.route('/dashboard/add-document')
+def dashboard_add_document():
+    user = current_app.get_current_user()
+
+    return render_template_with_token('main/dashboard/add_document.html', title='Documents - Adele')
 
 
 """
@@ -342,13 +357,14 @@ def view_document(doc_id):
 
     can_edit = doc in user.documents_i_can_edit
 
-    return render_template_with_token('main/document.html', title='Documents - Adele', doc=doc, can_edit=can_edit)
+    return render_template_with_token('main/document_view.html', title='Documents - Adele', doc=doc, can_edit=can_edit)
 
 
 @app_bp.route('/documents/<doc_id>/edition')
 @login_required
 def document_edit(doc_id):
     user = current_app.get_current_user()
+    doc = None
     if not user.is_anonymous:
         doc = Document.query.filter(Document.id == doc_id).first()
 
@@ -356,7 +372,7 @@ def document_edit(doc_id):
         flash('Document {doc_id} introuvable.'.format(doc_id=doc_id), 'error')
         return redirect(url_for('app_bp.documents'))
 
-    if not doc in user.documents_i_can_edit:
+    if doc not in user.documents_i_can_edit:
         abort(403)
 
     return render_template_with_token('main/document_edit.html', title='Document - Adele', doc=doc)

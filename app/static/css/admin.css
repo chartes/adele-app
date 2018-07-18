@@ -50,10 +50,10 @@
     padding-bottom: 12px;
     border-bottom: 1px solid #dbdbdb; }
 
-.edit-document, .delete-document {
+.edit-document, .delete-document, .edit-manifest-info, .export-document {
   font-size: medium !important;
   text-decoration: none !important; }
-  .edit-document p, .delete-document p {
+  .edit-document p, .delete-document p, .edit-manifest-info p, .export-document p {
     margin-left: 6px !important; }
 
 .is-invisible {
@@ -1439,11 +1439,41 @@ l {
                                         #user-management .user-row:hover {
                                           cursor: pointer; }
 
-#document-list-table td {
-  vertical-align: middle; }
-  #document-list-table .checkbox {
-    margin: 40% 30% !important; }
-    #document-list-table .date-picker {
-      width: 180px; }
-      #document-list-table .pick-manifest {
-        margin-right: 20px; }
+#document-list-table {
+  margin-top: 32px; }
+  #document-list-table .fa-sort-down {
+    margin-left: 8px;
+    margin-bottom: 2px; }
+    #document-list-table .fa-sort-up {
+      margin-left: 8px;
+      margin-bottom: -5px; }
+      #document-list-table th:hover {
+        cursor: pointer; }
+        #document-list-table td {
+          vertical-align: middle; }
+          #document-list-table .checkbox {
+            margin: 30% !important;
+            top: 3px; }
+            #document-list-table .date-picker {
+              width: 180px; }
+              #document-list-table .edit-manifest-info {
+                margin-right: 20px; }
+
+#add-document-form {
+  width: 50%; }
+  #add-document-form input {
+    width: 420px; }
+    #add-document-form #import-manifest {
+      width: 250px;
+      margin-top: 0px; }
+
+#modal-manifest-validation .modal-card {
+  width: 50%;
+  min-height: 600px; }
+  #modal-manifest-validation #manifest-url,
+  #modal-manifest-validation #input-manifest-filename {
+    width: 480px; }
+    #modal-manifest-validation .info, #modal-manifest-validation .map,
+    #modal-manifest-validation .errors {
+      margin-top: 30px;
+      margin-bottom: 30px; }
