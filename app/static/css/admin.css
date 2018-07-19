@@ -1278,98 +1278,111 @@ l {
   .thumbnail-container {
     width: auto; }
 
-    .thumbnail img {
-      margin: auto;
-      padding: 16px;
-      width: auto; }
+    .empty-thumbnail {
+      height: 250px;
+      font-size: 60px;
+      text-align: center;
+      padding-top: 90px; }
 
-      .columns {
-        margin-top: 0px; }
+      .empty-image {
+        height: 600px;
+        padding-top: 32%; }
 
-        .nav-pages {
-          margin: auto auto 30px;
-          width: 300px; }
+        .image-count {
+          text-align: center; }
 
-          .find-btn-group {
-            margin-top: 30px; }
+          .thumbnail img {
+            margin: auto;
+            padding: 16px;
+            width: auto; }
 
-            #tag-cloud {
-              margin-bottom: 20px;
-              margin-top: 20px; }
+            .columns {
+              margin-top: 0px; }
 
-              #find-col {
-                padding-right: 0px;
-                background-color: #eee;
-                user-select: none; }
+              .nav-pages {
+                margin: auto auto 30px;
+                width: 300px; }
 
-                #find-col .level:not(:last-child) {
-                  margin-bottom: 0px; }
+                .find-btn-group {
+                  margin-top: 30px; }
 
-                  #find-col .section {
-                    padding-left: 0px;
-                    padding-right: 0px; }
+                  #tag-cloud {
+                    margin-bottom: 20px;
+                    margin-top: 20px; }
 
-                    .field.is-grouped {
-                      display: block; }
+                    #find-col {
+                      padding-right: 0px;
+                      background-color: #eee;
+                      user-select: none; }
 
-                      #find-col .accordion {
-                        background-color: #eee;
-                        color: #444;
-                        cursor: pointer;
-                        padding: 18px;
-                        width: 100%;
-                        text-align: left;
-                        border: none;
-                        outline: none;
-                        transition: 0.4s; }
+                      #find-col .level:not(:last-child) {
+                        margin-bottom: 0px; }
 
-                        #find-col .active, .accordion:hover {
-                          background-color: #ccc; }
+                        #find-col .section {
+                          padding-left: 0px;
+                          padding-right: 0px; }
 
-                          #find-col .panel {
-                            padding: 0;
-                            background-color: whitesmoke;
-                            display: none;
-                            overflow: hidden; }
+                          .field.is-grouped {
+                            display: block; }
 
-                            #find-col .panel:not(:last-child) {
-                              margin-bottom: 0px; }
+                            #find-col .accordion {
+                              background-color: #eee;
+                              color: #444;
+                              cursor: pointer;
+                              padding: 18px;
+                              width: 100%;
+                              text-align: left;
+                              border: none;
+                              outline: none;
+                              transition: 0.4s; }
 
-                              #find-col .panel-item {
-                                padding: 12px 12px 12px 24px; }
+                              #find-col .active, .accordion:hover {
+                                background-color: #ccc; }
 
-                                #find-col li {
-                                  color: #7a7a7a;
-                                  cursor: pointer; }
+                                #find-col .panel {
+                                  padding: 0;
+                                  background-color: whitesmoke;
+                                  display: none;
+                                  overflow: hidden; }
 
-                                  #find-col li:hover {
-                                    background-color: #ff3860;
-                                    color: whitesmoke; }
+                                  #find-col .panel:not(:last-child) {
+                                    margin-bottom: 0px; }
 
-                                    .dot {
-                                      height: 12px;
-                                      width: 12px;
-                                      background-color: #ff3860;
-                                      border-radius: 50%;
-                                      display: inline-block;
-                                      margin-right: 18px; }
+                                    #find-col .panel-item {
+                                      padding: 12px 12px 12px 24px; }
 
-                                      .white-dot {
-                                        height: 12px;
-                                        width: 12px;
-                                        background-color: #eee;
-                                        border-radius: 50%;
-                                        display: inline-block;
-                                        margin-right: 18px; }
+                                      #find-col li {
+                                        color: #7a7a7a;
+                                        cursor: pointer; }
 
-                                        #document-list {
-                                          margin: auto;
-                                          width: 95%; }
-                                          #document-list img {
-                                            padding-left: 0px; }
-                                            #document-list .thumbnail-container {
-                                              left: 0px;
-                                              width: 150px; }
+                                        #find-col li:hover {
+                                          background-color: #ff3860;
+                                          color: whitesmoke; }
+
+                                          .dot {
+                                            height: 12px;
+                                            width: 12px;
+                                            background-color: #ff3860;
+                                            border-radius: 50%;
+                                            display: inline-block;
+                                            margin-right: 18px; }
+
+                                            .white-dot {
+                                              height: 12px;
+                                              width: 12px;
+                                              background-color: #eee;
+                                              border-radius: 50%;
+                                              display: inline-block;
+                                              margin-right: 18px; }
+
+                                              #document-list {
+                                                margin: auto;
+                                                width: 95%; }
+                                                #document-list img {
+                                                  padding-left: 0px; }
+                                                  #document-list .thumbnail-container {
+                                                    left: 0px;
+                                                    width: 150px; }
 
 .content figure {
   margin-left: 0px; }
@@ -1460,7 +1473,7 @@ l {
                 margin-right: 20px; }
 
 #add-document-form {
-  width: 50%; }
+  width: 100%; }
   #add-document-form input {
     width: 420px; }
     #add-document-form #import-manifest {
@@ -1477,3 +1490,8 @@ l {
     #modal-manifest-validation .errors {
       margin-top: 30px;
       margin-bottom: 30px; }
+      #modal-manifest-validation #manifest-preview {
+        width: 300px;
+        margin: auto; }
+        #modal-manifest-validation #manifest-preview p {
+          text-align: center; }

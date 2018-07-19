@@ -1,13 +1,15 @@
 import datetime
+import pprint
 
-from flask import request, url_for, current_app
+from flask import request, url_for, current_app, flash
 from flask_user import roles_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
-from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist
+from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
+    ImageUrl, Image
 
 """
 ===========================
@@ -417,8 +419,65 @@ def api_add_document(api_version):
     new_doc = Document(**kwargs)
     db.session.add(new_doc)
     db.session.commit()
-    print(new_doc.id)
 
     response = APIResponseFactory.make_response(data=new_doc.serialize())
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/set-manifest', methods=['POST'])
+@auth.login_required
+@roles_required(["admin", "teacher"])
+def api_set_document_manifest(api_version, doc_id):
+
+    user = current_app.get_current_user()
+    doc = Document.query.filter(Document.id == doc_id, Document.user_id == user.id).first()
+
+    if doc is None:
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+        return APIResponseFactory.jsonify(response)
+
+    data = request.get_json()
+    data = data["data"]
+
+    manifest_url = data.get("manifest_url")
+
+    if Image.query.filter(Image.manifest_url == manifest_url).first() or \
+        ImageUrl.query.filter(ImageUrl.manifest_url == manifest_url).first():
+        response = APIResponseFactory.make_response(errors={
+            "status": 403,
+            "title": "This manifest is already present",
+            "code": "Already present",
+            "details": "This manifest is already used by another document."
+                       "Please choose another or upload it to another URL."
+        })
+        return APIResponseFactory.jsonify(response)
+
+    manifest = query_json_endpoint(request, endpoint_url=manifest_url, direct=True)
+    if "errors" in manifest:
+        response = APIResponseFactory.make_response(errors=manifest["errors"])
+        return APIResponseFactory.jsonify(response)
+
+    # delete old images
+    for old_image in Image.query.filter(Image.doc_id == doc.id).all():
+        db.session.delete(old_image)
+    for old_image_url in ImageUrl.query.filter(ImageUrl.manifest_url == manifest_url).all():
+        db.session.delete(old_image_url)
+
+    # add new images
+    for canvas_idx, canvas in enumerate(manifest["sequences"][0]['canvases']):
+        for img_idx, img in enumerate(canvas["images"]):
+            print(canvas_idx, img_idx, img["resource"]["@id"])
+            new_img = Image(manifest_url=manifest_url, canvas_idx=canvas_idx, img_idx=img_idx, doc_id=doc_id)
+            new_img_url = ImageUrl(manifest_url=manifest_url, canvas_idx=canvas_idx, img_idx=img_idx, img_url=img["resource"]["@id"])
+            db.session.add(new_img)
+            db.session.add(new_img_url)
+
+    db.session.commit()
+    pprint.pprint(doc.serialize())
+
+    response = APIResponseFactory.make_response(data=[])
 
     return APIResponseFactory.jsonify(response)

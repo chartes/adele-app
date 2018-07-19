@@ -22,8 +22,9 @@
                     {% if current_user.is_admin or current_user.is_teacher %}
                     <div class="section">
                         <h2>Ajouter un nouveau document</h2>
-                        <p>Le document nouvellement crée apparaîtra dans le tableau ci-dessus et pourra être édité avant publication.</p>
+                        <p>Le document nouvellement crée apparaîtra dans le tableau ci-dessus et pourra être modifié avant publication.</p>
                         <div id="add-document-form">
+
                             <div class="field">
                                 <label class="label">Titre</label>
                                 <div class="control">
@@ -37,16 +38,6 @@
                                     <input id="new-doc-subtitle" class="input" type="text" placeholder="Vente à l’abbaye Saint-Germer-de-Fly ... ">
                                 </div>
                                 <p id="help-doc-subtitle" class="help is-danger is-invisible">Le sous-titre du document ne peut pas être vide</p>
-                            </div>
-                            <div class="field">
-                                <label class="label">Manifeste IIIF</label>
-                                <p>Le manifeste IIIF contient les images relatives au document</p>
-                                <div class="control">
-                                    <div id="submit-add-document" class="button is-light" style="margin-bottom: 20px;">
-                                        <span class="icon"><i class="fas fa-plus-square"></i></span>
-                                        <span>Importer un manifeste IIIF</span>
-                                    </div>
-                                </div>
                             </div>
                             <div class="field">
                                 <div class="control">
@@ -158,7 +149,7 @@
                             let publish_url = "{{ url_for('api_bp.api_documents_publish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
                             let unpublish_url = "{{ url_for('api_bp.api_documents_unpublish', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
 
-                            url = $(this).prop('checked') ? publish_url : unpublish_url;
+                            let url = $(this).prop('checked') ? publish_url : unpublish_url;
                             url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
 
                             $.ajax({
@@ -173,27 +164,28 @@
                                 }
                             });
                         });
-                        /*
-                            modal panels
-                         */
-                        $(".edit-manifest-info").click(function() {
-                            $('#modal-manifest-validation').toggleClass("is-active");
-                            go_to_tab($('.tabs li')[0], 'tab-url');
-                        });
-
-                        $('.close-modal-manifest-validation').click(function(){
-                            $("#modal-manifest-validation").toggleClass("is-active");
-                        });
-
-                        $(".delete-document").click(function() {
-                            $('#modal-document-delete').toggleClass("is-active");
-                        });
-
-                        $('.close-document_delete').click(function(){
-                            $("#modal-document-delete").toggleClass("is-active");
-                        });
-
                 }
+
+                /*
+                   modal panels
+                */
+                $(".edit-manifest-info").click(function() {
+                    // set the manifest doc id
+                    const doc_id = $(this).closest("tr").find('input[name="doc-id"]').val();
+                    $('#manifest-of-doc-id').val(doc_id);
+
+                    // open the modal panel
+                    $('#modal-manifest-validation').toggleClass("is-active");
+                    go_to_tab($('.tabs li')[0], 'tab-url');
+                });
+
+                $(".delete-document").click(function() {
+                    $('#modal-document-delete').toggleClass("is-active");
+                });
+
+                $('.close-document_delete').click(function(){
+                    $("#modal-document-delete").toggleClass("is-active");
+                });
             });
         }
 
@@ -205,10 +197,16 @@
         /*
             Manifest validator
         */
-        function reset_form(){
+        $('.close-modal-manifest-validation').click(function(){
+            $("#modal-manifest-validation").toggleClass("is-active");
+        });
+
+        function reset_manifest_form(){
            $('#confirm-manifest-validation').prop("disabled", true);
            $('#manifest-validation-errors').empty();
            $('#manifest-validation-info').empty();
+           $('#validate-manifest-url').removeClass('is-loading');
+           $('#confirm-manifest-validation').removeClass('is-loading');
         }
 
         function go_to_tab(tab, content_id) {
@@ -218,7 +216,7 @@
             $('#' + content_id).show();
             $(tab).addClass('is-active');
 
-            reset_form();
+            reset_manifest_form();
         }
 
         $('.tabs li').each(function(i, e) {
@@ -228,19 +226,76 @@
            }) ;
         });
 
-        $('#confirm-manifest-validation').click(function() {
-           //TODO : changer le contenu du TD,
-           //       + maj manifest_url côté backend
-           load_document_list();
+        /*
+            set the manifest for the given document in base
+         */
+
+        $('#confirm-manifest-validation').click(function () {
+           //TODO : changer le contenu du TD
+           $(this).addClass('is-loading');
+
+           const manifest_url = $('#manifest-url').val();
+           const doc_id = $('#manifest-of-doc-id').val();
+           let url = "{{ url_for('api_bp.api_set_document_manifest', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+           url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+
+           $.ajax({
+               url: url,
+               method: 'POST',
+               contentType: "application/json",
+               data:  JSON.stringify({data: {manifest_url: manifest_url}}),
+                   beforeSend: function (xhr) {
+                       xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                   }
+           }).done(function(data) {
+               $('#confirm-manifest-validation').removeClass('is-loading');
+               if (!data.errors) {
+                   // close the modal
+                   $("#modal-manifest-validation").toggleClass("is-active");
+                   load_document_list();
+               }
+               else {
+                   reset_manifest_form();
+                   //console.log(data);
+                   let msg = data.errors.title;
+                   if (data.errors.code && data.errors.code === "Already present") {
+                       msg = "Ce manifeste est déjà présent en base. Choisissez un autre manifeste ou trouvez-lui une autre adresse.";
+                   }
+
+                   $('#manifest-validation-errors').html(
+                       "<article class='message is-danger'>" +
+                           "<div class='message-header'><p>Erreur : impossible de choisir ce manifeste</p></div>" +
+                           "<div class='message-body'>" +
+                               msg +
+                           "</div>" +
+                       "</article>"
+                   );
+               }
+           });
         });
 
         $('#input-manifest-filename').change(function() {
            $('#manifest-filename').html($(this).val());
         });
 
+        $('#manifest-url').keyup(function() {
+            // prevent some unwanted manifest selection behavior
+            reset_manifest_form();
+        });
+
         $('#validate-manifest-url').click(function(){
 
-           reset_form();
+           reset_manifest_form();
+           $(this).addClass('is-loading');
+
+           // display preview loading
+           let info = "<article class='message is-light'>" +
+                          "<div class='message-body'>" +
+                              "<div id='manifest-preview'>" +
+                              "</div>" +
+                          "</div>" +
+                      "</article>";
+           $('#manifest-validation-info').html(info);
 
            const manifest_url = $('#manifest-url').val();
            if (manifest_url.length > 0) {
@@ -248,11 +303,29 @@
                $.ajax({
                     url : validator_url
                }).done(function(data) {
-                   console.log(data);
-
                    if (data.okay) {
 
-                       if (data.warnings && data.warnings.length > 0) {
+                       // display first image
+                       $.ajax({ url: manifest_url}).done(function(data) {
+                           let manifest_preview = "";
+                           if (data.sequences[0].canvases[0].images.length > 0) {
+                               if (data.label){
+                                   // set title
+                                   manifest_preview += "<p class='is-6'>" + data.label + "</p>";
+                               }
+                               // set image
+                               let first_image = data.sequences[0].canvases[0].images[0].resource["@id"];
+                               first_image = first_image.replace('full/full', 'full/300,300');
+                               manifest_preview += "<img src='" + first_image + "'/>";
+                           }
+                           // set image count
+                           manifest_preview += "<p>"+ data.sequences[0].canvases.length +" image(s) détectée(s).</p>";
+                           $('#manifest-preview').html(manifest_preview);
+                       });
+
+                       // display warnings
+                       const DISPLAY_WARNINGS = false;
+                       if (DISPLAY_WARNINGS && data.warnings && data.warnings.length > 0) {
                            let msg = "" +
                            "<article class='message is-warning'>" +
                                "<div class='message-header'><p>Attention</p></div>" +
@@ -266,6 +339,8 @@
                        }
                        $('#confirm-manifest-validation').prop("disabled", false);
                    } else {
+                       // display errors
+                       $('#manifest-validation-info').empty();
                        $('#manifest-validation-errors').html(
                            "<article class='message is-danger'>" +
                                "<div class='message-header'><p>Erreur de validation</p></div>" +
@@ -275,6 +350,8 @@
                            "</article>"
                        );
                    }
+
+                   $('#validate-manifest-url').removeClass('is-loading');
                });
            }
 

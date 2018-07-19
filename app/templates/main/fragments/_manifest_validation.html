@@ -8,11 +8,10 @@
             </header>
 
             <section class="modal-card-body">
-
                 <div class="tabs is-medium">
                     <ul>
                         <li><a><i class="fas fa-link" style="margin-right: 12px"></i>URL</a></li>
-                        <li><a><i class="fas fa-upload" style="margin-right: 12px"></i>Fichier</a></li>
+                        <li class="is-invisible"><a><i class="fas fa-upload" style="margin-right: 12px"></i>Fichier</a></li>
                     </ul>
                 </div>
 
@@ -22,6 +21,8 @@
                     La validation repose sur l'appel à l'API <a href="http://iiif.io/api/presentation/validator/service/">Presentation API Validator</a>
                 </p>
                 <br>
+
+                <input type="hidden" id="manifest-of-doc-id" value=""/>
 
                 <div class="tab" id="tab-url">
                     <div class="field">

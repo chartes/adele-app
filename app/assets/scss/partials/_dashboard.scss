@@ -62,7 +62,7 @@
 }
 
 #add-document-form {
-  width: 50%;
+  width: 100%;
   input {
     width: 420px;
   }
@@ -85,5 +85,14 @@
   .info, .map, .errors {
     margin-top: 30px;
     margin-bottom: 30px;
+  }
+
+  #manifest-preview {
+    width: 300px;
+    margin: auto;
+
+    p {
+      text-align: center;
+    }
   }
 }

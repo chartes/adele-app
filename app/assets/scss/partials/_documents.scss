@@ -2,6 +2,20 @@
 .thumbnail-container {
   width: auto;
 }
+.empty-thumbnail {
+    height: 250px;
+    font-size: 60px;
+    text-align: center;
+    padding-top: 90px;
+}
+.empty-image {
+  height: 600px;
+  padding-top: 32%;
+}
+
+.image-count {
+    text-align: center;
+}
 
 .thumbnail img {
   margin: auto;

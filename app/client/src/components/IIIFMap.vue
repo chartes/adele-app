@@ -129,18 +129,6 @@
                     id:'facsimile-pagination-control',
                     position: 'bottomleft',
                     content: '<div class="facsimile-pagination">' +
-                    thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
-                        thumbnails +
                         thumbnails +
                     '</div>',
                     classes: '',

@@ -1688,6 +1688,22 @@ note {
   width: auto;
 }
 
+.empty-thumbnail {
+  height: 250px;
+  font-size: 60px;
+  text-align: center;
+  padding-top: 90px;
+}
+
+.empty-image {
+  height: 600px;
+  padding-top: 32%;
+}
+
+.image-count {
+  text-align: center;
+}
+
 .thumbnail img {
   margin: auto;
   padding: 16px;
@@ -1923,7 +1939,7 @@ note {
 }
 
 #add-document-form {
-  width: 50%;
+  width: 100%;
 }
 #add-document-form input {
   width: 420px;
@@ -1943,6 +1959,13 @@ note {
 #modal-manifest-validation .info, #modal-manifest-validation .map, #modal-manifest-validation .errors {
   margin-top: 30px;
   margin-bottom: 30px;
+}
+#modal-manifest-validation #manifest-preview {
+  width: 300px;
+  margin: auto;
+}
+#modal-manifest-validation #manifest-preview p {
+  text-align: center;
 }
 
 /*# sourceMappingURL=admin.css.map */

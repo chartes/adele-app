@@ -18,10 +18,16 @@
 
             <div class="columns">
                 <div class="column is-4" id="img-col">
+                    {% if doc.images|length > 0 %}
                     <figure class="image">
                         <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" />
                     </figure>
                     <div id="iiif-map"></div>
+                    {% else %}
+                    <div class="box empty-image">
+                        <div class="empty-thumbnail"><i class="fas fa-file-alt"></i></div>
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="column" id="text-col">
                     <div class="tabs">
