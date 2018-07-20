@@ -1,5 +1,4 @@
-
-
+import datetime
 from flask import Flask, request, Blueprint
 from flask_mail import Mail
 from flask_scss import Scss
@@ -134,6 +133,22 @@ def create_app(config_name="dev"):
 
     app.get_current_user = get_current_user
     app.get_user_from_username = get_user_from_username
+
+    """
+    ========================================================
+        Setup custom filters
+    ========================================================
+    """
+
+    def format_datetime(value):
+        if value:
+            d = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+            return datetime.datetime.strftime(d, '%d/%m/%Y')
+        else:
+            return ""
+
+    app.jinja_env.filters['date'] = format_datetime
+
     """
     ========================================================
         Import all routes

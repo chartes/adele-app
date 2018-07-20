@@ -41,7 +41,7 @@
                                 <div class="field is-pulled-right">
                                         <p class="control">
                                             <a id="del-user" class="button is-danger delete-btn">
-                                              Supprimer l'utilisateur
+                                              Désactiver le compte de l'utilisateur
                                             </a>
                                         </p>
                                 </div>
@@ -97,13 +97,34 @@
                                 </div>
                                 <!-- filled through ajax calls -->
                                 <div id="userlist-table-container"></div>
-                                 <div class="field is-pulled-right">
-                                        <p class="control">
-                                            <a id="delete-userlist" class="button is-danger delete-btn">
-                                              Supprimer la liste
-                                            </a>
-                                        </p>
-                                 </div>
+                                <div class="field is-pulled-right">
+                                    <p class="control">
+                                         <a id="delete-userlist" class="button is-danger delete-btn">
+                                            Supprimer la liste
+                                        </a>
+                                    </p>
+                                    <div id="modal-confirm-userlist-delete" class="modal">
+                                      <div class="modal-background close-confirm-userlist-delete"></div>
+                                      <div class="modal-card">
+                                        <header class="modal-card-head">
+                                          <p class="modal-card-title">Suppression d'une liste d'utilisateurs</p>
+                                          <button class="delete close-confirm-userlist-delete" aria-label="close" ></button>
+                                        </header>
+                                        <section class="modal-card-body">
+                                          <h2>Attention</h2>
+                                          <p>Vous êtes sur le point du supprimer la liste d'utilisateurs '<b id="modal-selected-userlist-name"></b>'</p>
+                                          <div id="userlist-bound-docs">
+                                            <p>Les documents suivants utilisent cette liste d'utilisateurs :</p>
+                                            <ul id="userlist-bound-docs-list"></ul>
+                                          </div>
+                                        </section>
+                                        <footer class="modal-card-foot">
+                                          <button id="confirm-userlist-delete" class="button is-danger">Confirmer la suppression</button>
+                                          <button class="button close-confirm-userlist-delete">Annuler</button>
+                                        </footer>
+                                      </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -236,14 +257,17 @@
                  });
             }
 
-
             /*
                 Populate the user/userlist tables
              */
             $("#select-userlist").change(function() {
                 populate_userlist_list();
                 populate_user_list();
+
+                const userlist_name = $('#select-userlist option:selected').html();
+                $("#modal-selected-userlist-name").html(userlist_name);
             });
+
             /*
                 Default select the last userlist
              */
@@ -274,6 +298,7 @@
                     });
                }
             });
+
             /*
                 remove user from a userlist
              */
@@ -332,7 +357,32 @@
                 Delete the selected userlist
              */
             $('#delete-userlist').click(function() {
-                const whitelist_id = $
+                /*
+                    compute the list of associated docs
+                 */
+                $('#userlist-bound-docs-list').empty();
+                $('#userlist-bound-docs').hide();
+                $('#document-list-table option:selected').each(function() {
+                    if ($(this).val() === $('#select-userlist option:selected').val()) {
+                        let doc_id_label = $(this).closest('tr').find('span:first').html();
+                        $('#userlist-bound-docs-list').append(
+                          "<li>" + doc_id_label + "</li>"
+                        );
+                        $('#userlist-bound-docs').show();
+                    }
+                });
+                /*
+                    then show the modal form
+                 */
+                $("#modal-confirm-userlist-delete").toggleClass("is-active");
+            });
+
+            $('.close-confirm-userlist-delete').click(function(){
+                $("#modal-confirm-userlist-delete").toggleClass("is-active");
+            });
+
+            $('#confirm-userlist-delete').click(function() {
+                const whitelist_id =  $('#select-userlist option:selected').val();
                 let url = "{{ url_for('api_bp.delete_whitelist', api_version='1.0', whitelist_id='WHITELIST_ID_PLACEHOLDER') }}";
                 url = url.replace("WHITELIST_ID_PLACEHOLDER", whitelist_id);
                 $.ajax({
@@ -342,12 +392,42 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
                     }
                 }).done(function() {
-                    console.log("delete userlist");
+                    /*
+                        remove the userlist from select inputs, refetch tables,
+                        select the last userlist then finally toggle the modal off
+                     */
+                    $(".select-userlist option[value='"+whitelist_id+"']").remove();
                     populate_userlist_list();
                     populate_user_list();
+                    $("#select-userlist option:last-child").prop("selected", true).change();
+                    $("#modal-confirm-userlist-delete").toggleClass("is-active");
                 });
             });
 
+            /*
+                Change the userlist of a document
+            */
+            $('#document-list-table .select-userlist').change(function() {
+                const doc_id = $(this).closest('tr').find('input[name="doc-id"]').val();
+                const userlist_id = $(this).find(':selected').val();
+
+                let url = "{{ url_for('api_bp.api_change_documents_whitelist', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+                url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    contentType: "application/json",
+                    data:  JSON.stringify({data: {whitelist_id: userlist_id}}),
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                    }
+                }).done(function() {
+                    if (!data.errors) {
+                        const new_userlist = data.data.whitelist;
+                        console.log(new_userlist);
+                    }
+                });
+            });
 
        });
    </script>

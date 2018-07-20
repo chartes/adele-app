@@ -1,6 +1,6 @@
 {% macro document_list(docs, whitelists, current_user) -%}
     <div id="document-list">
-        <table id="document-list-table" class="table is-striped is-hoverable is-fullwidth">
+        <table id="document-list-table" class="table is-striped is-fullwidth">
             <thead>
             <tr>
                 <th>Document</th>
@@ -14,6 +14,7 @@
                     <td>
                         <input type="hidden" value="{{ url_for("app_bp.document_edit", doc_id=d.id) }}"/>
                         <span class="tag is-light">Dossier {{ d.id }}</span>
+                        <input type="hidden" name="doc-id" value="{{ d.id }}"/>
                         {% for img in d.images %}
                             <div class="thumbnail-container has-background-grey-lighter">
                                 <figure class=" thumbnail">
@@ -34,6 +35,7 @@
                         <p class="control">
                             <div class="select">
                                 <select class="select-userlist">
+                                    <option value="-1">Aucune liste</option>
                                     {% for whitelist in whitelists %}
                                     <option value="{{whitelist.id}}"
                                             {%- if d.whitelist and d.whitelist.id == whitelist.id %}

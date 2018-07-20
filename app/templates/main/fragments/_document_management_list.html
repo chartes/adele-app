@@ -1,66 +1,105 @@
-{% macro document_list(docs, current_user) -%}
-    <div id="document-list">
-        <table id="document-list-table" class="table is-striped is-hoverable is-fullwidth">
-            <thead>
-            <tr>
-                <th>Document</th>
-                <th>Titre</th>
-                <th>Date limite de modification</th>
-                <th>Publié</th>
-                <!-- edit button -->
-                <th></th>
-                <!-- delete button -->
-                {% if current_user.is_admin or current_user.is_teacher %}<th></th>{% endif %}
-            </tr>
-            </thead>
 
-            {% for d in docs %}
-                <tr>
-                    <td>
-                        <input type="hidden" value="{{ url_for("app_bp.document_edit", doc_id=d.id) }}"/>
-                        <span class="tag is-light">Dossier {{ d.id }}</span>
-                        {% for img in d.images %}
-                            <div class="thumbnail-container has-background-grey-lighter">
-                                <figure class=" thumbnail">
-                                    <img src="{{ img.url | replace("full/full", "full/,40") }}"/>
-                                </figure>
-                            </div>
-                        {% endfor %}
-                        <div class="is-invisible sort-criteria">{{ d.id }}</div>
-                    </td>
-                    <td>
-                        <p class="title is-6">{{ d.title }}</p>
-                        <p>
-                            <small>{{ d.subtitle }}</small>
-                        </p>
-                        <div class="is-invisible sort-criteria">{{ d.title }}</div>
-                    </td>
-                     <td>
-                        <input type="text" class="date-picker sort-criteria"
-                         {% if d.date_closing %}
-                            value="{{ date_closing }}"
-                         {% endif %}
-                         {% if not (current_user.is_admin or current_user.is_teacher) %} disabled {% endif %}/>
-                        <div class="is-invisible sort-criteria">{{ date_closing }}</div>
+<table id="document-list-table" class="table is-striped  is-fullwidth">
+    <thead>
+        <tr>
+            <th>Document <i class="fas fa-sort-down"></i></th>
+            <th>Titre <i class="fas fa-sort-down"></i></th>
+            {% if current_user.is_admin or current_user.is_teacher %}
+            <th>Manifeste IIIF <i class="fas fa-sort-down"></i></th>
+            {% endif %}
+            <th style="width: 240px;">Date limite de modification <i class="fas fa-sort-down"></i></th>
+            {% if current_user.is_admin or current_user.is_teacher %}
+            <th style="width: 100px;">Publié <i class="fas fa-sort-down"></i></th>
+            {% endif %}
+            <!-- edit button -->
+            <th></th>
+            <!-- export button -->
+            <th></th>
+            <!-- delete button -->
+            {% if current_user.is_admin or current_user.is_teacher %}
+            <th></th>
+            {% endif %}
+        </tr>
+    </thead>
+    {% for d in docs %}
+    <tr>
+        <td>
+            <input type="hidden" value="{{ url_for("app_bp.document_edit", doc_id=d.id) }}"/>
+            <input type="hidden" name="doc-id" value="{{ d.id }}"/>
+            <span class="tag is-light">Dossier {{ d.id }}</span>
+            {% if d.images|length > 0 %}
+                <div class="thumbnail-container has-background-grey-lighter">
+                    <figure class=" thumbnail">
+                        <img src="{{ d.images[0].url | replace("full/full", "full/,40") }}"/>
+                    </figure>
+                </div>
+                {% if d.images|length > 1 %}
+                        <div class="is-size-7" style="margin: auto; width: 100px;"><i>{{ d.images|length }} page(s)</i></div>
+                {% endif %}
+            {% endif %}
+            <div class="is-invisible sort-criteria">{{ d.id }}</div>
+        </td>
+        <td>
+            <p class="title is-6">{{ d.title }}</p>
+            <p>
+                <small>{{ d.subtitle }}</small>
+            </p>
+            <div class="is-invisible sort-criteria">{{ d.title }}</div>
+        </td>
+        {% if current_user.is_admin or current_user.is_teacher %}
+        <td>
+            <div class="button is-light edit-manifest-info">
+                <span class="icon"><i class="fas {% if d.images|length > 0 %}fa-edit{% else %}fa-plus-square{% endif %}"></i></span>
+                <span>{% if d.images|length > 0 %}Mettre à jour{% else %}Lier un manifeste{% endif%}</span>
+            </div>
+            <div class="is-invisible sort-criteria">{{ manifest_url }}</div>
+        </td>
+        {% endif %}
+        <td>
+            <input type="text" class="date-picker"
+            {% if d.date_closing %}
+            value="{{ d.date_closing|date }}"
+            {% endif %}
+            {% if not (current_user.is_admin or current_user.is_teacher) %} disabled {% endif %}/>
+            <div class="is-invisible sort-criteria">{{ d.date_closing|date }}</div>
+        </td>
+        {% if current_user.is_admin or current_user.is_teacher %}
+        <td>
+            <label class="checkbox">
+                <input type="checkbox" name="publish-checkbox" {% if d.is_published %} checked {% endif%}>
+            </label>
+            <div class="is-invisible sort-criteria">{% if d.is_published %}1{% else %}0{% endif%}</div>
+        </td>
+        {% endif %}
+        <td>
+            <a class="button tag is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=d.id)}}">
+                <i class="fas fa-edit"></i>
+                <p>Éditer</p>
+            </a>
+        </td>
+        <td>
+            <div class="button tag is-light export-document">
+                <i class="fas fa-file-export"></i>
+                <p>Exporter</p>
+            </div>
+        </td>
+        {% if current_user.is_admin or current_user.is_teacher %}
+        <td>
+            <div class="button tag is-danger delete-document">
+                <i class="fas fa-trash-alt"></i>
+                <p>Supprimer</p>
+            </div>
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
 
-                    </td>
-                    <td>
-                        <label class="checkbox">
-                          <input type="checkbox" class="sort-criteria" value="{{ d.is_published }}"
-                            {% if not (current_user.is_admin or current_user.is_teacher) %} disabled {% endif %}>
-                        </label>
-                        <div class="is-invisible sort-criteria">{{ d.is_published }}</div>
-                    </td>
-                    <td><i class="fas fa-edit" style="margin-left: 4px"></i></td>
-                    {% if current_user.is_admin or current_user.is_teacher %}
-                    <td><i class="fas fa-trash-alt" style="color: #c60000; margin-left: 4px"></i></td>
-                    {% endif %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+{# include modal panels #}
+{% from 'main/fragments/_document_delete.html' import document_delete %}
 
-    {% include 'main/fragments/_sort_table_script.html' %}
-{%- endmacro %}
+{{  document_delete() }}
+
+{% include 'main/fragments/_sort_table_script.html' %}
 

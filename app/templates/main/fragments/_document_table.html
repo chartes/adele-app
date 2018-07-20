@@ -1,4 +1,4 @@
-{% macro document_table(docs) -%}
+{% macro document_table(current_user, docs) -%}
     <div class="columns is-multiline">
         {% if docs | length >= 10 %}
             {% set col_fmt = 3 %}
@@ -11,9 +11,10 @@
         {% for d in docs %}
 
             <div class="column {% if col_fmt == 3 %}is-one-third{% elif col_fmt == 2 %}is-half{% endif %}">
-                <a href="{{ url_for("app_bp.document_edit", doc_id=d.id) }}">
+                <a href="{{ url_for("app_bp.view_document", doc_id=d.id) }}">
                     <div class="card document-card" id="card-{{ d.id }}">
-                        {% for img in d.images %}
+                        {% if d.images|length > 0 %}
+                            {% set img = d.images[0] %}
                             <div class="thumbnail-container has-background-grey-lighter">
                                 <figure class=" image thumbnail">
                                     {% if col_fmt == 3 %}
@@ -25,10 +26,22 @@
                                     {% endif %}
                                 </figure>
                             </div>
-                        {% endfor %}
+                            {% if d.images|length > 1 %}
+                             <div class="image-count is-size-7"><i>{{ d.images|length }} page(s)</i></div>
+                            {% endif %}
+                        {% else %}
+                        <div class="thumbnail-container has-background-grey-lighter">
+                            <div class="empty-thumbnail"><i class="fas fa-file-alt"></i></div>
+                        </div>
+                        {% endif %}
                         <div class="card-content">
                             <div class="content">
-                                <p><span class="tag is-light">Dossier {{ d.id }}</span></p>
+                                <p>
+                                    <div class="tags">
+                                        <span class="tag is-light">Dossier {{ d.id }}</span>
+                                        {% if not d.is_published and not current_user.is_anonymous  %} <span class="tag is-warning">Non publié</span> {% endif %}
+                                    </div>
+                                </p>
                                 <p class="title is-6">{{ d.title }}</p>
                                 <p>
                                     <small>{{ d.subtitle }}</small>

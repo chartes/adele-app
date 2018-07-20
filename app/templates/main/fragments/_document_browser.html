@@ -40,7 +40,7 @@
         {% from 'main/fragments/_document_table.html' import document_table %}
         {% from 'main/fragments/_document_list.html' import document_list %}
         <!-- {{  document_list(docs) }} -->
-        {{  document_table(docs) }}
+        {{  document_table(current_user, docs) }}
         {{ nav_pages(nav_uri, current_page) }}
     {% endif %}
 </section>

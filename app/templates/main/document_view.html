@@ -1,0 +1,459 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+    <section class="section">
+        <div class="view-container is-fullhd">
+            <div class="tags visibility-tags">
+                <span class="tag is-light">Dossier {{ doc.id }}</span>
+
+                <span class="tag">
+                    <a id="visibility-image"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>image</a>
+                    <a id="visibility-notice"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>notice</a>
+                    <a id="visibility-transcription"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>transcription</a>
+                    <a id="visibility-translation"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>traduction</a>
+                    <a id="visibility-commentaries"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>commentaires</a>
+                    <a id="visibility-speech-parts"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>parties du discours</a>
+                </span>
+            </div>
+
+            <div class="columns">
+                <div class="column is-4" id="img-col">
+                    {% if doc.images|length > 0 %}
+                    <figure class="image">
+                        <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" />
+                    </figure>
+                    <div id="iiif-map"></div>
+                    {% else %}
+                    <div class="box empty-image">
+                        <div class="empty-thumbnail"><i class="fas fa-file-alt"></i></div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="column" id="text-col">
+                    <div class="tabs">
+                        <ul>
+                        {% if can_edit %}
+                        <li><a class="button tag is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=doc.id)}}"><i class="fas fa-edit"></i><p>Éditer</p></a></li>
+                        {% endif %}
+                        <li class="tab is-active"><input type="hidden" value="tab-notice"/><a>Notice</a></li>
+                        <li class="tab"><input type="hidden" value="tab-transcription"/><a>Transcription</a></li>
+                        <li class="tab"><input type="hidden" value="tab-commentaries"/><a>Commentaires</a></li>
+                        <li class="tab"><input type="hidden" value="tab-speech-parts"/><a>Parties du discours</a></li>
+                        </ul>
+                    </div>
+                    <div class="tab-content" id="tab-notice">
+                        <div class="content">
+                            <p>
+
+                                <!--
+                                <span class="tag is-light">Créé le {{ doc.date_insert }}</span>
+                                <span class="tag is-light">Dern. modif. le {{ doc.date_update }}</span>
+                                -->
+                            </p>
+                            <p class="title is-3">{{ doc.title }}</p>
+                            <p>{{ doc.subtitle }}</p>
+                        </div>
+
+                        <hr>
+
+                        <p class="title is-4">Métadonnées</p>
+                        {% if doc.creation_lab %}
+                        <p><strong>creation_lab : </strong>{{ doc.creation_lab }}</p>
+                        {% endif %}
+                        {% if doc.copy_year %}
+                        <p><strong>copy_year : </strong>{{ doc.copy_year }}</p>
+                        {% endif %}
+                        {% if doc.copy_cent %}
+                        <p><strong>copy_cent : </strong>{{ doc.copy_cent }}</p>
+                        {% endif %}
+                        {% if doc.institution %}
+                        <p><strong>Institution : </strong><a href="{{ doc.institution.ref }}" target="_blank">{{ doc.institution.name }}</a></p>
+                        {% endif %}
+                        {% if doc.pressmark %}
+                        <p><strong>pressmark : </strong>{{ doc.pressmark }}</p>
+                        {% endif %}
+                        {% if doc.argument %}
+                        <p><strong>argument : </strong>{{ doc.argument|safe }}</p>
+                        {% endif %}
+                        <p>&nbsp;</p>
+
+                        <p class="title is-6">Liaisons</p>
+
+                        <div>
+                            <p><strong>Type d'acte :</strong></p>
+                            <ul>
+                                {% for acte_type in doc.acte_types %}
+                                <li>{{ acte_type.label }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <p><strong>Traditions :</strong></p>
+                            <ul>
+                                {% for tradition in doc.traditions %}
+                                <li>{{ tradition.label }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <p><strong>Pays :</strong></p>
+                            <ul>
+                                {% for country in doc.countries %}
+                                <li><a href="{{ country.ref }}" target="_blank">{{ country.label }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <p><strong>District(s) :</strong></p>
+                            <ul>
+                                {% for district in doc.districts %}
+                                <li>{{ district.label }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <p><strong>Langages :</strong></p>
+                            <ul>
+                                {% for lang in doc.languages %}
+                                <li>{{ lang.label }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <p><strong>Editeurs :</strong></p>
+                            <ul>
+                                {% for editor in doc.editors %}
+                                <li>{{ editor.name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <p><strong>Transcriptions :</strong> {{ doc.transcription_id_collection|length }}</p>
+                            <p><strong>Traductions :</strong> {{ doc.translation_id_collection|length }}</p>
+                            <p><strong>Commentaires :</strong> {{ doc.commentary_id_collection|length }}</p>
+                        </div>
+                        <div>
+                            <p><strong>Documents liés :</strong></p>
+                            <ul>
+                                {% for linked_doc in doc.document_linked_id_collection %}
+                                <li><a href="{{ url_for("app_bp.document_edit", doc_id=d.id) }}">{{ linked_doc.id }} {{ linked_doc.title }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        </div>
+
+                    <div class="tab-content" id="tab-transcription">
+                        <p class="content" id="transcription-container"></p>
+                        <p class="content" id="translation-container"></p>
+                        <div class="" id="transcription-alignment-container">
+                            <table id="alignment-table" class="table is-striped is-fullwidth">
+                                <thead>
+                                    <tr>
+                                        <th>Transcription</th>
+                                        <th>Traduction </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="tab-commentaries">
+                        <div class="content" id="commentaries-toc"></div>
+                         <p class="content" id="commentaries-container"></p>
+                    </div>
+                    <div class="tab-content" id="tab-speech-parts">
+                        <p class="content" id="speech-parts-container"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock content %}
+
+{% block breadcrumb %}
+    <div class="navbar-item breadcrumb-arrow">
+        <i class="fas fa-angle-right"></i>
+    </div>
+    <div class="navbar-item"><a class="is-text">{{ doc.title }}</a> </div>
+{% endblock %}
+
+{% block scripts %}
+   <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
+   <script type="text/javascript">
+       $(document).ready(function () {
+
+           /*
+           $.ajax({
+                  url: '{#url_for('api_bp.api_documents_manifest_url', api_version='1.0', doc_id=doc.id)#}'
+              }).done(function (data) {
+                  if (!data.errors){
+                      const iiif_map = LeafletIiifmap.initialize('iiif-map', manifest);
+                  }
+           });
+           */
+
+           function go_to_tab(tab_id) {
+               $('.tab-content').hide();
+               $('#' + tab_id).show();
+
+               $('#visibility-notice').hide();
+               $('#visibility-transcription').hide();
+               $('#visibility-translation').hide();
+               $('#visibility-commentaries').hide();
+               $('#visibility-speech-parts').hide();
+
+               switch (tab_id) {
+                   case 'tab-notice':
+                       $('#visibility-notice').show();
+                       break;
+                   case 'tab-transcription':
+                       $('#visibility-transcription').show();
+                       $('#visibility-translation').show();
+                       break;
+                   case 'tab-commentaries':
+                       $('#visibility-commentaries').show();
+                       break;
+                   case 'tab-speech-parts':
+                       $('#visibility-speech-parts').show();
+                       break;
+               }
+           }
+
+           $('.tab').click(function() {
+               const tab_id = $(this).find('input[type="hidden"]').val();
+               go_to_tab(tab_id);
+               $('.tab.is-active').removeClass('is-active');
+               $(this).addClass('is-active');
+           });
+
+           function load_transcription(){
+               let url = "{{ url_for('api_bp.api_documents_transcriptions_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   if (!data.errors){
+                       $('#transcription-container').html(data.data.content);
+                        load_translation();
+                        load_speech_parts();
+                   }
+               });
+           }
+
+           function load_translation(){
+               let url = "{{ url_for('api_bp.api_documents_translations_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   console.log(data);
+                   if (!data.errors){
+                       $('#translation-container').html(data.data.content);
+                        load_transcription_alignment();
+                   }
+               });
+           }
+
+           function load_transcription_alignment(){
+               let url = "{{ url_for('api_bp.api_documents_transcriptions_alignments_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   console.log(data);
+                   if (!data.errors){
+                       const translation = $('#translation-container').html();
+                       const transcription = $('#transcription-container').html();
+
+                       for (const al of data.data) {
+                           const al_trc = transcription.substr(al[0], al[1]-al[0]);
+                           const al_trl = translation.substr(al[2], al[3]-al[2]);
+                           $('#alignment-table tbody').append(
+                               '<tr><td>'+ al_trc +'</td><td>'+ al_trl +'</td></tr>'
+                           );
+                       }
+                   }
+               });
+           }
+
+           function load_commentaries(){
+               let url = "{{ url_for('api_bp.api_commentary_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+
+               function make_commentary(com) {
+                   c = "<div class='commentary' id='commentary-"+ com.id +"'>" +
+                       "    <div class='title is-5'>Commentaire " + com.type.label.toLowerCase() + "</div>" +
+                       "    <p>" + com.content + "</p>" +
+                       "</div>";
+                   return c;
+               }
+
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   if (!data.errors){
+                       if (data.data.length > 0) {
+                            /*
+                                make TOC
+                             */
+                            let toc = "<div class='title is-3'>Sommaire</div>" +
+                                      "<table class='table is-hoverable'><tbody>";
+                            for (let com of data.data) {
+                                toc += "<tr><td><a href='#commentary-" + com.id + "'>Commentaire " + com.type.label.toLowerCase() + "</a></td></tr>"
+                            }
+                            toc += "</tbody></table>";
+
+                            $('#commentaries-toc').html(toc);
+                            /*
+                                write commentaries
+                             */
+                           for (let com of data.data) {
+                               $('#commentaries-container').append(
+                                   make_commentary(com)
+                               );
+                           }
+
+                           /*
+                               bind TOC anchors
+                            */
+                           $('#commentaries-toc td').each(function(){
+                               $(this).click(function() {
+                                   console.log($(this).find('a:first').prop('href'));
+                                   window.location.href = $(this).find('a').prop('href');
+                               });
+                           });
+                       }
+                   }
+               });
+           }
+
+           function load_speech_parts(){
+               let url = "{{ url_for('api_bp.api_documents_transcriptions_alignments_discours_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+               url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
+               $.ajax({
+                   url: url
+               }).done(function (data) {
+                   console.log("speech parts");
+                   console.log(data);
+                   if (!data.errors){
+                       const transcription = $('#transcription-container').html();
+                       $('#speech-parts-container').html(transcription);
+
+                       for (const sp of data.data) {
+                           console.log(sp.speech_part_type.label);
+                       }
+                   }
+               });
+           }
+
+           /*
+                Load data & select the notice tab;
+            */
+           load_transcription(); // also load translation & speech-parts
+           load_commentaries();
+
+           go_to_tab('tab-notice');
+
+           /*
+                set up visibility filters
+            */
+           $('#visibility-image').click(function(){
+               if ($('#img-col').css('display') === 'none'){
+                   $('#img-col').show();
+               }
+               else {
+                   $('#img-col').hide();
+               }
+               $(this).find('.active,.inactive').toggle();
+           });
+
+           function toggleTextCol(t) {
+               if ($('#text-col').css('display') === 'none'){
+                   $('#text-col').show();
+                   $('#img-col').addClass('is-4');
+               }
+               else {
+                   $('#text-col').hide();
+                   $('#img-col').removeClass('is-4');
+               }
+               $(t).find('.active,.inactive').toggle();
+           };
+
+           $('#visibility-notice').click(function(){toggleTextCol(this)});
+           $('#visibility-commentaries').click(function(){toggleTextCol(this)});
+           $('#visibility-speech-parts').click(function(){toggleTextCol(this)});
+
+
+           $('#visibility-transcription').click(function(){
+               if ($('#transcription-container').css('display') === 'none'){
+                   if ($('#translation-container').css('display') === 'block'){
+                       $('#transcription-alignment-container').show();
+                       $('#translation-container').hide();
+                   }
+                   else {
+                       if ($('#text-col').css('display') === 'block') {
+                           $('#translation-container').show();
+                       }
+                       else {
+                         $('#transcription-container').show();
+                       }
+                       $('#transcription-alignment-container').hide();
+                   }
+                   $('#img-col').addClass('is-4');
+               }
+               else {
+                  $('#transcription-container').hide();
+               }
+
+               if ($('#transcription-container').css('display') === 'none'
+                    && $('#translation-container').css('display') === 'none'
+                    && $('#transcription-alignment-container').css('display') === 'none'){
+                 $('#text-col').hide();
+                 $('#img-col').removeClass('is-4');
+               } else {
+                 $('#text-col').show();
+               }
+
+               $(this).find('.active,.inactive').toggle();
+           });
+
+           $('#visibility-translation').click(function(){
+               if ($('#translation-container').css('display') === 'none'){
+                   if ($('#transcription-container').css('display') === 'block'){
+                       $('#transcription-alignment-container').show();
+                       $('#transcription-container').hide();
+                   }
+                   else {
+                       if ($('#text-col').css('display') === 'block') {
+                           $('#transcription-container').show();
+                       } else {
+                           $('#translation-container').show();
+                       }
+                       $('#transcription-alignment-container').hide();
+                   }
+                   $('#img-col').addClass('is-4');
+               }
+               else {
+                  $('#translation-container').hide();
+               }
+
+               if ($('#transcription-container').css('display') === 'none'
+                    && $('#translation-container').css('display') === 'none'
+                    && $('#transcription-alignment-container').css('display') === 'none'){
+                 $('#text-col').hide();
+                 $('#img-col').removeClass('is-4')
+               } else {
+                 $('#text-col').show();
+               }
+
+               $(this).find('.active,.inactive').toggle();
+           });
+
+           $('#transcription-container').css('display', 'none');
+           $('#translation-container').css('display', 'none');
+
+       });
+   </script>
+{% endblock %}

@@ -2,6 +2,20 @@
 .thumbnail-container {
   width: auto;
 }
+.empty-thumbnail {
+    height: 250px;
+    font-size: 60px;
+    text-align: center;
+    padding-top: 90px;
+}
+.empty-image {
+  height: 600px;
+  padding-top: 32%;
+}
+
+.image-count {
+    text-align: center;
+}
 
 .thumbnail img {
   margin: auto;
@@ -112,10 +126,6 @@
   margin: auto;
   width: 95%;
 
-  table:hover {
-    cursor: pointer;
-  }
-
   img {
     padding-left: 0px;
   }
@@ -129,4 +139,9 @@
 
 .content figure {
   margin-left: 0px;
+}
+
+.view-container {
+  margin: auto;
+  width : 90%;
 }

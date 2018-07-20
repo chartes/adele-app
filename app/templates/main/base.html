@@ -12,7 +12,7 @@
     {% block head_scripts %}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.0/css/bulma.min.css">
         <link rel="stylesheet" href="{{ url_for('app_bp.static', filename='css/admin.css') }}">
-        <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+        <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
     {% endblock head_scripts %}
 </head>
 <body>
@@ -72,6 +72,15 @@
                                         </span>
                                         <span>Tableau de bord</span>
                                     </a>
+                                    {% if current_user.is_teacher or current_user.is_admin %}
+                                    <a id="mydocs-item" class="navbar-item"
+                                       href="{{ url_for('app_bp.dashboard_manage_users') }}">
+                                        <span class="icon">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                        <span>Utilisateurs</span>
+                                    </a>
+                                    {% endif %}
                                     <a id="mydocs-item" class="navbar-item"
                                        href="{{ url_for('app_bp.dashboard_documents') }}">
                                         <span class="icon">
@@ -79,15 +88,6 @@
                                         </span>
                                         <span>Mes documents</span>
                                     </a>
-                                    <!--
-                                    <a id="manual-item" class="navbar-item"
-                                       href="{{ url_for('app_bp.documents') }}">
-                                        <span class="icon">
-                                            <i class="fas fa-book"></i>
-                                        </span>
-                                        <span>Mode d'emploi</span>
-                                    </a>
-                                    -->
                                     <a id="logout-item" class="navbar-item" href="{{ url_for('user.logout') }}">
                                         <span class="icon">
                                             <i class="fas fa-sign-in-alt"></i>
@@ -121,7 +121,7 @@
 {% block flash_messages %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <section class="section message-section">
+            <section class="message-section">
                 <div class="container is-fullhd">{% for category, message in messages %}
                     <article class="message {% if category == 'success' %}is-info{% else %}is-warning{% endif %}">
                         <div class="message-body">
@@ -137,8 +137,6 @@
 {% endblock %}
 
 {% block content %}
-
-    {# application content needs to be provided in the app_content block #}
     {% block app_content %}{% endblock %}
 {% endblock %}
 

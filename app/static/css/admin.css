@@ -13,16 +13,55 @@
         padding-bottom: 12px; }
 
         #user-menu a {
-          width: 200px; }
+          width: 220px; }
+          #user-menu span {
+            margin-right: 10px; }
 
-          .message-section ul {
-            list-style-type: none !important;
-            margin: 0 !important; }
+.message-section {
+  margin: 1.1rem 1.5rem; }
+  .message-section ul {
+    list-style-type: none !important;
+    margin: 0 !important; }
 
 #user-messages p .control {
   margin-bottom: 0px; }
 #user-messages .message-body {
   padding: 0.4em 1.5em; }
+
+.visibility-tags {
+  margin-bottom: 0px !important; }
+  .visibility-tags span p {
+    padding-right: 6px; }
+    .visibility-tags span a {
+      padding: 3px; }
+      .visibility-tags span a span {
+        padding: 3px; }
+
+#commentaries-toc {
+  width: 50%;
+  margin-bottom: 50px; }
+  #commentaries-toc tr:hover {
+    cursor: pointer; }
+
+.commentary {
+  margin-top: 12px;
+  margin-bottom: 24px; }
+  .commentary p {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dbdbdb; }
+
+.edit-document, .delete-document, .edit-manifest-info, .export-document {
+  font-size: medium !important;
+  text-decoration: none !important; }
+  .edit-document p, .delete-document p, .edit-manifest-info p, .export-document p {
+    margin-left: 6px !important; }
+
+.is-invisible {
+  height: 0px; }
+
+  #text-col .edit-document {
+    margin: auto;
+    margin-right: 14px; }
 
 .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow,
 .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas,
@@ -1239,131 +1278,143 @@ l {
   .thumbnail-container {
     width: auto; }
 
-    .thumbnail img {
-      margin: auto;
-      padding: 16px;
-      width: auto; }
+    .empty-thumbnail {
+      height: 250px;
+      font-size: 60px;
+      text-align: center;
+      padding-top: 90px; }
 
-      .columns {
-        margin-top: 0px; }
+      .empty-image {
+        height: 600px;
+        padding-top: 32%; }
 
-        .nav-pages {
-          margin: auto auto 30px;
-          width: 300px; }
+        .image-count {
+          text-align: center; }
 
-          .find-btn-group {
-            margin-top: 30px; }
+          .thumbnail img {
+            margin: auto;
+            padding: 16px;
+            width: auto; }
 
-            #tag-cloud {
-              margin-bottom: 20px;
-              margin-top: 20px; }
+            .columns {
+              margin-top: 0px; }
 
-              #find-col {
-                padding-right: 0px;
-                background-color: #eee;
-                user-select: none; }
+              .nav-pages {
+                margin: auto auto 30px;
+                width: 300px; }
 
-                #find-col .level:not(:last-child) {
-                  margin-bottom: 0px; }
+                .find-btn-group {
+                  margin-top: 30px; }
 
-                  #find-col .section {
-                    padding-left: 0px;
-                    padding-right: 0px; }
+                  #tag-cloud {
+                    margin-bottom: 20px;
+                    margin-top: 20px; }
 
-                    .field.is-grouped {
-                      display: block; }
+                    #find-col {
+                      padding-right: 0px;
+                      background-color: #eee;
+                      user-select: none; }
 
-                      #find-col .accordion {
-                        background-color: #eee;
-                        color: #444;
-                        cursor: pointer;
-                        padding: 18px;
-                        width: 100%;
-                        text-align: left;
-                        border: none;
-                        outline: none;
-                        transition: 0.4s; }
+                      #find-col .level:not(:last-child) {
+                        margin-bottom: 0px; }
 
-                        #find-col .active, .accordion:hover {
-                          background-color: #ccc; }
+                        #find-col .section {
+                          padding-left: 0px;
+                          padding-right: 0px; }
 
-                          #find-col .panel {
-                            padding: 0;
-                            background-color: whitesmoke;
-                            display: none;
-                            overflow: hidden; }
+                          .field.is-grouped {
+                            display: block; }
 
-                            #find-col .panel:not(:last-child) {
-                              margin-bottom: 0px; }
+                            #find-col .accordion {
+                              background-color: #eee;
+                              color: #444;
+                              cursor: pointer;
+                              padding: 18px;
+                              width: 100%;
+                              text-align: left;
+                              border: none;
+                              outline: none;
+                              transition: 0.4s; }
 
-                              #find-col .panel-item {
-                                padding: 12px 12px 12px 24px; }
+                              #find-col .active, .accordion:hover {
+                                background-color: #ccc; }
 
-                                #find-col li {
-                                  color: #7a7a7a;
-                                  cursor: pointer; }
+                                #find-col .panel {
+                                  padding: 0;
+                                  background-color: whitesmoke;
+                                  display: none;
+                                  overflow: hidden; }
 
-                                  #find-col li:hover {
-                                    background-color: #ff3860;
-                                    color: whitesmoke; }
+                                  #find-col .panel:not(:last-child) {
+                                    margin-bottom: 0px; }
 
-                                    .dot {
-                                      height: 12px;
-                                      width: 12px;
-                                      background-color: #ff3860;
-                                      border-radius: 50%;
-                                      display: inline-block;
-                                      margin-right: 18px; }
+                                    #find-col .panel-item {
+                                      padding: 12px 12px 12px 24px; }
 
-                                      .white-dot {
-                                        height: 12px;
-                                        width: 12px;
-                                        background-color: #eee;
-                                        border-radius: 50%;
-                                        display: inline-block;
-                                        margin-right: 18px; }
+                                      #find-col li {
+                                        color: #7a7a7a;
+                                        cursor: pointer; }
 
-                                        #document-list {
-                                          margin: auto;
-                                          width: 95%; }
-                                          #document-list table:hover {
-                                            cursor: pointer; }
-                                            #document-list img {
-                                              padding-left: 0px; }
-                                              #document-list .thumbnail-container {
-                                                left: 0px;
-                                                width: 150px; }
+                                        #find-col li:hover {
+                                          background-color: #ff3860;
+                                          color: whitesmoke; }
+
+                                          .dot {
+                                            height: 12px;
+                                            width: 12px;
+                                            background-color: #ff3860;
+                                            border-radius: 50%;
+                                            display: inline-block;
+                                            margin-right: 18px; }
+
+                                            .white-dot {
+                                              height: 12px;
+                                              width: 12px;
+                                              background-color: #eee;
+                                              border-radius: 50%;
+                                              display: inline-block;
+                                              margin-right: 18px; }
+
+                                              #document-list {
+                                                margin: auto;
+                                                width: 95%; }
+                                                #document-list img {
+                                                  padding-left: 0px; }
+                                                  #document-list .thumbnail-container {
+                                                    left: 0px;
+                                                    width: 150px; }
 
 .content figure {
   margin-left: 0px; }
 
-  .help {
-    font-size: 1em; }
+  .view-container {
+    margin: auto;
+    width: 90%; }
 
-    .login-form {
-      margin: auto;
-      margin-top: 120px; }
+    .help {
+      font-size: 1em; }
 
-      .login-form .message {
-        width: 700px;
-        margin: auto; }
+      .login-form {
+        margin: auto;
+        margin-top: 120px; }
 
-        .login-form .message-body {
-          width: 460px;
+        .login-form .message {
+          width: 700px;
           margin: auto; }
 
-          .register-form {
-            margin: auto;
-            margin-top: 120px; }
+          .login-form .message-body {
+            width: 460px;
+            margin: auto; }
 
-            .register-form .message {
-              width: 800px;
-              margin: auto; }
+            .register-form {
+              margin: auto;
+              margin-top: 120px; }
 
-              .register-form .message-body {
-                width: 700px;
+              .register-form .message {
+                width: 800px;
                 margin: auto; }
 
+<<<<<<< HEAD
                 .register-form .message-body input {
                   width: 400px; }
 
@@ -1397,3 +1448,86 @@ l {
                                       margin-top: 12px; }
                                       #user-management .user-row:hover {
                                         cursor: pointer; }
+=======
+                .register-form .message-body {
+                  width: 700px;
+                  margin: auto; }
+
+                  .register-form .message-body input {
+                    width: 400px; }
+
+                    .register-form .message-body .submit {
+                      width: initial; }
+
+                      .column {
+                        padding-bottom: 0.25em; }
+
+                        .submit-group {
+                          margin-top: 18px; }
+
+                          .submit {
+                            margin-top: 12px;
+                            margin-bottom: 12px; }
+
+                            #user-management {
+                              margin-top: 32px; }
+                              #user-management .user-messages {
+                                height: 30px;
+                                margin-left: 12px; }
+                                #user-management #empty-tile {
+                                  height: 140px; }
+                                  #user-management .arrow-btn {
+                                    width: 40px !important;
+                                    height: 60px !important;
+                                    margin-left: 43% !important; }
+                                    #user-management #field-add-userlist {
+                                      margin-left: 20px; }
+                                      #user-management .delete-btn {
+                                        margin-top: 12px; }
+                                        #user-management .user-row:hover {
+                                          cursor: pointer; }
+
+#document-list-table {
+  margin-top: 32px; }
+  #document-list-table .fa-sort-down {
+    margin-left: 8px;
+    margin-bottom: 2px; }
+    #document-list-table .fa-sort-up {
+      margin-left: 8px;
+      margin-bottom: -5px; }
+      #document-list-table th:hover {
+        cursor: pointer; }
+        #document-list-table td {
+          vertical-align: middle; }
+          #document-list-table .checkbox {
+            margin: 30% !important;
+            top: 3px; }
+            #document-list-table .date-picker {
+              width: 180px; }
+              #document-list-table .edit-manifest-info {
+                margin-right: 20px; }
+
+#add-document-form {
+  width: 100%; }
+  #add-document-form input {
+    width: 420px; }
+    #add-document-form #import-manifest {
+      width: 250px;
+      margin-top: 0px; }
+
+#modal-manifest-validation .modal-card {
+  width: 50%;
+  min-height: 600px; }
+  #modal-manifest-validation #manifest-url,
+  #modal-manifest-validation #input-manifest-filename {
+    width: 480px; }
+    #modal-manifest-validation .info, #modal-manifest-validation .map,
+    #modal-manifest-validation .errors {
+      margin-top: 30px;
+      margin-bottom: 30px; }
+      #modal-manifest-validation #manifest-preview {
+        width: 300px;
+        margin: auto; }
+        #modal-manifest-validation #manifest-preview p {
+          text-align: center; }
+>>>>>>> c72a693cfeaab5392fea017281460b955898f66d

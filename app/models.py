@@ -1,4 +1,6 @@
+import datetime
 from flask import current_app
+from flask_login import AnonymousUserMixin
 from flask_user import UserMixin
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -533,6 +535,11 @@ class Translation(db.Model):
         }
 
 
+class AnonymousUser(AnonymousUserMixin):
+    @property
+    def documents_i_can_edit(self):
+        return []
+
 # Define the User data model
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -596,6 +603,7 @@ class User(db.Model, UserMixin):
         user = User.query.get(data['id'])
         return user
 
+    @property
     def documents_i_can_edit(self):
         all_docs = Document.query.all()
         docs = []
@@ -606,7 +614,21 @@ class User(db.Model, UserMixin):
         else:
             for doc in all_docs:
                 if doc.user_id == self.id or (doc.whitelist and self in doc.whitelist.users):
-                    docs.append(doc)
+                    if self.is_teacher:
+                        docs.append(doc)
+                    else:
+                        if doc.date_closing:
+                            # check the closing date
+                            now = datetime.datetime.now()
+                            doc_closing_time = datetime.datetime.strptime(doc.date_closing, '%Y-%m-%d %H:%M:%S')
+                            if now > doc_closing_time:
+                                pass
+                                #print("document edition is closed")
+                            else:
+                                docs.append(doc)
+                            pass
+                        else:
+                            docs.append(doc)
         return docs
 
 
