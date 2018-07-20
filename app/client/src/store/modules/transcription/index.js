@@ -37,17 +37,20 @@ const state = {
 const mutations = {
 
   INIT(state, payload) {
+
+    console.log("INIT", payload)
+
     if (!transcriptionShadowQuill) {
 
-      transcriptionShadowQuillElement.innerHTML = payload.content;
+      transcriptionShadowQuillElement.innerHTML = payload.content || "";
       transcriptionShadowQuill = new Quill(transcriptionShadowQuillElement);
       state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
 
-      notesShadowQuillElement.innerHTML = payload.withNotes;
+      notesShadowQuillElement.innerHTML = payload.withNotes || "";
       notesShadowQuill = new Quill(notesShadowQuillElement);
       state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
 
-      speechpartsShadowQuillElement.innerHTML = payload.withSpeechparts;
+      speechpartsShadowQuillElement.innerHTML = payload.withSpeechparts || "";
       speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement);
       state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
 
@@ -108,36 +111,50 @@ const actions = {
     }).then(() => {
       return this.dispatch('notes/fetch', doc_id);
     })
-    .then(() => {
-      return this.dispatch('transcription/fetchAlignments', { doc_id, user_id });
-    })
-    .then(() => {
-
-      return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
-
-        let transcription = {content : " ", notes: []};
-
-        if (response.data.data && response.data.data.length !== 0) {
-          transcription = response.data.data;
-        }
-
-        let quillContent = TEIToQuill(transcription.content);
-        let content = insertSegments(quillContent, state.transcriptionAlignments, 'transcription');
-        const withNotes = insertNotesAndSegments(quillContent, transcription.notes, state.transcriptionAlignments, 'transcription');
-
-        const data = {
-          transcription: transcription,
-          content: convertLinebreakTEIToQuill(content),
-          withNotes: convertLinebreakTEIToQuill(withNotes),
-          withSpeechparts: convertLinebreakTEIToQuill(content),
-        }
-        console.warn("ne pas oublier de mettre les vraies parties")
-
-        commit('INIT', data)
-        commit('UPDATE', data);
+      .then(() => {
+        return this.dispatch('transcription/fetchAlignments', { doc_id, user_id });
       })
+      .then(() => {
 
-    })
+        return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
+
+          console.log('TRANSCRIPTION', response)
+          if (response.data.errors && response.data.errors.status === 404) {
+            console.log("NO transcription found")
+            const emptyData = {
+              transcription: " ",
+              content: " ",
+              withNotes: " ",
+              withSpeechparts: " ",
+            }
+            commit('INIT', emptyData)
+            commit('UPDATE', emptyData);
+            return;
+          }
+          let transcription = {content : " ", notes: []};
+
+          if (response.data.data && response.data.data.length !== 0) {
+            transcription = response.data.data;
+          }
+
+
+          let quillContent = TEIToQuill(transcription.content);
+          let content = insertSegments(quillContent, state.transcriptionAlignments, 'transcription');
+          const withNotes = insertNotesAndSegments(quillContent, transcription.notes, state.transcriptionAlignments, 'transcription');
+
+          const data = {
+            transcription: transcription,
+            content: convertLinebreakTEIToQuill(content),
+            withNotes: convertLinebreakTEIToQuill(withNotes),
+            withSpeechparts: convertLinebreakTEIToQuill(content),
+          }
+          console.warn("ne pas oublier de mettre les vraies parties")
+
+          commit('INIT', data)
+          commit('UPDATE', data);
+        })
+
+      })
       .then(() => {
         return this.dispatch('translation/fetch', { doc_id, user_id });
       });
@@ -145,16 +162,30 @@ const actions = {
   fetchAlignments ({commit}, {doc_id, user_id}) {
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/from-user/${user_id}`).then( response => {
       // Check if response is 1 alignment or more
+      console.log("STORE ACTION transcription/fetchAlignments", response)
+      if (response.data.errors) {
+        commit('ALIGNMENTS', []);
+        return;
+      }
       const alignments = response.data.data && Array.isArray(response.data.data[0]) ? response.data.data : [response.data.data]
       commit('ALIGNMENTS', alignments);
     })
 
   },
-  save ({dispatch}, transcriptionWithNotes) {
+  save ({dispatch, rootState}, transcriptionWithNotes) {
     console.log('STORE ACTION transcription/save');
 
     return dispatch('saveContent')
-      .then(reponse => dispatch('saveAlignment'))
+      .then(reponse => {
+        if (rootState.translation.translation.id) {
+          // Saves alignment if translation exists
+
+          console.log('   => saves');
+          return dispatch('saveAlignment')
+        }
+          console.log('   => bypass');
+        return true;
+      })
       .then(reponse => dispatch('saveNotes'))
       .then(reponse => dispatch('translation/save', null, {root:true}))
       .then(function(values) {
@@ -166,8 +197,8 @@ const actions = {
       });
 
   },
-  saveContent ({ state, rootGetters }) {
-    console.log('STORE ACTION transcription/saveContent');
+  saveContent ({ state, rootGetters, rootState }) {
+    console.log('STORE ACTION transcription/saveContent', rootState);
     const auth = rootGetters['user/authHeader'];
     const tei = quillToTEI(state.transcriptionContent);
     const sanitized = stripSegments(tei);
@@ -175,8 +206,9 @@ const actions = {
         "content" : sanitized,
         "username": rootGetters['user/currentUser'].username
       }]};
+    const method  = (state.transcription && state.transcription.doc_id) ? axios.put : axios.post;
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/adele/api/1.0/documents/${state.transcription.doc_id}/transcriptions`, data, auth)
+      method(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions`, data, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);
@@ -209,7 +241,7 @@ const actions = {
     const auth = rootGetters['user/authHeader'];
 
     return new Promise( ( resolve, reject ) => {
-      axios.put(`/adele/api/1.0/documents/${state.transcription.doc_id}/transcriptions/notes`, { data: notes }, auth)
+      axios.put(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/notes`, { data: notes }, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);
@@ -242,7 +274,7 @@ const actions = {
         ptr_list : pointers,
       }};
     return new Promise( ( resolve, reject ) => {
-      axios.post(`/adele/api/1.0/documents/${state.transcription.doc_id}/transcriptions/alignments`, data, auth)
+      axios.post(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/alignments`, data, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);
@@ -255,7 +287,6 @@ const actions = {
           reject( error )
         });
     } );
-
   },
   changed ({ commit }, deltas) {
     commit('ADD_OPERATION', deltas)

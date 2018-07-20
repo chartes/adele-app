@@ -1379,3 +1379,21 @@ l {
                         .submit {
                           margin-top: 12px;
                           margin-bottom: 12px; }
+
+                          #user-management {
+                            margin-top: 32px; }
+                            #user-management .user-messages {
+                              height: 30px;
+                              margin-left: 12px; }
+                              #user-management #empty-tile {
+                                height: 140px; }
+                                #user-management .arrow-btn {
+                                  width: 40px !important;
+                                  height: 60px !important;
+                                  margin-left: 43% !important; }
+                                  #user-management #field-add-userlist {
+                                    margin-left: 20px; }
+                                    #user-management .delete-btn {
+                                      margin-top: 12px; }
+                                      #user-management .user-row:hover {
+                                        cursor: pointer; }

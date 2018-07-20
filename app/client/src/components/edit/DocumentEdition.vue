@@ -12,7 +12,7 @@
                 <facsimile-editor></facsimile-editor>
             </tab>
 
-            <tab name="Parties du discours">
+            <tab name="Parties du discours" v-if="!!transcription">
                 <speechparts-edition/>
             </tab>
 
@@ -39,6 +39,7 @@
   import SpeechpartsEditor from "../editors/SpeechpartsEditor";
   import SpeechpartsEdition from "./SpeechpartsEdition";
   import NoticeEdition from "./NoticeEdition";
+  import {mapState} from 'vuex';
 
   export default {
     name: "document-edition",
@@ -57,6 +58,10 @@
     created() {
       this.$store.dispatch('transcription/fetch');
       //this.$store.dispatch('translation/fetch');
+    },
+    computed: {
+      ...mapState('transcription', ['transcription']),
+      ...mapState('translation', ['translation']),
     }
   }
 </script>
