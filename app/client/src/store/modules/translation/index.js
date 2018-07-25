@@ -9,7 +9,6 @@ import {removeFromDelta} from "../../../modules/quill/DeltaUtils";
 
 const translationShadowQuillElement = document.createElement('div');
 const notesShadowQuillElement = document.createElement('div');
-const speechpartsShadowQuillElement = document.createElement('div');
 let translationShadowQuill;
 let notesShadowQuill;
 let speechpartsShadowQuill;
@@ -78,8 +77,8 @@ const actions = {
 
   fetch ({ commit, rootGetters, rootState }) {
 
-    const doc_id = rootGetters['document/document'].id;
-    const user_id = rootGetters['user/currentUser'].id;
+    const doc_id = rootState.document.document.id;
+    const user_id = rootState.user.author.id;
     const alignments = rootState.transcription.transcriptionAlignments;
 
     console.log('STORE ACTION translation/fetch',rootState)
@@ -108,7 +107,7 @@ const actions = {
 
 
   },
-  save ({ commit, dispatch, getters, rootState }) {
+  save ({ commit, dispatch }) {
 
     console.log('STORE ACTION translation/save');
 
@@ -119,14 +118,14 @@ const actions = {
       })
 
   },
-  saveContent ({ state, rootGetters }) {
+  saveContent ({ state, rootState, rootGetters }) {
     console.log('STORE ACTION translation/saveContent');
     const auth = rootGetters['user/authHeader'];
     const tei = quillToTEI(state.translationContent);
     const sanitized = stripSegments(tei);
     const data = { data: [{
         "content" : sanitized,
-        "username": rootGetters['user/currentUser'].username
+        "username": rootState.user.author.username
       }]};
 
     return new Promise( ( resolve, reject ) => {

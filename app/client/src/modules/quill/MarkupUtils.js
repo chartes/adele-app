@@ -206,9 +206,7 @@ const insertSegments = (text, segments, translationOrTranscription) => {
   const tagLength = tag.length;
   let result = text;
   let indexCorrection = 0;
-  console.log('insertSegments', segments)
   segments.forEach(segment => {
-    console.log('insertSegments', segment)
     let strAtInsertPoint = result.substr(segment[index] + indexCorrection, 3);
     if (segment[index] + indexCorrection > 0 && strAtInsertPoint !== '<p>' && strAtInsertPoint !== '<l>' && strAtInsertPoint !== '<lb>') {
       result = result.insert(segment[index] + indexCorrection, tag);
@@ -271,13 +269,44 @@ const insertNotesAndSegments  = (text, notes, segments, translationOrTranscripti
 
   return result
 }
+const insertSpeechparts = (text, speechparts) => {
+  let insertions = [];
+  speechparts.forEach((note, index) => {
+    insertions.push({index: note.ptr_start, type: 'sp_start', note: note, fakeId: index});
+    insertions.push({index: note.ptr_end, type: 'sp_end'});
+  });
+  insertions.sort((a, b) => { return a.index - b.index; });
+
+  let result = text;
+  let indexCorrection = 0;
+
+  insertions.forEach(ins => {
+    let insertTag = '';
+    let inserted = false;
+    switch (ins.type) {
+      case 'sp_start':
+        insertTag = `<speechpart id="${ins.fakeId}">`;
+        inserted = true;
+        break;
+      case 'sp_end':
+        insertTag = `</speechpart>`;
+        inserted = true;
+        break;
+    }
+    result = result.insert(ins.index + indexCorrection, insertTag);
+    if (inserted) //console.log(" =>", result)
+      indexCorrection += insertTag.length;
+  });
+
+  return result
+};
+
 const stripNotes  = text => text.replace(/<\/?note( id="\d+")?>/gmi, '');
 const stripSegments  = text => text.replace(/<\/?segment>/gmi, '');
+const stripSpeechparts  = text => text.replace(/<\/?speechpart( id="\d+")?>/gmi, '');
 
 const computeNotesPointers  = (htmlWithNotes) => {
 
-  ////console.log("computeNotesPointers:")
-  ////console.log(htmlWithNotes)
   const regexpStart = /<note id="(\d+)">/;
   const regexpEnd = /<\/note>/;
   let resStart, resEnd;
@@ -327,6 +356,26 @@ const computeAlignmentPointers  = (htmlWithSegments) => {
   return pointers;
 }
 
+const computeSpeechpartsPointers  = (htmlWithSpeechparts) => {
+
+  const regexpStart = /<speechpart id="((\d+)|temp)">/;
+  const regexpEnd = /<\/speechpart>/;
+  let resStart, resEnd;
+  const speechparts = [];
+  while((resStart = regexpStart.exec(htmlWithSpeechparts)) !== null) {
+    htmlWithSpeechparts = htmlWithSpeechparts.replace(regexpStart, '');
+    resEnd = regexpEnd.exec(htmlWithSpeechparts);
+    htmlWithSpeechparts = htmlWithSpeechparts.replace(regexpEnd, '');
+    speechparts.push({
+      "index" : parseInt(resStart[1]),
+      "ptr_start": resStart.index,
+      "ptr_end": resEnd.index
+    });
+  }
+  return speechparts;
+}
+
+
 export {
   quillToTEI,
   TEIToQuill,
@@ -335,8 +384,10 @@ export {
   insertNotesAndSegments,
   insertNotes,
   insertSegments,
+  insertSpeechparts,
   stripNotes,
   stripSegments,
   computeAlignmentPointers,
   computeNotesPointers,
+  computeSpeechpartsPointers,
 };

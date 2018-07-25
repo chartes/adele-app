@@ -12,7 +12,11 @@ const mutations = {
 
   UPDATE_CURRENT_USER (state, payload) {
     state.currentUser = payload;
+    console.log('STORE MUTATION user/UPDATE_CURRENT_USER')
+  },
+  UPDATE_AUTHOR (state, payload) {
     state.author = payload;
+    console.log('STORE MUTATION user/UPDATE_AUTHOR')
   },
   UPDATE_AUTH_TOKEN (state, payload) {
     state.authToken = payload;
@@ -25,6 +29,7 @@ const actions = {
   getCurrentUser ({ commit }) {
     return axios.get('/adele/api/1.0/user').then( (response) => {
       commit('UPDATE_CURRENT_USER', response.data.data)
+      commit('UPDATE_AUTHOR', response.data.data)
     })
   },
   setAuthToken ({ commit }, token) {

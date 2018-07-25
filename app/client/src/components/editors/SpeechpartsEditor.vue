@@ -18,6 +18,9 @@
                         :delete="setSpeechpartEditModeDelete"/>
             </div>
 
+
+            <save-bar :action="save"/>
+
             <speechpart-form
                     v-if="speechpartEditMode == 'new' || speechpartEditMode == 'edit'"
                     :speechpart="currentSpeechpart"
@@ -25,7 +28,7 @@
                     :submit="updateSpeechpart"
                     :cancel="closeSpeechpartEdit"
             />
-            <modal-confirm-note-delete
+            <modal-confirm-speechpart-delete
                     v-if="speechpartEditMode == 'delete'"
                     :cancel="closeSpeechpartEdit"
                     :submit="deleteSpeechpart"
@@ -44,12 +47,14 @@
   import SaveBar from "../ui/save-bar";
   import SpeechpartForm from "../forms/SpeechpartForm";
   import SpeechpartActions from "../ui/speechpart-actions";
+  import ModalConfirmSpeechpartDelete from "../forms/ModalConfirmSpeechpartDelete";
 
   export default {
     name: "speechparts-editor",
     props: ['initialContent'],
     mixins: [EditorMixins],
     components: {
+      ModalConfirmSpeechpartDelete,
       SpeechpartActions,
       SpeechpartForm,
       SaveBar,
@@ -108,32 +113,19 @@
         }
       },
       onSpeechpartSelected (speechpart, range) {
-        console.log("onSpeechpartSelected", speechpart, range.index, range.length)
-
         if (!range.length) return;
         this.selectedSpeechpartId = speechpart;
-        console.log("onSpeechpartSelected => ", this.selectedSpeechpartId)
-
-        var deltas = this.editor.getContents().ops;
-        var length = deltas.length;
-
       },
 
       updateSpeechpart(sp) {
         const isNewSpeechpart = this.speechpartEditMode === 'new';
         const action = isNewSpeechpart ? 'add' : 'update';
-        console.log('updateSpeechpart', sp, action)
-        this.$store.dispatch('speechparts/'+action, sp).then(()=>{
-          if (isNewSpeechpart) {
-            console.log('editor set format', this.newSpeechpart);
-            this.editor.format('speechpart', this.newSpeechpart.id);
-            this.selectedSpeechpartId = this.newSpeechpart.id;
-          }
-          this.closeSpeechpartEdit();
-        })
+        sp.speech_part_type = this.getSpeechpartTypeById(sp.type_id);
+        this.editor.format('speechpart',  this.$store.state.speechparts.speechparts.length);
+        this.$store.dispatch('speechparts/add', sp);
+        this.closeSpeechpartEdit();
       },
       deleteSpeechpart() {
-        console.log('deleteSpeechpart')
         this.editor.format('speechpart', false);
         this.selectedSpeechpartId = null;
         this.closeSpeechpartEdit();
@@ -151,7 +143,7 @@
       },
       setSpeechpartEditModeEdit() {
         this.speechpartEditMode = 'edit';
-        this.currentSpeechpart = this.$store.getters['speechparts/getSpeechpartById'](this.selectedSpeechpartId);
+        this.currentSpeechpart = this.$store.state.speechparts.speechparts[this.selectedSpeechpartId];
       },
 
       newSpeechpartChoiceOpen() {
@@ -162,7 +154,6 @@
       },
 
       closeSpeechpartEdit() {
-        console.log("closeSpeechpartEdit")
         this.speechpartEditMode = null;
         this.currentSpeechpart = null;
         this.editor.focus();
@@ -190,12 +181,12 @@
 
     computed: {
       isSpeechpartButtonActive () {
-        console.log('isSpeechpartButtonActive')
         const cond = this.editorHasFocus && this.buttons.speechpart;
         return cond;
       },
       ...mapGetters('transcription', ['transcription']),
-      ...mapGetters('speechparts', ['newSpeechpart'])
+      ...mapGetters('speechparts', ['newSpeechpart']),
+      ...mapGetters('speechpartTypes', ['getSpeechpartTypeById']),
     }
   }
 </script>

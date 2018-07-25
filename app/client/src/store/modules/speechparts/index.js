@@ -10,17 +10,17 @@ const state = {
 const mutations = {
 
   UPDATE_ALL (state, speechparts) {
-    console.log("speechpart UPDATE_ALL");
+    console.log("STORE ACTION speechpart/UPDATE_ALL", speechparts);
     state.speechparts = speechparts;
   },
   NEW (state, speechpart) {
+    console.log("STORE ACTION speechpart/NEW", speechpart);
     state.newSpeechpart = speechpart;
     state.speechparts.push(speechpart);
-    console.log("speechpart NEW", state.newSpeechpart);
   },
   UPDATE_ONE (state, speechpart) {
-    state.speechparts.push(speechpart);
-    console.log("speechpart UPDATE_ONE", speechpart);
+    //state.speechparts.push(speechpart);
+    console.log("STORE ACTION speechpart/UPDATE_ONE", speechpart);
     let foundSpeechpart = state.speechparts.find(n => n.id === speechpart.id);
     console.log('speechpart foundSpeechpart', foundSpeechpart)
   }
@@ -29,9 +29,9 @@ const mutations = {
 
 const actions = {
 
-  fetch ({ commit, getters, rootGetters }, docId) {
-    console.log('STORE ACTION speechparts/fetch')
-    return axios.get(`/adele/api/1.0/documents/${docId}/speechparts`)
+  fetch ({ commit, getters, rootGetters }, { doc_id, user_id }) {
+    console.log('STORE ACTION speechparts/fetch', doc_id, user_id)
+    return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/discours/from-user/${user_id}`)
       .then( (response) => {
         commit('UPDATE_ALL', response.data.data)
       }).catch(function(error) {
@@ -39,6 +39,10 @@ const actions = {
       });
   },
   add ({ commit, getters, rootState }, newSpeechpart) {
+    console.log("STORE ACTION speechparts/add", newSpeechpart, rootState);
+    commit('NEW', newSpeechpart);
+  },
+  /*add ({ commit, getters, rootState }, newSpeechpart) {
     console.log("STORE ACTION speechparts/add", newSpeechpart, rootState);
     const docId = rootState.document.document.id;
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
@@ -56,11 +60,11 @@ const actions = {
 
     return axios.post(`/adele/api/1.0/documents/${docId}/transcriptions/alignments/discours`, newSpeechparts, config)
       .then( response => {
-        const speechpart = response.data.data;
-        console.log("STORE ACTION speechparts/add saved", response)
-        commit('NEW', speechpart);
+        console.log("STORE ACTION speechparts/add saved")
+        commit('NEW', newSpeechpart);
       })
-  },
+  },*/
+
   update ({ commit, getters, rootState }, speechpart) {
     console.log("STORE ACTION speechparts/update", speechpart);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
