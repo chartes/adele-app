@@ -797,11 +797,11 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
                             data = data["speech_parts"]
 
                         # DELETE the old data
-                        # for old_al in AlignmentDiscours.query.filter(
-                        #        AlignmentDiscours.transcription_id == transcription.id,
-                        #        AlignmentDiscours.user_id == user_id
-                        # ).all():
-                        # db.session.delete(old_al)
+                        for old_al in AlignmentDiscours.query.filter(
+                                AlignmentDiscours.transcription_id == transcription.id,
+                                AlignmentDiscours.user_id == user_id
+                            ).all():
+                            db.session.delete(old_al)
 
                         if response is None:
                             try:
