@@ -11,10 +11,12 @@ const mutations = {
 
   UPDATE_ALL (state, notes) {
     console.log("UPDATE_NOTES");
+    notes = Array.isArray(notes) ? notes : [notes];
     state.notes = notes;
   },
   NEW (state, note) {
     state.newNote = note;
+    console.log('NEW', state, state.notes, state.notes.push)
     state.notes.push(note);
     console.log("ADD_NEW_NOTE", state.newNote);
   },
