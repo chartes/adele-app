@@ -1300,89 +1300,94 @@ l {
               margin-top: 0px; }
 
               .nav-pages {
-                margin: auto auto 30px;
-                width: 300px; }
+                margin-bottom: 12px; }
+                .nav-pages li + li {
+                  margin-top: 0; }
+                  .nav-pages ul {
+                    margin: 0; }
+                    .nav-pages .pagination-list {
+                      justify-content: center; }
 
-                .find-btn-group {
-                  margin-top: 30px; }
+.find-btn-group {
+  margin-top: 30px; }
 
-                  #tag-cloud {
-                    margin-bottom: 20px;
-                    margin-top: 20px; }
+  #tag-cloud {
+    margin-bottom: 20px;
+    margin-top: 20px; }
 
-                    #find-col {
-                      padding-right: 0px;
-                      background-color: #eee;
-                      user-select: none; }
+    #find-col {
+      padding-right: 0px;
+      background-color: #eee;
+      user-select: none; }
 
-                      #find-col .level:not(:last-child) {
-                        margin-bottom: 0px; }
+      #find-col .level:not(:last-child) {
+        margin-bottom: 0px; }
 
-                        #find-col .section {
-                          padding-left: 0px;
-                          padding-right: 0px; }
+        #find-col .section {
+          padding-left: 0px;
+          padding-right: 0px; }
 
-                          .field.is-grouped {
-                            display: block; }
+          .field.is-grouped {
+            display: block; }
 
-                            #find-col .accordion {
+            #find-col .accordion {
+              background-color: #eee;
+              color: #444;
+              cursor: pointer;
+              padding: 18px;
+              width: 100%;
+              text-align: left;
+              border: none;
+              outline: none;
+              transition: 0.4s; }
+
+              #find-col .active, .accordion:hover {
+                background-color: #ccc; }
+
+                #find-col .panel {
+                  padding: 0;
+                  background-color: whitesmoke;
+                  display: none;
+                  overflow: hidden; }
+
+                  #find-col .panel:not(:last-child) {
+                    margin-bottom: 0px; }
+
+                    #find-col .panel-item {
+                      padding: 12px 12px 12px 24px; }
+
+                      #find-col li {
+                        color: #7a7a7a;
+                        cursor: pointer; }
+
+                        #find-col li:hover {
+                          background-color: #ff3860;
+                          color: whitesmoke; }
+
+                          .dot {
+                            height: 12px;
+                            width: 12px;
+                            background-color: #ff3860;
+                            border-radius: 50%;
+                            display: inline-block;
+                            margin-right: 18px; }
+
+                            .white-dot {
+                              height: 12px;
+                              width: 12px;
                               background-color: #eee;
-                              color: #444;
-                              cursor: pointer;
-                              padding: 18px;
-                              width: 100%;
-                              text-align: left;
-                              border: none;
-                              outline: none;
-                              transition: 0.4s; }
+                              border-radius: 50%;
+                              display: inline-block;
+                              margin-right: 18px; }
 
-                              #find-col .active, .accordion:hover {
-                                background-color: #ccc; }
-
-                                #find-col .panel {
-                                  padding: 0;
-                                  background-color: whitesmoke;
-                                  display: none;
-                                  overflow: hidden; }
-
-                                  #find-col .panel:not(:last-child) {
-                                    margin-bottom: 0px; }
-
-                                    #find-col .panel-item {
-                                      padding: 12px 12px 12px 24px; }
-
-                                      #find-col li {
-                                        color: #7a7a7a;
-                                        cursor: pointer; }
-
-                                        #find-col li:hover {
-                                          background-color: #ff3860;
-                                          color: whitesmoke; }
-
-                                          .dot {
-                                            height: 12px;
-                                            width: 12px;
-                                            background-color: #ff3860;
-                                            border-radius: 50%;
-                                            display: inline-block;
-                                            margin-right: 18px; }
-
-                                            .white-dot {
-                                              height: 12px;
-                                              width: 12px;
-                                              background-color: #eee;
-                                              border-radius: 50%;
-                                              display: inline-block;
-                                              margin-right: 18px; }
-
-                                              #document-list {
-                                                margin: auto;
-                                                width: 95%; }
-                                                #document-list img {
-                                                  padding-left: 0px; }
-                                                  #document-list .thumbnail-container {
-                                                    left: 0px;
-                                                    width: 150px; }
+                              #document-list {
+                                margin: auto;
+                                width: 95%; }
+                                #document-list img {
+                                  padding-left: 0px; }
+                                  #document-list .thumbnail-container {
+                                    left: 0px;
+                                    width: 150px; }
 
 .content figure {
   margin-left: 0px; }
@@ -1414,41 +1419,6 @@ l {
                 width: 800px;
                 margin: auto; }
 
-<<<<<<< HEAD
-                .register-form .message-body input {
-                  width: 400px; }
-
-                  .register-form .message-body .submit {
-                    width: initial; }
-
-                    .column {
-                      padding-bottom: 0.25em; }
-
-                      .submit-group {
-                        margin-top: 18px; }
-
-                        .submit {
-                          margin-top: 12px;
-                          margin-bottom: 12px; }
-
-                          #user-management {
-                            margin-top: 32px; }
-                            #user-management .user-messages {
-                              height: 30px;
-                              margin-left: 12px; }
-                              #user-management #empty-tile {
-                                height: 140px; }
-                                #user-management .arrow-btn {
-                                  width: 40px !important;
-                                  height: 60px !important;
-                                  margin-left: 43% !important; }
-                                  #user-management #field-add-userlist {
-                                    margin-left: 20px; }
-                                    #user-management .delete-btn {
-                                      margin-top: 12px; }
-                                      #user-management .user-row:hover {
-                                        cursor: pointer; }
-=======
                 .register-form .message-body {
                   width: 700px;
                   margin: auto; }
@@ -1475,7 +1445,7 @@ l {
                                 height: 30px;
                                 margin-left: 12px; }
                                 #user-management #empty-tile {
-                                  height: 140px; }
+                                  height: 170px; }
                                   #user-management .arrow-btn {
                                     width: 40px !important;
                                     height: 60px !important;
@@ -1486,6 +1456,8 @@ l {
                                         margin-top: 12px; }
                                         #user-management .user-row:hover {
                                           cursor: pointer; }
+                                          #user-management .field:not(:last-child) {
+                                            margin-bottom: 0; }
 
 #document-list-table {
   margin-top: 32px; }
@@ -1530,4 +1502,3 @@ l {
         margin: auto; }
         #modal-manifest-validation #manifest-preview p {
           text-align: center; }
->>>>>>> c72a693cfeaab5392fea017281460b955898f66d

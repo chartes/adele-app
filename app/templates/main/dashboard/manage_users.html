@@ -35,8 +35,8 @@
                                             <div id="user-messages"></div>
                                     </div>
                                 </div>
-                                <!-- filled through ajax calls -->
 
+                                 <!-- filled through ajax calls -->
                                 <div id="users-table-container"></div>
                                 <div class="field is-pulled-right">
                                         <p class="control">
@@ -215,11 +215,29 @@
                 }
             });
 
+            function bind_user_selections() {
+                $('.user-row').each(function() {
+                    $(this).unbind('click');
+                    $(this).click(function(){
+                            console.log('click', $(this), $(this).hasClass('is-selected'));
+                            if ($(this).hasClass('user')) {
+                                $('.userlist').removeClass('is-selected');
+                            }
+                            else {
+                                $('.user').removeClass('is-selected');
+                            }
+                            $(this).toggleClass("is-selected");
+                        });
+
+                });
+            }
+
             function populate_userlist_list() {
                  const list_id = $("#select-userlist option:selected").val();
                  $.ajax({
                         url: "{{ url_for('app_bp.dashboard_manage_users_list', list_id='') }}" + list_id,
-                        method: 'GET',
+                        method: 'POST',
+                        data: $("#userlist-form").serialize(),
                         beforeSend: function (xhr) {
                             xhr.setRequestHeader (
                                 "Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
@@ -227,34 +245,39 @@
                         context: document.body
                     }).done(function (data) {
                         $("#userlist-table-container").html(data);
+
+                        bind_user_selections();
+
+                        $('#userlist-form .pagination-btn').click(function () {
+                            $('#userlist_page').val($(this).text().trim());
+                            populate_userlist_list();
+                        });
                  });
             }
 
             function populate_user_list() {
-                const list_id = $("#select-userlist option:selected").val();
+                 const list_id = $("#select-userlist option:selected").val();
+                 console.log("populate_userlist");
                  $.ajax({
                         url: "{{ url_for('app_bp.dashboard_manage_users_users', list_id='') }}" + list_id,
-                        method: 'GET',
+                        method: 'POST',
+                        data: $("#users-form").serialize(),
+                        context: document.body,
                         beforeSend: function (xhr) {
                             xhr.setRequestHeader (
                                 "Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
                         },
-                        context: document.body
                     }).done(function (data) {
                         $("#users-table-container").html(data);
-                        /*
-                            Select users on click
-                        */
-                        $('.user-row').click(function(){
-                            if ($(this).hasClass('user')) {
-                                $('.userlist').removeClass('is-selected');
-                            }
-                            else {
-                                $('.user').removeClass('is-selected');
-                            }
-                           $(this).toggleClass("is-selected");
+
+                        bind_user_selections();
+
+                        $('#users-form .pagination-btn').click(function () {
+                            $('#user_page').val($(this).text());
+                            populate_user_list();
                         });
-                 });
+
+                    });
             }
 
             /*
@@ -421,7 +444,7 @@
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
                     }
-                }).done(function() {
+                }).done(function(data) {
                     if (!data.errors) {
                         const new_userlist = data.data.whitelist;
                         console.log(new_userlist);
