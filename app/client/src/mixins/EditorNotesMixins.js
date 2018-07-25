@@ -29,11 +29,11 @@ var EditorNotesMixin = {
     },
     updateNote(note) {
       const isNewNote = this.noteEditMode === 'new';
-      const action = isNewNote ? 'addNote' : 'updateNote';
+      const action = isNewNote ? 'notes/add' : 'notes/update';
       this.$store.dispatch(action, note).then(()=>{
         if (isNewNote) {
-          this.editor.format('note', this.$store.getters.newNote.id);
-          this.selectedNoteId = this.$store.getters.newNote.id;
+          this.editor.format('note', this.$store.getters['notes/newNote'].id);
+          this.selectedNoteId = this.$store.getters['notes/newNote'].id;
         }
         this.closeNoteEdit();
       })
