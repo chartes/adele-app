@@ -90,7 +90,7 @@ const actions = {
       let translation = {content : " ", notes: []};
 
       if (response.data.data && response.data.data.length !== 0) {
-        translation = response.data.data;
+        translation = response.data.data[0];
       }
       let quillContent = TEIToQuill(translation.content);
       let content = insertSegments(quillContent, alignments, 'translation');

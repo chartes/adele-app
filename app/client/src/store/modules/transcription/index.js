@@ -118,25 +118,24 @@ const actions = {
 
         return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
 
-          console.log('TRANSCRIPTION', response)
+          console.log('TRANSCRIPTION', response);
           if (response.data.errors && response.data.errors.status === 404) {
-            console.log("NO transcription found")
+            console.log("NO transcription found");
             const emptyData = {
               transcription: " ",
               content: " ",
               withNotes: " ",
               withSpeechparts: " ",
-            }
-            commit('INIT', emptyData)
+            };
+            commit('INIT', emptyData);
             commit('UPDATE', emptyData);
             return;
           }
           let transcription = {content : " ", notes: []};
 
           if (response.data.data && response.data.data.length !== 0) {
-            transcription = response.data.data;
+            transcription = response.data.data[0];
           }
-
 
           let quillContent = TEIToQuill(transcription.content);
           let content = insertSegments(quillContent, state.transcriptionAlignments, 'transcription');
