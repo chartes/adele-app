@@ -621,7 +621,7 @@ def api_post_documents_transcriptions_alignments(api_version, doc_id):
                         response = APIResponseFactory.make_response(errors=json_obj["errors"])
                         translation = None
                     else:
-                        translation = json_obj["data"]
+                        translation = json_obj["data"][0]
 
                         # let's make the new alignments from the data
                     if translation is not None and response is None:
@@ -669,10 +669,7 @@ def api_post_documents_transcriptions_alignments(api_version, doc_id):
                                     ),
                                     user=user
                                 )
-                                if "data" in json_obj:
-                                    response = APIResponseFactory.make_response(data=json_obj["data"])
-                                else:
-                                    response = APIResponseFactory.make_response(data=json_obj["errors"])
+                                response = APIResponseFactory.make_response(json_obj["data"])
         else:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Data is malformed"
