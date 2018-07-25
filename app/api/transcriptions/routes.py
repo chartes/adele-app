@@ -439,7 +439,7 @@ def api_documents_transcriptions_alignments(api_version, doc_id, user_id=None):
             if "data" not in json_obj:
                 response = APIResponseFactory.make_response(errors=json_obj["errors"])
             else:
-                translation = json_obj["data"]
+                translation = json_obj["data"][0]
 
                 alignments = AlignmentTranslation.query.filter(
                     AlignmentTranslation.transcription_id == transcription.id,
