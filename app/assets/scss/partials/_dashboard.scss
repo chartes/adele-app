@@ -8,7 +8,7 @@
   }
 
   #empty-tile {
-    height: 140px;
+    height: 170px;
   }
 
   .arrow-btn {
@@ -27,6 +27,11 @@
 
   .user-row:hover {
     cursor: pointer;
+  }
+
+  .field:not(:last-child)  {
+
+      margin-bottom: 0;
   }
 }
 

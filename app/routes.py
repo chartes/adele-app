@@ -134,27 +134,72 @@ def dashboard_manual():
     return render_template_with_token('main/dashboard/manual.html')
 
 
-@app_bp.route('/dashboard/manage-users/userlist/<list_id>')
+@app_bp.route('/dashboard/manage-users/userlist/<list_id>', methods=["POST"])
 @roles_required(['admin', 'teacher'])
 @login_required
 def dashboard_manage_users_list(list_id):
     user_list = Whitelist.query.filter(Whitelist.id == list_id).first()
+
+    userlist_page = request.form.get('userlist_page')
+    userlist_page = int(userlist_page if userlist_page and userlist_page != '' else 1)
+    nav_uri = []
+
+    _page_max = current_app.config['USERS_PER_PAGE']
+    if len(user_list.users) == _page_max:
+        nav_uri = [1]
+    else:
+        for p in range(0, int(math.floor(len(user_list.users) / _page_max)) + 1):
+            nav_uri.append(p + 1)
+
+    def get_page(p):
+        return user_list.users[0 + (p - 1) * _page_max: 0 + p * _page_max]
+
+    paged_users = get_page(userlist_page)
+    if len(paged_users) == 0 and userlist_page > 1:
+        paged_users = get_page(userlist_page - 1)
+
     return render_template_with_token(
         'main/fragments/_manage_users_list.html',
-        user_list=user_list
+        users=paged_users,
+        current_userlist_page=userlist_page,
+        nav_uri=nav_uri
     )
 
 
-@app_bp.route('/dashboard/manage-users/users/<list_id>')
+@app_bp.route('/dashboard/manage-users/users/<list_id>', methods=["POST"])
 @roles_required(['admin', 'teacher'])
 @login_required
 def dashboard_manage_users_users(list_id):
+
     user_list = Whitelist.query.filter(Whitelist.id == list_id).first()
     users = User.query.filter(User.id.notin_([u.id for u in user_list.users])).all()
 
+    # manage pagination
+    users = sorted(users, key=lambda u: "%s %s" % (u.last_name, u.first_name))
+
+    user_page = request.form.get('user_page')
+    user_page = int(user_page if user_page and user_page != '' else 1)
+    nav_uri = []
+
+    _page_max = current_app.config['USERS_PER_PAGE']
+    if len(users) == _page_max:
+        nav_uri = [1]
+    else:
+        for p in range(0, int(math.floor(len(users) / _page_max)) + 1):
+            nav_uri.append(p + 1)
+
+    def get_page(p):
+        return users[0 + (p - 1) * _page_max: 0 + p * _page_max]
+
+    paged_users = get_page(user_page)
+    if len(paged_users) == 0 and user_page > 1:
+        paged_users = get_page(user_page - 1)
+
     return render_template_with_token(
         'main/fragments/_manage_users.html',
-        users=users
+        users=paged_users,
+        current_user_page=user_page,
+        nav_uri=nav_uri
     )
 
 

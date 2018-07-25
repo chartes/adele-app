@@ -1715,10 +1715,17 @@ note {
 }
 
 .nav-pages {
-  margin: auto auto 30px;
-  width: 300px;
+  margin-bottom: 12px;
 }
-
+.nav-pages li + li {
+  margin-top: 0;
+}
+.nav-pages ul {
+  margin: 0;
+}
+.nav-pages .pagination-list {
+  justify-content: center;
+}
 .find-btn-group {
   margin-top: 30px;
 }
@@ -1893,7 +1900,7 @@ note {
   margin-left: 12px;
 }
 #user-management #empty-tile {
-  height: 140px;
+  height: 170px;
 }
 #user-management .arrow-btn {
   width: 40px !important;
@@ -1908,6 +1915,9 @@ note {
 }
 #user-management .user-row:hover {
   cursor: pointer;
+}
+#user-management .field:not(:last-child) {
+  margin-bottom: 0;
 }
 
 #document-list-table {

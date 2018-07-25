@@ -9,15 +9,15 @@
             {% endif %}
             <th style="width: 240px;">Date limite de modification <i class="fas fa-sort-down"></i></th>
             {% if current_user.is_admin or current_user.is_teacher %}
-            <th style="width: 100px;">Publié <i class="fas fa-sort-down"></i></th>
+            <th style="width: 130px;">Publication <i class="fas fa-sort-down"></i></th>
             {% endif %}
             <!-- edit button -->
-            <th></th>
+            <th style="width:250px"></th>
             <!-- export button -->
-            <th></th>
-            <!-- delete button -->
+            <!--<th></th>-->
+            <!-- delete button
             {% if current_user.is_admin or current_user.is_teacher %}
-            <th></th>
+            <!--<th></th>-->
             {% endif %}
         </tr>
     </thead>
@@ -73,22 +73,30 @@
             <div class="is-invisible sort-criteria">{% if d.is_published %}1{% else %}0{% endif%}</div>
         </td>
         <td>
-            <a class="button tag is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=d.id)}}">
-                <i class="fas fa-edit"></i>
-                <p>Éditer</p>
-            </a>
-        </td>
-        <td>
-            <div class="button tag is-light export-document">
-                <i class="fas fa-file-export"></i>
-                <p>Exporter</p>
+            <div>
+                <a class="" >
+                    <i class="fas fa-eye"></i>
+                    Travaux en cours
+                </a>
             </div>
-        </td>
-        <td>
+            <div>
+                <a class="is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=d.id)}}">
+                    <i class="fas fa-edit"></i>
+                    Éditer
+                </a>
+            </div>
+            <div>
+                <a class="is-light export-document">
+                    <i class="fas fa-file-export"></i>
+                    Exporter
+                </a>
+            </div>
             {% if current_user.is_admin or (current_user.is_teacher and current_user.id == d.user_id) %}
-            <div class="button tag is-danger delete-document">
-                <i class="fas fa-trash-alt"></i>
-                <p>Supprimer</p>
+            <div>
+                <a class="is-danger delete-document">
+                    <i class="fas fa-trash-alt"></i>
+                    Supprimer
+                </a>
             </div>
             {% endif %}
         </td>

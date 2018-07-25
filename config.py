@@ -17,6 +17,7 @@ class Config(object):
     SCSS_ASSET_DIR = os.path.join(basedir, "app/assets/scss")
 
     DOC_PER_PAGE = 20
+    USERS_PER_PAGE = 10
 
     CSRF_ENABLED = True
 

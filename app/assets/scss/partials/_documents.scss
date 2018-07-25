@@ -28,8 +28,20 @@
 }
 
 .nav-pages {
-  margin: auto auto 30px;
-  width: 300px;
+  li + li {
+      margin-top: 0;
+  }
+  ul {
+    margin: 0;
+  }
+  .pagination-list {
+    justify-content: center;
+  }
+  .pagination-link.is-current{
+
+  }
+
+  margin-bottom: 12px;
 }
 
 .find-btn-group {

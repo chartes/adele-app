@@ -1,18 +1,3 @@
-{% macro nav_pages(nav_uri, current_page) %}
-    <div class="nav-pages">
-        {% if nav_uri | length > 1 %}
-            <ul class="level">
-                {% for url in nav_uri %}
-                    <li class="level-item">
-                        <div class="pagination-btn button {% if loop.index != current_page %} is-white {% else %} is-light {% endif %}">
-                            {{ loop.index }}
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    </div>
-{% endmacro %}
 
 
 <section class="section">
@@ -36,6 +21,8 @@
             </article>
         </div>
     {% else %}
+        {% from 'main/fragments/_pagination.html' import nav_pages %}
+
         {{ nav_pages(nav_uri, current_page) }}
         {% from 'main/fragments/_document_table.html' import document_table %}
         {% from 'main/fragments/_document_list.html' import document_list %}
