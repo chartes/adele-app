@@ -81,10 +81,12 @@
 
       this.initEditor(this.$refs.editor, this.$props.initialContent);
       this.preventKeyboard();
+      this.activateMouseOver()
 
     },
     beforeDestroy () {
       this.allowKeyboard();
+      this.deactivateMouseOver();
     },
     methods: {
 
@@ -138,7 +140,6 @@
       setSpeechpartEditModeNew() {
         this.speechpartEditMode = 'new';
         this.currentSpeechpart = { transcription_id: this.transcription.id };
-        console.log("setSpeechpartEditModeNew", this.transcription.id, this.currentSpeechpart);
         this.newSpeechpartChoiceClose();
       },
       setSpeechpartEditModeEdit() {
@@ -146,9 +147,6 @@
         this.currentSpeechpart = this.$store.state.speechparts.speechparts[this.selectedSpeechpartId];
       },
 
-      newSpeechpartChoiceOpen() {
-        this.defineNewSpeechpart = true;
-      },
       newSpeechpartChoiceClose() {
         this.defineNewSpeechpart = false;
       },
@@ -171,11 +169,36 @@
       },
       keyboardPreventHandler (event) {
         if (!this.editor.hasFocus()) return;
-        console.log(event.keyCode)
         if (event.keyCode < 37 || event.keyCode > 40) {
           event.preventDefault();
         }
-      }
+      },
+
+      /* Speechpart mouse over */
+      activateMouseOver () {
+        this.$refs.editor.addEventListener('mouseover', this.mouseOverHandler)
+        this.$refs.editor.addEventListener('mouseout', this.mouseOutHandler)
+        //.querySelectorAll('speechpart')
+      },
+      deactivateMouseOver () {
+
+        this.$refs.editor.removeEventListener('mouseover', this.mouseOverHandler)
+        this.$refs.editor.removeEventListener('mouseout', this.mouseOutHandler)
+      },
+      mouseOverHandler (e) {
+        let id = null;
+        if (e.target.tagName.toLowerCase() === 'speechpart') {
+          id = parseInt(e.target.getAttribute('id'));
+        } else if (e.target.parentNode.tagName.toLowerCase() === 'speechpart') {
+          id = parseInt(e.target.parentNode.getAttribute('id'));
+        }
+        if (id === null) return;
+        this.$store.dispatch('speechparts/mouseover', {speechpart: this.$store.state.speechparts.speechparts[id], posY: e.clientY});
+
+      },
+      mouseOutHandler (e) {
+        this.$store.dispatch('speechparts/mouseover', {speechpart: false, posY: 0});
+      },
 
     },
 

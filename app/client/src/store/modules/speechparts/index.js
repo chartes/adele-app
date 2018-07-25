@@ -4,6 +4,8 @@ const state = {
 
   speechparts: [],
   newSpeechpart: false,
+  mouseOver: false,
+  mouseOverY: 0,
 
 };
 
@@ -17,6 +19,10 @@ const mutations = {
     console.log("STORE ACTION speechpart/NEW", speechpart);
     state.newSpeechpart = speechpart;
     state.speechparts.push(speechpart);
+  },
+  MOUSE_OVER (state, { speechpart, posY}) {
+    state.mouseOver = speechpart;
+    state.mouseOverY = posY;
   },
   UPDATE_ONE (state, speechpart) {
     //state.speechparts.push(speechpart);
@@ -41,6 +47,9 @@ const actions = {
   add ({ commit, getters, rootState }, newSpeechpart) {
     console.log("STORE ACTION speechparts/add", newSpeechpart, rootState);
     commit('NEW', newSpeechpart);
+  },
+  mouseover ({ commit, getters, rootState }, { speechpart, posY} ) {
+    commit('MOUSE_OVER', { speechpart, posY });
   },
   /*add ({ commit, getters, rootState }, newSpeechpart) {
     console.log("STORE ACTION speechparts/add", newSpeechpart, rootState);

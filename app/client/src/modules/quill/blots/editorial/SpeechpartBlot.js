@@ -5,7 +5,6 @@ let Inline = Quill.import('blots/inline');
 class SpeechpartBlot extends Inline {
   static create(data) {
     let node = super.create();
-    console.log("SpeechpartBlot.create", data)
     node.setAttribute('id', data);
     return node;
   }
