@@ -16,12 +16,12 @@ class APIResponseFactory:
         #    raise ValueError("MUST have either data either errors. data: {0} errors: {1}".format(data, errors))
 
         if len(errors) == 0:
-            if cls.is_iterable(data):
-                if len(data) == 1:
-                    if isinstance(data, set):
-                        data = data.pop()
-                    else:
-                        data = data[0]
+            #if cls.is_iterable(data):
+            #    if len(data) == 1:
+            #        if isinstance(data, set):
+            #            data = data.pop()
+            #        else:
+            #            data = data[0]
             r["data"] = data
         else:
             r["errors"] = errors
