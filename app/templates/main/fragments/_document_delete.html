@@ -1,18 +1,34 @@
-{% macro document_delete() %}
     <div id="modal-document-delete" class="modal">
         <div class="modal-background close-document_delete"></div>
-        <div class="modal-card">
+        <div class="modal-card ">
             <header class="modal-card-head">
-                <p class="modal-card-title">Document <span id="manifest-validation-doc-id"></span></p>
+                <p class="modal-card-title">Suppression de document</p>
                 <button class="delete close-document_delete" aria-label="close"></button>
             </header>
             <section class="modal-card-body">
-                <h1>Attention</h1>
+                <article class="message is-danger">
+                    <div class="message-header">Attention</div>
+                    <div class="message-body">
+                        <p>
+                        Vous êtes sur le point de supprimer le document <span id="delete-doc-id"  style="font-weight: bold"></span> :
+                        <p id="delete-doc-title" style="font-weight: bold"></p>
+                        </p>
+                        <p>La suppression du document entrainera la perte des données de tous les utilisateurs
+                          qui lui sont associés :
+                           <ul>
+                               <li>Transcriptions</li>
+                               <li>Traductions</li>
+                               <li>Annotations du facsimilé</li>
+                               <li>Commentaires</li>
+                               <li>Parties du discours</li>
+                           <ul>
+                        </p>
+                    </div>
+                </article>
             </section>
             <footer class="modal-card-foot">
-                <button id="confirm-userlist-delete" class="button is-danger">Supprimer le document</button>
+                <button id="confirm-delete-document" class="button is-danger">Confirmer la suppression</button>
                 <button class="button close-document_delete">Annuler</button>
             </footer>
         </div>
     </div>
-{% endmacro %}

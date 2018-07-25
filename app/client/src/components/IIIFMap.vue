@@ -33,11 +33,11 @@
         },
 
         mounted() {
-            axios.get(this.manifest)
+            axios.get(this.manifest, this.$store.getters['user/authHeader'])
                 .then(response => {
                     this.handleAPIErrors(response);
 
-                    this.manifest_data = response.data;
+                    this.manifest_data = response.data.data;
                     let page = this.manifest_data.sequences[0].canvases[0];
                     this.mapCreate(page);
 
@@ -70,7 +70,7 @@
                         });
                     });
                     // Finally load the annotations
-                    this.annotationsLoader = IIIFAnnotationLoader.initialize(this.manifest_data);
+                    this.annotationsLoader = IIIFAnnotationLoader.initialize(this.manifest_data, {}, this.$store.getters['user/authHeader']);
                     // and display them
                     this.toggleDisplayAnnotations();
                     if (this.drawMode) {
@@ -348,8 +348,11 @@
             saveZones(doc_id, user_id, annotations) {
                 const new_annotations = [];
                 for (let anno of annotations) {
+                    console.log(anno);
+                    console.log(this.images);
+                    console.log(this.canvases);
                     const newAnnotation = {
-                        manifest_url: this.$store.getters['document/manifestURL'],
+                        //manifest_url: this.$store.getters['document/manifestURL'],
                         img_idx: this.images.indexOf(anno.img_id),
                         canvas_idx: this.canvases.indexOf(anno.canvas_id),
                         coords: anno.region.coords,
@@ -368,13 +371,14 @@
                     });
             },
             saveAlignments(doc_id, user_id, annotations) {
+                return;
+                // TODO
                 return axios.delete(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`,
                     this.$store.getters['user/authHeader'])
                     .then((response) => {
                         this.handleAPIErrors(response);
                         let data = {
                             username: "AdminJulien",
-                            manifest_url: "http://193.48.42.68/adele/iiif/manifests/man20.json",
                             img_idx: 0,
                             canvas_idx: 0,
                             alignments: [
@@ -398,18 +402,24 @@
                         );
                     });
             },
+            getCurrentCanevasId() {
+                return this.canvases[0]; // TODO
+            },
+            getCurrentImageId(){
+                return this.images[0]; // TODO
+            },
             saveAnnotations() {
                 /*
                   - Read annotations from LeafletIIIFAnnotation
                   - call the API to post the new data (zones & alignments)
                   - eventually redraw with correctly updated data from the API side
                  */
-                const annotations = LeafletIIIFAnnotation.getAnnotations();
+                const annotations = LeafletIIIFAnnotation.getAnnotations(this.getCurrentCanevasId(), this.getCurrentImageId());
 
                 const doc_id = this.$store.getters['document/document'].id;
                 const user_id = this.$store.getters['user/currentUser'].id;
                 let _must_be_saved = this.must_be_saved;
-                console.log(_must_be_saved);
+
                 return this.saveZones(doc_id, user_id, annotations)
                     .then((response) => {
                         console.log(response);

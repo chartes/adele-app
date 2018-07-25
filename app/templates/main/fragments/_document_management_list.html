@@ -46,31 +46,32 @@
             </p>
             <div class="is-invisible sort-criteria">{{ d.title }}</div>
         </td>
-        {% if current_user.is_admin or current_user.is_teacher %}
+
         <td>
+            {% if current_user.is_admin or (current_user.is_teacher and current_user.id == d.user_id) %}
             <div class="button is-light edit-manifest-info">
                 <span class="icon"><i class="fas {% if d.images|length > 0 %}fa-edit{% else %}fa-plus-square{% endif %}"></i></span>
-                <span>{% if d.images|length > 0 %}Mettre à jour{% else %}Lier un manifeste{% endif%}</span>
+                <span>{% if d.images|length > 0 %}Changer le manifeste{% else %}Lier un manifeste{% endif%}</span>
             </div>
-            <div class="is-invisible sort-criteria">{{ manifest_url }}</div>
+            {% endif %}
+            <div class="is-invisible sort-criteria">{{ d.images|length }}</div>
         </td>
-        {% endif %}
+
         <td>
             <input type="text" class="date-picker"
             {% if d.date_closing %}
             value="{{ d.date_closing|date }}"
             {% endif %}
-            {% if not (current_user.is_admin or current_user.is_teacher) %} disabled {% endif %}/>
+            {% if not(current_user.is_admin or (current_user.is_teacher and current_user.id == d.user_id)) %} disabled {% endif %}/>
             <div class="is-invisible sort-criteria">{{ d.date_closing|date }}</div>
         </td>
-        {% if current_user.is_admin or current_user.is_teacher %}
         <td>
             <label class="checkbox">
-                <input type="checkbox" name="publish-checkbox" {% if d.is_published %} checked {% endif%}>
+                <input type="checkbox" name="publish-checkbox" {% if d.is_published %} checked {% endif%}
+                {% if not(current_user.is_admin or (current_user.is_teacher and current_user.id == d.user_id)) %} disabled {% endif %}>
             </label>
             <div class="is-invisible sort-criteria">{% if d.is_published %}1{% else %}0{% endif%}</div>
         </td>
-        {% endif %}
         <td>
             <a class="button tag is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=d.id)}}">
                 <i class="fas fa-edit"></i>
@@ -83,23 +84,17 @@
                 <p>Exporter</p>
             </div>
         </td>
-        {% if current_user.is_admin or current_user.is_teacher %}
         <td>
+            {% if current_user.is_admin or (current_user.is_teacher and current_user.id == d.user_id) %}
             <div class="button tag is-danger delete-document">
                 <i class="fas fa-trash-alt"></i>
                 <p>Supprimer</p>
             </div>
+            {% endif %}
         </td>
-        {% endif %}
     </tr>
     {% endfor %}
     </tbody>
 </table>
 
-{# include modal panels #}
-{% from 'main/fragments/_document_delete.html' import document_delete %}
-
-{{  document_delete() }}
-
-{% include 'main/fragments/_sort_table_script.html' %}
 

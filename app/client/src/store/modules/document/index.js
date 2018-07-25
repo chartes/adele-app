@@ -58,8 +58,9 @@ const actions = {
 const getters = {
 
   document: state => state.document,
-  manifestURL: state => {
-    return state.document && state.document.images &&  state.document.images.length > 0 ? state.document.images[0].manifest_url : null
+  manifestURL: (state, getters, rootState) => {
+    const manifest_url = `/adele/api/1.0/documents/${state.document.id}/manifest`;
+    return state.document && state.document.images &&  state.document.images.length > 0 ? manifest_url : null
   }
 
 };

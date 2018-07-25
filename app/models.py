@@ -4,6 +4,8 @@ from flask_login import AnonymousUserMixin
 from flask_user import UserMixin
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+from sqlalchemy import ForeignKeyConstraint
+
 from app import db
 
 association_document_has_acte_type = db.Table('document_has_acte_type',
@@ -45,7 +47,7 @@ association_whitelist_has_user = db.Table('whitelist_has_user',
 
 
 class ActeType(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
     description = db.Column(db.String)
 
@@ -57,40 +59,25 @@ class ActeType(db.Model):
         }
 
 
-class AlignmentDiscours(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'))
-    speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id"))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    ptr_start = db.Column(db.Integer)
-    ptr_end = db.Column(db.Integer)
-    note = db.Column(db.Text)
-
-    transcription = db.relationship("Transcription")
-    speech_part_type = db.relationship("SpeechPartType")
-    user = db.relationship("User")
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'transcription_id': self.transcription_id,
-            'speech_part_type': self.speech_part_type.serialize(),
-            'user_id': self.user_id,
-            'ptr_start': self.ptr_start,
-            'ptr_end': self.ptr_end,
-            'note': self.note
-        }
-
-
 class AlignmentImage(db.Model):
-    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
-    manifest_url = db.Column(db.String, db.ForeignKey('image_zone.manifest_url'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    canvas_idx = db.Column(db.Integer, db.ForeignKey('image_zone.canvas_idx'), primary_key=True)
-    img_idx = db.Column(db.Integer, db.ForeignKey('image_zone.img_idx'), primary_key=True)
-    zone_id = db.Column(db.Integer, db.ForeignKey('image_zone.zone_id'), primary_key=True)
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id', ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.Integer,  primary_key=True)
+    zone_id = db.Column(db.Integer,  primary_key=True)
+    manifest_url = db.Column(db.String,  primary_key=True)
+    canvas_idx = db.Column(db.Integer,  primary_key=True)
+    img_idx = db.Column(db.Integer,  primary_key=True)
+
     ptr_transcription_start = db.Column(db.Integer)
     ptr_transcription_end = db.Column(db.Integer)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("user_id", "zone_id", "manifest_url", "canvas_idx", "img_idx"),
+            ["image_zone.user_id", "image_zone.zone_id", "image_zone.manifest_url", "image_zone.canvas_idx", "image_zone.img_idx"],
+            name="fk_alignment_image",
+            ondelete='CASCADE'
+        ),
+    )
 
     def serialize(self):
         return {
@@ -106,8 +93,8 @@ class AlignmentImage(db.Model):
 
 
 class AlignmentTranslation(db.Model):
-    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
-    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id'), primary_key=True)
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id', ondelete='CASCADE'), primary_key=True)
+    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id', ondelete='CASCADE'), primary_key=True)
     ptr_transcription_start = db.Column(db.Integer, primary_key=True)
     ptr_transcription_end = db.Column(db.Integer, primary_key=True)
     ptr_translation_start = db.Column(db.Integer, primary_key=True)
@@ -128,7 +115,7 @@ class AlignmentTranslation(db.Model):
 
 
 class Country(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ref = db.Column(db.String)
     label = db.Column(db.String)
 
@@ -141,7 +128,7 @@ class Country(db.Model):
 
 
 class CommentaryType(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
 
     def serialize(self):
@@ -152,13 +139,13 @@ class CommentaryType(db.Model):
 
 
 class Commentary(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
-    type_id = db.Column(db.Integer, db.ForeignKey('commentary_type.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
+    type_id = db.Column(db.Integer, db.ForeignKey('commentary_type.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("CommentaryHasNote", back_populates="commentary", cascade="all, delete-orphan")
+    notes = db.relationship("CommentaryHasNote", back_populates="commentary", cascade="all, delete-orphan", passive_deletes=True)
     type = db.relationship("CommentaryType", backref="commentary")
 
     def serialize(self):
@@ -177,8 +164,8 @@ class Commentary(db.Model):
 
 
 class CommentaryHasNote(db.Model):
-    commentary_id = db.Column(db.Integer, db.ForeignKey('commentary.id'), primary_key=True)
-    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    commentary_id = db.Column(db.Integer, db.ForeignKey('commentary.id', ondelete='CASCADE'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
     note = db.relationship("Note", back_populates="commentary")
@@ -186,7 +173,7 @@ class CommentaryHasNote(db.Model):
 
 
 class District(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
     country_id = db.Column(db.Integer, db.ForeignKey('country.id'))
 
@@ -199,10 +186,10 @@ class District(db.Model):
 
 
 class Document(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(), nullable=False, unique=False)
     subtitle = db.Column(db.String(), nullable=False, unique=False)
-    creation = db.Column(db.Integer, nullable=False)
+    creation = db.Column(db.Integer)
     creation_lab = db.Column(db.String())
     copy_year = db.Column(db.String())
     copy_cent = db.Column(db.Integer)
@@ -213,14 +200,18 @@ class Document(db.Model):
     date_closing = db.Column(db.String())
     is_published = db.Column(db.Boolean())
     institution_id = db.Column(db.Integer(), db.ForeignKey("institution.id"))
-    user_id = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    user_id = db.Column(db.Integer(), db.ForeignKey("user.id", ondelete='CASCADE'))
     whitelist_id = db.Column(db.Integer(), db.ForeignKey("whitelist.id"))
 
     # Relationships #
     whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id", backref=db.backref('documents'))
     user = db.relationship("User", primaryjoin="Document.user_id==User.id", backref=db.backref('documents'))
 
-    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id", backref='document')
+    images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id",
+        backref=db.backref('document'),
+        cascade="all, delete-orphan", single_parent=True,  passive_deletes=True
+    )
+
     institution = db.relationship("Institution", primaryjoin="Document.institution_id==Institution.id", backref=db.backref('documents'))
     acte_types = db.relationship(ActeType,
                              secondary=association_document_has_acte_type,
@@ -274,7 +265,7 @@ class Document(db.Model):
 
 
 class Editor(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ref = db.Column(db.String)
     name = db.Column(db.String)
 
@@ -287,7 +278,7 @@ class Editor(db.Model):
 
 
 class ImageZoneType(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
 
     def serialize(self):
@@ -298,16 +289,26 @@ class ImageZoneType(db.Model):
 
 
 class ImageZone(db.Model):
-    manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
-    canvas_idx = db.Column(db.Integer, db.ForeignKey('image.canvas_idx'), primary_key=True)
-    img_idx = db.Column(db.Integer, db.ForeignKey('image.img_idx'), primary_key=True)
     zone_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    zone_type_id = db.Column(db.Integer, db.ForeignKey('image_zone_type.id'), primary_key=True)
+    manifest_url = db.Column(db.String, primary_key=True)
+    canvas_idx = db.Column(db.Integer, primary_key=True)
+    img_idx = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
+    zone_type_id = db.Column(db.Integer, db.ForeignKey('image_zone_type.id', ondelete='CASCADE'))
     coords = db.Column(db.String)
     note = db.Column(db.String)
 
-    zone_type = db.relationship("ImageZoneType", primaryjoin="ImageZoneType.id==ImageZone.zone_type_id", backref=db.backref('image_zones'))
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("manifest_url", "canvas_idx", "img_idx"),
+            ["image.manifest_url", "image.canvas_idx", "image.img_idx"],
+            name="fk_image",
+            ondelete='CASCADE'
+        ),
+    )
+
+    zone_type = db.relationship("ImageZoneType", primaryjoin="ImageZoneType.id==ImageZone.zone_type_id",
+                                backref=db.backref('image_zones'))
 
     def serialize(self):
         return {
@@ -323,9 +324,19 @@ class ImageZone(db.Model):
 
 
 class ImageUrl(db.Model):
-    manifest_url = db.Column(db.String, db.ForeignKey('image.manifest_url'), primary_key=True)
-    canvas_idx = db.Column(db.Integer,  db.ForeignKey('image.canvas_idx'), primary_key=True)
-    img_idx = db.Column(db.Integer,  db.ForeignKey('image.img_idx'), primary_key=True)
+    manifest_url = db.Column(db.String, primary_key=True)
+    canvas_idx = db.Column(db.Integer, primary_key=True)
+    img_idx = db.Column(db.Integer, primary_key=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("manifest_url", "canvas_idx", "img_idx"),
+            ["image.manifest_url", "image.canvas_idx", "image.img_idx"],
+            name="fk_image",
+            ondelete='CASCADE'
+        ),
+    )
+
     img_url = db.Column(db.String)
 
     def serialize(self):
@@ -341,15 +352,18 @@ class Image(db.Model):
     manifest_url = db.Column(db.String, primary_key=True)
     canvas_idx = db.Column(db.Integer,  primary_key=True)
     img_idx = db.Column(db.Integer,  primary_key=True)
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
 
     zones = db.relationship("ImageZone",
                             primaryjoin="and_(ImageZone.manifest_url == Image.manifest_url, ImageZone.canvas_idx == Image.canvas_idx, ImageZone.img_idx == Image.img_idx)",
-                            cascade="all, delete-orphan")
+                            cascade="all, delete-orphan", passive_deletes=True)
     _image_url = db.relationship("ImageUrl",
                                  primaryjoin="and_(ImageUrl.manifest_url == Image.manifest_url,ImageUrl.canvas_idx == Image.canvas_idx, ImageUrl.img_idx == Image.img_idx)",
                                  uselist=False,
-                                 cascade="all, delete-orphan")
+                                 cascade="all, delete-orphan", passive_deletes=True)
+
+    #doc = db.relationship("Document", primaryjoin="Document.id==Image.doc_id",
+    #                            backref=db.backref('images'), cascade="all, delete-orphan", single_parent=True, passive_deletes=True)
 
     @property
     def url(self):
@@ -375,7 +389,7 @@ class Image(db.Model):
 
 
 class Institution(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ref = db.Column(db.String)
     name = db.Column(db.String)
 
@@ -399,16 +413,16 @@ class Language(db.Model):
 
 
 class Note(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    type_id = db.Column(db.Integer, db.ForeignKey('note_type.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    type_id = db.Column(db.Integer, db.ForeignKey('note_type.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    note_type = db.relationship("NoteType")
+    note_type = db.relationship("NoteType", backref=db.backref('note', passive_deletes=True))
 
-    transcription = db.relationship("TranscriptionHasNote", back_populates="note", cascade="all, delete-orphan")
-    translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan")
-    commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan")
+    transcription = db.relationship("TranscriptionHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
+    translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
+    commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
 
     def serialize(self):
         return {
@@ -420,7 +434,7 @@ class Note(db.Model):
 
 
 class NoteType(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
 
     def serialize(self):
@@ -432,7 +446,7 @@ class NoteType(db.Model):
 
 # Define the Role DataModel
 class Role(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     name = db.Column(db.String(), unique=True)
     description = db.Column(db.String())
     label = db.Column(db.String())
@@ -447,7 +461,7 @@ class Role(db.Model):
 
 
 class SpeechPartType(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     lang_code = db.Column(db.String, db.ForeignKey("language.code"))
     label = db.Column(db.String)
     definition = db.Column(db.Text)
@@ -458,7 +472,7 @@ class SpeechPartType(db.Model):
         return {
             'id': self.id,
             'label': self.label,
-            'language': self.language.serialize(),
+            'language': self.language.serialize() if self.language else None,
             'definition': self.definition if self.definition else ''
         }
 
@@ -475,21 +489,21 @@ class Tradition(db.Model):
 
 
 class TranscriptionHasNote(db.Model):
-    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id'), primary_key=True)
-    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id', ondelete='CASCADE'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="transcription")
-    transcription = db.relationship("Transcription", back_populates="notes")
+    note = db.relationship("Note", back_populates="transcription", cascade="all, delete-orphan",single_parent=True)
+    transcription = db.relationship("Transcription", back_populates="notes", cascade="all, delete-orphan", single_parent=True)
 
 
 class Transcription(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
+    notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan", passive_deletes=True)
 
     def serialize(self):
 
@@ -506,21 +520,21 @@ class Transcription(db.Model):
 
 
 class TranslationHasNote(db.Model):
-    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id'), primary_key=True)
-    note_id = db.Column(db.Integer, db.ForeignKey('note.id'), primary_key=True)
+    translation_id = db.Column(db.Integer, db.ForeignKey('translation.id', ondelete='CASCADE'), primary_key=True)
+    note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="translation")
-    translation = db.relationship("Translation", back_populates="notes")
+    note = db.relationship("Note", back_populates="translation", cascade="all, delete-orphan", single_parent=True)
+    translation = db.relationship("Translation", back_populates="notes", cascade="all, delete-orphan", single_parent=True)
 
 
 class Translation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    doc_id = db.Column(db.Integer, db.ForeignKey('document.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan")
+    notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan", passive_deletes=True)
 
     def serialize(self):
         return {
@@ -542,7 +556,7 @@ class AnonymousUser(AnonymousUserMixin):
 
 # Define the User data model
 class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # User authentication information
     username = db.Column(db.String(), nullable=False, unique=True)
@@ -633,16 +647,16 @@ class User(db.Model, UserMixin):
 
 
 class UserInvitation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     # UserInvitation email information. The collation='NOCASE' is required
     # to search case insensitively when USER_IFIND_MODE is 'nocase_collation'.
     email = db.Column(db.String(255, collation='NOCASE'), nullable=False)
     # save the user of the invitee
-    invited_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    invited_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
 
 
 class Whitelist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(), nullable=False, server_default='Whitelist')
 
     users = db.relationship("User", secondary=association_whitelist_has_user, backref=db.backref('whitelists'))
@@ -652,4 +666,29 @@ class Whitelist(db.Model):
             'id': self.id,
             'label': self.label,
             'users': [u.serialize() for u in self.users]
+        }
+
+
+class AlignmentDiscours(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id', ondelete='CASCADE'))
+    speech_part_type_id = db.Column(db.Integer, db.ForeignKey("speech_part_type.id", ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    ptr_start = db.Column(db.Integer)
+    ptr_end = db.Column(db.Integer)
+    note = db.Column(db.Text)
+
+    transcription = db.relationship("Transcription")
+    speech_part_type = db.relationship("SpeechPartType")
+    user = db.relationship("User")
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'transcription_id': self.transcription_id,
+            'speech_part_type': self.speech_part_type.serialize(),
+            'user_id': self.user_id,
+            'ptr_start': self.ptr_start,
+            'ptr_end': self.ptr_end,
+            'note': self.note
         }

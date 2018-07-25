@@ -56,8 +56,12 @@
     </div>
 </section>
 
-{% from 'main/fragments/_manifest_validation.html' import manifest_validation %}
-{{  manifest_validation() }}
+
+{# include modal panels #}
+{% include 'main/fragments/_document_delete.html'  %}
+{% include 'main/fragments/_manifest_validation.html' %}
+
+{% include 'main/fragments/_sort_table_script.html' %}
 
 {% endblock content %}
 
@@ -167,7 +171,7 @@
                 }
 
                 /*
-                   modal panels
+                   open modal panels
                 */
                 $(".edit-manifest-info").click(function() {
                     // set the manifest doc id
@@ -180,27 +184,37 @@
                 });
 
                 $(".delete-document").click(function() {
+                    const doc_id = $(this).closest("tr").find('input[name="doc-id"]').val();
+                    const doc_title = $(this).closest("tr").find('.title').html();
+                    $("#delete-doc-id").html(doc_id);
+                    $("#delete-doc-title").html(doc_title);
                     $('#modal-document-delete').toggleClass("is-active");
+                    $('#confirm-userlist-delete').removeClass('is-loading');
                 });
 
-                $('.close-document_delete').click(function(){
-                    $("#modal-document-delete").toggleClass("is-active");
-                });
             });
         }
 
         /*
-            Initialize the document liste
+            Initialize the document list
          */
         load_document_list();
 
         /*
-            Manifest validator
+            Close modal panels
         */
+
         $('.close-modal-manifest-validation').click(function(){
             $("#modal-manifest-validation").toggleClass("is-active");
         });
 
+        $('.close-document_delete').click(function(){
+            $("#modal-document-delete").toggleClass("is-active");
+        });
+
+        /*
+            Manifest validator
+        */
         function reset_manifest_form(){
            $('#confirm-manifest-validation').prop("disabled", true);
            $('#manifest-validation-errors').empty();
@@ -226,53 +240,6 @@
            }) ;
         });
 
-        /*
-            set the manifest for the given document in base
-         */
-
-        $('#confirm-manifest-validation').click(function () {
-           //TODO : changer le contenu du TD
-           $(this).addClass('is-loading');
-
-           const manifest_url = $('#manifest-url').val();
-           const doc_id = $('#manifest-of-doc-id').val();
-           let url = "{{ url_for('api_bp.api_set_document_manifest', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
-           url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
-
-           $.ajax({
-               url: url,
-               method: 'POST',
-               contentType: "application/json",
-               data:  JSON.stringify({data: {manifest_url: manifest_url}}),
-                   beforeSend: function (xhr) {
-                       xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
-                   }
-           }).done(function(data) {
-               $('#confirm-manifest-validation').removeClass('is-loading');
-               if (!data.errors) {
-                   // close the modal
-                   $("#modal-manifest-validation").toggleClass("is-active");
-                   load_document_list();
-               }
-               else {
-                   reset_manifest_form();
-                   //console.log(data);
-                   let msg = data.errors.title;
-                   if (data.errors.code && data.errors.code === "Already present") {
-                       msg = "Ce manifeste est déjà présent en base. Choisissez un autre manifeste ou trouvez-lui une autre adresse.";
-                   }
-
-                   $('#manifest-validation-errors').html(
-                       "<article class='message is-danger'>" +
-                           "<div class='message-header'><p>Erreur : impossible de choisir ce manifeste</p></div>" +
-                           "<div class='message-body'>" +
-                               msg +
-                           "</div>" +
-                       "</article>"
-                   );
-               }
-           });
-        });
 
         $('#input-manifest-filename').change(function() {
            $('#manifest-filename').html($(this).val());
@@ -284,6 +251,9 @@
         });
 
         $('#validate-manifest-url').click(function(){
+           const manifest_url = $('#manifest-url').val();
+           if (manifest_url.length === 0)
+               return;
 
            reset_manifest_form();
            $(this).addClass('is-loading');
@@ -297,7 +267,6 @@
                       "</article>";
            $('#manifest-validation-info').html(info);
 
-           const manifest_url = $('#manifest-url').val();
            if (manifest_url.length > 0) {
               const validator_url = "http://iiif.io/api/presentation/validator/service/validate?format=json&version=2.1&url=" + manifest_url;
                $.ajax({
@@ -355,6 +324,76 @@
                });
            }
 
+        });
+
+        /*
+            set the manifest for the given document in base
+         */
+        $('#confirm-manifest-validation').click(function () {
+           //TODO : changer le contenu du TD
+           $(this).addClass('is-loading');
+
+           const manifest_url = $('#manifest-url').val();
+           const doc_id = $('#manifest-of-doc-id').val();
+           let url = "{{ url_for('api_bp.api_set_document_manifest', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+           url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+
+           $.ajax({
+               url: url,
+               method: 'POST',
+               contentType: "application/json",
+               data:  JSON.stringify({data: {manifest_url: manifest_url}}),
+               beforeSend: function (xhr) {
+                       xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+               }
+           }).done(function(data) {
+               $('#confirm-manifest-validation').removeClass('is-loading');
+               if (!data.errors) {
+                   // close the modal
+                   $("#modal-manifest-validation").toggleClass("is-active");
+                   load_document_list();
+               }
+               else {
+                   reset_manifest_form();
+                   //console.log(data);
+                   let msg = data.errors.title;
+                   if (data.errors.code && data.errors.code === "Already present") {
+                       msg = "Ce manifeste est déjà présent en base. Choisissez un autre manifeste ou trouvez-lui une autre adresse.";
+                   }
+
+                   $('#manifest-validation-errors').html(
+                       "<article class='message is-danger'>" +
+                           "<div class='message-header'><p>Erreur : impossible de choisir ce manifeste</p></div>" +
+                           "<div class='message-body'>" +
+                               msg +
+                           "</div>" +
+                       "</article>"
+                   );
+               }
+           });
+        });
+
+        /*
+            Confirm delete document
+        */
+        $('#confirm-delete-document').click(function(){
+            $(this).addClass('is-loading');
+
+            let url = "{{ url_for('api_bp.api_delete_documents', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
+            const doc_id = $("#delete-doc-id").html();
+            url = url.replace("DOC_ID_PLACEHOLDER", doc_id);
+            $.ajax({
+                url: url,
+                method: 'DELETE',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
+                }
+            }).done(function(data) {
+                $('#confirm-delete-document').removeClass('is-loading');
+                console.log(data);
+                load_document_list();
+                $('#modal-document-delete').toggleClass("is-active");
+            });
         });
 
         /*

@@ -49,7 +49,7 @@ const LeafletIIIFAnnotation = {
             layer.annotation_type = this.annotationTypes["transcription"];
         }
 
-        return {
+        return  {
             region: {coords: coords.join(',')},
             content: layer.content,
             annotation_type: layer.annotation_type,
@@ -58,10 +58,15 @@ const LeafletIIIFAnnotation = {
         };
     },
 
-    getAnnotations: function () {
+    getAnnotations: function (canevas_id, img_id) {
         this.annotations = [];
         const _this = this;
         this.featureGroup.eachLayer(function (layer) {
+            console.log("make anno");
+            if (!layer.canvas_id)
+                layer.canvas_id = canevas_id;
+            if (!layer.img_id)
+                layer.img_id = img_id;
             _this.annotations.push(_this._makeAnnotation(layer))
         });
         return this.annotations
@@ -77,6 +82,7 @@ const LeafletIIIFAnnotation = {
         const facsimileToolTipOptions = {direction: "center", className: "facsimileToolTip"};
 
         for (let listId in annotationLists) {
+            this.annotationTypes[annotationLists[listId].annotation_type.label] = annotationLists[listId].annotation_type;
             for (let annotation of annotationLists[listId].annotations) {
 
                 let c = annotation.region.coords.split(',');
@@ -106,7 +112,7 @@ const LeafletIIIFAnnotation = {
                 }
                 shape.annotation_type = annotationLists[listId].annotation_type;
                 this.featureGroup.addLayer(shape);
-                this.annotationTypes[annotationLists[listId].annotation_type.label] = annotationLists[listId].annotation_type;
+
                 shape.addTo(this.map);
             }
         }

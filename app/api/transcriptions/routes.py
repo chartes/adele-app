@@ -593,8 +593,7 @@ def api_post_documents_transcriptions_alignments(api_version, doc_id):
                         "status": 403, "title": "Cannot insert data"
                     })
                 else:
-                    if not (user.is_teacher or user.is_admin) and "username" in data and data[
-                        "username"] != user.username:
+                    if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
                         response = APIResponseFactory.make_response(errors={
                             "status": 403, "title": "Access forbidden"
                         })
@@ -1131,8 +1130,8 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
         {
             "data": {
                 "username" : "Eleve1",
-                "manifest_url" :  "http://193.48.42.68/adele/iiif/manifests/man20.json",
-                "img_id" : "http://193.48.42.68/loris/adele/dossiers/20.jpg/full/full/0/default.jpg",
+                "img_idx" : 0,
+                "img_idx" : 1,
                 "alignments" : [
                     {
                         "zone_id" : 1,
@@ -1179,6 +1178,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                         "status": 403, "title": "Data is malformed"
                     })
 
+
                 if response is None:
                     # teachers and admins can put/post/delete on others behalf
                     if (user.is_teacher or user.is_admin) and "username" in data:
@@ -1189,6 +1189,12 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                     # let's make the new alignments from the data
                     if response is None:
 
+                        json_obj = query_json_endpoint(
+                            request,
+                            url_for('api_bp.api_documents_manifest_url_origin', api_version=api_version, doc_id=doc_id)
+                        )
+                        manifest_url = json_obj["data"]['manifest_url']
+
                         if not isinstance(data["alignments"], list):
                             alignments = [data["alignments"]]
                         else:
@@ -1197,9 +1203,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                         # DELETE the old data
                         for old_al in AlignmentImage.query.filter(
                                 AlignmentImage.transcription_id == transcription.id,
-                                AlignmentImage.user_id == int(user_id),
-                                AlignmentImage.manifest_url == data["manifest_url"],
-                                AlignmentImage.img_id == data["img_id"]
+                                AlignmentImage.user_id == int(user_id)
                         ).all():
                             db.session.delete(old_al)
 
@@ -1210,14 +1214,16 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                         ImageZone.zone_id == int(alignment["zone_id"]),
                                         ImageZone.manifest_url == data["manifest_url"],
                                         ImageZone.user_id == int(user_id),
-                                        ImageZone.img_id == data["img_id"]
+                                        ImageZone.img_idx == data["img_idx"],
+                                        ImageZone.canvas_idx == data["canvas_idx"],
                                     ).one()
 
                                     new_al = AlignmentImage(
                                         transcription_id=transcription.id,
                                         user_id=user_id,
-                                        manifest_url=data["manifest_url"],
-                                        img_id=data["img_id"],
+                                        manifest_url=manifest_url,
+                                        img_idx=data["img_idx"],
+                                        canvas_idx=data["canvas_idx"],
                                         zone_id=zone.zone_id,
                                         ptr_transcription_start=alignment["ptr_start"],
                                         ptr_transcription_end=alignment["ptr_end"]

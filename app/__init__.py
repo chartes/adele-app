@@ -20,10 +20,19 @@ auth = HTTPBasicAuth()
 # Initialize Flask-Babel
 babel = Babel()
 
-
 api_bp = Blueprint('api_bp', __name__, template_folder='templates')
 app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
 
+
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 """
 =========================================================

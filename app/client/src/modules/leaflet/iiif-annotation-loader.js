@@ -21,7 +21,7 @@ import axios from 'axios';
 const IIIFAnnotationLoader = {
     options: {},
 
-    initialize: function (manifest_data, options = {}) {
+    initialize: function (manifest_data, options = {}, headers = {}) {
         this.manifest = manifest_data;
         this.options = Object.assign(this.options, options);
         this.annotationLists = [];
@@ -32,7 +32,9 @@ const IIIFAnnotationLoader = {
         if (canvas.otherContent) {
             for (let oc of canvas.otherContent) {
                 if (oc["@type"] === "sc:AnnotationList") {
-                    axiosPromises.push(this.loadAnnotationList(oc["@id"]));
+                    axiosPromises.push(
+                        this.loadAnnotationList(oc["@id"], headers)
+                    );
                 }
             }
         }
@@ -155,10 +157,10 @@ const IIIFAnnotationLoader = {
         return new_annotation;
     },
 
-    loadAnnotationList: function (list_url) {
+    loadAnnotationList: function (list_url, headers) {
         //console.log("Adding list " + list_url);
         this.annotationLists[list_url] = {annotation_type: undefined, annotations: []};
-        return axios.get(list_url)
+        return axios.get(list_url, headers)
             .then(response => {
 
                 for(const m of response.data.metadata) {

@@ -297,7 +297,17 @@ def api_delete_documents(api_version, doc_id):
     if response is None:
         try:
             doc = Document.query.filter(Document.id == doc_id).one()
-            db.session.delete(doc)
+            if doc.user_id != user.id and not user.is_admin:
+                response = APIResponseFactory.make_response(errors={
+                    "status": 403, "title": "Access forbidden"
+                })
+            else:
+
+
+
+
+
+                db.session.delete(doc)
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
                 "status": 404, "title": "Document {0} not found".format(doc_id)
