@@ -2,6 +2,17 @@
 
     <div>
 
+        <loading-indicator :active="!transcription" :full-page="true"/>
+
+        <div class="columns">
+            <div class="column">
+                <h1 class="title is-size-5">Document {{ document.id }}</h1>
+            </div>
+            <div class="column" v-if="$store.getters['user/currentUserIsTeacher']">
+                <p class="has-text-right">Le travail affiché est celui de : {{ author.first_name }} {{ author.last_name }} <a class="button is-link is-small" @click="changeAuthor">Changer</a></p>
+            </div>
+        </div>
+
         <tabs>
 
             <tab name="Édition" :selected="true">
@@ -39,12 +50,14 @@
   import SpeechpartsEditor from "../editors/SpeechpartsEditor";
   import SpeechpartsEdition from "./SpeechpartsEdition";
   import NoticeEdition from "./NoticeEdition";
-  import {mapState} from 'vuex';
+  import {mapState, mapGetters} from 'vuex';
+  import LoadingIndicator from "../ui/LoadingIndicator";
 
   export default {
     name: "document-edition",
 
     components: {
+      LoadingIndicator,
       NoticeEdition,
       SpeechpartsEdition,
       SpeechpartsEditor,
@@ -59,7 +72,27 @@
       this.$store.dispatch('transcription/fetch');
       //this.$store.dispatch('translation/fetch');
     },
+    methods: {
+      changeAuthor () {
+        console.log("changeAuthor");
+
+        var newAuthor = {
+        active:true,
+        email:"eleve1@gmail.com",
+        email_confirmed_at:"2018-03-29 10:29:20",
+        first_name:"PrenomEleve1",
+        id:5,
+        last_name:"NomEleve1",
+        //roles:Array[1]
+        username:"Eleve1"}
+
+        this.$store.dispatch('user/setAuthor', newAuthor);
+        this.$store.dispatch('transcription/fetch');
+      }
+    },
     computed: {
+      ...mapState('user', ['author']),
+      ...mapState('document', ['document']),
       ...mapState('transcription', ['transcription']),
       ...mapState('translation', ['translation']),
     }

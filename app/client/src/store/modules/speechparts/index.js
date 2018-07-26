@@ -51,28 +51,6 @@ const actions = {
   mouseover ({ commit, getters, rootState }, { speechpart, posY} ) {
     commit('MOUSE_OVER', { speechpart, posY });
   },
-  /*add ({ commit, getters, rootState }, newSpeechpart) {
-    console.log("STORE ACTION speechparts/add", newSpeechpart, rootState);
-    const docId = rootState.document.document.id;
-    const config = { auth: { username: rootState.user.authToken, password: undefined }};
-    const newSpeechparts = {
-      data: {
-        username : rootState.user.currentUser.username,
-        speech_parts : [{
-          type_id : newSpeechpart.type_id,
-          ptr_start: -1,
-          ptr_end: -1,
-          note: newSpeechpart.note,
-        }]
-      }
-    };
-
-    return axios.post(`/adele/api/1.0/documents/${docId}/transcriptions/alignments/discours`, newSpeechparts, config)
-      .then( response => {
-        console.log("STORE ACTION speechparts/add saved")
-        commit('NEW', newSpeechpart);
-      })
-  },*/
 
   update ({ commit, getters, rootState }, speechpart) {
     console.log("STORE ACTION speechparts/update", speechpart);

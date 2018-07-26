@@ -25,10 +25,10 @@ let speechpartsShadowQuill;
 
 const state = {
 
-  transcription: undefined,
-  transcriptionContent: undefined,
-  transcriptionWithNotes: undefined,
-  transcriptionWithSpeechparts: undefined,
+  transcription: false,
+  transcriptionContent: false,
+  transcriptionWithNotes: false,
+  transcriptionWithSpeechparts: false,
   transcriptionSaved: false,
   transcriptionError: false,
   transcriptionAlignments: []
@@ -56,6 +56,20 @@ const mutations = {
       state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
 
     }
+  },
+  RESET(state) {
+
+    console.log("STORE MUTATION transcription/RESET")
+    state.transcription = false;
+    state.transcriptionAlignments = [];
+    state.transcriptionContent = false;
+    state.transcriptionWithNotes = false;
+    state.transcriptionWithSpeechparts = false;
+
+    if (transcriptionShadowQuillElement) transcriptionShadowQuillElement.innerHTML = "";
+    if (notesShadowQuillElement) notesShadowQuillElement.innerHTML = "";
+    if (speechpartsShadowQuillElement) speechpartsShadowQuillElement.innerHTML = "";
+
   },
   ALIGNMENTS(state, payload) {
     state.transcriptionAlignments = payload;
@@ -330,6 +344,9 @@ const actions = {
   changed ({ commit }, deltas) {
     commit('ADD_OPERATION', deltas)
     commit('SAVED', false)
+  },
+  reset({commit}) {
+
   }
 
 };

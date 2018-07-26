@@ -24,16 +24,17 @@
 
 <script>
 
-  import { mapGetters } from 'vuex'
+  import { mapState } from 'vuex'
   import ModalForm from './ModalForm';
 
   export default {
-    name: "note-form",
+    name: "author-swap-list-form",
     props: ['title', 'noteId', 'cancel', 'submit'],
     components: {
       ModalForm
     },
     data() {
+      console.log('NoteListForm data');
       return {
         selected: null
       }
@@ -55,7 +56,8 @@
       }
     },
     computed: {
-      ...mapGetters('notes', ['notes'])
+      ...mapState('user', ['author']),
+      ...mapState('document', ['document'])
     }
   }
 </script>

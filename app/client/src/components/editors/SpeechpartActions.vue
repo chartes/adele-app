@@ -31,22 +31,10 @@
         type: Function,
         required: true
       },
-      /*newSpeechpart: {
-        type: Function,
-        required: true
-      },*/
       delete: {
         type: Function,
         required: true
       },
-      /*updateLink: {
-        type: Function,
-        required: true
-      },
-      unlink: {
-        type: Function,
-        required: true
-      }*/
     },
     methods: {
       deleteAction () {
@@ -55,15 +43,6 @@
       editAction () {
         this.$props.edit();
       },
-      /*newAction () {
-        this.$props.newNote();
-      },
-      unlinkAction () {
-        this.$props.unlink();
-      },
-      updateLinkAction () {
-        this.$props.updateLink();
-      }*/
     }
   }
 </script>

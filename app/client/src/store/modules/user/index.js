@@ -35,8 +35,8 @@ const actions = {
   setAuthToken ({ commit }, token) {
     commit('UPDATE_AUTH_TOKEN', token)
   },
-  setAuthor({ commit }, authorId) {
-
+  setAuthor({ commit }, author) {
+    commit('UPDATE_AUTHOR', author)
   }
 
 };

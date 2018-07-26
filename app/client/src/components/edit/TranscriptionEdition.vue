@@ -22,12 +22,6 @@
 
                 <h2 class="subtitle">Image</h2>
 
-                <p><a href="#" @click.prevent="debug.content=!debug.content">Content</a></p>
-                <small v-if="debug.content" v-text="transcriptionContent"></small>
-
-                <p><a href="#" @click.prevent="debug.speechparts=!debug.speechparts">Speechparts</a></p>
-                <small v-if="debug.speechparts" v-text="transcriptionWithSpeechparts"></small>
-
                 <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
 
             </div>

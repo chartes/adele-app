@@ -46,7 +46,7 @@
   import InEditorActions from './InEditorActions';
   import SaveBar from "../ui/save-bar";
   import SpeechpartForm from "../forms/SpeechpartForm";
-  import SpeechpartActions from "../ui/speechpart-actions";
+  import SpeechpartActions from "./SpeechpartActions";
   import ModalConfirmSpeechpartDelete from "../forms/ModalConfirmSpeechpartDelete";
 
   export default {

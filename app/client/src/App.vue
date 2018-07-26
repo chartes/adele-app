@@ -3,9 +3,6 @@
         <div v-if="!!document">
             <document-edition></document-edition>
         </div>
-        <div v-if="!document">
-            <a class="button is-loading">Loading</a>
-        </div>
     </div>
 </template>
 
@@ -32,4 +29,7 @@
 </script>
 
 <style>
+    #app {
+        min-height: 100vh;
+    }
 </style>
