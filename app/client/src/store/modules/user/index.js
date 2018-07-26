@@ -16,7 +16,7 @@ const mutations = {
   },
   UPDATE_AUTHOR (state, payload) {
     state.author = payload;
-    console.log('STORE MUTATION user/UPDATE_AUTHOR')
+    console.log('STORE MUTATION user/UPDATE_AUTHOR', state.author.id, state.author)
   },
   UPDATE_AUTH_TOKEN (state, payload) {
     state.authToken = payload;
@@ -36,6 +36,7 @@ const actions = {
     commit('UPDATE_AUTH_TOKEN', token)
   },
   setAuthor({ commit }, author) {
+    console.log('STORE ACTION user/setAuthor', author.id, author)
     commit('UPDATE_AUTHOR', author)
   }
 
@@ -53,10 +54,13 @@ const getters = {
   currentUserIsAdmin: state => {
     return checkRole(state.currentUser, 'admin')
   },
+  currentUserIsAuthor: state => {
+    return state.currentUser.id === state.author.id;
+  },
   currentUserIsTeacher: state => {
     return checkRole(state.currentUser, 'teacher')
   },
-  currentUserIsStudentstate: state => {
+  currentUserIsStudent: state => {
     return checkRole(state.currentUser, 'student')
   },
 

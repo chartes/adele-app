@@ -14,7 +14,7 @@ let notesShadowQuill;
 
 const state = {
 
-  translationLoading: false,
+  translationLoading: true,
   translation: false,
   translationContent: false,
   translationWithNotes: false,
@@ -101,6 +101,12 @@ const actions = {
 
     return axios.get(`/adele/api/1.0/documents/${doc_id}/translations/from-user/${user_id}`).then( response => {
 
+      commit('LOADING_STATUS', false);
+
+      if (response.data.errors && response.data.errors.status === 404) {
+        console.log("NO translation found");
+        return;
+      }
 
       let translation = {content : " ", notes: []};
 
@@ -119,7 +125,6 @@ const actions = {
 
       commit('INIT', data)
       commit('UPDATE', data);
-      commit('LOADING_STATUS', false);
     });
 
 

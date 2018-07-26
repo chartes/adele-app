@@ -2,7 +2,7 @@
 
     <div>
 
-        <loading-indicator :active="!transcription" :full-page="true"/>
+        <loading-indicator :active="transcriptionLoading && translationLoading" :full-page="true"/>
 
         <div class="columns">
             <div class="column">
@@ -27,14 +27,14 @@
                 <speechparts-edition/>
             </tab>
 
-            <tab name="Notice">
+            <tab v-if="!currentUserIsStudent" name="Notice">
                 <h1>Notice</h1>
                 <notice-edition/>
             </tab>
 
         </tabs>
 
-        <author-swap-list-form v-if="swapUser" :selected-author="author" :cancel="cancelSwap" :submit="changeAuthor"/>
+        <author-swap-list-form v-if="swapUser" :selected-author="author" :cancel="cancelSwap" :submit="swapAuthor"/>
 
     </div>
 
@@ -79,8 +79,7 @@
       this.$store.dispatch('transcription/fetch');
     },
     methods: {
-      changeAuthor (newAuthor) {
-        console.log("changeAuthor");
+      swapAuthor (newAuthor) {
         this.cancelSwap();
         this.$store.dispatch('user/setAuthor', newAuthor);
         this.$store.dispatch('transcription/reset');
@@ -103,7 +102,8 @@
       ...mapState('user', ['author']),
       ...mapState('document', ['document']),
       ...mapState('transcription', ['transcriptionLoading', 'transcription']),
-      ...mapState('translation', ['translation']),
+      ...mapState('translation', ['translation', 'translationLoading']),
+      ...mapGetters('user', ['currentUserIsStudent']),
     }
   }
 </script>

@@ -51,6 +51,7 @@
       selectItem (user) {
         this.selected = user;
         this.id = user.id;
+        console.log("Slect user", this.id, this.selected)
       },
       submitAction () {
         this.$props.submit(this.selected);

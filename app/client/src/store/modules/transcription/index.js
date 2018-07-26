@@ -25,14 +25,15 @@ let speechpartsShadowQuill;
 
 const state = {
 
-  transcriptionLoading: false,
+  transcriptionLoading: true,
   transcription: false,
   transcriptionContent: false,
   transcriptionWithNotes: false,
   transcriptionWithSpeechparts: false,
   transcriptionSaved: false,
   transcriptionError: false,
-  transcriptionAlignments: []
+  transcriptionAlignments: [],
+  referenceTranscription: false
 
 };
 
@@ -120,12 +121,12 @@ const actions = {
 
   fetch ({ commit, rootState }) {
 
-    console.log('STORE ACTION transcription/fetch', rootState)
 
     commit('LOADING_STATUS', true);
 
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
+    console.log('STORE ACTION transcription/fetch', doc_id, user_id);
 
 
     this.dispatch('noteTypes/fetch').then(() => {
@@ -143,6 +144,9 @@ const actions = {
       return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
 
         console.log('TRANSCRIPTION', response);
+
+        commit('LOADING_STATUS', false);
+
         if (response.data.errors && response.data.errors.status === 404) {
           console.log("NO transcription found");
           const emptyData = {
@@ -151,8 +155,8 @@ const actions = {
             withNotes: " ",
             withSpeechparts: " ",
           };
-          commit('INIT', emptyData);
-          commit('UPDATE', emptyData);
+          //commit('INIT', emptyData);
+          //commit('UPDATE', emptyData);
           return;
         }
         let transcription = {content : " ", notes: []};
@@ -176,7 +180,6 @@ const actions = {
 
         commit('INIT', data)
         commit('UPDATE', data);
-        commit('LOADING_STATUS', false);
       })
 
     })
@@ -196,6 +199,25 @@ const actions = {
       commit('ALIGNMENTS', alignments);
     })
   },
+  create ({ commit, rootState, rootGetters }) {
+    const auth = rootGetters['user/authHeader'];
+    const data = { data: [{
+        "content" : '<p></p>',
+        "username": rootState.user.currentUser.username
+      }]};
+    return new Promise( ( resolve, reject ) => {
+      axios.post(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions`, data, auth)
+        .then( response => {
+          if (response.data.errors) {
+            reject(response.data.errors);
+          }
+          else resolve( response.data )
+        })
+        .catch( error => {
+          reject( error )
+        });
+    } );
+  },
   save ({dispatch, rootState}, transcriptionWithNotes) {
     console.log('STORE ACTION transcription/save');
 
@@ -212,7 +234,10 @@ const actions = {
       })
       .then(reponse => dispatch('saveSpeechparts'))
       .then(reponse => dispatch('saveNotes'))
-      .then(reponse => dispatch('translation/save', null, {root:true}))
+      .then(reponse => {
+        if (rootState.translation.translation) return dispatch('translation/save', null, {root:true})
+        else return true;
+      })
       .then(function(values) {
         console.log('all saved', values);
       })

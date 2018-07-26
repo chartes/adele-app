@@ -29,15 +29,22 @@
 
                 <h2 class="subtitle">Transcription</h2>
 
-                <transcription-editor v-if="!!transcriptionWithNotes" :initialContent="transcriptionWithNotes"/>
+                <transcription-editor v-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
+                <div v-else>
+                    <minimal-message v-if="!transcriptionLoading" :body="'Aucune transcription pour le moment'"/>
+                    <p v-if="allowedToCreateTranscription"><a ref="createTranscriptionButton" class="button is-link" @click="createTranscription">Ajouter une transcription</a></p>
+                </div>
 
             </div>
             <div class="column" v-show="visibility.translation" :class="columnSize">
 
                 <h2 class="subtitle">Traduction</h2>
 
-                <translation-editor v-if="!!translationWithNotes" :initialContent="translationWithNotes"/>
-
+                <translation-editor v-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
+                <div v-else>
+                    <minimal-message v-if="!translationLoading" :body="'Aucune traduction pour le moment'"/>
+                    <p v-if="allowedToCreateTranslation"><a ref="createTranslationButton" class="button is-link" @click="createTranslation">Ajouter une traduction</a></p>
+                </div>
             </div>
         </div>
     </div>
@@ -50,10 +57,12 @@
   import TranscriptionEditor from '../editors/TranscriptionEditor'
   import TranslationEditor from "../editors/TranslationEditor";
   import VisibilityToggle from "../ui/VisibilityToggle";
+  import MinimalMessage from "../ui/MinimalMessage";
 
   export default {
     name: "transcription-edition",
     components: {
+      MinimalMessage,
       VisibilityToggle,
       IIIFMap,
       TranslationEditor,
@@ -66,19 +75,25 @@
           transcription: true,
           translation: true,
         },
-        debug: {
-          content: false,
-          notes: false,
-          align: false,
-          speechparts: false
-        }
       }
     },
     methods: {
       toggle (what) {
         console.log('toggle', what)
         this.visibility[what] = !this.visibility[what];
-      }
+      },
+      createTranscription () {
+        this.$refs.createTranscriptionButton.setAttribute('disabled','disabled');
+        this.$store.dispatch('transcription/create')
+          .then(data => {
+            console.log('transcription created', data)
+            this.$store.dispatch('transcription/fetch');
+          });
+      },
+      createTranslation () {
+
+        this.$refs.createTranslationButton.setAttribute('disabled','disabled');
+      },
     },
     computed: {
 
@@ -100,9 +115,36 @@
       isNight () {
         return this.nbCols ? 'is-night' : '';
       },
+
+      displayTranscriptionEditor () {
+        return !!this.transcriptionWithSpeechparts
+      },
+      displayTranslationEditor () {
+        return !!this.translationWithNotes
+      },
+
+      allowedToCreateTranscription () {
+        return (
+          !this.transcriptionLoading
+          &&
+          this.currentUserIsAuthor
+        )
+      },
+      allowedToCreateTranslation () {
+        return (
+          !this.translationLoading
+          && this.currentUserIsAuthor
+          && ( (this.currentUserIsStudent && this.referenceTranscription)
+            || (this.currentUserIsTeacher && this.transcription)
+          )
+        )
+      },
+
       ...mapGetters('document', ['manifestURL']),
-      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts']),
-      ...mapGetters('translation', ['translationWithNotes'])
+      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading']),
+      ...mapState('translation', ['translationWithNotes', 'translationLoading']),
+      ...mapState('user', ['currentUser', 'author']),
+      ...mapGetters('user', ['currentUserIsAuthor', 'currentUserIsStudent', 'currentUserIsTeacher']),
     }
   }
 </script>
