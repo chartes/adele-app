@@ -6,6 +6,8 @@ adele.sqlite
 .idea
 *.pyc
 
+app/static/css/admin.css
+
 # Frontend directories and files
 
 node_modules/
