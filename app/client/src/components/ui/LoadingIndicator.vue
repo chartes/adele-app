@@ -42,6 +42,6 @@
         transition: transform .25s;
     }
     .fade-enter .loading-icon, .fade-leave-to .loading-icon {
-        transform: translateY(-300%);
+        transform: translateY(100%);
     }
 </style>

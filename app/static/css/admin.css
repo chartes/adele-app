@@ -1221,7 +1221,7 @@ l {
 .new-speechpart-actions .button {
   width: 100%; }
 
-.notes-list-item {
+.notes-list-item, .list-item {
   background-color: #fff;
   border-radius: 5px;
   box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1);
@@ -1229,49 +1229,54 @@ l {
   display: block;
   padding: 0.75rem;
   border: 1px solid transparent; }
-  .notes-list-item .content {
+  .notes-list-item .content, .list-item .content {
     font-size: 60%; }
-    .notes-list-item.selected, .notes-list-item:hover, .notes-list-item:focus {
+    .notes-list-item.selected, .notes-list-item:hover, .notes-list-item:focus,
+    .list-item.selected, .list-item:hover, .list-item:focus {
       box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px #23d160;
       border-color: #23d160; }
-      .notes-list-item:not(:last-child) {
+      .notes-list-item:not(:last-child), .list-item:not(:last-child) {
         margin-bottom: 0.75rem; }
 
-.select, select {
-  transition: all 3s; }
+.list-subsection-title {
+  margin: 2em 0 1em 0;
+  font-weight: bold; }
 
-  .field-multiselect .add-item .fa-plus {
-    color: #fff; }
-    .field-multiselect .add-item .fa-circle {
-      color: #dbdbdb; }
-      .field-multiselect .add-item:hover .fa-circle {
-        color: #7a7a7a;
-        fill: #7a7a7a; }
-  .field-multiselect .unselected-item {
-    background-color: #fff;
-    color: #4a4a4a;
-    display: block;
-    padding: 0.5rem;
-    font-size: 0.8em;
-    border: 2px solid transparent; }
-    .field-multiselect .unselected-item .content {
-      font-size: 60%; }
-      .field-multiselect .unselected-item.selected,
-      .field-multiselect .unselected-item:hover,
-      .field-multiselect .unselected-item:focus {
-        border-color: #23d160; }
-        .field-multiselect .unselected-item:not(:last-child) {
-          margin-bottom: 0.75rem; }
-  .field-multiselect .box {
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-sizing: content-box;
-    max-height: 195px;
-    overflow: auto;
-    z-index: 1; }
-    .field-multiselect .multiselect-actions {
-      position: relative; }
+  .select, select {
+    transition: all 3s; }
+
+    .field-multiselect .add-item .fa-plus {
+      color: #fff; }
+      .field-multiselect .add-item .fa-circle {
+        color: #dbdbdb; }
+        .field-multiselect .add-item:hover .fa-circle {
+          color: #7a7a7a;
+          fill: #7a7a7a; }
+    .field-multiselect .unselected-item {
+      background-color: #fff;
+      color: #4a4a4a;
+      display: block;
+      padding: 0.5rem;
+      font-size: 0.8em;
+      border: 2px solid transparent; }
+      .field-multiselect .unselected-item .content {
+        font-size: 60%; }
+        .field-multiselect .unselected-item.selected,
+        .field-multiselect .unselected-item:hover,
+        .field-multiselect .unselected-item:focus {
+          border-color: #23d160; }
+          .field-multiselect .unselected-item:not(:last-child) {
+            margin-bottom: 0.75rem; }
+    .field-multiselect .box {
+      position: absolute;
+      top: 0;
+      left: 0;
+      box-sizing: content-box;
+      max-height: 195px;
+      overflow: auto;
+      z-index: 1; }
+      .field-multiselect .multiselect-actions {
+        position: relative; }
 
 .save-button {
   transition: all 0.25s; }

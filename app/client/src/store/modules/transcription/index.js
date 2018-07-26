@@ -25,6 +25,7 @@ let speechpartsShadowQuill;
 
 const state = {
 
+  transcriptionLoading: false,
   transcription: false,
   transcriptionContent: false,
   transcriptionWithNotes: false,
@@ -36,6 +37,7 @@ const state = {
 };
 
 const mutations = {
+
 
   INIT(state, payload) {
 
@@ -66,10 +68,13 @@ const mutations = {
     state.transcriptionWithNotes = false;
     state.transcriptionWithSpeechparts = false;
 
-    if (transcriptionShadowQuillElement) transcriptionShadowQuillElement.innerHTML = "";
-    if (notesShadowQuillElement) notesShadowQuillElement.innerHTML = "";
-    if (speechpartsShadowQuillElement) speechpartsShadowQuillElement.innerHTML = "";
+    if (transcriptionShadowQuillElement) transcriptionShadowQuillElement.children[0].innerHTML = "";
+    if (notesShadowQuillElement) notesShadowQuillElement.children[0].innerHTML = "";
+    if (speechpartsShadowQuillElement) speechpartsShadowQuillElement.children[0].innerHTML = "";
 
+  },
+  LOADING_STATUS (state, payload) {
+    state.transcriptionLoading = payload;
   },
   ALIGNMENTS(state, payload) {
     state.transcriptionAlignments = payload;
@@ -116,6 +121,8 @@ const actions = {
   fetch ({ commit, rootState }) {
 
     console.log('STORE ACTION transcription/fetch', rootState)
+
+    commit('LOADING_STATUS', true);
 
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
@@ -169,6 +176,7 @@ const actions = {
 
         commit('INIT', data)
         commit('UPDATE', data);
+        commit('LOADING_STATUS', false);
       })
 
     })
@@ -346,7 +354,7 @@ const actions = {
     commit('SAVED', false)
   },
   reset({commit}) {
-
+    commit('RESET')
   }
 
 };

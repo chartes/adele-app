@@ -203,7 +203,7 @@ note {
 }
 
 
-.notes-list-item {
+.notes-list-item, .list-item {
 
     background-color: #fff;
     border-radius: 5px;
@@ -221,4 +221,8 @@ note {
     &:not(:last-child) {
         margin-bottom: .75rem;
     }
+}
+.list-subsection-title {
+  margin: 2em 0 1em 0;
+  font-weight: bold;
 }

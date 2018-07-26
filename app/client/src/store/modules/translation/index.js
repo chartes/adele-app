@@ -11,13 +11,13 @@ const translationShadowQuillElement = document.createElement('div');
 const notesShadowQuillElement = document.createElement('div');
 let translationShadowQuill;
 let notesShadowQuill;
-let speechpartsShadowQuill;
 
 const state = {
 
-  translation: undefined,
-  translationContent: undefined,
-  translationWithNotes: undefined,
+  translationLoading: false,
+  translation: false,
+  translationContent: false,
+  translationWithNotes: false,
   translationSaved: false,
   translationError: false,
   translationAlignments: []
@@ -37,6 +37,20 @@ const mutations = {
       state.translationWithNotes = notesShadowQuillElement.children[0].innerHTML;
 
     }
+  },
+  RESET (state) {
+    console.log("STORE MUTATION translation/RESET")
+    state.translation = false;
+    state.translationAlignments = [];
+    state.translationContent = false;
+    state.translationWithNotes = false;
+    state.translationWithSpeechparts = false;
+
+    if (translationShadowQuillElement) translationShadowQuillElement.innerHTML = "";
+    if (notesShadowQuillElement) notesShadowQuillElement.innerHTML = "";
+  },
+  LOADING_STATUS (state, payload) {
+    state.translationLoading = payload;
   },
   ALIGNMENTS(state, payload) {
     state.translationAlignments = payload;
@@ -77,6 +91,8 @@ const actions = {
 
   fetch ({ commit, rootGetters, rootState }) {
 
+    commit('LOADING_STATUS', true);
+
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
     const alignments = rootState.transcription.transcriptionAlignments;
@@ -103,6 +119,7 @@ const actions = {
 
       commit('INIT', data)
       commit('UPDATE', data);
+      commit('LOADING_STATUS', false);
     });
 
 
@@ -178,6 +195,9 @@ const actions = {
   changed ({ commit }, deltas) {
     commit('ADD_OPERATION', deltas)
     commit('SAVED', false)
+  },
+  reset ({ commit }) {
+    commit('RESET')
   }
 
 };

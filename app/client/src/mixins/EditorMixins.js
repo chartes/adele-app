@@ -24,11 +24,22 @@ var EditorMixin = {
 
       editorElement.innerHTML = initialContent;
       this.editor = getNewQuill(editorElement);
+      this.activateEvents();
+      this.editor.updateContents(getNewDelta().retain(this.editor.getLength(), 'api'))
+      this.editorContentElement = editorElement.children[0];
+    },
+
+    activateEvents () {
+      //console.log("EditorMixins.activateEvents")
       this.editor.on('selection-change', this.onSelection);
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);
-      this.editor.updateContents(getNewDelta().retain(this.editor.getLength(), 'api'))
-      this.editorContentElement = editorElement.children[0];
+    },
+    deactivateEvents () {
+      //console.log("EditorMixins.deactivateEvents")
+      this.editor.off('selection-change', this.onSelection);
+      this.editor.off('selection-change', this.onFocus);
+      this.editor.off('text-change', this.onTextChange);
     },
 
     getEditorHTML () {
@@ -46,7 +57,7 @@ var EditorMixin = {
      */
 
     onTextChange (delta, oldDelta, source) {
-      console.log('onTranscriptionTextChange', delta, oldDelta, source)
+      //console.log('onTranscriptionTextChange', delta, oldDelta, source)
       this.lastOperations = delta;
       //this.updateContent();
       this.$store.dispatch(this.storeActions.changed, delta)

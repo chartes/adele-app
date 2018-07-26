@@ -8,8 +8,8 @@
             <div class="column">
                 <h1 class="title is-size-5">Document {{ document.id }}</h1>
             </div>
-            <div class="column" v-if="$store.getters['user/currentUserIsTeacher']">
-                <p class="has-text-right">Le travail affiché est celui de : {{ author.first_name }} {{ author.last_name }} <a class="button is-link is-small" @click="changeAuthor">Changer</a></p>
+            <div class="column" v-if="enabledSwapAuthor">
+                <p class="has-text-right">Le travail affiché est celui de : {{ author.first_name }} {{ author.last_name }} <a class="button is-link is-small" @click="swapUser = true">Changer</a></p>
             </div>
         </div>
 
@@ -19,7 +19,7 @@
                 <transcription-edition/>
             </tab>
 
-            <tab name="Facsimilé">
+            <tab name="Facsimilé" v-if="!!transcription">
                 <facsimile-editor></facsimile-editor>
             </tab>
 
@@ -33,6 +33,8 @@
             </tab>
 
         </tabs>
+
+        <author-swap-list-form v-if="swapUser" :selected-author="author" :cancel="cancelSwap" :submit="changeAuthor"/>
 
     </div>
 
@@ -52,11 +54,13 @@
   import NoticeEdition from "./NoticeEdition";
   import {mapState, mapGetters} from 'vuex';
   import LoadingIndicator from "../ui/LoadingIndicator";
+  import AuthorSwapListForm from "../forms/AuthorSwapListForm";
 
   export default {
     name: "document-edition",
 
     components: {
+      AuthorSwapListForm,
       LoadingIndicator,
       NoticeEdition,
       SpeechpartsEdition,
@@ -68,32 +72,37 @@
       Tabs,
       Tab
     },
+    data () {
+      return { swapUser: false }
+    },
     created() {
       this.$store.dispatch('transcription/fetch');
-      //this.$store.dispatch('translation/fetch');
     },
     methods: {
-      changeAuthor () {
+      changeAuthor (newAuthor) {
         console.log("changeAuthor");
-
-        var newAuthor = {
-        active:true,
-        email:"eleve1@gmail.com",
-        email_confirmed_at:"2018-03-29 10:29:20",
-        first_name:"PrenomEleve1",
-        id:5,
-        last_name:"NomEleve1",
-        //roles:Array[1]
-        username:"Eleve1"}
-
+        this.cancelSwap();
         this.$store.dispatch('user/setAuthor', newAuthor);
+        this.$store.dispatch('transcription/reset');
+        this.$store.dispatch('translation/reset');
         this.$store.dispatch('transcription/fetch');
+      },
+      cancelSwap () {
+        this.swapUser = false;
       }
     },
     computed: {
+      enabledSwapAuthor () {
+        return (
+          this.$store.getters['user/currentUserIsTeacher']
+          && this.document.whitelist
+          && this.document.whitelist.users
+          && this.document.whitelist.users.length > 0
+        );
+      },
       ...mapState('user', ['author']),
       ...mapState('document', ['document']),
-      ...mapState('transcription', ['transcription']),
+      ...mapState('transcription', ['transcriptionLoading', 'transcription']),
       ...mapState('translation', ['translation']),
     }
   }

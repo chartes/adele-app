@@ -1,20 +1,24 @@
 <template>
 
     <modal-form
-            :title="'Choisissez une note'"
+            :title="'Choisissez une personne'"
             :cancel="cancelAction"
             :submit="submitAction"
             :valid="!!selected"
     >
-        <div class="NoteForm">
-            <a class="notes-list-item"
-               v-for="note in notes"
-               :key="note.id"
-               @click="selectItem(note.id)"
-               :class="{ selected: note.id == selected }"
-            >
-                <p class="content" v-html="note.content"></p>
-            </a>
+        <div class="authors-list-form">
+            <a class="authors-list-item list-item"
+               :key="currentUser.id"
+               @click="selectItem(currentUser)"
+               :class="{ selected: currentUser.id == id }"
+            >Vous</a>
+            <p class="list-subsection-title">{{document.whitelist.label}}</p>
+            <a class="authors-list-item list-item"
+               v-for="user in document.whitelist.users"
+               :key="user.id"
+               @click="selectItem(user)"
+               :class="{ selected: user.id == id }"
+            >{{ user.first_name }} {{ user.last_name }}</a>
         </div>
     </modal-form>
 
@@ -29,26 +33,26 @@
 
   export default {
     name: "author-swap-list-form",
-    props: ['title', 'noteId', 'cancel', 'submit'],
+    props: ['title', 'selectedAuthor', 'cancel', 'submit'],
     components: {
       ModalForm
     },
     data() {
-      console.log('NoteListForm data');
       return {
-        selected: null
+        selected: null,
+        id: false
       }
     },
     mounted () {
-      console.log('NoteListForm mounted', this.noteId)
-      this.selected = this.noteId
+      this.selected = this.selectedAuthor;
+      this.id = this.selected.id;
     },
     methods: {
-      selectItem (noteId) {
-        this.selected = noteId;
+      selectItem (user) {
+        this.selected = user;
+        this.id = user.id;
       },
       submitAction () {
-        console.log("NotesListForm.submitAction", this.selected)
         this.$props.submit(this.selected);
       },
       cancelAction () {
@@ -56,7 +60,7 @@
       }
     },
     computed: {
-      ...mapState('user', ['author']),
+      ...mapState('user', ['author', 'currentUser']),
       ...mapState('document', ['document'])
     }
   }

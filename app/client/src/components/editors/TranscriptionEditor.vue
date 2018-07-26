@@ -132,6 +132,9 @@
       this.initEditor(this.$refs.editor, this.$props.initialContent);
 
     },
+    beforeDestroy () {
+      this.deactivateEvents();
+    },
     methods: {
 
       updateContent () {
