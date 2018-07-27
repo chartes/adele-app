@@ -461,6 +461,9 @@ def view_document_speech_parts(doc_id):
     transcription = get_reference_transcription(doc_id)
     transcription = Markup(transcription.content) if transcription else ""
     speech_parts = get_reference_alignment_discours(doc_id)
+
+    speech_parts = sorted(speech_parts, key=lambda s: s.ptr_start)
+
     return render_template('main/fragments/document_view/_speech_parts.html',
                            transcription=transcription,
                            speech_parts=speech_parts)
