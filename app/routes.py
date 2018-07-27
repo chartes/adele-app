@@ -416,28 +416,34 @@ def view_document_notice(doc_id):
 def view_document_transcription(doc_id):
     from .api.transcriptions.routes import get_reference_transcription
     tr = get_reference_transcription(doc_id)
+    tr = Markup(tr.content) if tr else ""
     return render_template('main/fragments/document_view/_transcription.html',
-                           transcription=Markup(tr.content))
+                           transcription=tr)
 
 
 @app_bp.route('/documents/<doc_id>/view/translation')
 def view_document_translation(doc_id):
     from .api.translations.routes import get_reference_translation
     tr = get_reference_translation(doc_id)
+    tr = Markup(tr.content) if tr else ""
     return render_template('main/fragments/document_view/_translation.html',
-                           translation=Markup(tr.content))
+                           translation=tr)
 
 
-@app_bp.route('/documents/<doc_id>/view/transcription_alignment')
+@app_bp.route('/documents/<doc_id>/view/transcription-alignment')
 def view_document_transcription_alignment(doc_id):
     from .api.translations.routes import get_reference_translation
     from .api.transcriptions.routes import get_reference_transcription
     translation = get_reference_translation(doc_id)
     transcription = get_reference_transcription(doc_id)
+
+    translation = Markup(translation.content) if translation else ""
+    transcription = Markup(transcription.content) if transcription else ""
+
     return render_template('main/fragments/document_view/_transcription_alignment.html',
                            doc_id=doc_id,
-                           transcription=Markup(transcription.content),
-                           translation=Markup(translation.content))
+                           transcription=transcription,
+                           translation=translation)
 
 
 @app_bp.route('/documents/<doc_id>/view/commentaries')
@@ -453,9 +459,10 @@ def view_document_speech_parts(doc_id):
     from .api.transcriptions.routes import get_reference_alignment_discours
     from .api.transcriptions.routes import get_reference_transcription
     transcription = get_reference_transcription(doc_id)
+    transcription = Markup(transcription.content) if transcription else ""
     speech_parts = get_reference_alignment_discours(doc_id)
     return render_template('main/fragments/document_view/_speech_parts.html',
-                           transcription=Markup(transcription.content),
+                           transcription=transcription,
                            speech_parts=speech_parts)
 
 
