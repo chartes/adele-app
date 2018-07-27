@@ -53,8 +53,7 @@
 .edit-document, .delete-document, .edit-manifest-info, .export-document {
   font-size: medium !important;
   text-decoration: none !important; }
-  .edit-document ; p, .delete-document ; p, .edit-manifest-info ; p,
-  .export-document ; p {
+  .edit-document p, .delete-document p, .edit-manifest-info p, .export-document p {
     margin-left: 6px !important; }
 
 .is-invisible {
@@ -1151,23 +1150,39 @@ smallcaps {
   font-variant: small-caps; }
 
   speechpart {
-    border-bottom: 3px solid #ccc; }
-    speechpart:nth-child(2n) {
-      border-color: cornflowerblue;
-      background-color: rgba(100, 149, 237, 0.2); }
-      speechpart:nth-child(2n+1) {
-        border-color: coral;
-        background-color: rgba(255, 127, 80, 0.2); }
+    border-bottom: 2px solid; }
+    speechpart:nth-child(8n) {
+      border-color: #d6cbd3; }
+      speechpart:nth-child(8n+1) {
+        border-color: #eca1a6; }
+        speechpart:nth-child(8n+2) {
+          border-color: #bdcebe; }
+          speechpart:nth-child(8n+3) {
+            border-color: #ada397; }
+            speechpart:nth-child(8n+4) {
+              border-color: #f7cac9; }
+              speechpart:nth-child(8n+5) {
+                border-color: #dac292; }
+                speechpart:nth-child(8n+6) {
+                  border-color: #b5e7a0; }
+                  speechpart:nth-child(8n+7) {
+                    border-color: #b9936c; }
+                    speechpart.unselected {
+                      border: none;
+                      background-color: inherit; }
 
-.ql-editor {
-  counter-reset: segment-count 0; }
-  .ql-editor segment {
-    display: inline-block; }
-    .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
-    .ql-editor segment:before {
+#speech-parts-toc {
+  margin-bottom: 20px; }
+
+  .ql-editor {
+    counter-reset: segment-count 0; }
+    .ql-editor segment {
       display: inline-block; }
-  .ql-editor span.br {
-    display: block; }
+      .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
+      .ql-editor segment:before {
+        display: inline-block; }
+    .ql-editor span.br {
+      display: block; }
 
 #transcription-editor segment:before, #transcription-editor p:before,
 #transcription-editor l:before, #transcription-editor .segment-bullet:before,
