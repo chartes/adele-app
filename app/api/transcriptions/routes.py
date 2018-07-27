@@ -30,6 +30,17 @@ def get_reference_transcription(doc_id):
     return transcription
 
 
+def get_reference_alignment_discours(doc_id):
+    alignments = []
+    transcription = get_reference_transcription(doc_id)
+    if transcription is not None:
+        alignments = AlignmentDiscours.query.filter(
+                AlignmentDiscours.transcription_id == transcription.id,
+                AlignmentDiscours.user_id == transcription.user_id
+        ).all()
+    return alignments
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/reference')
 def api_documents_transcriptions_reference(api_version, doc_id):
     tr = get_reference_transcription(doc_id)

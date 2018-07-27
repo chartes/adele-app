@@ -29,6 +29,22 @@ def get_reference_commentary(doc_id, type_id):
     return commentary
 
 
+def get_reference_commentaries(doc_id):
+    """
+
+    :param doc_id:
+    :return:
+    """
+    tr_ref = get_reference_transcription(doc_id)
+    if tr_ref is None:
+            raise NoResultFound("Reference transcription not found")
+    commentary = Commentary.query.filter(
+        doc_id == Commentary.doc_id,
+        tr_ref.user_id == Commentary.user_id
+    ).all()
+    return commentary
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>')

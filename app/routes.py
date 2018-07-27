@@ -3,6 +3,7 @@ import math
 from flask import render_template, flash, redirect, url_for, session, current_app, abort
 from flask_user import login_required, roles_required
 from flask_user.forms import InviteUserForm
+from jinja2 import Markup
 
 from app import app_bp
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType, \
@@ -403,6 +404,59 @@ def view_document(doc_id):
     can_edit = doc in user.documents_i_can_edit
 
     return render_template_with_token('main/document_view.html', title='Documents - Adele', doc=doc, can_edit=can_edit)
+
+
+@app_bp.route('/documents/<doc_id>/view/notice')
+def view_document_notice(doc_id):
+    doc = Document.query.filter(Document.id == doc_id).first()
+    return render_template('main/fragments/document_view/_notice.html', doc=doc)
+
+
+@app_bp.route('/documents/<doc_id>/view/transcription')
+def view_document_transcription(doc_id):
+    from .api.transcriptions.routes import get_reference_transcription
+    tr = get_reference_transcription(doc_id)
+    return render_template('main/fragments/document_view/_transcription.html',
+                           transcription=Markup(tr.content))
+
+
+@app_bp.route('/documents/<doc_id>/view/translation')
+def view_document_translation(doc_id):
+    from .api.translations.routes import get_reference_translation
+    tr = get_reference_translation(doc_id)
+    return render_template('main/fragments/document_view/_translation.html',
+                           translation=Markup(tr.content))
+
+
+@app_bp.route('/documents/<doc_id>/view/transcription_alignment')
+def view_document_transcription_alignment(doc_id):
+    from .api.translations.routes import get_reference_translation
+    from .api.transcriptions.routes import get_reference_transcription
+    translation = get_reference_translation(doc_id)
+    transcription = get_reference_transcription(doc_id)
+    return render_template('main/fragments/document_view/_transcription_alignment.html',
+                           doc_id=doc_id,
+                           transcription=Markup(transcription.content),
+                           translation=Markup(translation.content))
+
+
+@app_bp.route('/documents/<doc_id>/view/commentaries')
+def view_document_commentaries(doc_id):
+    from .api.commentaries.routes import get_reference_commentaries
+    commentaries = get_reference_commentaries(doc_id)
+    return render_template('main/fragments/document_view/_commentaries.html',
+                           commentaries=commentaries)
+
+
+@app_bp.route('/documents/<doc_id>/view/speech-parts')
+def view_document_speech_parts(doc_id):
+    from .api.transcriptions.routes import get_reference_alignment_discours
+    from .api.transcriptions.routes import get_reference_transcription
+    transcription = get_reference_transcription(doc_id)
+    speech_parts = get_reference_alignment_discours(doc_id)
+    return render_template('main/fragments/document_view/_speech_parts.html',
+                           transcription=Markup(transcription.content),
+                           speech_parts=speech_parts)
 
 
 @app_bp.route('/documents/<doc_id>/edition')

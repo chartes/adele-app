@@ -53,7 +53,7 @@
                         //LeafletIIIFAnnotation.resetMouseOverStyle();
                         /*
                         if (_this.must_be_saved) {
-                            _this.saveAnnotations().then(function () {
+                            _this.saveAll().then(function () {
                                 console.log("annotations saved.");
                                 _this._must_be_saved = false;
                             });

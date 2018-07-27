@@ -803,8 +803,8 @@ def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None)
     """
 
     response = None
-
     user = current_app.get_current_user()
+
     if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
             response = APIResponseFactory.make_response(errors={
@@ -821,6 +821,7 @@ def api_delete_documents_annotations(api_version, doc_id, user_id, zone_id=None)
             ImageZone.manifest_url == img.manifest_url,
             ImageZone.user_id == user_id
         ).all()
+
         for img_zone in img_zones:
             db.session.delete(img_zone)
     except NoResultFound as e:

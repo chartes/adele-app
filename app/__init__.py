@@ -26,7 +26,7 @@ app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folde
 
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
-
+from flask_cors import CORS
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -68,6 +68,8 @@ def create_app(config_name="dev"):
     mail.init_app(app)
     app.scss = Scss(app)
     babel.init_app(app)
+
+    CORS(app, resources={r"%s/api/*" % app.config["APP_URL_PREFIX"]: {"origins": "*"}})
 
     # Use the browser's language preferences to select an available translation
     @babel.localeselector
