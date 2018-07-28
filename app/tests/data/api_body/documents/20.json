@@ -1,0 +1,38 @@
+{
+  "data": {
+    "title": "My new title",
+    "subtitle": "My new subtitle",
+    "argument": "<p>L’infante Urra</p>",
+    "creation": 1400,
+    "creation_lab": "1400",
+    "copy_year": "[1409-1420 ca.]",
+    "copy_cent": 15,
+    "institution_id": 1,
+    "pressmark": "J 340, n° 21",
+    "editor_id": [
+      1,
+      2
+    ],
+    "country_id": [
+      100,
+      2,
+      3
+    ],
+    "district_id": [
+      1,
+      2,
+      3
+    ],
+    "acte_type_id": [
+      1
+    ],
+    "language_code": "fro",
+    "tradition_id": [
+      1
+    ],
+    "linked_document_id": [
+      110,
+      22
+    ]
+  }
+}

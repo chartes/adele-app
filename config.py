@@ -58,7 +58,7 @@ class Config(object):
     MAIL_USE_SSL = int(os.getenv('MAIL_USE_SSL') or True)
 
     # used when generating the IIIF annotation lists urls
-    APP_DOMAIN_NAME = "adele.chartes.psl.eu"
+    APP_DOMAIN_NAME = "adele.chartes.psl.eu" #TODO: vérifier si encore utilisé
 
     @staticmethod
     def init_app(app):
@@ -70,7 +70,7 @@ class DevelopmentConfig(Config):
     COPY = False
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
-    APP_DOMAIN_NAME = "locahost:5000"
+    APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé
 
     MAIL_USERNAME = 'adele@chartes.psl.eu'
     USER_EMAIL_SENDER_NAME = 'Adele'
@@ -96,7 +96,34 @@ class DevelopmentConfig(Config):
 
 
 class TestConfig(Config):
-    pass
+
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), 'data', 'adele.sqlite')
+
+    SECRET_KEY = 'you-will-never-guess-but-please-change-me'
+    APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé
+
+    MAIL_USERNAME = 'adele@chartes.psl.eu'
+    USER_EMAIL_SENDER_NAME = 'Adele'
+    USER_EMAIL_SENDER_EMAIL = 'adele@chartes.psl.eu'
+    MAIL_SERVER = 'smtp.chartes.psl.eu'
+    MAIL_PORT = 465
+    MAIL_USE_SSL = 1
+
+    LIVESERVER_TIMEOUT = 10
+    LIVESERVER_PORT = 8943
+
+    @staticmethod
+    def init_app(app):
+        print("APP STARTED FROM TEST CONFIG")
+        print(TestConfig.SQLALCHEMY_DATABASE_URI)
+        app.testing = True
+
+        path = os.path.join('data', 'adele.sqlite')
+        print("** fetching new db **")
+        db_url = 'https://github.com/chartes/adele/raw/master/adele.sqlite'
+        with urllib.request.urlopen(db_url) as response, open(path, 'wb') as out_file:
+            shutil.copyfileobj(response, out_file)
+            print("** DB ready **")
 
 
 config = {

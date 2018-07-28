@@ -1,0 +1,28 @@
+
+INSERT INTO main.role (id, name, description, label) VALUES (1, 'admin', 'administrateur de l''application', 'admin');
+INSERT INTO main.role (id, name, description, label) VALUES (2, 'student', 'élève', 'élève');
+INSERT INTO main.role (id, name, description, label) VALUES (3, 'teacher', 'professeur', 'professeur');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (1, 'AdminJulien', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'Julien', 'Pilla', 'julien.pilla@chartes.psl.eu', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (2, 'AdminVincent', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'Vincent', 'Jolivet', 'vincent.jolivet@chartes.psl.eu', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (3, 'AdminMorgan', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'Morgan', 'Legal', 'morganlegal@gmail.com', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (4, 'Professeur1', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'PrenomProf1', 'NomProf1', 'professeur1@gmail.com', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (5, 'Eleve1', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'PrenomEleve1', 'NomEleve1', 'eleve1@gmail.com', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (6, 'Professeur2', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'PrenomProf2', 'NomProf2', 'professeur2@gmail.com', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (7, 'Eleve2', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'PrenomEleve2', 'NomEleve2', 'elve2@gmail.com', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (8, 'Professeur3', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'PrenomProf3', 'NomProf3', 'professeur3@gmail.com', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user (id, username, password, is_active, firstname, lastname, email, confirmed_at) VALUES (9, 'Eleve3', 'pbkdf2:sha256:50000$TSy0ZWG3$80255f32a6a93097294b4333fdb0f367df92c2876f38c7f14e5ae4198892ba99', 1, 'PrenomEleve3', 'NomEleve3', 'eleve3@gmail.com', '2018-03-29 10:29:20.059262');
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (1, 1);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (1, 2);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (1, 3);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (2, 1);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (2, 2);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (2, 3);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (3, 1);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (3, 3);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (3, 2);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (4, 3);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (5, 2);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (6, 3);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (7, 2);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (8, 3);
+INSERT INTO main.user_has_role (user_id, role_id) VALUES (9, 2);
