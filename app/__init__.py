@@ -118,7 +118,7 @@ def create_app(config_name="dev"):
         user = models.User.verify_auth_token(username_or_token)
         if not user:
             user = models.User.query.filter(models.User.username == username_or_token).first()
-            if not user or not verify_password(password, user.password):
+            if not user or not user_manager.verify_password(password, user.password):
                 return False
         return True
 
