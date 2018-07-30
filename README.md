@@ -9,7 +9,7 @@ pip install -r requirements.txt
 mkdir db
 ```
 
-The database will be fetched from https://github.com/chartes/adele each time the server is restarted.
+The database must be fetched from https://github.com/chartes/adele and put in the db folder
 
 Starting the server in debug mode:
 ```
