@@ -1,6 +1,6 @@
 # adele-app 
 [![Build Status](https://travis-ci.org/chartes/adele-app.png)](https://travis-ci.org/chartes/adele-app)
-
+[![Coverage Status](https://coveralls.io/repos/github/chartes/adele-app/badge.svg?branch=master)](https://coveralls.io/github/chartes/adele-app?branch=master)
 
 ```
 python3 -m venv venv
