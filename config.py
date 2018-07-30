@@ -97,7 +97,8 @@ class DevelopmentConfig(Config):
 
 class TestConfig(Config):
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), 'data', 'adele.sqlite')
+    DB_PATH = 'tests/data'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), DB_PATH, 'adele.sqlite')
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
     APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé
@@ -115,10 +116,9 @@ class TestConfig(Config):
     @staticmethod
     def init_app(app):
         print("APP STARTED FROM TEST CONFIG")
-        print(TestConfig.SQLALCHEMY_DATABASE_URI)
         app.testing = True
 
-        path = os.path.join('data', 'adele.sqlite')
+        path = os.path.join(TestConfig.DB_PATH, 'adele.sqlite')
         print("** fetching new db **")
         db_url = 'https://github.com/chartes/adele/raw/master/adele.sqlite'
         with urllib.request.urlopen(db_url) as response, open(path, 'wb') as out_file:

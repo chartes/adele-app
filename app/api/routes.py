@@ -3,13 +3,12 @@ import json
 import sys
 
 from flask_user import roles_required
-from urllib.request import urlopen, build_opener, Request
+from urllib.request import build_opener
 
-from flask import request, Blueprint
+from flask import request
 
 from app import auth, db, api_bp
 from app.api.response import APIResponseFactory
-from app.database.alignment.alignment_translation import align_translation
 from app.models import Commentary, User
 
 
@@ -104,26 +103,6 @@ def api_test_auth_post(api_version, doc_id):
         user.serialize(), request.get_json(), [c.serialize() for c in Commentary.query.all()]
     ])
 
-    return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route('/api/<api_version>/alignments/translation/<transcription_id>/<translation_id>')
-def api_align_translation(api_version, transcription_id, translation_id):
-    alignment = align_translation(transcription_id, translation_id)
-    if len(alignment) > 0:
-        data = []
-        for al in alignment:
-            data.append({
-                "ptr_transcription_start": al[2],
-                "ptr_transcription_end": al[3],
-                "ptr_translation_start": al[4],
-                "ptr_translation_end": al[5],
-                "transcription": al[6],
-                "translation": al[7],
-            })
-        response = APIResponseFactory.make_response(data=data)
-    else:
-        response = APIResponseFactory.make_response(errors={"status": 404, "title": "Alignement introuvable"})
     return APIResponseFactory.jsonify(response)
 
 

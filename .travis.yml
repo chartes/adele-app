@@ -1,14 +1,21 @@
 language: python
 python:
   - "3.5"
-  - "3.6"
 
 # command to install dependencies
 install:
+  - wget -N https://chromedriver.storage.googleapis.com/2.35/chromedriver_linux64.zip -P ~/
+  - unzip ~/chromedriver_linux64.zip -d ~/
+  - rm ~/chromedriver_linux64.zip
+  - sudo mv -f ~/chromedriver /usr/local/share/
+  - sudo chmod +x /usr/local/share/chromedriver
+  - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
   - pip install -r requirements.txt
-  
+  - pip install coveralls
+  - pip install nose
 # command to run tests
 script:
-  - mkdir db
-  - curl https://github.com/chartes/adele/raw/master/adele.sqlite -o db/sqlite
-  - python -m unittest
+  - nosetests ./tests --with-coverage --cover-package=app --cover-xml
+after_success:
+  - coverage combine
+  #- coveralls

@@ -17,8 +17,8 @@ class TestBaseServer(LiveServerTestCase):
         return self.app
 
     BASE_FIXTURES = [
-        "data/fixtures/users/default_users.sql",
-        "data/fixtures/refs.sql",
+        "tests/data/fixtures/users/default_users.sql",
+        "tests/data/fixtures/refs.sql",
     ]
 
     def setUp(self):
