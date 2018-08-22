@@ -30,7 +30,7 @@ class TestBaseServer(TestCase):
     FIXTURES_PATH = join(getcwd(), 'data', 'fixtures')
 
     BASE_FIXTURES = [
-        join(FIXTURES_PATH, "users/default_users.sql"),
+        join(FIXTURES_PATH, "users", "default_users.sql"),
         join(FIXTURES_PATH, "refs.sql"),
     ]
 

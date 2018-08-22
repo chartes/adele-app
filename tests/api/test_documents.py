@@ -7,7 +7,7 @@ from tests.base_server import TestBaseServer, json_loads
 class TestDocumentsAPI(TestBaseServer):
 
     FIXTURES = [
-        join(TestBaseServer.FIXTURES_PATH, "documents/doc_20.sql")
+        join(TestBaseServer.FIXTURES_PATH, "documents", "doc_20.sql")
     ]
 
     def test_get_document(self):
