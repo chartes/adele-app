@@ -239,7 +239,7 @@ class Document(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'user_id': self.id,
+            'user_id': self.user_id,
             'title': self.title,
             'subtitle': self.subtitle,
             'creation': self.creation,

@@ -114,19 +114,20 @@ def api_post_users_roles(api_version, user_id):
             if not isinstance(data, list):
                 data = [data]
 
-            target_user = User.query.filter(User.id == user_id).one()
+            target_user = User.query.filter(User.id == user_id).first()
 
             for role_name in [r["name"] for r in data]:
 
-                if not target_user.has_role(role_name):
+                if not target_user.has_roles([role_name]):
                     if role_name == "admin" and not user.is_admin:
                         response = APIResponseFactory.make_response(errors={
                             "status": 403, "title": "Access forbidden"
                         })
                         break
                     else:
-                        role = Role.query.filter(Role.name == role_name).one()
-                        target_user.roles.append(role)
+                        role = Role.query.filter(Role.name == role_name).first()
+                        if role:
+                            target_user.roles.append(role)
 
             if response is None:
                 db.session.add(target_user)
@@ -139,6 +140,8 @@ def api_post_users_roles(api_version, user_id):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Cannot insert data", "details": str(e)
                     })
+        else:
+            response = APIResponseFactory.make_response(errors=data)
 
     return APIResponseFactory.jsonify(response)
 

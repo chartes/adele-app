@@ -13,8 +13,8 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), 'db', 'adele.sqlite')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    SCSS_STATIC_DIR = os.path.join(basedir, "app/static/css")
-    SCSS_ASSET_DIR = os.path.join(basedir, "app/assets/scss")
+    SCSS_STATIC_DIR = os.path.join(basedir, "app ", "static", "css")
+    SCSS_ASSET_DIR = os.path.join(basedir, "app", "assets", "scss")
 
     DOC_PER_PAGE = 20
     USERS_PER_PAGE = 10
@@ -97,7 +97,7 @@ class DevelopmentConfig(Config):
 
 class TestConfig(Config):
 
-    DB_PATH = os.path.join(basedir, "tests/data")
+    DB_PATH = os.path.join(basedir, "tests", "data")
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), DB_PATH, 'adele.sqlite')
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'

@@ -1,8 +1,7 @@
 import datetime
 import pprint
 
-from flask import request, url_for, current_app, flash
-from flask_user import roles_required
+from flask import request, url_for, current_app
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import auth, db
@@ -32,7 +31,6 @@ def api_documents(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/publish')
 @auth.login_required
-@roles_required(["admin", "teacher"])
 def api_documents_publish(api_version, doc_id):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
@@ -53,7 +51,6 @@ def api_documents_publish(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unpublish')
-@roles_required(["admin", "teacher"])
 @auth.login_required
 def api_documents_unpublish(api_version, doc_id):
     try:
@@ -89,7 +86,6 @@ def api_documents_id_list(api_version):
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST', 'PUT'])
 @auth.login_required
-@roles_required(["admin", "teacher"])
 def api_post_documents(api_version):
     """
     {
@@ -97,7 +93,7 @@ def api_post_documents(api_version):
         {
           "title":  "My new title",
           "subtitle": "My new subtitle",
-          "argument" : "<p>L’infante Urra</p>"
+          "argument" : "<p>L’infante Urra</p>",
           "creation": 1400,
           "creation_lab" : "1400",
           "copy_year" : "[1409-1420 ca.]",
@@ -110,7 +106,7 @@ def api_post_documents(api_version):
           "district_id" : [1, 2, 3],
           "acte_type_id" : [1],
           "language_code" : "fro",
-          "tradition_id": [1]
+          "tradition_id": [1],
           "linked_document_id" : [110, 22]
         }
     }
@@ -252,7 +248,7 @@ def api_post_documents(api_version):
                     tmp_doc.date_update = now
 
                 if response is None:
-
+                    tmp_doc["user_id"] = user.id
                     if is_post_method:
                         doc = Document(**tmp_doc)
                     else:
@@ -283,7 +279,6 @@ def api_post_documents(api_version):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['DELETE'])
 @auth.login_required
-@roles_required(["admin", "teacher"])
 def api_delete_documents(api_version, doc_id):
 
     response = None
@@ -330,7 +325,6 @@ def api_delete_documents(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])
 @auth.login_required
-@roles_required(["admin", "teacher"])
 def api_change_documents_whitelist(api_version, doc_id):
 
     user = current_app.get_current_user()
@@ -366,7 +360,6 @@ def api_change_documents_whitelist(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
 @auth.login_required
-@roles_required(["admin", "teacher"])
 def api_change_documents_closing_date(api_version, doc_id):
 
     user = current_app.get_current_user()
@@ -403,7 +396,6 @@ def api_change_documents_closing_date(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/add', methods=['POST'])
 @auth.login_required
-@roles_required(["admin", "teacher"])
 def api_add_document(api_version):
 
     user = current_app.get_current_user()
@@ -437,13 +429,12 @@ def api_add_document(api_version):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/set-manifest', methods=['POST'])
 @auth.login_required
-@roles_required(["admin", "teacher"])
 def api_set_document_manifest(api_version, doc_id):
 
     user = current_app.get_current_user()
     doc = Document.query.filter(Document.id == doc_id, Document.user_id == user.id).first()
 
-    if doc is None:
+    if doc is None or user.is_anonymous or not (user.is_teacher or user.is_admin):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })

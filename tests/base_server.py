@@ -67,7 +67,7 @@ class TestBaseServer(TestCase):
         return self.post(url, data, headers=make_auth_headers(username, password))
 
     def get(self, url):
-        return self.client.get(url)
+        return self.client.get(url, follow_redirects=True)
 
     def get_with_auth(self, url, username, password):
-        return self.client.get(url, header=make_auth_headers(username, password))
+        return self.client.get(url, headers=make_auth_headers(username, password))
