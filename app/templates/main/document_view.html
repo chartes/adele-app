@@ -1,5 +1,14 @@
 {% extends 'main/base.html' %}
 
+{% from 'main/fragments/document_view/_liiiflet_viewer.html' import liiiflet_viewer %}
+
+{% block head_scripts %}
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('app_bp.static', filename='js/liiiflet.js') }}"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/liiiflet.css')}}"/>
+{% endblock head_scripts %}
+
 {% block content %}
     <section class="section">
         <div class="view-container is-fullhd">
@@ -7,20 +16,21 @@
                 <span class="tag is-light">Dossier {{ doc.id }}</span>
 
                 <span class="tag">
-                    <a id="visibility-image"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>image</a>
-                    <a id="visibility-notice"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>notice</a>
-                    <a id="visibility-transcription"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>transcription</a>
-                    <a id="visibility-translation"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>traduction</a>
-                    <a id="visibility-commentaries"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>commentaires</a>
-                    <a id="visibility-speech-parts"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>parties du discours</a>
+                    <a id="visibility-image" class="visibility-tag"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>image</a>
+                    <a id="visibility-notice" class="visibility-tag"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>notice</a>
+                    <a id="visibility-transcription" class="visibility-tag"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>transcription</a>
+                    <a id="visibility-translation" class="visibility-tag"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>traduction</a>
+                    <a id="visibility-commentaries" class="visibility-tag"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>commentaires</a>
+                    <a id="visibility-speech-parts" class="visibility-tag"><span><i class="fas fa-eye active"></i><i class="fas fa-eye-slash inactive" style="display:none"></i></span>parties du discours</a>
                 </span>
             </div>
 
             <div class="columns">
-                <div class="column is-4" id="img-col">
+                <div class="column is-5" id="img-col">
                     {% if doc.images|length > 0 %}
                     <figure class="image">
-                        <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" />
+                        <!-- <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" /> -->
+                        {{ liiiflet_viewer(doc.id, doc.user_id, false, auth_token) }}
                     </figure>
                     <div id="iiif-map"></div>
                     {% else %}
@@ -59,7 +69,6 @@
 {% endblock %}
 
 {% block scripts %}
-   <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
    <script type="text/javascript">
        $(document).ready(function () {
 
@@ -155,16 +164,28 @@
            /*
                 set up visibility filters
            */
+
+           // recompute the liiiflet map size after it changed
+           function toggleLiiifletFullscreen(t){
+               // show/hide liiiflet/text columns
+               $(t).find('.active,.inactive').toggle();
+               liiiflet.map.invalidateSize(true);
+               //liiiflet.setAnnotations();
+           }
+
            function toggleTextCol(t) {
                if ($('#text-col').css('display') === 'none'){
                    $('#text-col').show();
-                   $('#img-col').addClass('is-4');
+                   $('#img-col').addClass('is-5');
                }
                else {
                    $('#text-col').hide();
-                   $('#img-col').removeClass('is-4');
+                   $('#img-col').removeClass('is-5');
                }
                $(t).find('.active,.inactive').toggle();
+
+
+               toggleLiiifletFullscreen(this);
            }
 
            $('#visibility-image').click(function(){
@@ -174,7 +195,6 @@
                else {
                    $('#img-col').hide();
                }
-               $(this).find('.active,.inactive').toggle();
            });
            $('#visibility-notice').click(function(){toggleTextCol(this)});
            $('#visibility-commentaries').click(function(){toggleTextCol(this)});
@@ -194,7 +214,7 @@
                        }
                        $('#transcription-alignment-container').hide();
                    }
-                   $('#img-col').addClass('is-4');
+                   $('#img-col').addClass('is-5');
                }
                else {
                   $('#transcription-container').hide();
@@ -204,13 +224,14 @@
                     && $('#translation-container').css('display') === 'none'
                     && $('#transcription-alignment-container').css('display') === 'none'){
                  $('#text-col').hide();
-                 $('#img-col').removeClass('is-4');
+                 $('#img-col').removeClass('is-5');
                } else {
                  $('#text-col').show();
                }
 
-               $(this).find('.active,.inactive').toggle();
+               toggleLiiifletFullscreen(this);
            });
+
            $('#visibility-translation').click(function(){
                if ($('#translation-container').css('display') === 'none'){
                    if ($('#transcription-container').css('display') === 'block'){
@@ -225,7 +246,7 @@
                        }
                        $('#transcription-alignment-container').hide();
                    }
-                   $('#img-col').addClass('is-4');
+                   $('#img-col').addClass('is-5');
                }
                else {
                   $('#translation-container').hide();
@@ -235,12 +256,12 @@
                     && $('#translation-container').css('display') === 'none'
                     && $('#transcription-alignment-container').css('display') === 'none'){
                  $('#text-col').hide();
-                 $('#img-col').removeClass('is-4')
+                 $('#img-col').removeClass('is-5')
                } else {
                  $('#text-col').show();
                }
 
-               $(this).find('.active,.inactive').toggle();
+               toggleLiiifletFullscreen(this);
            });
 
        });

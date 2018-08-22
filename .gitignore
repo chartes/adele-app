@@ -5,9 +5,9 @@ db
 adele.sqlite
 .idea
 *.pyc
-
-admin.css
-
+.coverage
+coverage.xml
+gunicorn.conf.py
 # Frontend directories and files
 
 node_modules/

@@ -97,7 +97,7 @@ class DevelopmentConfig(Config):
 
 class TestConfig(Config):
 
-    DB_PATH = 'tests/data'
+    DB_PATH = os.path.join(basedir, "tests/data")
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), DB_PATH, 'adele.sqlite')
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
@@ -115,15 +115,17 @@ class TestConfig(Config):
 
     @staticmethod
     def init_app(app):
-        print("APP STARTED FROM TEST CONFIG")
+        print("APP STARTED FROM TEST CONFIG\n")
         app.testing = True
-
+        app.debug = False
+        """
         path = os.path.join(TestConfig.DB_PATH, 'adele.sqlite')
         print("** fetching new db **")
         db_url = 'https://github.com/chartes/adele/raw/master/adele.sqlite'
         with urllib.request.urlopen(db_url) as response, open(path, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)
             print("** DB ready **")
+        """
 
 
 config = {

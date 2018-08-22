@@ -1,0 +1,40 @@
+{% macro liiiflet_viewer(doc_id, user_id, enable_edition, auth_token) %}
+
+      <div id="liiiflet-map" style="height: 720px;"></div>
+      <script type="text/javascript">
+           const manifest_url = "{{ url_for('api_bp.api_documents_manifest_reference', api_version=1.0, doc_id=doc_id)}}";
+           const auth_token = "{{ auth_token|default('', true) }}";
+           const auth_header = { auth: { username: auth_token, password: auth_token } };
+
+           const liiiflet = new Liiiflet("liiiflet-map", {
+               loadManifest: function() {
+                   return axios.get(manifest_url, null);
+               },
+               loadAnnotations: function(annotation_list_url) {
+                   return axios.get(annotation_list_url, null);
+               } ,
+               saveAnnotations: function(annotations) {
+                   return axios.delete(
+                       "{{ url_for('api_bp.api_delete_documents_annotations', api_version=1.0, doc_id=doc_id, user_id=user_id)}}",
+                       auth_header
+                   ).then((response) => {
+                      console.log("delete response:", response);
+                      //this.handleAPIErrors(response, doc_id);
+                      return axios.post(
+                          "{{ url_for('api_bp.api_post_documents_annotations', api_version=1.0, doc_id=doc_id)}}",
+                          {"data": annotations},
+                          auth_header
+                      );
+                   });
+               },
+               saveAnnotationAlignments: function(annotations) {
+                   //TODO
+               }
+           },
+           {direction: "center", className: "facsimileToolTip"}, // Tooltip options
+           {{enable_edition|lower}});
+
+
+       </script>
+
+{% endmacro %}

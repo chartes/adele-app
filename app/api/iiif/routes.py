@@ -24,7 +24,7 @@ ANNO_ZONE_TYPE = 2  # annotations
 """
 
 
-def make_manifest(api_version, doc_id, user_id):
+def make_manifest(api_version, doc_id, user_id, reference=False):
     img = Image.query.filter(Image.doc_id == doc_id).first()
     if img is None:
         response = APIResponseFactory.make_response(errors={
@@ -45,7 +45,8 @@ def make_manifest(api_version, doc_id, user_id):
                 "canvas_name": canvas["@id"][canvas["@id"].rfind("/")+1:],
                 "user_id": user_id
             }
-            print(kwargs)
+            if reference:
+                kwargs.pop("user_id")
 
             canvas["otherContent"].extend([
                 {
@@ -66,7 +67,7 @@ def make_manifest(api_version, doc_id, user_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/reference')
 def api_documents_manifest_reference(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
-    return make_manifest(api_version, doc_id, doc.user_id)
+    return make_manifest(api_version, doc_id, doc.user_id, reference=True)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest')
