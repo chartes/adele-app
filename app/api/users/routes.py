@@ -23,13 +23,10 @@ def get_auth_token(api_version):
 
 
 @api_bp.route('/api/<api_version>/user')
+@auth.login_required
 def api_current_user(api_version):
     user = current_app.get_current_user()
-    if user.is_anonymous:
-        response = APIResponseFactory.make_response()
-    else:
-        response = APIResponseFactory.make_response(data=user.serialize())
-
+    response = APIResponseFactory.make_response(data=user.serialize())
     return APIResponseFactory.jsonify(response)
 
 
@@ -158,7 +155,6 @@ def api_delete_user(api_version, user_id):
     if response is None:
         try:
             target_user = User.query.filter(User.id == user_id).one()
-
             if target_user.is_admin and not user.is_admin:
                 response = APIResponseFactory.make_response(errors={
                     "status": 403, "title": "Access forbidden"
@@ -167,14 +163,14 @@ def api_delete_user(api_version, user_id):
             if response is None:
                 db.session.delete(target_user)
 
-            try:
-                db.session.commit()
-                response = APIResponseFactory.make_response(data=[])
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot delete data", "details": str(e)
-                })
+                try:
+                    db.session.commit()
+                    response = APIResponseFactory.make_response(data=[])
+                except Exception as e:
+                    db.session.rollback()
+                    response = APIResponseFactory.make_response(errors={
+                        "status": 403, "title": "Cannot delete data", "details": str(e)
+                    })
 
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
@@ -202,12 +198,12 @@ def api_delete_users_roles(api_version, user_id):
                 })
 
             if response is None:
-                target_user.roles = [Role.query.filter(Role.name == "student").one()]
+                target_user.roles = [Role.query.filter(Role.name == "student").first()]
                 db.session.add(target_user)
 
             try:
                 db.session.commit()
-                response = APIResponseFactory.make_response(data=[])
+                response = APIResponseFactory.make_response(data={"data": target_user.serialize()})
             except Exception as e:
                 db.session.rollback()
                 response = APIResponseFactory.make_response(errors={
@@ -221,7 +217,7 @@ def api_delete_users_roles(api_version, user_id):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/users/add-to-whitelist', methods=['POST'])
+@api_bp.route('/api/<api_version>/whitelists/add-users', methods=['POST'])
 @auth.login_required
 def add_user_to_whitelist(api_version):
     """
@@ -301,13 +297,35 @@ def remove_user_from_whitelist(api_version, user_id, whitelist_id):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/users/add-whitelist', methods=['POST'])
+@api_bp.route('/api/<api_version>/whitelists/<whitelist_id>')
 @auth.login_required
-def add_whitelist(api_version):
+def api_get_whitelist(api_version, whitelist_id):
+    user = current_app.get_current_user()
+    response = None
+    if user.is_anonymous or (not user.is_teacher and not user.is_admin):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+    if response is None:
+
+        w = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
+        if w is None:
+            response = APIResponseFactory.make_response(errors={
+                "status": 404, "title": "Whitelist %s does not exist" % whitelist_id
+            })
+        else:
+            response = APIResponseFactory.make_response(data=w.serialize())
+
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/whitelists', methods=['POST'])
+@auth.login_required
+def api_post_whitelist(api_version):
     """
     {
         data: {
-            name : 'My new whitelist'
+            whitelist_name : 'My new whitelist'
         }
     }
     :return:
@@ -331,9 +349,7 @@ def add_whitelist(api_version):
             db.session.commit()
             new_id = db.session.query(func.max(Whitelist.id))
             new_whitelist = Whitelist.query.filter(Whitelist.id == new_id).first()
-            response = APIResponseFactory.make_response(data={
-                "whitelist": new_whitelist.serialize()
-            })
+            response = APIResponseFactory.make_response(data=new_whitelist.serialize())
         except Exception as e:
             db.session.rollback()
             response = APIResponseFactory.make_response(errors={
@@ -343,7 +359,7 @@ def add_whitelist(api_version):
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route('/api/<api_version>/users/delete-whitelist/<whitelist_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/whitelists/<whitelist_id>', methods=['DELETE'])
 @auth.login_required
 def delete_whitelist(api_version, whitelist_id):
     """

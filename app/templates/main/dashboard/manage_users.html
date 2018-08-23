@@ -356,7 +356,7 @@
                 const new_userlist_name = $('#new-userlist-name').val();
                 if (new_userlist_name.length > 0) {
                     $.ajax({
-                       url: "{{ url_for('api_bp.add_whitelist', api_version='1.0') }}",
+                       url: "{{ url_for('api_bp.api_post_whitelist', api_version='1.0') }}",
                        method: 'POST',
                        contentType: "application/json",
                        data:  JSON.stringify({data: {whitelist_name: new_userlist_name}}),
@@ -366,8 +366,8 @@
                     }).done(function(data) {
                         console.log(data);
                         // add the new userlist to the different select inputs
-                        const id = data["data"]["whitelist"]["id"];
-                        const label = data["data"]["whitelist"]["label"];
+                        const id = data["data"]["id"];
+                        const label = data["data"]["label"];
                         $(".select-userlist").append("<option value='"+ id +"'>"+ label +"</option>");
                         $("#select-userlist option:last-child").prop("selected", true).change();
                         // empty the userlist input

@@ -1,7 +1,6 @@
-import pprint
-from flask import json
+
 from os.path import join
-from tests.base_server import TestBaseServer, json_loads
+from tests.base_server import TestBaseServer, json_loads, ADMIN_USER
 
 
 class TestDocumentsAPI(TestBaseServer):
@@ -28,9 +27,8 @@ class TestDocumentsAPI(TestBaseServer):
 
     def test_post_document(self):
         self.load_fixtures(self.BASE_FIXTURES + self.FIXTURES)
-        login_info = {"username": "AdminJulien", "password": "AdeleAdmin2018"}
 
-        resp = self.post_with_auth(
+        self.post_with_auth(
             "/adele/api/1.0/documents",
             data={
                 "data":
@@ -53,7 +51,7 @@ class TestDocumentsAPI(TestBaseServer):
                       "linked_document_id": [20]
                     }
             },
-            **login_info)
+            **ADMIN_USER)
 
         resp = self.get("/adele/api/1.0/documents/21")
         r = json_loads(resp.data)
