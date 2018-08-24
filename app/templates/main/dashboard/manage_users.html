@@ -300,17 +300,19 @@
                 Add user to a userlist
              */
             $('#right-arrow').click(function() {
-               let emails_to_add_to_userlist = [] ;
-               $('.user-row.user.is-selected td:last-child').each(function() {
-                   emails_to_add_to_userlist.push($(this).text());
+               let userids_to_add_to_userlist = [] ;
+               $('.user-row.user.is-selected td:first-child').each(function() {
+                   userids_to_add_to_userlist.push($(this).text());
                });
-               if (emails_to_add_to_userlist.length > 0) {
+               if (userids_to_add_to_userlist.length > 0) {
                     const whitelist_id = $('#select-userlist option:selected').val();
+                    let url = "{{ url_for('api_bp.add_user_to_whitelist', api_version='1.0', whitelist_id='WHITELIST_ID_PLACEHOLDER') }}";
+                    url = url.replace("WHITELIST_ID_PLACEHOLDER", whitelist_id);
                     $.ajax({
-                       url: "{{ url_for('api_bp.add_user_to_whitelist', api_version='1.0') }}",
+                       url: url,
                        method: 'POST',
                        contentType: "application/json",
-                       data:  JSON.stringify({data: {emails: emails_to_add_to_userlist, whitelist_id: whitelist_id}}),
+                       data:  JSON.stringify({data: {user_id: userids_to_add_to_userlist}}),
                        beforeSend: function (xhr) {
                            xhr.setRequestHeader ("Authorization", "Basic " + btoa("{{auth_token }}:{{auth_token}}"));
                        }

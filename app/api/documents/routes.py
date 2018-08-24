@@ -326,6 +326,16 @@ def api_delete_documents(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])
 @auth.login_required
 def api_change_documents_whitelist(api_version, doc_id):
+    """
+    {
+        "data" : {
+            "whitelist_id" : 1
+        }
+    }
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
 
     user = current_app.get_current_user()
 

@@ -1,3 +1,5 @@
+from os.path import join
+
 import unittest
 
 from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, PROF1_USER, STU1_USER
@@ -117,18 +119,66 @@ class TestUsersAPI(TestBaseServer):
         # As of today, 14 is the next generated id
         self.assertEqual(14, json_loads(r.data)["data"]["id"])
 
-    @unittest.skip("NotImplemented")
     def test_delete_whitelist(self):
         self.assert403("/adele/api/1.0/whitelists/1", method="DELETE")
         self.assert404("/adele/api/1.0/whitelists/100", method="DELETE", **ADMIN_USER)
-        # TODO: test bind/unbind to document
 
-    @unittest.skip("NotImplemented")
+        # bind the whitelist 1 to the doc
+        doc_fixtures = join(TestBaseServer.FIXTURES_PATH, "documents", "doc_20.sql")
+        self.load_fixtures([doc_fixtures])
+        self.post_with_auth("/adele/api/1.0/documents/20/whitelist",
+                        data={"data": {"whitelist_id": "1"}}, **PROF1_USER)
+        r = self.get("/adele/api/1.0/documents/20")
+        self.assertEqual(1, json_loads(r.data)["data"]["whitelist"]["id"])
+
+        # delete the whitelist then check the document again
+        self.delete_with_auth("/adele/api/1.0/whitelists/1", **ADMIN_USER)
+        r = self.get("/adele/api/1.0/documents/20")
+        self.assertIsNone(json_loads(r.data)["data"]["whitelist"])
+
+        # try to get the whitelist
+        self.assert404("/adele/api/1.0/whitelists/1", method="DELETE", **ADMIN_USER)
+
     def test_add_user_to_whitelist(self):
-        pass
+        self.assert403("/adele/api/1.0/whitelists/1/add-users", data={}, method="POST")
+        self.assert403("/adele/api/1.0/whitelists/1/add-users", data={}, method="POST", **STU1_USER)
 
-    @unittest.skip("NotImplemented")
+        def get_ids(r):
+            return [u['id'] for u in json_loads(r.data)["data"]["users"]]
+        # check that users 1 and 2 are not in the list
+        r = self.get_with_auth("/adele/api/1.0/whitelists/1", **PROF1_USER)
+        ids = get_ids(r)
+        self.assertNotIn(1, ids)
+        self.assertNotIn(2, ids)
+        # add users 1 and 2
+        r = self.post_with_auth("/adele/api/1.0/whitelists/1/add-users",
+                            data={"data": {"user_id": [1, 2]}}, **PROF1_USER)
+        ids = get_ids(r)
+        self.assertIn(1, ids)
+        self.assertIn(2, ids)
+
+        # be sure you can't add duplicates
+        r = self.post_with_auth("/adele/api/1.0/whitelists/1/add-users",
+                            data={"data": {"user_id": [1, 2]}}, **PROF1_USER)
+        ids_wo_ducplicates = get_ids(r)
+        self.assertEqual(len(ids), len(ids_wo_ducplicates))
+
     def test_remove_user_from_whitelist(self):
-        pass
+        self.assert403("/adele/api/1.0/whitelists/1/remove-user/1", method="DELETE")
+        self.assert403("/adele/api/1.0/whitelists/1/remove-user/1", method="DELETE", **STU1_USER)
 
+        def get_ids(r):
+            return [u['id'] for u in json_loads(r.data)["data"]["users"]]
 
+        # add users 1 and 2
+        r = self.post_with_auth("/adele/api/1.0/whitelists/1/add-users",
+                            data={"data": {"user_id": [1, 2]}}, **PROF1_USER)
+        ids = get_ids(r)
+
+        # be sure you can't add duplicates
+        self.delete_with_auth("/adele/api/1.0/whitelists/1/remove-user/1", **PROF1_USER)
+        r = self.get_with_auth("/adele/api/1.0/whitelists/1", **PROF1_USER)
+        ids_wo_user_1 = get_ids(r)
+
+        self.assertNotIn(1, ids_wo_user_1)
+        self.assertEqual(len(ids) - 1, len(ids_wo_user_1))
