@@ -10,15 +10,6 @@ class TestUsersAPI(TestBaseServer):
     FIXTURES = [
     ]
 
-    def setUp(self):
-        super().setUp()
-        self.load_fixtures(self.BASE_FIXTURES)
-
-    def test_get_auth_token(self):
-        self.assert403("/adele/api/1.0/token")
-
-        r = self.get_with_auth("/adele/api/1.0/token", **ADMIN_USER)
-        self.assertIn("token", json_loads(r.data))
 
     def test_get_current_user(self):
         self.assert403("/adele/api/1.0/user")
@@ -31,6 +22,7 @@ class TestUsersAPI(TestBaseServer):
     def test_get_user_from_id(self):
         self.assert403("/adele/api/1.0/users/1")
         self.assert404("/adele/api/1.0/users/100", **ADMIN_USER)
+        self.assert403("/adele/api/1.0/users/100", **STU1_USER)
 
         r = self.assert403("/adele/api/1.0/users/1")
         r = self.get_with_auth("/adele/api/1.0/users/4", **PROF1_USER)
@@ -60,6 +52,7 @@ class TestUsersAPI(TestBaseServer):
 
     def test_add_role_to_user(self):
         self.assert403("/adele/api/1.0/users/4/roles", data={"data": {"name": "student"}}, method="POST")
+        self.assert403("/adele/api/1.0/users/4/roles", data={"data": {"name": "student"}}, method="POST", **STU1_USER)
 
         resp = self.get_with_auth("/adele/api/1.0/users/4/roles", **ADMIN_USER)
         role_names = [role["name"] for role in json_loads(resp.data)["data"]]
@@ -90,6 +83,7 @@ class TestUsersAPI(TestBaseServer):
 
     def test_delete_user_roles(self):
         self.assert403("/adele/api/1.0/users/5/roles", method="DELETE")
+        self.assert403("/adele/api/1.0/users/4/roles", method="DELETE", **STU1_USER)
         self.assert404("/adele/api/1.0/users/100/roles", method="DELETE", **ADMIN_USER)
 
         self.post_with_auth("/adele/api/1.0/users/5/roles",
@@ -104,6 +98,7 @@ class TestUsersAPI(TestBaseServer):
 
     def test_get_whitelist(self):
         self.assert404("/adele/api/1.0/whitelists/100", **PROF1_USER)
+        self.assert403("/adele/api/1.0/whitelists/1", **STU1_USER)
         self.assert403("/adele/api/1.0/whitelists/1")
 
         r = self.get_with_auth("/adele/api/1.0/whitelists/1", **PROF1_USER)
@@ -113,6 +108,9 @@ class TestUsersAPI(TestBaseServer):
         self.assert403("/adele/api/1.0/whitelists",
                        data={"data": {"whitelist_name": "WL1"}},
                        method="POST")
+        self.assert403("/adele/api/1.0/whitelists",
+                       data={"data": {"whitelist_name": "WL1"}},
+                       method="POST", **STU1_USER)
 
         r = self.post_with_auth("/adele/api/1.0/whitelists",
                                 data={"data": {"whitelist_name": "WL1"}}, **PROF1_USER)
@@ -121,6 +119,7 @@ class TestUsersAPI(TestBaseServer):
 
     def test_delete_whitelist(self):
         self.assert403("/adele/api/1.0/whitelists/1", method="DELETE")
+        self.assert403("/adele/api/1.0/whitelists/1", method="DELETE", **STU1_USER)
         self.assert404("/adele/api/1.0/whitelists/100", method="DELETE", **ADMIN_USER)
 
         # bind the whitelist 1 to the doc

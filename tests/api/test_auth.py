@@ -1,7 +1,5 @@
-import pprint
-from flask import json
-from os.path import join
-from tests.base_server import TestBaseServer, json_loads
+
+from tests.base_server import TestBaseServer, json_loads, ADMIN_USER
 
 
 class TestAuthAPI(TestBaseServer):
@@ -9,9 +7,8 @@ class TestAuthAPI(TestBaseServer):
     FIXTURES = [
     ]
 
-    def test_auth(self):
-        self.load_fixtures(self.BASE_FIXTURES)
+    def test_get_auth_token(self):
+        self.assert403("/adele/api/1.0/token")
 
-        resp = self.get_with_auth("/adele/api/1.0/user", username="AdminJulien", password="AdeleAdmin2018")
-        r = json_loads(resp.data)
-        self.assertEqual('AdminJulien', r["data"]["username"])
+        r = self.get_with_auth("/adele/api/1.0/token", **ADMIN_USER)
+        self.assertIn("token", json_loads(r.data))

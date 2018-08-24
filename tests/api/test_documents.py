@@ -1,6 +1,6 @@
-
+import unittest
 from os.path import join
-from tests.base_server import TestBaseServer, json_loads, ADMIN_USER
+from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, STU1_USER, PROF1_USER, PROF2_USER
 
 
 class TestDocumentsAPI(TestBaseServer):
@@ -10,23 +10,17 @@ class TestDocumentsAPI(TestBaseServer):
     ]
 
     def test_get_document(self):
-        self.load_fixtures(self.BASE_FIXTURES + self.FIXTURES)
-
-        # document found
-        resp = self.get("/adele/api/1.0/documents/20")
-        self.assertEqual(200, resp.status_code)
-        r = json_loads(resp.data)
-        self.assertIn("data", r)
-        self.assertEqual(20, r["data"]["id"])
+        self.load_fixtures(self.FIXTURES)
 
         # document not found
-        resp = self.get("/adele/api/1.0/documents/999")
-        self.assertEqual(200, resp.status_code)
-        r = json_loads(resp.data)
-        self.assertIn("errors", r)
+        self.assert404("/adele/api/1.0/documents/999")
+        # document found
+        resp = self.get("/adele/api/1.0/documents/20")
+        self.assertEqual(20, json_loads(resp.data)["data"]["id"])
 
     def test_post_document(self):
-        self.load_fixtures(self.BASE_FIXTURES + self.FIXTURES)
+        self.load_fixtures(self.FIXTURES)
+        self.assert403("/adele/api/1.0/documents", data={"data": {}},  method="POST", **STU1_USER)
 
         self.post_with_auth(
             "/adele/api/1.0/documents",
@@ -57,4 +51,115 @@ class TestDocumentsAPI(TestBaseServer):
         r = json_loads(resp.data)
         self.assertEqual(21, r["data"]["id"])
         self.assertEqual(1, r["data"]["user_id"])
-        #print(r)
+
+    def test_publish_document(self):
+        self.load_fixtures(self.FIXTURES)
+        self.assert403("/adele/api/1.0/documents/20/publish", method="GET", **STU1_USER)
+        self.assert403("/adele/api/1.0/documents/20/publish", method="GET", **PROF2_USER)
+        self.assert404("/adele/api/1.0/documents/100/publish", method="GET", **ADMIN_USER)
+
+        self.get_with_auth("/adele/api/1.0/documents/20/unpublish", **ADMIN_USER)
+        resp = self.get_with_auth("/adele/api/1.0/documents/20/publish", **PROF1_USER)
+        self.assertTrue(json_loads(resp.data)["data"]["is_published"])
+
+    def test_unpublish_document(self):
+        self.load_fixtures(self.FIXTURES)
+        self.assert403("/adele/api/1.0/documents/20/unpublish", method="GET", **STU1_USER)
+        self.assert403("/adele/api/1.0/documents/20/unpublish", method="GET", **PROF2_USER)
+        self.assert404("/adele/api/1.0/documents/100/unpublish", method="GET", **ADMIN_USER)
+
+        self.get_with_auth("/adele/api/1.0/documents/20/publish", **PROF1_USER)
+        resp = self.get_with_auth("/adele/api/1.0/documents/20/unpublish", **PROF1_USER)
+        self.assertFalse(json_loads(resp.data)["data"]["is_published"])
+
+    def test_list_document(self):
+        self.post_with_auth("/adele/api/1.0/documents/add",
+                            data={"data": {"title": "Title1", "subtitle": "Subtitle1"}},
+                            **PROF1_USER)
+        r = self.get("/adele/api/1.0/documents")
+        self.assertEqual(1, len(json_loads(r.data)["data"]))
+
+        self.post_with_auth("/adele/api/1.0/documents/add",
+                            data={"data": {"title": "Title1", "subtitle": "Subtitle1"}},
+                            **ADMIN_USER)
+        r = self.get("/adele/api/1.0/documents")
+        self.assertEqual(2, len(json_loads(r.data)["data"]))
+
+    def test_delete_document(self):
+        self.load_fixtures(self.FIXTURES)
+        self.assert403("/adele/api/1.0/documents/20", method="DELETE", **STU1_USER)
+        self.assert403("/adele/api/1.0/documents/20", method="DELETE", **PROF2_USER)
+
+        self.delete_with_auth("/adele/api/1.0/documents/20", **ADMIN_USER)
+        self.assert404("/adele/api/1.0/documents/20")
+
+    def test_change_document_whitelist(self):
+        self.load_fixtures(self.FIXTURES)
+        self.assert403("/adele/api/1.0/documents/20/whitelist", data={}, method="POST")
+        self.assert403("/adele/api/1.0/documents/20/whitelist", data={}, method="POST", **STU1_USER)
+        self.assert403("/adele/api/1.0/documents/20/whitelist", data={}, method="POST", **PROF2_USER)
+
+        r = self.post_with_auth("/adele/api/1.0/documents/20/whitelist",
+                                data={"data": {"whitelist_id": 1}},
+                                **PROF1_USER)
+
+        self.assertEqual(1, json_loads(r.data)["data"]["whitelist"]["id"])
+
+        r = self.post_with_auth("/adele/api/1.0/documents/20/whitelist",
+                                data={"data": {}},
+                                **ADMIN_USER)
+        self.assertIsNone(json_loads(r.data)["data"]["whitelist"])
+
+    def test_change_documents_closing_date(self):
+        self.load_fixtures(self.FIXTURES)
+        self.assert403("/adele/api/1.0/documents/20/close", data={}, method="POST")
+        self.assert403("/adele/api/1.0/documents/20/close", data={}, method="POST", **STU1_USER)
+        self.assert403("/adele/api/1.0/documents/20/close", data={}, method="POST", **PROF2_USER)
+
+        r = self.post_with_auth("/adele/api/1.0/documents/20/close",
+                                data={"data": {"closing_date": "15/10/2087"}},
+                                **PROF1_USER)
+
+        self.assertEqual('2087-10-15 00:00:00', json_loads(r.data)["data"]["date_closing"])
+
+        r = self.post_with_auth("/adele/api/1.0/documents/20/close",
+                                data={"data": {}},
+                                **ADMIN_USER)
+        self.assertIsNone(json_loads(r.data)["data"]["date_closing"])
+
+    def test_add_document(self):
+        self.assert403("/adele/api/1.0/documents/add", data={}, method="POST")
+        self.assert403("/adele/api/1.0/documents/add", data={}, method="POST", **STU1_USER)
+
+        r = self.get("/adele/api/1.0/documents")
+        self.assertEqual(0, len(json_loads(r.data)["data"]))
+
+        self.post_with_auth("/adele/api/1.0/documents/add",
+                            data={"data": {"title": "Title1", "subtitle": "Subtitle1"}},
+                            **PROF1_USER)
+        r = self.get("/adele/api/1.0/documents")
+        self.assertEqual(1, len(json_loads(r.data)["data"]))
+
+        self.post_with_auth("/adele/api/1.0/documents/add",
+                            data={"data": {"title": "Title1", "subtitle": "Subtitle1"}},
+                            **ADMIN_USER)
+        r = self.get("/adele/api/1.0/documents")
+        self.assertEqual(2, len(json_loads(r.data)["data"]))
+
+    def test_set_document_manifest(self):
+        self.load_fixtures(self.FIXTURES)
+        self.assert403("/adele/api/1.0/documents/20/set-manifest", data={}, method="POST")
+        self.assert403("/adele/api/1.0/documents/20/set-manifest", data={}, method="POST", **STU1_USER)
+        self.assert403("/adele/api/1.0/documents/20/set-manifest", data={}, method="POST", **PROF2_USER)
+
+        r = self.post_with_auth("/adele/api/1.0/documents/20/set-manifest",
+                            data={"data": {"manifest_url": "http://193.48.42.68/adele/iiif/manifests/man20.json"}},
+                            **PROF1_USER)
+
+        self.assertEqual(1, len(json_loads(r.data)["data"]))
+
+        r = self.post_with_auth("/adele/api/1.0/documents/20/set-manifest",
+                            data={"data": {"manifest_url": "http://193.48.42.68/adele/iiif/manifests/man109.json"}},
+                            **ADMIN_USER)
+
+        self.assertEqual(2, len(json_loads(r.data)["data"]))

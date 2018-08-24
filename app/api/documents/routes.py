@@ -35,7 +35,7 @@ def api_documents_publish(api_version, doc_id):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
         user = current_app.get_current_user()
-        if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        if user.is_anonymous or not (user.is_teacher or user.is_admin) or (user.is_teacher and not user.is_admin and doc.user_id != user.id):
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
             })
@@ -56,7 +56,7 @@ def api_documents_unpublish(api_version, doc_id):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
         user = current_app.get_current_user()
-        if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        if user.is_anonymous or not (user.is_teacher or user.is_admin) or (user.is_teacher and not user.is_admin and doc.user_id != user.id):
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Access forbidden"
             })
@@ -73,14 +73,9 @@ def api_documents_unpublish(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents')
 def api_documents_id_list(api_version):
-    try:
-        docs = Document.query.all()
-        data = [doc.id for doc in docs]
-        response = APIResponseFactory.make_response(data=data)
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Documents not found"
-        })
+    docs = Document.query.all()
+    data = [doc.id for doc in docs]
+    response = APIResponseFactory.make_response(data=data)
     return APIResponseFactory.jsonify(response)
 
 
@@ -292,16 +287,11 @@ def api_delete_documents(api_version, doc_id):
     if response is None:
         try:
             doc = Document.query.filter(Document.id == doc_id).one()
-            if doc.user_id != user.id and not user.is_admin:
+            if doc.user_id != user.id and user.is_teacher and not user.is_admin:
                 response = APIResponseFactory.make_response(errors={
                     "status": 403, "title": "Access forbidden"
                 })
             else:
-
-
-
-
-
                 db.session.delete(doc)
         except NoResultFound:
             response = APIResponseFactory.make_response(errors={
@@ -336,29 +326,24 @@ def api_change_documents_whitelist(api_version, doc_id):
     :param doc_id:
     :return:
     """
-
     user = current_app.get_current_user()
+    data = request.get_json()
+    data = data.get('data')
+    doc = Document.query.filter(Document.id == doc_id).first()
 
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or not (user.is_teacher or user.is_admin) or (user.is_teacher and not user.is_admin and doc.user_id != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
         return APIResponseFactory.jsonify(response)
 
-    data = request.get_json()
-    data = data.get('data')
-
-    doc = Document.query.filter(Document.id == doc_id).first()
-
     try:
-        new_white_list_id = int(data.get('whitelist_id'))
-        if new_white_list_id == -1:
-            new_white_list_id = None
+        new_white_list_id = data.get('whitelist_id')
+        if new_white_list_id is None or int(new_white_list_id) == -1:
+            doc.whitelist_id = None
         else:
             wl = Whitelist.query.filter(Whitelist.id == new_white_list_id).first()
-            if wl is None:
-                raise Exception("Whitelist does not exist")
-        doc.whitelist_id = new_white_list_id
+            doc.whitelist = wl
         db.session.commit()
     except Exception as e:
         print(e)
@@ -371,19 +356,27 @@ def api_change_documents_whitelist(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
 @auth.login_required
 def api_change_documents_closing_date(api_version, doc_id):
-
+    """
+    {
+        "data" : {
+            "closing_date" : "15/10/2020"
+        }
+    }
+    # dd/mm/YYYY
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
     user = current_app.get_current_user()
+    data = request.get_json()
+    data = data.get('data')
+    doc = Document.query.filter(Document.id == doc_id).first()
 
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+    if user.is_anonymous or not (user.is_teacher or user.is_admin) or (user.is_teacher and not user.is_admin and doc.user_id != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
         return APIResponseFactory.jsonify(response)
-
-    data = request.get_json()
-    data = data.get('data')
-
-    doc = Document.query.filter(Document.id == doc_id).first()
 
     try:
         new_closing_date = data.get('closing_date')
@@ -442,9 +435,9 @@ def api_add_document(api_version):
 def api_set_document_manifest(api_version, doc_id):
 
     user = current_app.get_current_user()
-    doc = Document.query.filter(Document.id == doc_id, Document.user_id == user.id).first()
+    doc = Document.query.filter(Document.id == doc_id).first()
 
-    if doc is None or user.is_anonymous or not (user.is_teacher or user.is_admin):
+    if doc is None or user.is_anonymous or not (user.is_teacher or user.is_admin) or (user.is_teacher and not user.is_admin and doc.user_id != user.id):
         response = APIResponseFactory.make_response(errors={
             "status": 403, "title": "Access forbidden"
         })
@@ -452,8 +445,8 @@ def api_set_document_manifest(api_version, doc_id):
 
     data = request.get_json()
     data = data["data"]
-
     manifest_url = data.get("manifest_url")
+    response = None
 
     if Image.query.filter(Image.manifest_url == manifest_url).first() or \
         ImageUrl.query.filter(ImageUrl.manifest_url == manifest_url).first():
@@ -480,15 +473,15 @@ def api_set_document_manifest(api_version, doc_id):
     # add new images
     for canvas_idx, canvas in enumerate(manifest["sequences"][0]['canvases']):
         for img_idx, img in enumerate(canvas["images"]):
-            print(canvas_idx, img_idx, img["resource"]["@id"])
             new_img = Image(manifest_url=manifest_url, canvas_idx=canvas_idx, img_idx=img_idx, doc_id=doc_id)
             new_img_url = ImageUrl(manifest_url=manifest_url, canvas_idx=canvas_idx, img_idx=img_idx, img_url=img["resource"]["@id"])
             db.session.add(new_img)
             db.session.add(new_img_url)
 
-    db.session.commit()
-    pprint.pprint(doc.serialize())
-
-    response = APIResponseFactory.make_response(data=[])
+    try:
+        db.session.commit()
+        response = APIResponseFactory.make_response(data=[i.serialize() for i in doc.images])
+    except Exception as e:
+        db.session.rollback()
 
     return APIResponseFactory.jsonify(response)

@@ -27,6 +27,7 @@ _app = create_app("test")
 # for convenience
 ADMIN_USER = {"username": "AdminJulien", "password": "AdeleAdmin2018"}
 PROF1_USER = {"username": "Professeur1", "password": "AdeleAdmin2018"}
+PROF2_USER = {"username": "Professeur2", "password": "AdeleAdmin2018"}
 STU1_USER  = {"username": "Eleve1", "password": "AdeleAdmin2018"}
 
 class TestBaseServer(TestCase):
@@ -41,6 +42,7 @@ class TestBaseServer(TestCase):
     def setUp(self):
         with self.app.app_context():
             self.clear_data()
+            self.load_fixtures(self.BASE_FIXTURES)
 
     def create_app(self):
         with _app.app_context():
@@ -55,7 +57,7 @@ class TestBaseServer(TestCase):
             db.session.execute(table.delete())
         db.session.commit()
 
-    def load_fixtures(self, fixtures):
+    def load_fixtures(self, fixtures: object) -> object:
         with self.app.app_context(), db.engine.connect() as connection:
             for fixture in fixtures:
                 with open(fixture) as f:
