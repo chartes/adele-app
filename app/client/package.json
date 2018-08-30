@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "leaflet": "^1.3.1",
+    "leaflet": "^1.3.4",
     "leaflet-iiif": "^1.2.2",
-    "quill": "^1.3.5",
-    "vue": "^2.5.16",
+    "node-sass": "^4.9.3",
+    "quill": "^1.3.6",
+    "vue": "^2.5.17",
     "vuex": "^3.0.1"
   },
   "browserslist": [
@@ -24,24 +25,24 @@
   ],
   "devDependencies": {
     "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.2",
+    "babel-loader": "^7.1.5",
     "babel-preset-env": "^1.7.0",
     "babel-preset-stage-3": "^6.24.1",
-    "copy-webpack-plugin": "^4.5.1",
-    "cross-env": "^5.0.5",
-    "css-loader": "^0.28.10",
-    "file-loader": "^1.1.4",
+    "copy-webpack-plugin": "^4.5.2",
+    "cross-env": "^5.2.0",
+    "css-loader": "^0.28.11",
+    "file-loader": "^1.1.11",
     "sass-loader": "^6.0.7",
-    "style-loader": "^0.20.2",
+    "style-loader": "^0.20.3",
     "svg-inline-loader": "^0.8.0",
-    "ts-loader": "^4.0.0",
-    "typescript": "^2.8.1",
-    "vue-loader": "^14.2.3",
-    "vue-template-compiler": "^2.5.16",
+    "ts-loader": "^4.5.0",
+    "typescript": "^2.9.2",
     "vue-click-outside": "^1.0.7",
-    "webpack": "^4.12.2",
+    "vue-loader": "^14.2.3",
+    "vue-template-compiler": "^2.5.17",
+    "webpack": "^4.17.1",
     "webpack-bundle-analyzer": "^2.13.1",
-    "webpack-dev-server": "^3.1.4",
-    "webpack-cli": "^3.0.8"
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.7"
   }
 }

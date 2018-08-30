@@ -42,8 +42,6 @@ const mutations = {
 
   INIT(state, payload) {
 
-    console.log("INIT", payload)
-
     if (!transcriptionShadowQuill) {
 
       transcriptionShadowQuillElement.innerHTML = payload.content || "";

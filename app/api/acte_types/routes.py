@@ -75,16 +75,15 @@ def api_put_acte_type(api_version):
 
                 if not isinstance(data, list):
                     data = [data]
-
-                modifed_data = []
-                for acte_type in data:
-                    a = ActeType.query.filter(ActeType.id == acte_type["id"]).one()
-                    a.label = acte_type["label"]
-                    a.description = acte_type["description"]
-                    db.session.add(a)
-                    modifed_data.append(a)
-
                 try:
+                    modifed_data = []
+                    for acte_type in data:
+                        a = ActeType.query.filter(ActeType.id == acte_type["id"]).one()
+                        a.label = acte_type.get("label")
+                        a.description = acte_type.get("description")
+                        db.session.add(a)
+                        modifed_data.append(a)
+
                     db.session.commit()
                 except Exception as e:
                     db.session.rollback()

@@ -17,10 +17,12 @@
     components: { DocumentEdition },
     props: ['doc_id', 'auth_token'],
     created () {
-      this.$store.dispatch('user/getCurrentUser').then(() => {
-        return this.$store.dispatch('document/fetch', this.doc_id)
+      this.$store.dispatch('user/setAuthToken', this.auth_token).then(() => {
+          this.$store.dispatch('user/getCurrentUser').then(() => {
+            return this.$store.dispatch('document/fetch', this.doc_id)
+          });
       });
-      this.$store.dispatch('user/setAuthToken', this.auth_token)
+
     },
     computed: {
       ...mapGetters('document', ['document'])

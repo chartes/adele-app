@@ -28,7 +28,8 @@ _app = create_app("test")
 ADMIN_USER = {"username": "AdminJulien", "password": "AdeleAdmin2018"}
 PROF1_USER = {"username": "Professeur1", "password": "AdeleAdmin2018"}
 PROF2_USER = {"username": "Professeur2", "password": "AdeleAdmin2018"}
-STU1_USER  = {"username": "Eleve1", "password": "AdeleAdmin2018"}
+STU1_USER = {"username": "Eleve1", "password": "AdeleAdmin2018"}
+
 
 class TestBaseServer(TestCase):
 
@@ -47,8 +48,12 @@ class TestBaseServer(TestCase):
     def create_app(self):
         with _app.app_context():
             db.create_all()
-            self.client = _app.test_client()
+            self.client = _app.test_client(allow_subdomain_redirects=True)
         return _app
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
 
     @staticmethod
     def clear_data():
@@ -57,7 +62,7 @@ class TestBaseServer(TestCase):
             db.session.execute(table.delete())
         db.session.commit()
 
-    def load_fixtures(self, fixtures: object) -> object:
+    def load_fixtures(self, fixtures):
         with self.app.app_context(), db.engine.connect() as connection:
             for fixture in fixtures:
                 with open(fixture) as f:

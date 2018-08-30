@@ -42,7 +42,6 @@
 
 <script>
 
-
   import Tabs from '../ui/tabs.vue'
   import Tab from '../ui/tab.vue'
   import FacsimileEditor from '../editors/FacsimileEditor';

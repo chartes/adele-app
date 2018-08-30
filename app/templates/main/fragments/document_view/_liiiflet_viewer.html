@@ -8,11 +8,29 @@
 
            const liiiflet = new Liiiflet("liiiflet-map", {
                loadManifest: function() {
-                   return axios.get(manifest_url, null);
+                   return axios.get(manifest_url, null).then(response => {
+                       // unbox the JSONAPI format
+                       return new Promise(resolve => resolve(response.data));}
+                   );
                },
                loadAnnotations: function(annotation_list_url) {
-                   return axios.get(annotation_list_url, null);
-               } ,
+                   return axios.get(annotation_list_url, null).then(response => {
+                       // unbox the JSONAPI format
+                       return new Promise(resolve => resolve(response.data));}
+                   );
+               },
+               loadDefaultAnnotationType: function() {
+                   return axios.get("{{ url_for('api_bp.api_annotations_types', api_version=1.0) }}", null).then((response) => {
+                       // unbox the JSONAPI format & find the "annotation" type
+                       // (== not the transcription zone type but the free annotations)
+                       for (let a of response.data.data) {
+                           if (a.label === "annotation") {
+                               return new Promise(resolve => resolve(a));
+                           }
+                       }
+                       return new Promise(resolve => resolve(response.data[0]));
+                   });
+               },
                saveAnnotations: function(annotations) {
                    return axios.delete(
                        "{{ url_for('api_bp.api_delete_documents_annotations', api_version=1.0, doc_id=doc_id, user_id=user_id)}}",
@@ -33,7 +51,6 @@
            },
            {direction: "center", className: "facsimileToolTip"}, // Tooltip options
            {{enable_edition|lower}});
-
 
        </script>
 
