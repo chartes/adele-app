@@ -1,7 +1,7 @@
 <template>
 
     <modal-form
-            :title="'Choisissez une personne'"
+            :title="'Auteur des travaux à afficher'"
             :cancel="cancelAction"
             :submit="submitAction"
             :valid="!!selected"
@@ -11,7 +11,8 @@
                :key="currentUser.id"
                @click="selectItem(currentUser)"
                :class="{ selected: currentUser.id == id }"
-            >Vous</a>
+            >Vous-même ({{ currentUser.username }})</a>
+            <hr/>
             <p class="list-subsection-title">{{document.whitelist.label}}</p>
             <a class="authors-list-item list-item"
                v-for="user in document.whitelist.users"

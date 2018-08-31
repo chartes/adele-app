@@ -6,10 +6,8 @@
 
         <div class="columns">
             <div class="column">
-                <h1 class="title is-size-5">Document {{ document.id }}</h1>
-            </div>
-            <div class="column" v-if="enabledSwapAuthor">
-                <p class="has-text-right">Le travail affiché est celui de : {{ author.first_name }} {{ author.last_name }} <a class="button is-link is-small" @click="swapUser = true">Changer</a></p>
+                <h1 class="title is-size-5"  style="display: inline-block; margin-bottom: 0.5em;" >Document {{ document.id }}</h1>
+                <a class="button is-link is-small" style="margin-left: 20px" @click="swapUser = true"><i class="fas fa-user-circle" style="margin-right: 8px"></i>{{ author.username }}</a>
             </div>
         </div>
 

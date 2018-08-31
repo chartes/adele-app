@@ -22,17 +22,27 @@
             }
         },
 
+
+
         mounted() {
             const auth_header = this.$store.getters['user/authHeader'];
             const doc_id = this.$store.getters['document/document'].id;
-            const user_id =  this.$store.getters['user/currentUser'].id;
-            const manifest_url = this.manifest;
-            console.log("THIS", auth_header, doc_id, user_id);
+
+            const store = this.$store;
+            function getAuthorId() {
+                return store.getters['user/author'].id;
+            }
+
+
             const liiiflet = new Liiiflet(
                 "liiiflet-map",
                 {
                     loadManifest: function() {
-                        return axios.get(manifest_url, null).then(response => {
+                        const author_id =  getAuthorId();
+                        const manifest_url = `/adele/api/1.0/documents/${doc_id}/manifest/from-user/${author_id}`;
+                        console.log("IIIFMAP: manifest_url: ", manifest_url);
+                        return axios.get(manifest_url, auth_header).then(response => {
+                            console.log("IIIFMAP: ", response);
                             // unbox the JSONAPI format
                             return new Promise(resolve => resolve(response.data));}
                         );
@@ -44,18 +54,15 @@
                         );
                     },
                     saveAnnotations: function(annotations) {
-                        return axios.delete(
-                            `/adele/api/1.0/documents/${doc_id}/annotations/from-user/${user_id}`,
+                        /*
+                            should I overwrite annotations' user_id(username?) field
+                            so it is not saved under the current user id ?
+                         */
+                        return axios.post(
+                            `/adele/api/1.0/documents/${doc_id}/annotations`,
+                            {"data": annotations},
                             auth_header
-                        ).then((response) => {
-                           console.log("delete response:", response);
-                           //this.handleAPIErrors(response, doc_id);
-                           return axios.post(
-                               `/adele/api/1.0/documents/${doc_id}/annotations`,
-                               {"data": annotations},
-                               auth_header
-                           );
-                        });
+                        );
                     },
                     loadDefaultAnnotationType: function() {
                        return axios.get('/adele/api/1.0/annotation-types', null).then((response) => {
@@ -77,8 +84,7 @@
                 this.drawMode
             );
 
-
-            setInterval(() => liiiflet.map.invalidateSize(true), 400);
+            setInterval(() =>  {if (liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
         },
 
         methods: {

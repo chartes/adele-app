@@ -52,6 +52,7 @@ const getters = {
   authToken: state => state.authToken,
   authHeader: state => { return { auth: { username: state.authToken, password: undefined }}},
   currentUser: state => state.currentUser,
+  author: state => state.author,
   currentUserIsAdmin: state => {
     return checkRole(state.currentUser, 'admin')
   },

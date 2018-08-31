@@ -77,6 +77,19 @@ def api_documents_manifest(api_version, doc_id):
     return make_manifest(api_version, doc_id, user_id)
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/from-user/<user_id>')
+@auth.login_required
+def api_documents_manifest_from_user(api_version, doc_id, user_id):
+    user = current_app.get_current_user()
+    if user.is_teacher or user.is_admin or int(user_id) == user.id:
+        return  make_manifest(api_version, doc_id, user_id)
+    else:
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+        return APIResponseFactory.jsonify(response)
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest-url-origin')
 def api_documents_manifest_url_origin(api_version, doc_id):
 

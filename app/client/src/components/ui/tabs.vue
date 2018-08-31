@@ -42,8 +42,8 @@
     methods: {
       selectTab (selectedTab) {
         this.tabs.forEach(t => {
-          t.isActive = t.name == selectedTab.name;
-        })
+          t.isActive = t.name === selectedTab.name;
+        });
         selectedTab.isActive = true;
       }
     }
