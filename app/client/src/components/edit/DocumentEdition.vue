@@ -7,7 +7,7 @@
         <div class="columns">
             <div class="column">
                 <h1 class="title is-size-5"  style="display: inline-block; margin-bottom: 0.5em;" >Document {{ document.id }}</h1>
-                <a class="button is-link is-small" style="margin-left: 20px" @click="swapUser = true"><i class="fas fa-user-circle" style="margin-right: 8px"></i>{{ author.username }}</a>
+                <a class="button is-link is-small" v-if="!currentUserIsStudent" style="margin-left: 20px" @click="swapUser = true"><i class="fas fa-user-circle" style="margin-right: 8px"></i>{{ author.username }}</a>
             </div>
         </div>
 
@@ -17,12 +17,18 @@
                 <transcription-edition/>
             </tab>
 
-            <tab name="Facsimilé" v-if="!!transcription">
-                <facsimile-editor></facsimile-editor>
+            <tab name="Facsimilé">
+                <div v-if="!!transcription">
+                    <facsimile-editor></facsimile-editor>
+                </div>
+                <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer le facsimilé.'"/>
             </tab>
 
-            <tab name="Parties du discours" v-if="!!transcription">
-                <speechparts-edition/>
+            <tab name="Parties du discours">
+                <div v-if="!!transcription">
+                    <speechparts-edition/>
+                </div>
+                <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer les parties du discours.'"/>
             </tab>
 
             <tab v-if="!currentUserIsStudent" name="Notice">
@@ -52,11 +58,13 @@
   import {mapState, mapGetters} from 'vuex';
   import LoadingIndicator from "../ui/LoadingIndicator";
   import AuthorSwapListForm from "../forms/AuthorSwapListForm";
+  import MinimalMessage from "../ui/MinimalMessage";
 
   export default {
     name: "document-edition",
 
     components: {
+      MinimalMessage,
       AuthorSwapListForm,
       LoadingIndicator,
       NoticeEdition,
