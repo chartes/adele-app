@@ -44,7 +44,15 @@ const actions = {
 };
 
 const checkRole = (user, role) => {
-  return user && user.roles.indexOf(role) > -1;
+  let theRole = '';
+  if (!(user && user.roles)) return false;
+  switch (user.roles.length) {
+    case 1: theRole = 'student'; break;
+    case 2: theRole = 'teacher'; break;
+    case 3: theRole = 'admin'; break;
+  }
+  return theRole === role;
+  //return user && user.roles.indexOf(role) > -1;
 };
 
 const getters = {
