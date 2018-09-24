@@ -22,8 +22,6 @@
             }
         },
 
-
-
         mounted() {
             const auth_header = this.$store.getters['user/authHeader'];
             const doc_id = this.$store.getters['document/document'].id;
@@ -32,7 +30,10 @@
             function getAuthorId() {
                 return store.getters['user/author'].id;
             }
-
+            /*
+                Comment recharger Liiiflet quand on change de user :
+                - Faire une méthode Liiiflet.reset et pouvoir l'appeler depuis swapAuthor de Vue ?
+            */
 
             const liiiflet = new Liiiflet(
                 "liiiflet-map",
