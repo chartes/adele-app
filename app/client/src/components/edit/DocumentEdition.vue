@@ -7,7 +7,9 @@
         <div class="columns">
             <div class="column">
                 <h1 class="title is-size-5"  style="display: inline-block; margin-bottom: 0.5em;" >Document {{ document.id }}</h1>
-                <a class="button is-link is-small" v-if="!currentUserIsStudent" style="margin-left: 20px" @click="swapUser = true"><i class="fas fa-user-circle" style="margin-right: 8px"></i>{{ author.username }}</a>
+                <a class="button is-link is-small" v-if="document.whitelist && !currentUserIsStudent" style="margin-left: 20px" @click="swapUser = true">
+                    <i class="fas fa-user-circle" style="margin-right: 8px"></i>{{ author.username }}
+                </a>
             </div>
         </div>
 
