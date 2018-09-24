@@ -45,7 +45,7 @@
                         return axios.get(manifest_url, auth_header).then(response => {
                             console.log("IIIFMAP: ", response);
                             // unbox the JSONAPI format
-                            return new Promise(resolve => resolve(response.data));}
+                            return new Promise(resolve => resolve(response.data.data));}
                         );
                     },
                     loadAnnotations: function(annotation_list_url) {
