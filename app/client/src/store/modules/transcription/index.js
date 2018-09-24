@@ -67,9 +67,9 @@ const mutations = {
     state.transcriptionWithNotes = false;
     state.transcriptionWithSpeechparts = false;
 
-    if (transcriptionShadowQuillElement) transcriptionShadowQuillElement.children[0].innerHTML = "";
-    if (notesShadowQuillElement) notesShadowQuillElement.children[0].innerHTML = "";
-    if (speechpartsShadowQuillElement) speechpartsShadowQuillElement.children[0].innerHTML = "";
+    if (transcriptionShadowQuillElement && transcriptionShadowQuillElement.children[0]) transcriptionShadowQuillElement.children[0].innerHTML = "";
+    if (notesShadowQuillElement && notesShadowQuillElement.children[0]) notesShadowQuillElement.children[0].innerHTML = "";
+    if (speechpartsShadowQuillElement && speechpartsShadowQuillElement.children[0]) speechpartsShadowQuillElement.children[0].innerHTML = "";
 
   },
   LOADING_STATUS (state, payload) {
