@@ -233,7 +233,7 @@ const actions = {
       .then(reponse => dispatch('saveSpeechparts'))
       .then(reponse => dispatch('saveNotes'))
       .then(reponse => {
-        if (rootState.translation.translation) return dispatch('translation/save', null, {root:true})
+        if (rootState.translation.translationq) return dispatch('translation/save', null, {root:true})
         else return true;
       })
       .then(function(values) {
