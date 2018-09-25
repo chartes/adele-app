@@ -43,7 +43,7 @@
                         const manifest_url = `/adele/api/1.0/documents/${doc_id}/manifest/from-user/${author_id}`;
                         console.log("IIIFMAP: manifest_url: ", manifest_url);
                         return axios.get(manifest_url, auth_header).then(response => {
-                            console.log("IIIFMAP: ", response);
+                            //console.log("IIIFMAP: ", response);
                             // unbox the JSONAPI format
                             return new Promise(resolve => resolve(response.data.data));}
                         );
