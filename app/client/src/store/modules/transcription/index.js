@@ -223,11 +223,8 @@ const actions = {
       .then(reponse => {
         if (rootState.translation.translation.id) {
           // Saves alignment if translation exists
-
-          console.log('   => saves');
           return dispatch('saveAlignment')
         }
-          console.log('   => bypass');
         return true;
       })
       .then(reponse => dispatch('saveSpeechparts'))

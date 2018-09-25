@@ -6,21 +6,37 @@
         <div class="column is-half">
             <h1>Transcription</h1>
         </div>
+        <loading-indicator :active="loading" :full-page="true"/>
     </div>
 </template>
 
 <script>
 
-    import { mapGetters } from 'vuex'
-    import IIIFMap from '../IIIFMap';
+  import { mapGetters, mapState } from 'vuex'
+  import IIIFMap from '../IIIFMap';
+  import LoadingIndicator from "../ui/LoadingIndicator";
 
-    export default {
-        name: "transcription-editor",
-        components: { IIIFMap },
-        computed: {
-            ...mapGetters('document', ['manifestURL'])
-        }
+  export default {
+    name: "transcription-editor",
+    components: { LoadingIndicator, IIIFMap },
+    data () {
+      return {  }
+    },
+    created() {
+      console.log("FacsimileEditor.created")
+      this.$store.dispatch('facsimile/fetchCanvasNames');
+    },
+    watch: {
+      canvasNames : function (newNames, oldNames) {
+        console.log("Canvas names changed");
+
+      }
+    },
+    computed: {
+      ...mapGetters('document', ['manifestURL']),
+      ...mapState('facsimile', ['canvasNames', 'currentCanvas', 'loading']),
     }
+  }
 </script>
 
 <style scoped>

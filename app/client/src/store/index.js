@@ -6,6 +6,7 @@ import document from './modules/document'
 import actTypes from './modules/actTypes'
 import countries from './modules/countries'
 import districts from './modules/districts'
+import facsimile from './modules/facsimile'
 import editors from './modules/editors'
 import institutions from './modules/institutions'
 import languages from './modules/languages'
@@ -24,8 +25,9 @@ export default new Vuex.Store({
       actTypes,
       countries,
       districts,
-      editors,
       document,
+      editors,
+      facsimile,
       institutions,
       languages,
       noteTypes,
