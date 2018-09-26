@@ -70,7 +70,7 @@ class DevelopmentConfig(Config):
     COPY = False
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
-    APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé
+    #APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé
 
     MAIL_USERNAME = 'adele@chartes.psl.eu'
     USER_EMAIL_SENDER_NAME = 'Adele'
