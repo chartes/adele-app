@@ -1094,7 +1094,8 @@ def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, z
                     'zone_id': zone.zone_id,
                     'zone_type': zone.zone_type.serialize(),
                     'fragment_url': url,
-                    'coords': coords})
+                    'coords': coords,
+                    'bbox_coords': '%i,%i,%i,%i' % (x, y, w, h)})
 
         response = APIResponseFactory.make_response(data={"fragments": frag_urls})
 
