@@ -176,6 +176,7 @@ def api_post_documents_transcriptions(api_version, doc_id):
                         Transcription.doc_id == doc_id
                     ).first()
 
+                print("existing tr:", existing_tr, user.is_anonymous)
                 if existing_tr is not None or user.is_anonymous:
                     response = APIResponseFactory.make_response(errors={
                         "status": 403,
@@ -1139,7 +1140,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
         {
             "data": {
                 "username" : "Eleve1",
-                "img_idx" : 0,
+                "canvas_idx" : 0,
                 "img_idx" : 1,
                 "alignments" : [
                     {
@@ -1182,7 +1183,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                         "status": 403, "title": "Access forbidden"
                     })
 
-                if not ("manifest_url" in data and "img_id" in data):
+                if not ("canvas_idx" in data and "img_idx" in data):
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Data is malformed"
                     })
@@ -1221,7 +1222,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                 for alignment in alignments:
                                     zone = ImageZone.query.filter(
                                         ImageZone.zone_id == int(alignment["zone_id"]),
-                                        ImageZone.manifest_url == data["manifest_url"],
+                                        ImageZone.manifest_url == manifest_url,
                                         ImageZone.user_id == int(user_id),
                                         ImageZone.img_idx == data["img_idx"],
                                         ImageZone.canvas_idx == data["canvas_idx"],
