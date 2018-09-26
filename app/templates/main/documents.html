@@ -116,11 +116,9 @@
             }
 
             function get_flash_messages() {
-                console.log('flash');
                 $.ajax({
                     url: "{{ url_for('app_bp.get_flash_messages') }}"
                 }).done(function (data) {
-                    console.log("msg " + data);
                     $('#flash-messages').html(data);
                 });
             }

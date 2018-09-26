@@ -17,14 +17,15 @@ def get_reference_commentary(doc_id, type_id):
     try:
         tr_ref = get_reference_transcription(doc_id)
         if tr_ref is None:
-            raise NoResultFound("Reference transcription not found")
+            return None
+            #raise NoResultFound("Reference transcription not found")
         commentary = Commentary.query.filter(
             doc_id == Commentary.doc_id,
             type_id == Commentary.type_id,
             tr_ref.user_id == Commentary.user_id
         ).one()
     except NoResultFound:
-        pass
+        commentary = None
 
     return commentary
 
@@ -37,12 +38,13 @@ def get_reference_commentaries(doc_id):
     """
     tr_ref = get_reference_transcription(doc_id)
     if tr_ref is None:
-            raise NoResultFound("Reference transcription not found")
-    commentary = Commentary.query.filter(
-        doc_id == Commentary.doc_id,
-        tr_ref.user_id == Commentary.user_id
-    ).all()
-    return commentary
+        commentaries = []
+    else:
+        commentaries = Commentary.query.filter(
+            doc_id == Commentary.doc_id,
+            tr_ref.user_id == Commentary.user_id
+        ).all()
+    return commentaries
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries')
