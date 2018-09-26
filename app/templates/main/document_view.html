@@ -195,6 +195,7 @@
                else {
                    $('#img-col').hide();
                }
+               $(this).find('.active,.inactive').toggle();
            });
            $('#visibility-notice').click(function(){toggleTextCol(this)});
            $('#visibility-commentaries').click(function(){toggleTextCol(this)});

@@ -27,6 +27,7 @@ def get_reference_transcription(doc_id):
         doc_id == Transcription.doc_id,
         doc.user_id == Transcription.user_id
     ).first()
+    print(doc_id, doc.user_id)
     return transcription
 
 

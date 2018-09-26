@@ -1071,15 +1071,16 @@ def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, z
             ImageZone.canvas_idx == get_canvas_idx_from_name(api_version, doc_id, canvas_name)
         ).all()
 
-        frag_urls = {}
-        for zone in zones:
-            print(zone)
+        frag_urls = []
+        response = APIResponseFactory.make_response(data={"fragments": []})
 
+        for zone in zones:
             img = ImageUrl.query.filter(
                 ImageUrl.manifest_url == zone.manifest_url,
                 ImageUrl.canvas_idx == zone.canvas_idx,
                 ImageUrl.img_idx == zone.img_idx
             ).first()
+            img_url = img.img_url
 
             root_img_url = img.img_url[:img.img_url.index('/full')]
             json_obj = query_json_endpoint(request, "%s/info.json" % root_img_url, direct=True)
@@ -1089,11 +1090,11 @@ def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, z
 
             if x >= 0 and y >= 0:
                 url = "%s/%i,%i,%i,%i/full/0/default.jpg" % (root_img_url, x, y, w, h)
-
-                if img.img_url not in frag_urls:
-                    frag_urls[img.img_url] = [{'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords}]
-                else:
-                    frag_urls[img.img_url].append({'zone_id': zone.zone_id, 'fragment_url': url, 'coords': coords})
+                frag_urls.append({
+                    'zone_id': zone.zone_id,
+                    'zone_type': zone.zone_type.serialize(),
+                    'fragment_url': url,
+                    'coords': coords})
 
         response = APIResponseFactory.make_response(data={"fragments": frag_urls})
 

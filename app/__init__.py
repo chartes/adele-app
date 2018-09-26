@@ -1,7 +1,7 @@
 import datetime
 from flask import Flask, request, Blueprint
 from flask_mail import Mail
-from flask_scss import Scss
+#from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import UserManager, user_sent_invitation, user_registered
 from flask_babelex import Babel
@@ -66,7 +66,7 @@ def create_app(config_name="dev"):
 
     db.init_app(app)
     mail.init_app(app)
-    app.scss = Scss(app)
+    #app.scss = Scss(app)
     babel.init_app(app)
 
     CORS(app, resources={r"%s/api/*" % app.config["APP_URL_PREFIX"]: {"origins": "*"}})
