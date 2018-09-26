@@ -645,7 +645,6 @@ def api_post_documents_annotations(api_version, doc_id):
                         break
 
                 # INSERT data but dont commit yet
-                print(anno)
                 img_zone = ImageZone(
                     manifest_url=manifest_url,
                     canvas_idx=anno["canvas_idx"],
@@ -656,7 +655,6 @@ def api_post_documents_annotations(api_version, doc_id):
                     zone_type_id=anno["zone_type_id"],
                     user_id=user_id
                 )
-                print(manifest_url, anno["canvas_idx"], anno["img_idx"], img_zone_max_zone_id, anno["zone_type_id"], user_id)
 
                 db.session.add(img_zone)
                 new_img_zones.append(img_zone)
@@ -665,7 +663,6 @@ def api_post_documents_annotations(api_version, doc_id):
             try:
                 db.session.commit()
             except Exception as e:
-                print("rollback", str(e))
                 db.session.rollback()
                 response = APIResponseFactory.make_response(errors={
                     "status": 403, "title": "Cannot insert data", "details": str(e)
@@ -673,7 +670,7 @@ def api_post_documents_annotations(api_version, doc_id):
 
         if response is None:
             response = APIResponseFactory.make_response(data=[z.serialize() for z in new_img_zones])
-
+    print(response)
     return APIResponseFactory.jsonify(response)
 
 
@@ -1072,7 +1069,6 @@ def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, z
         ).all()
 
         frag_urls = []
-        response = APIResponseFactory.make_response(data={"fragments": []})
 
         for zone in zones:
             img = ImageUrl.query.filter(
@@ -1080,7 +1076,6 @@ def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, z
                 ImageUrl.canvas_idx == zone.canvas_idx,
                 ImageUrl.img_idx == zone.img_idx
             ).first()
-            img_url = img.img_url
 
             root_img_url = img.img_url[:img.img_url.index('/full')]
             json_obj = query_json_endpoint(request, "%s/info.json" % root_img_url, direct=True)

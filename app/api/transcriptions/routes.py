@@ -27,7 +27,6 @@ def get_reference_transcription(doc_id):
         doc_id == Transcription.doc_id,
         doc.user_id == Transcription.user_id
     ).first()
-    print(doc_id, doc.user_id)
     return transcription
 
 
@@ -1188,7 +1187,6 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                         "status": 403, "title": "Data is malformed"
                     })
 
-
                 if response is None:
                     # teachers and admins can put/post/delete on others behalf
                     if (user.is_teacher or user.is_admin) and "username" in data:
@@ -1209,13 +1207,6 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                             alignments = [data["alignments"]]
                         else:
                             alignments = data["alignments"]
-
-                        # DELETE the old data
-                        for old_al in AlignmentImage.query.filter(
-                                AlignmentImage.transcription_id == transcription.id,
-                                AlignmentImage.user_id == int(user_id)
-                        ).all():
-                            db.session.delete(old_al)
 
                         if response is None:
                             try:
@@ -1240,12 +1231,22 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                     )
                                     db.session.add(new_al)
 
+                                # DELETE the old data
+                                print("DELETING")
+                                for old_al in AlignmentImage.query.filter(
+                                        AlignmentImage.transcription_id == transcription.id,
+                                        AlignmentImage.user_id == int(user_id)
+                                ).all():
+                                    db.session.delete(old_al)
+                                print("DELETE OK")
+
                                 db.session.commit()
                             except Exception as e:
                                 db.session.rollback()
                                 response = APIResponseFactory.make_response(errors={
                                     "status": 403, "title": "Cannot insert data", "details": str(e)
                                 })
+                                print(str(e))
 
                             if response is None:
                                 json_obj = query_json_endpoint(
@@ -1262,10 +1263,12 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                     response = APIResponseFactory.make_response(data=json_obj["data"])
                                 else:
                                     response = APIResponseFactory.make_response(data=json_obj["errors"])
+
         else:
             response = APIResponseFactory.make_response(errors={
                 "status": 403, "title": "Data is malformed"
             })
+
     return APIResponseFactory.jsonify(response)
 
 

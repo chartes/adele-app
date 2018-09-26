@@ -79,6 +79,10 @@
                     },
                     saveAnnotationAlignments: function(annotations) {
                         //TODO
+                        console.log("SAVE ANNOTATIONS ALIGNMENTS");
+                        for(let a of annotations) {
+                            console.log(a);
+                        }
                     }
                 },
                 { direction: "center", className: "facsimileToolTip"},
@@ -87,19 +91,6 @@
 
             setInterval(() =>  {if (liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
         },
-
-        methods: {
-
-            handleAPIErrors(response) {
-                const error_str = JSON.stringify(response.errors);
-                if (response.errors) {
-                    this.error = error_str;
-                    throw new Error(error_str);
-                }
-            },
-
-
-        }
 
     }
 </script>
