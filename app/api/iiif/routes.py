@@ -1086,8 +1086,7 @@ def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, z
             if x >= 0 and y >= 0:
                 url = "%s/%i,%i,%i,%i/full/0/default.jpg" % (root_img_url, x, y, w, h)
                 frag_urls.append({
-                    'zone_id': zone.zone_id,
-                    'zone_type': zone.zone_type.serialize(),
+                    'zone': zone.serialize(),
                     'fragment_url': url,
                     'coords': coords,
                     'bbox_coords':  [x, y, w, h]})
