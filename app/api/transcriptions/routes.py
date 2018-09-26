@@ -1139,15 +1139,17 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
         {
             "data": {
                 "username" : "Eleve1",
-                "canvas_idx" : 0,
-                "img_idx" : 1,
                 "alignments" : [
                     {
+                        "canvas_idx" : 0,
+                        "img_idx" : 1,
                         "zone_id" : 1,
                         "ptr_start": 1,
                         "ptr_end": 20
                     },
                     {
+                        "canvas_idx" : 0,
+                        "img_idx" : 1,
                         "zone_id" : 2,
                         "ptr_start": 21,
                         "ptr_end": 450
@@ -1180,11 +1182,6 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                 if not (user.is_teacher or user.is_admin) and "username" in data and data["username"] != user.username:
                     response = APIResponseFactory.make_response(errors={
                         "status": 403, "title": "Access forbidden"
-                    })
-
-                if not ("canvas_idx" in data and "img_idx" in data):
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Data is malformed"
                     })
 
                 if response is None:
@@ -1223,17 +1220,17 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                         ImageZone.zone_id == int(alignment["zone_id"]),
                                         ImageZone.manifest_url == manifest_url,
                                         ImageZone.user_id == int(user_id),
-                                        ImageZone.img_idx == data["img_idx"],
-                                        ImageZone.canvas_idx == data["canvas_idx"],
+                                        ImageZone.img_idx == int(alignment["img_idx"]),
+                                        ImageZone.canvas_idx == int(alignment["canvas_idx"]),
                                     ).one()
-                                    print(int(alignment["zone_id"]), int(user_id), data["img_idx"], data["canvas_idx"])
+                                    print(int(alignment["zone_id"]), int(user_id), alignment["img_idx"], alignment["canvas_idx"])
 
                                     new_al = AlignmentImage(
                                         transcription_id=transcription.id,
                                         user_id=user_id,
                                         manifest_url=manifest_url,
-                                        img_idx=data["img_idx"],
-                                        canvas_idx=data["canvas_idx"],
+                                        img_idx=alignment["img_idx"],
+                                        canvas_idx=alignment["canvas_idx"],
                                         zone_id=zone.zone_id,
                                         ptr_transcription_start=alignment["ptr_start"],
                                         ptr_transcription_end=alignment["ptr_end"]
