@@ -14,7 +14,8 @@ var EditorMixin = {
       formTextfield: null,
       actionsPositions: {
         top: 0, left: 0, right: 0, bottom: 0
-      }
+      },
+      editorInited: false,
     }
   },
 
@@ -27,6 +28,7 @@ var EditorMixin = {
       this.activateEvents();
       this.editor.updateContents(getNewDelta().retain(this.editor.getLength(), 'api'))
       this.editorContentElement = editorElement.children[0];
+      this.editorInited = true;
     },
 
     activateEvents () {
@@ -57,10 +59,9 @@ var EditorMixin = {
      */
 
     onTextChange (delta, oldDelta, source) {
-      //console.log('onTranscriptionTextChange', delta, oldDelta, source)
+      console.warn('onTranscriptionTextChange', delta, oldDelta, source, 'inited', this.editorInited)
       this.lastOperations = delta;
-      //this.updateContent();
-      this.$store.dispatch(this.storeActions.changed, delta)
+      if (this.editorInited) this.$store.dispatch(this.storeActions.changed, delta)
     },
     onSelection (range) {
       if (range) {

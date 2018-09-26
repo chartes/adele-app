@@ -18,7 +18,7 @@ const state = {
   translation: false,
   translationContent: false,
   translationWithNotes: false,
-  translationSaved: false,
+  translationSaved: true,
   translationError: false,
   translationAlignments: []
 };
@@ -82,7 +82,7 @@ const mutations = {
   SAVED (state) {
     // translation changed and needs to be saved
     console.log("STORE MUTATION translation/SAVED");
-    state.translationSaved = false;
+    state.translationSaved = true;
   }
 
 };

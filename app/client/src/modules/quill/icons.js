@@ -18,4 +18,5 @@ module.exports = {
   'smallcaps'   : require('../../assets/icons/smallcaps.svg'),
   'speechpart'  : require('../../assets/icons/speechpart.svg'),
   'verse'       : require('../../assets/icons/verse.svg'),
+  'zone'        : require('../../assets/icons/link.svg'),
 };

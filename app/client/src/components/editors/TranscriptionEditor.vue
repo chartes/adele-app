@@ -70,13 +70,14 @@
                 :submit="deleteNote"
         />
 
-        <save-bar :action="save"/>
+        <save-bar v-show="!translationSaved || !transcriptionSaved" :action="save"/>
 
     </div>
 </template>
 
 <script>
 
+  import { mapState } from 'vuex'
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
   import EditorNotesMixins from '../../mixins/EditorNotesMixins'
@@ -145,7 +146,8 @@
     },
 
     computed: {
-
+      ...mapState('transcription', ['transcriptionSaved']),
+      ...mapState('translation', ['translationSaved']),
     }
   }
 </script>
