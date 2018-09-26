@@ -1210,6 +1210,14 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
 
                         if response is None:
                             try:
+
+                                # DELETE the old data
+                                for old_al in AlignmentImage.query.filter(
+                                        AlignmentImage.transcription_id == transcription.id,
+                                        AlignmentImage.user_id == int(user_id)
+                                ).all():
+                                    db.session.delete(old_al)
+
                                 for alignment in alignments:
                                     zone = ImageZone.query.filter(
                                         ImageZone.zone_id == int(alignment["zone_id"]),
@@ -1218,6 +1226,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                         ImageZone.img_idx == data["img_idx"],
                                         ImageZone.canvas_idx == data["canvas_idx"],
                                     ).one()
+                                    print(int(alignment["zone_id"]), int(user_id), data["img_idx"], data["canvas_idx"])
 
                                     new_al = AlignmentImage(
                                         transcription_id=transcription.id,
@@ -1230,15 +1239,6 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                         ptr_transcription_end=alignment["ptr_end"]
                                     )
                                     db.session.add(new_al)
-
-                                # DELETE the old data
-                                print("DELETING")
-                                for old_al in AlignmentImage.query.filter(
-                                        AlignmentImage.transcription_id == transcription.id,
-                                        AlignmentImage.user_id == int(user_id)
-                                ).all():
-                                    db.session.delete(old_al)
-                                print("DELETE OK")
 
                                 db.session.commit()
                             except Exception as e:
