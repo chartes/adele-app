@@ -10,12 +10,16 @@
             </div>
             <div class="editor-container">
                 <div class="quill-editor" ref="editor" spellcheck="false"></div>
-                <speechpart-actions
+                <in-editor-actions
+                        class="speechpart-actions"
                         v-show="selectedSpeechpartId && this.editor.hasFocus()"
                         :style="actionsPosition"
                         refs="speechpartActions"
                         :edit="setSpeechpartEditModeEdit"
-                        :delete="setSpeechpartEditModeDelete"/>
+                        :delete="setSpeechpartEditModeDelete"
+                        :editText="'Éditer la partie du discours'"
+                        :deleteText="'Supprimer la partie du discours'"
+                />
             </div>
 
 
@@ -46,16 +50,14 @@
   import InEditorActions from './InEditorActions';
   import SaveBar from "../ui/save-bar";
   import SpeechpartForm from "../forms/SpeechpartForm";
-  import SpeechpartActions from "./SpeechpartActions";
   import ModalConfirmSpeechpartDelete from "../forms/ModalConfirmSpeechpartDelete";
 
   export default {
-    name: "speechparts-editor",
+    name: "speechparts-editior",
     props: ['initialContent'],
     mixins: [EditorMixins],
     components: {
       ModalConfirmSpeechpartDelete,
-      SpeechpartActions,
       SpeechpartForm,
       SaveBar,
       InEditorActions,

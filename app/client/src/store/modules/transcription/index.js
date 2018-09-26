@@ -8,6 +8,7 @@ import {
   insertSegments,
   insertNotesAndSegments,
   insertSpeechparts,
+  insertFacsimileZones,
   stripSegments,
   computeNotesPointers,
   computeAlignmentPointers,
@@ -19,9 +20,11 @@ import {removeFromDelta} from '../../../modules/quill/DeltaUtils'
 const transcriptionShadowQuillElement = document.createElement('div');
 const notesShadowQuillElement = document.createElement('div');
 const speechpartsShadowQuillElement = document.createElement('div');
+const facsimileShadowQuillElement = document.createElement('div');
 let transcriptionShadowQuill;
 let notesShadowQuill;
 let speechpartsShadowQuill;
+let facsimileShadowQuill;
 
 const state = {
 
@@ -30,7 +33,8 @@ const state = {
   transcriptionContent: false,
   transcriptionWithNotes: false,
   transcriptionWithSpeechparts: false,
-  transcriptionSaved: false,
+  transcriptionWithFacsimile: false,
+  transcriptionSaved: true,
   transcriptionError: false,
   transcriptionAlignments: [],
   referenceTranscription: false
@@ -55,6 +59,10 @@ const mutations = {
       speechpartsShadowQuillElement.innerHTML = payload.withSpeechparts || "";
       speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement);
       state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
+
+      facsimileShadowQuillElement.innerHTML = payload.withFacsimile || "";
+      facsimileShadowQuill = new Quill(facsimileShadowQuillElement);
+      state.transcriptionWithFacsimile = facsimileShadowQuillElement.children[0].innerHTML;
 
     }
   },
@@ -83,7 +91,7 @@ const mutations = {
     state.transcription = payload.transcription;
     state.transcriptionWithNotes = payload.withNotes;
     state.transcriptionWithSpeechparts = payload.withSpeechparts;
-    state.transcriptionSaved = true;
+    state.transcriptionWithFacsimile = payload.withFacsimile;
   },
   CHANGED (state) {
     // transcription changed and needs to be saved
@@ -108,9 +116,9 @@ const mutations = {
 
   },
   SAVED (state) {
-    // transcription changed and needs to be saved
+    // transcription saved
     console.log("STORE MUTATION transcription/SAVED")
-    state.transcriptionSaved = false;
+    state.transcriptionSaved = true;
   }
 
 };
@@ -127,16 +135,19 @@ const actions = {
     console.log('STORE ACTION transcription/fetch', doc_id, user_id);
 
 
-    this.dispatch('noteTypes/fetch').then(() => {
-      return this.dispatch('speechpartTypes/fetch', doc_id);
-    }).then(() => {
-      return this.dispatch('notes/fetch', doc_id);
-    }).then(() => {
-      return this.dispatch('speechparts/fetch', { doc_id, user_id });
-    })
-    .then(() => {
-      return this.dispatch('transcription/fetchAlignments', { doc_id, user_id });
-    })
+    this.dispatch('noteTypes/fetch')
+      .then(() => {
+        return this.dispatch('speechpartTypes/fetch', doc_id);
+      })
+      .then(() => {
+        return this.dispatch('notes/fetch', doc_id);
+      })
+      .then(() => {
+        return this.dispatch('speechparts/fetch', { doc_id, user_id });
+      })
+      .then(() => {
+        return this.dispatch('transcription/fetchAlignments', { doc_id, user_id });
+      })
     .then(() => {
 
       return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
@@ -146,12 +157,13 @@ const actions = {
         commit('LOADING_STATUS', false);
 
         if (response.data.errors && response.data.errors.status === 404) {
-          console.log("NO transcription found");
+          console.warn("NO transcription found");
           const emptyData = {
             transcription: " ",
             content: " ",
             withNotes: " ",
             withSpeechparts: " ",
+            withFacsimile: " ",
           };
           //commit('INIT', emptyData);
           //commit('UPDATE', emptyData);
@@ -167,14 +179,16 @@ const actions = {
         let content = insertSegments(quillContent, state.transcriptionAlignments, 'transcription');
         const withNotes = insertNotesAndSegments(quillContent, transcription.notes, state.transcriptionAlignments, 'transcription');
         const withSpeechparts = insertSpeechparts(quillContent, rootState.speechparts.speechparts);
+        console.log("insertFacsimileZones", rootState.facsimile.textZones)
+        const withFacsimile = insertFacsimileZones(quillContent, rootState.facsimile.textZones);
 
         const data = {
           transcription: transcription,
           content: convertLinebreakTEIToQuill(content),
           withNotes: convertLinebreakTEIToQuill(withNotes),
           withSpeechparts: convertLinebreakTEIToQuill(withSpeechparts),
+          withFacsimile: convertLinebreakTEIToQuill(withFacsimile),
         }
-        console.warn("ne pas oublier de mettre les vraies parties")
 
         commit('INIT', data)
         commit('UPDATE', data);
@@ -216,7 +230,7 @@ const actions = {
         });
     } );
   },
-  save ({dispatch, rootState}, transcriptionWithNotes) {
+  save ({dispatch, commit, rootState}, transcriptionWithNotes) {
     console.log('STORE ACTION transcription/save');
 
     return dispatch('saveContent')
@@ -235,6 +249,7 @@ const actions = {
       })
       .then(function(values) {
         console.log('all saved', values);
+        commit('SAVED');
       })
       .catch( error => {
         console.log('something bad happened', error);
@@ -370,10 +385,12 @@ const actions = {
     } );
   },
   changed ({ commit }, deltas) {
+    console.warn('STORE ACTION transcription/changed');
     commit('ADD_OPERATION', deltas)
-    commit('SAVED', false)
+    commit('CHANGED')
   },
   reset({commit}) {
+    console.warn('STORE ACTION transcription/reset');
     commit('RESET')
   }
 

@@ -4,8 +4,10 @@ const state = {
 
   canvasNames: [],
   currentCanvas: 0,
-  annotations: [],
-  loading: false
+  fragments: [],
+  textZones: [],
+  loading: false,
+  newFacsimileZone: false
 
 };
 

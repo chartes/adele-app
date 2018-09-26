@@ -1,7 +1,7 @@
 <template>
     <div class="save-bar" v-show="visible">
         <div class="container">
-            <a class="button is-primary" @click="action">Sauvegarder les changements</a>
+            <a class="button is-primary" :disabled="disabled" @click="action">Sauvegarder les changements</a>
         </div>
     </div>
 </template>
@@ -14,6 +14,10 @@
         type: Boolean,
         default: true
       },
+      disabled: {
+        type: Boolean,
+        default: true
+      },
       action: {
         type: Function,
         required: true
@@ -23,5 +27,4 @@
 </script>
 
 <style scoped>
-
 </style>

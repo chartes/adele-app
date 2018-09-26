@@ -19,6 +19,7 @@ import LineBreak from './blots/editorial/LineBreak';
 import Paragraph from './blots/editorial/Paragraph';
 import Verse from './blots/editorial/Verse';
 import NoteBlot from './blots/editorial/Note';
+import ZoneBlot from './blots/editorial/Zone';
 import List from 'quill/formats/list';
 
 import SpeechpartBlot from './blots/editorial/SpeechpartBlot';
@@ -45,6 +46,7 @@ Quill.register(SegmentBlot, true);
 Quill.register(Paragraph, true);
 Quill.register(Verse, true);
 Quill.register(NoteBlot, true);
+Quill.register(ZoneBlot, true);
 //Quill.register(List, true);
 //Quill.register(ListItem, true);
 

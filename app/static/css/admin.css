@@ -1,21 +1,25 @@
-.iiif-map {
-  min-height: 500px;
-  background: #333; }
+.edition-section {
+  padding-top: 2rem;
+  padding-bottom: 6rem; }
 
-  .navbar-item {
-    padding-left: 20px;
-    padding-right: 20px; }
+  .iiif-map {
+    min-height: 500px;
+    background: #333; }
 
-    .breadcrumb-arrow {
-      padding: 6px; }
+    .navbar-item {
+      padding-left: 20px;
+      padding-right: 20px; }
 
-      .breadcrumb-index {
-        padding-bottom: 12px; }
+      .breadcrumb-arrow {
+        padding: 6px; }
 
-        #user-menu a {
-          width: 220px; }
-          #user-menu span {
-            margin-right: 10px; }
+        .breadcrumb-index {
+          padding-bottom: 12px; }
+
+          #user-menu a {
+            width: 220px; }
+            #user-menu span {
+              margin-right: 10px; }
 
 .message-section {
   margin: 1.1rem 1.5rem; }
@@ -53,7 +57,8 @@
 .edit-document, .delete-document, .edit-manifest-info, .export-document {
   font-size: medium !important;
   text-decoration: none !important; }
-  .edit-document p, .delete-document p, .edit-manifest-info p, .export-document p {
+  .edit-document ; p, .delete-document ; p, .edit-manifest-info ; p,
+  .export-document ; p {
     margin-left: 6px !important; }
 
 .is-invisible {
@@ -920,7 +925,7 @@ l {
   display: none;
   justify-content: center;
   overflow: hidden;
-  z-index: 999;
+  z-index: 9999;
   bottom: 0;
   left: 0;
   position: absolute;
@@ -959,3 +964,14 @@ l {
         content: '';
         display: block;
         position: relative; }
+
+.save-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1em 0 2em 0;
+  background: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  z-index: 1; }

@@ -1,20 +1,22 @@
 <template>
     <div class="in-editor-actions">
-        <div class="field has-addons">
+        <div class="field">
             <p class="control">
                 <a class="button" @click="editAction">
                   <span class="icon is-small">
                     <i class="fas fa-edit"></i>
                   </span>
-                    <span>Éditer</span>
+                    <span v-text="editText"></span>
                 </a>
             </p>
+        </div>
+        <div class="field">
             <p class="control">
                 <a class="button is-danger is-outlined" @click="deleteAction">
                     <span class="icon is-small">
                         <i class="fas fa-eraser"></i>
                     </span>
-                    <span>Supprimer</span>
+                    <span v-text="deleteText">Supprimer</span>
                 </a>
             </p>
         </div>
@@ -32,6 +34,14 @@
       delete : {
         type: Function,
         required: true
+      },
+      editText : {
+        type: String,
+        default: 'Éditer'
+      },
+      deleteText : {
+        type: String,
+        default: 'Supprimer'
       }
     },
     methods: {

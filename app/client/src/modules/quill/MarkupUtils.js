@@ -200,6 +200,19 @@ const insertNotes = (text, notes) => {
   })
   return result;
 };
+const insertFacsimileZones = (text, zones) => {
+  let result = text;
+  let indexCorrection = 0;
+  zones.forEach(zone => {
+    let opening = `<zone id="${zone.id}">`;
+    let closing = '</zone>'
+    result = result.insert(zone.ptr_start + indexCorrection, opening);
+    indexCorrection += opening.length;
+    result = result.insert(zone.ptr_end + indexCorrection, closing);
+    indexCorrection += closing.length;
+  })
+  return result;
+};
 const insertSegments = (text, segments, translationOrTranscription) => {
   const index = translationOrTranscription === 'transcription' ? 0 : 2;
   const tag = `<segment></segment>`;
@@ -381,6 +394,7 @@ export {
   TEIToQuill,
   convertLinebreakTEIToQuill,
   convertLinebreakQuillToTEI,
+  insertFacsimileZones,
   insertNotesAndSegments,
   insertNotes,
   insertSegments,

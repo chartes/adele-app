@@ -50,7 +50,7 @@
 
   import Tabs from '../ui/tabs.vue'
   import Tab from '../ui/tab.vue'
-  import FacsimileEditor from '../editors/FacsimileEditor';
+  import FacsimileEditor from './FacsimileEdition';
   import TranscriptionEdition from './TranscriptionEdition';
   import TranslationEdition from "./TranslationEdition";
   import AlignmentEdition from "./AlignmentEdition";
