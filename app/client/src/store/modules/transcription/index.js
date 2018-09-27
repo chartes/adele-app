@@ -219,7 +219,7 @@ const actions = {
         });
     } );
   },
-  save ({dispatch, commit, rootState}, transcriptionWithNotes) {
+  save ({dispatch, commit, rootState}) {
     console.log('STORE ACTION transcription/save');
 
     commit('SAVING_STATUS', 'saving');
@@ -417,6 +417,11 @@ const actions = {
   changed ({ commit }, deltas) {
     console.warn('STORE ACTION transcription/changed');
     commit('ADD_OPERATION', deltas)
+    commit('CHANGED')
+    commit('SAVING_STATUS', 'tobesaved')
+  },
+  translationChanged ({ commit }, deltas) {
+    console.warn('STORE ACTION transcription/translationChanged');
     commit('CHANGED')
     commit('SAVING_STATUS', 'tobesaved')
   },

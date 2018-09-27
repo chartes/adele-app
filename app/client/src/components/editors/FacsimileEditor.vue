@@ -17,13 +17,9 @@
                         :delete="setFacsimileEditModeDelete"/>
             </div>
 
-
-            <save-bar :action="save"/>
-
             <facsimile-zone-list-form
                     v-if="facsimileEditMode == 'new' || facsimileEditMode == 'edit'"
-                    :facsimile="currentFacsimile"
-                    :facsimileId="selectedZoneId"
+                    :zoneId="selectedZoneId"
                     :submit="updateAlignment"
                     :cancel="closeFragmentsListEdit"
             />
@@ -61,7 +57,6 @@
     data() {
       return {
         storeActions: {
-          save: 'transcription/save',
           changed: 'transcription/changed'
         },
         delta: null,

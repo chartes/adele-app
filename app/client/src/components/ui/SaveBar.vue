@@ -53,7 +53,6 @@
     },
     watch: {
       savingStatus () {
-        console.log("savingStatus", this.savingStatus)
         switch (this.savingStatus) {
           case 'tobesaved':
             this.visible = true;

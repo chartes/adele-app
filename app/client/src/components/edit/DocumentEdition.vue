@@ -42,14 +42,17 @@
 
         <author-swap-list-form v-if="swapUser" :selected-author="author" :cancel="cancelSwap" :submit="swapAuthor"/>
 
+
+        <save-bar :action="save"/>
+
     </div>
 
 </template>
 
 <script>
 
-  import Tabs from '../ui/tabs.vue'
-  import Tab from '../ui/tab.vue'
+  import Tabs from '../ui/Tabs.vue'
+  import Tab from '../ui/Tab.vue'
   import FacsimileEditor from './FacsimileEdition';
   import TranscriptionEdition from './TranscriptionEdition';
   import TranslationEdition from "./TranslationEdition";
@@ -61,11 +64,13 @@
   import LoadingIndicator from "../ui/LoadingIndicator";
   import AuthorSwapListForm from "../forms/AuthorSwapListForm";
   import MinimalMessage from "../ui/MinimalMessage";
+  import SaveBar from "../ui/SaveBar";
 
   export default {
     name: "document-edition",
 
     components: {
+      SaveBar,
       MinimalMessage,
       AuthorSwapListForm,
       LoadingIndicator,
@@ -95,6 +100,9 @@
       },
       cancelSwap () {
         this.swapUser = false;
+      },
+      save () {
+        this.$store.dispatch('transcription/save')
       }
     },
     computed: {

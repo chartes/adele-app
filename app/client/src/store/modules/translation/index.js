@@ -197,9 +197,10 @@ const actions = {
         });
     } );
   },
-  changed ({ commit }, deltas) {
-    commit('ADD_OPERATION', deltas)
-    commit('SAVED', false)
+  changed ({ commit, dispatch }, deltas) {
+    commit('ADD_OPERATION', deltas);
+    commit('SAVED', false);
+    dispatch('transcription/translationChanged', null, {root:true})
   },
   reset ({ commit }) {
     commit('RESET')
