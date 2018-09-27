@@ -10,7 +10,7 @@
             <div class="editor-container">
                 <div class="quill-editor" ref="editor" spellcheck="false"></div>
                 <in-editor-actions
-                        v-show="selectedFacsimileId && this.editor.hasFocus()"
+                        v-show="selectedZoneId && this.editor.hasFocus()"
                         :style="actionsPosition"
                         refs="facsimileActions"
                         :edit="setFacsimileEditModeEdit"
@@ -23,14 +23,14 @@
             <facsimile-zone-list-form
                     v-if="facsimileEditMode == 'new' || facsimileEditMode == 'edit'"
                     :facsimile="currentFacsimile"
-                    :facsimileId="selectedFacsimileId"
-                    :submit="updateFacsimile"
-                    :cancel="closeFacsimileEdit"
+                    :facsimileId="selectedZoneId"
+                    :submit="updateAlignment"
+                    :cancel="closeFragmentsListEdit"
             />
             <modal-confirm-facsimile-delete
                     v-if="facsimileEditMode == 'delete'"
-                    :cancel="closeFacsimileEdit"
-                    :submit="deleteFacsimile"
+                    :cancel="closeFragmentsListEdit"
+                    :submit="deleteTextAlignment"
             />
 
         </div>
@@ -39,7 +39,7 @@
 
 <script>
 
-  import { mapState } from 'vuex';
+  import { mapState, mapGetters } from 'vuex';
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
   import InEditorActions from './InEditorActions';
@@ -66,11 +66,11 @@
         },
         delta: null,
         facsimileEditMode: null,
-        selectedFacsimileId: null,
+        selectedZoneId: null,
         currentFacsimile: null,
         defineNewFacsimile: false,
         buttons: {
-          facsimile: false,
+          zone: false,
         }
       }
     },
@@ -100,32 +100,32 @@
           this.setRangeBound(range);
           let formats = this.editor.getFormat(range.index, range.length);
           this.updateButtons(formats);
-          if (!!formats.facsimile) {
-            this.onFacsimileSelected(formats.facsimile, range);
-            this.buttons.facsimile = false;
+          if (!!formats.zone) {
+            this.onTextAlignmentSelected(formats.zone, range);
+            this.selectedZoneId = formats.zone;
+            this.buttons.zone = false;
           } else {
-            this.selectedFacsimileId = null;
-            this.buttons.facsimile = true;
+            this.selectedZoneId = null;
+            this.buttons.zone = true;
           }
         }
       },
-      onFacsimileSelected (facsimile, range) {
+      onTextAlignmentSelected (zone, range) {
         if (!range.length) return;
-        this.selectedFacsimileId = facsimile;
+        this.selectedZoneId = zone;
       },
 
-      updateFacsimile(sp) {
-        const isNewFacsimile = this.facsimileEditMode === 'new';
-        const action = isNewFacsimile ? 'add' : 'update';
-        sp.speech_part_type = this.getFacsimileTypeById(sp.type_id);
-        this.editor.format('facsimile',  this.$store.state.facsimiles.facsimiles.length);
-        this.$store.dispatch('facsimiles/add', sp);
-        this.closeFacsimileEdit();
+      updateAlignment(z) {
+        const isNewZone = this.facsimileEditMode === 'new';
+        const action = isNewZone ? 'add' : 'update';
+        this.editor.format('zone',  z);
+        this.$store.dispatch('facsimile/addAlignment', z);
+        this.closeFragmentsListEdit();
       },
-      deleteFacsimile() {
-        this.editor.format('facsimile', false);
-        this.selectedFacsimileId = null;
-        this.closeFacsimileEdit();
+      deleteTextAlignment() {
+        this.editor.format('zone', false);
+        this.selectedZoneId = null;
+        this.closeFragmentsListEdit();
       },
 
 
@@ -135,19 +135,19 @@
       setFacsimileEditModeNew() {
         console.log("setFacsimileEditModeNew");
         this.facsimileEditMode = 'new';
-        this.currentFacsimile = { transcription_id: this.transcription.id };
+        this.currentFacsimile = { zone_id: this.selectedZoneId };
         this.newFacsimileChoiceClose();
       },
       setFacsimileEditModeEdit() {
         this.facsimileEditMode = 'edit';
-        this.currentFacsimile = this.$store.state.facsimiles.facsimiles[this.selectedFacsimileId];
+        this.currentFacsimile = this.selectedZoneId;
       },
 
       newFacsimileChoiceClose() {
         this.defineNewFacsimile = false;
       },
 
-      closeFacsimileEdit() {
+      closeFragmentsListEdit() {
         this.facsimileEditMode = null;
         this.currentFacsimile = null;
         this.editor.focus();
@@ -175,11 +175,11 @@
 
     computed: {
       isZoneButtonActive () {
-        const cond = this.editorHasFocus && this.buttons.facsimile;
-        return cond;
+        return this.editorHasFocus && this.buttons.zone;
       },
       ...mapState('transcription', ['transcription']),
-      ...mapState('facsimile', ['newFacsimileZone', '']),
+      ...mapState('facsimile', ['newFacsimileZone', 'fragments']),
+      ...mapGetters('facsimile', ['getZoneById']),
     }
   }
 </script>

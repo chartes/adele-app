@@ -114,5 +114,6 @@ export {
   BlockquoteBlot,
   InlinequoteBlot,
 
-  SpeechpartBlot
+  SpeechpartBlot,
+  ZoneBlot,
 }

@@ -7,13 +7,15 @@
             :valid="!!selected"
     >
         <div class="ZoneForm">
-            <a class="Zones-list-item"
-               v-for="zone in zones"
-               :key="zone.id"
-               @click="selectItem(zone.id)"
-               :class="{ selected: zone.id == selected }"
+            <a class="zones-list-item list-item"
+               v-for="fragment in transcriptionFragments"
+               :key="fragment.zone_id"
+               @click="selectItem(fragment.zone_id)"
+               :class="{ selected: fragment.zone_id == selected }"
             >
-                <p class="content" v-html="zone.content"></p>
+                <div class="content">
+                    <img :src="fragment.fragment_url"/>
+                </div>
             </a>
         </div>
     </modal-form>
@@ -39,12 +41,12 @@
       }
     },
     mounted () {
-      console.log('FacsimileZoneListForm mounted', this.noteId)
-      this.selected = this.noteId
+      console.log('FacsimileZoneListForm mounted', this.zoneId)
+      this.selected = this.zoneId
     },
     methods: {
-      selectItem (noteId) {
-        this.selected = noteId;
+      selectItem (zoneId) {
+        this.selected = zoneId;
       },
       submitAction () {
         console.log("FacsimileZoneListForm.submitAction", this.selected)
@@ -55,7 +57,7 @@
       }
     },
     computed: {
-      ...mapGetters('facsimile', ['fragments'])
+      ...mapGetters('facsimile', ['transcriptionFragments'])
     }
   }
 </script>

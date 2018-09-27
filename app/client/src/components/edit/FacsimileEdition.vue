@@ -8,7 +8,6 @@
             <h2 class="subtitle">Transcription</h2>
             <facsimiles-editior :initialContent="transcriptionWithFacsimile" />
         </div>
-        <loading-indicator :active="loading" :full-page="true"/>
     </div>
 </template>
 
@@ -27,7 +26,7 @@
     },
     created() {
       console.log("FacsimileEditor.created")
-      this.$store.dispatch('facsimile/fetchCanvasNames');
+      //this.$store.dispatch('facsimile/fetchCanvasNames');
     },
     watch: {
       canvasNames : function (newNames, oldNames) {
@@ -37,7 +36,7 @@
     },
     computed: {
       ...mapGetters('document', ['manifestURL']),
-      ...mapState('facsimile', ['canvasNames', 'currentCanvas', 'loading']),
+      ...mapState('facsimile', ['canvasNames', 'currentCanvas']),
       ...mapState('transcription', ['transcriptionWithFacsimile']),
     }
   }

@@ -1,9 +1,11 @@
 <template>
-    <div class="save-bar" v-show="visible">
-        <div class="container">
-            <a class="button is-primary" :disabled="disabled" @click="action">Sauvegarder les changements</a>
+    <transition name="slideup">
+        <div class="save-bar" v-show="visible">
+            <div class="container">
+                <button class="button is-primary is-full-width" :disabled="disabled" @click="action">Sauvegarder les changements</button>
+            </div>
         </div>
-    </div>
+    </transition>
 </template>
 
 <script>
@@ -27,4 +29,5 @@
 </script>
 
 <style scoped>
+    a { pointer-events: none; }
 </style>

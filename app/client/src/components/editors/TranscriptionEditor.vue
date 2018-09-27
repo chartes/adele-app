@@ -70,7 +70,7 @@
                 :submit="deleteNote"
         />
 
-        <save-bar v-show="!translationSaved || !transcriptionSaved" :action="save"/>
+        <save-bar v-show="!translationSaved || !transcriptionSaved" :disabled="false" :action="save"/>
 
     </div>
 </template>

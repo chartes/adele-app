@@ -12,7 +12,8 @@ import {
   stripSegments,
   computeNotesPointers,
   computeAlignmentPointers,
-  computeSpeechpartsPointers
+  computeSpeechpartsPointers,
+  computeImageAlignmentsPointers
 } from '../../../modules/quill/MarkupUtils'
 import {removeFromDelta} from '../../../modules/quill/DeltaUtils'
 
@@ -74,10 +75,12 @@ const mutations = {
     state.transcriptionContent = false;
     state.transcriptionWithNotes = false;
     state.transcriptionWithSpeechparts = false;
+    state.transcriptionWithFacsimile = false;
 
     if (transcriptionShadowQuillElement && transcriptionShadowQuillElement.children[0]) transcriptionShadowQuillElement.children[0].innerHTML = "";
     if (notesShadowQuillElement && notesShadowQuillElement.children[0]) notesShadowQuillElement.children[0].innerHTML = "";
     if (speechpartsShadowQuillElement && speechpartsShadowQuillElement.children[0]) speechpartsShadowQuillElement.children[0].innerHTML = "";
+    if (facsimileShadowQuillElement && facsimileShadowQuillElement.children[0]) facsimileShadowQuillElement.children[0].innerHTML = "";
 
   },
   LOADING_STATUS (state, payload) {
@@ -102,17 +105,20 @@ const mutations = {
 
     console.log("STORE MUTATION transcription/ADD_OPERATION", payload)
 
-    const deltaFilteredForContent = removeFromDelta(payload, ['note','speechpart']);
-    const deltaFilteredForNotes = removeFromDelta(payload, ['segment','speechpart']);
-    const deltaFilteredForSpeechparts = removeFromDelta(payload, ['note']);
+    const deltaFilteredForContent = removeFromDelta(payload, ['note','speechpart', 'zone']);
+    const deltaFilteredForNotes = removeFromDelta(payload, ['segment','speechpart', 'zone']);
+    const deltaFilteredForSpeechparts = removeFromDelta(payload, ['segment', 'note', 'zone']);
+    const deltaFilteredForFacsimile = removeFromDelta(payload, ['note', 'segment','speechpart']);
 
     transcriptionShadowQuill.updateContents(deltaFilteredForContent);
     notesShadowQuill.updateContents(deltaFilteredForNotes);
     speechpartsShadowQuill.updateContents(deltaFilteredForSpeechparts);
+    facsimileShadowQuill.updateContents(deltaFilteredForFacsimile);
 
     state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
+    state.transcriptionWithFacsimile = facsimileShadowQuillElement.children[0].innerHTML;
 
   },
   SAVED (state) {
@@ -127,77 +133,56 @@ const actions = {
 
   fetch ({ commit, rootState }) {
 
-
     commit('LOADING_STATUS', true);
 
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
     console.log('STORE ACTION transcription/fetch', doc_id, user_id);
 
-
     this.dispatch('noteTypes/fetch')
-      .then(() => {
-        return this.dispatch('speechpartTypes/fetch', doc_id);
-      })
-      .then(() => {
-        return this.dispatch('notes/fetch', doc_id);
-      })
-      .then(() => {
-        return this.dispatch('speechparts/fetch', { doc_id, user_id });
-      })
-      .then(() => {
-        return this.dispatch('transcription/fetchAlignments', { doc_id, user_id });
-      })
-    .then(() => {
+      .then(() => this.dispatch('speechpartTypes/fetch', doc_id))
+      .then(() => this.dispatch('notes/fetch', doc_id))
+      .then(() => this.dispatch('speechparts/fetch', { doc_id, user_id }))
+      .then(() => this.dispatch('facsimile/fetchCanvasNames'))
+      .then(() => this.dispatch('facsimile/fetchFragments'))
+      .then(() => this.dispatch('facsimile/fetchAlignments'))
+      .then(() => this.dispatch('transcription/fetchAlignments', { doc_id, user_id }))
+      .then(() => this.dispatch('transcription/fetchTranscriptionFromUser', { doc_id, user_id }))
+      .then(() => this.dispatch('translation/fetch', { doc_id, user_id }))
 
-      return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
+  },
+  fetchTranscriptionFromUser ({commit, state, rootState}, {doc_id, user_id}) {
+    return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
 
-        console.log('TRANSCRIPTION', response);
+      commit('LOADING_STATUS', false);
 
-        commit('LOADING_STATUS', false);
+      if (response.data.errors && response.data.errors.status === 404) {
+        console.warn("NO transcription found");
+        return;
+      }
+      let transcription = {content : " ", notes: []};
 
-        if (response.data.errors && response.data.errors.status === 404) {
-          console.warn("NO transcription found");
-          const emptyData = {
-            transcription: " ",
-            content: " ",
-            withNotes: " ",
-            withSpeechparts: " ",
-            withFacsimile: " ",
-          };
-          //commit('INIT', emptyData);
-          //commit('UPDATE', emptyData);
-          return;
-        }
-        let transcription = {content : " ", notes: []};
+      if (response.data.data && response.data.data.length !== 0) {
+        transcription = response.data.data[0];
+      }
 
-        if (response.data.data && response.data.data.length !== 0) {
-          transcription = response.data.data[0];
-        }
+      let quillContent = TEIToQuill(transcription.content);
+      let content = insertSegments(quillContent, state.transcriptionAlignments, 'transcription');
+      const withNotes = insertNotesAndSegments(quillContent, transcription.notes, state.transcriptionAlignments, 'transcription');
+      const withSpeechparts = insertSpeechparts(quillContent, rootState.speechparts.speechparts);
+      const withFacsimile = insertFacsimileZones(quillContent, rootState.facsimile.alignments);
 
-        let quillContent = TEIToQuill(transcription.content);
-        let content = insertSegments(quillContent, state.transcriptionAlignments, 'transcription');
-        const withNotes = insertNotesAndSegments(quillContent, transcription.notes, state.transcriptionAlignments, 'transcription');
-        const withSpeechparts = insertSpeechparts(quillContent, rootState.speechparts.speechparts);
-        console.log("insertFacsimileZones", rootState.facsimile.textZones)
-        const withFacsimile = insertFacsimileZones(quillContent, rootState.facsimile.textZones);
+      const data = {
+        transcription: transcription,
+        content: convertLinebreakTEIToQuill(content),
+        withNotes: convertLinebreakTEIToQuill(withNotes),
+        withSpeechparts: convertLinebreakTEIToQuill(withSpeechparts),
+        withFacsimile: convertLinebreakTEIToQuill(withFacsimile),
+      }
 
-        const data = {
-          transcription: transcription,
-          content: convertLinebreakTEIToQuill(content),
-          withNotes: convertLinebreakTEIToQuill(withNotes),
-          withSpeechparts: convertLinebreakTEIToQuill(withSpeechparts),
-          withFacsimile: convertLinebreakTEIToQuill(withFacsimile),
-        }
-
-        commit('INIT', data)
-        commit('UPDATE', data);
-      })
-
+      commit('INIT', data)
+      commit('UPDATE', data);
     })
-    .then(() => {
-      return this.dispatch('translation/fetch', { doc_id, user_id });
-    });
   },
   fetchAlignments ({commit}, {doc_id, user_id}) {
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/from-user/${user_id}`).then( response => {
@@ -234,6 +219,7 @@ const actions = {
     console.log('STORE ACTION transcription/save');
 
     return dispatch('saveContent')
+      .then(response => dispatch('saveImageAlignments'))
       .then(reponse => {
         if (rootState.translation.translation.id) {
           // Saves alignment if translation exists
@@ -244,7 +230,7 @@ const actions = {
       .then(reponse => dispatch('saveSpeechparts'))
       .then(reponse => dispatch('saveNotes'))
       .then(reponse => {
-        if (rootState.translation.translationq) return dispatch('translation/save', null, {root:true})
+        if (rootState.translation.translation) return dispatch('translation/save', null, {root:true})
         else return true;
       })
       .then(function(values) {
@@ -338,6 +324,42 @@ const actions = {
 
     return new Promise( ( resolve, reject ) => {
       return axios.post(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/alignments/discours`, { data: data }, auth)
+        .then( response => {
+          if (response.data.errors) {
+            console.error("error", response.data.errors);
+            reject(response.data.errors);
+          }
+          else resolve( response.data )
+        })
+        .catch( error => {
+          console.error("error", error)
+          reject( error )
+        });
+    } );
+  },
+  saveImageAlignments ({ commit, rootState, state, rootGetters }) {
+
+
+    console.warn('STORE ACTION transcription/saveImageAlignments');
+
+    // compute image alignments pointers
+    let sanitizedWithFacsimile = stripSegments(state.transcriptionWithFacsimile);
+    sanitizedWithFacsimile = convertLinebreakQuillToTEI(sanitizedWithFacsimile);
+    const imageAlignments = computeImageAlignmentsPointers(sanitizedWithFacsimile);
+    imageAlignments.forEach(ia => {
+      let found = rootGetters['facsimile/getZoneById'](ia.zone_id);
+      ia.canvas_idx = found.canvas_idx;
+      ia.img_idx = found.img_idx;
+    });
+
+    const auth = rootGetters['user/authHeader'];
+    const data = {
+      username: rootState.user.author.username,
+      alignments: imageAlignments
+    }
+
+    return new Promise( ( resolve, reject ) => {
+      return axios.post(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/alignments/images`, { data: data }, auth)
         .then( response => {
           if (response.data.errors) {
             console.error("error", response.data.errors);

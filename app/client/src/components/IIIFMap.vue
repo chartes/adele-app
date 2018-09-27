@@ -18,7 +18,8 @@
         props: ['manifest', 'drawMode', 'displayAnnotationsMode'],
         data() {
             return {
-                error: undefined
+                error: undefined,
+                refreshInterval: null,
             }
         },
 
@@ -70,7 +71,7 @@
                            // unbox the JSONAPI format & find the "annotation" type
                            // (== not the transcription zone type but the free annotations)
                            for (let a of response.data.data) {
-                               if (a.label === "annotation") {
+                               if (a.label === "transcription") {
                                    return new Promise(resolve => resolve(a));
                                }
                            }
@@ -89,8 +90,12 @@
                 this.drawMode
             );
 
-            setInterval(() =>  {if (liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
+          this.refreshInterval = setInterval(() =>  {if (liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
         },
+
+      beforeDestroy () {
+          clearInterval(this.refreshInterval);
+      }
 
     }
 </script>

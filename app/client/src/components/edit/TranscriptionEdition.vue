@@ -9,26 +9,27 @@
 
         <p class="has-text-right is-size-7" style="margin-bottom: 1em">
             <span class="tag">
-            Affichage : &nbsp;&nbsp;&nbsp;
-            <visibility-toggle :action="toggle" :param="'image'" :visible="visibility.image">image</visibility-toggle>
-            &nbsp;&nbsp;&nbsp;
-            <visibility-toggle :action="toggle" :param="'transcription'" :visible="visibility.transcription">transcription</visibility-toggle>
-            &nbsp;&nbsp;&nbsp;
-            <visibility-toggle :action="toggle" :param="'translation'" :visible="visibility.translation">traduction</visibility-toggle>
-        </span>
+                Affichage : &nbsp;&nbsp;&nbsp;
+                <visibility-toggle :action="toggle" :param="'image'" :visible="visibility.image">image</visibility-toggle>
+                &nbsp;&nbsp;&nbsp;
+                <visibility-toggle :action="toggle" :param="'transcription'" :visible="visibility.transcription">transcription</visibility-toggle>
+                &nbsp;&nbsp;&nbsp;
+                <visibility-toggle :action="toggle" :param="'translation'" :visible="visibility.translation">traduction</visibility-toggle>
+            </span>
         </p>
+
         <div class="columns">
+
             <div class="column" v-show="visibility.image" :class="columnSize">
 
                 <h2 class="subtitle">Image</h2>
-
                 <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
 
             </div>
+
             <div class="column" v-show="visibility.transcription" :class="columnSize">
 
                 <h2 class="subtitle">Transcription</h2>
-
                 <transcription-editor v-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
                 <div v-else>
                     <minimal-message v-if="!transcriptionLoading" :body="'Aucune transcription pour le moment'"/>
@@ -36,15 +37,16 @@
                 </div>
 
             </div>
+
             <div class="column" v-show="visibility.translation" :class="columnSize">
 
                 <h2 class="subtitle">Traduction</h2>
-
                 <translation-editor v-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
                 <div v-else>
                     <minimal-message v-if="!translationLoading" :body="'Aucune traduction pour le moment'"/>
                     <p v-if="allowedToCreateTranslation"><a ref="createTranslationButton" class="button is-link" @click="createTranslation">Ajouter une traduction</a></p>
                 </div>
+
             </div>
         </div>
     </div>
@@ -166,15 +168,6 @@
         left: 50%;
         transform: translate(-50%, -50%) rotate(-30deg);
         animation: astronaut-rotation 5s infinite linear;
-    }
-    .fade-enter-active {
-        transition: all 1s ease;
-    }
-    .fade-leave-active {
-        transition: all .5s ease;
-    }
-    .fade-enter, .fade-leave-to {
-        opacity: 0;
     }
     @keyframes astronaut-rotation {
         0% {

@@ -31,7 +31,7 @@ class ZoneBlot extends Inline {
     return formats;
   }
 }
-ZoneBlot.blotName = 'note';
-ZoneBlot.tagName = 'note';
+ZoneBlot.blotName = 'zone';
+ZoneBlot.tagName = 'zone';
 
 export default ZoneBlot;

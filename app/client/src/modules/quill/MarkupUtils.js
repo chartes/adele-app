@@ -204,7 +204,7 @@ const insertFacsimileZones = (text, zones) => {
   let result = text;
   let indexCorrection = 0;
   zones.forEach(zone => {
-    let opening = `<zone id="${zone.id}">`;
+    let opening = `<zone id="${zone.zone_id}">`;
     let closing = '</zone>'
     result = result.insert(zone.ptr_start + indexCorrection, opening);
     indexCorrection += opening.length;
@@ -387,6 +387,25 @@ const computeSpeechpartsPointers  = (htmlWithSpeechparts) => {
   }
   return speechparts;
 }
+const computeImageAlignmentsPointers  = (htmlWithFacsimile) => {
+
+  const regexpStart = /<zone id="((\d+)|temp)">/;
+  const regexpEnd = /<\/zone>/;
+  let resStart, resEnd;
+  const alignments = [];
+  console.log("htmlWithFacsimile", htmlWithFacsimile)
+  while((resStart = regexpStart.exec(htmlWithFacsimile)) !== null) {
+    htmlWithFacsimile = htmlWithFacsimile.replace(regexpStart, '');
+    resEnd = regexpEnd.exec(htmlWithFacsimile);
+    htmlWithFacsimile = htmlWithFacsimile.replace(regexpEnd, '');
+    alignments.push({
+      "zone_id" : parseInt(resStart[1]),
+      "ptr_start": resStart.index,
+      "ptr_end": resEnd.index
+    });
+  }
+  return alignments;
+}
 
 
 export {
@@ -404,4 +423,5 @@ export {
   computeAlignmentPointers,
   computeNotesPointers,
   computeSpeechpartsPointers,
+  computeImageAlignmentsPointers
 };
