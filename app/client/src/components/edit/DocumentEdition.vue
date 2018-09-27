@@ -42,6 +42,9 @@
 
         <author-swap-list-form v-if="swapUser" :selected-author="author" :cancel="cancelSwap" :submit="swapAuthor"/>
 
+
+        <save-bar :action="save"/>
+
     </div>
 
 </template>
@@ -61,11 +64,13 @@
   import LoadingIndicator from "../ui/LoadingIndicator";
   import AuthorSwapListForm from "../forms/AuthorSwapListForm";
   import MinimalMessage from "../ui/MinimalMessage";
+  import SaveBar from "../ui/SaveBar";
 
   export default {
     name: "document-edition",
 
     components: {
+      SaveBar,
       MinimalMessage,
       AuthorSwapListForm,
       LoadingIndicator,
@@ -95,6 +100,9 @@
       },
       cancelSwap () {
         this.swapUser = false;
+      },
+      save () {
+        this.$store.dispatch('transcription/save')
       }
     },
     computed: {

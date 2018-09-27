@@ -22,9 +22,6 @@
                 />
             </div>
 
-
-            <save-bar :action="save"/>
-
             <speechpart-form
                     v-if="speechpartEditMode == 'new' || speechpartEditMode == 'edit'"
                     :speechpart="currentSpeechpart"
@@ -66,7 +63,6 @@
     data() {
       return {
         storeActions: {
-          save: 'transcription/save',
           changed: 'transcription/changed'
         },
         delta: null,

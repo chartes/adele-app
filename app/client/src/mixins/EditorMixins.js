@@ -48,11 +48,6 @@ var EditorMixin = {
       return this.editorContentElement.innerHTML;
     },
 
-    save () {
-      this.$store.dispatch(this.storeActions.save, this.getEditorHTML())
-    },
-
-
     /**************
      *
      * EDITOR EVENT HANDLERS

@@ -70,8 +70,6 @@
                 :submit="deleteNote"
         />
 
-        <save-bar :status="saveBarStatus" :action="save"/>
-
     </div>
 </template>
 
@@ -108,7 +106,6 @@
     data() {
       return {
         storeActions: {
-          save: 'transcription/save',
           changed: 'transcription/changed'
         },
         delta: null,
@@ -146,14 +143,6 @@
     },
 
     computed: {
-      saveBarStatus () {
-        if (!this.translationSaved || !this.transcriptionSaved) {
-          return 'visible'
-        } else {
-          return 'hidden'
-        }
-
-      },
       ...mapState('transcription', ['transcriptionSaved']),
       ...mapState('translation', ['translationSaved']),
     }
