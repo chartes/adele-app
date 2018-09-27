@@ -38,7 +38,8 @@ const state = {
   transcriptionSaved: true,
   transcriptionError: false,
   transcriptionAlignments: [],
-  referenceTranscription: false
+  referenceTranscription: false,
+  savingStatus: 'uptodate'
 
 };
 
@@ -85,6 +86,10 @@ const mutations = {
   },
   LOADING_STATUS (state, payload) {
     state.transcriptionLoading = payload;
+  },
+  SAVING_STATUS (state, payload) {
+    console.log("STORE MUTATION transcription/SAVING_STATUS", payload)
+    state.savingStatus = payload;
   },
   ALIGNMENTS(state, payload) {
     state.transcriptionAlignments = payload;
@@ -186,7 +191,6 @@ const actions = {
   },
   fetchAlignments ({commit}, {doc_id, user_id}) {
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/from-user/${user_id}`).then( response => {
-      // Check if response is 1 alignment or more
       console.log("STORE ACTION transcription/fetchAlignments", response)
       if (response.data.errors) {
         commit('ALIGNMENTS', []);
@@ -218,6 +222,8 @@ const actions = {
   save ({dispatch, commit, rootState}, transcriptionWithNotes) {
     console.log('STORE ACTION transcription/save');
 
+    commit('SAVING_STATUS', 'saving');
+
     return dispatch('saveContent')
       .then(response => dispatch('saveImageAlignments'))
       .then(reponse => {
@@ -236,9 +242,11 @@ const actions = {
       .then(function(values) {
         console.log('all saved', values);
         commit('SAVED');
+        commit('SAVING_STATUS', 'uptodate');
       })
       .catch( error => {
         console.log('something bad happened', error);
+        commit('SAVING_STATUS', 'error');
         //dispatch( 'error', { error } )
       });
 
@@ -410,10 +418,10 @@ const actions = {
     console.warn('STORE ACTION transcription/changed');
     commit('ADD_OPERATION', deltas)
     commit('CHANGED')
+    commit('SAVING_STATUS', 'tobesaved')
   },
   reset({commit}) {
     console.warn('STORE ACTION transcription/reset');
-    commit('RESET')
   }
 
 };

@@ -567,6 +567,16 @@ smallcaps {
                       border: none;
                       background-color: inherit; }
 
+zone {
+  border-bottom: 2px solid; }
+  zone:nth-child(2n) {
+    border-color: #b5e7a0; }
+    zone:nth-child(2n+1) {
+      border-color: #eca1a6; }
+      zone.unselected {
+        border: none;
+        background-color: inherit; }
+
 #speech-parts-toc {
   margin-bottom: 20px; }
 
@@ -975,3 +985,27 @@ l {
   background: rgba(255, 255, 255, 0.8);
   text-align: center;
   z-index: 1; }
+
+  .save-bar__container {
+    max-width: 33.33%; }
+
+    .save-bar__message, .save-bar__working, .save-bar__error {
+      border-color: transparent; }
+
+      .fade-enter-active {
+        transition: opacity 0.5s ease; }
+
+        .fade-leave-active {
+          transition: opacity 0.5s ease; }
+
+          .fade-enter, .fade-leave-to {
+            opacity: 0; }
+
+            .slideup-enter-active {
+              transition: transform 0.5s ease; }
+
+              .slideup-leave-active {
+                transition: transform 0.5s ease; }
+
+                .slideup-enter, .slideup-leave-to {
+                  transform: translateY(100%); }

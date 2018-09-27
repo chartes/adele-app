@@ -1,0 +1,25 @@
+$transitions-speed-default: .5s;
+
+/* FADE */
+
+.fade-enter-active {
+    transition: opacity $transitions-speed-default ease;
+}
+.fade-leave-active {
+    transition: opacity $transitions-speed-default ease;
+}
+.fade-enter, .fade-leave-to {
+    opacity: 0;
+}
+
+/* SLIDE UP FOR FIXED COMPONENTS  */
+
+.slideup-enter-active {
+    transition: transform $transitions-speed-default ease;
+}
+.slideup-leave-active {
+    transition: transform $transitions-speed-default ease;
+}
+.slideup-enter, .slideup-leave-to {
+    transform: translateY(100%);
+}

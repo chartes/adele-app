@@ -70,7 +70,7 @@
                 :submit="deleteNote"
         />
 
-        <save-bar v-show="!translationSaved || !transcriptionSaved" :disabled="false" :action="save"/>
+        <save-bar :status="saveBarStatus" :action="save"/>
 
     </div>
 </template>
@@ -87,7 +87,7 @@
   import NoteForm from '../forms/NoteForm';
   import NotesListForm from '../forms/NotesListForm';
   import ModalConfirmNoteDelete from '../forms/ModalConfirmNoteDelete';
-  import SaveBar from "../ui/save-bar";
+  import SaveBar from "../ui/SaveBar";
   import TextfieldForm from "../forms/TextfieldForm";
 
   export default {
@@ -146,6 +146,14 @@
     },
 
     computed: {
+      saveBarStatus () {
+        if (!this.translationSaved || !this.transcriptionSaved) {
+          return 'visible'
+        } else {
+          return 'hidden'
+        }
+
+      },
       ...mapState('transcription', ['transcriptionSaved']),
       ...mapState('translation', ['translationSaved']),
     }

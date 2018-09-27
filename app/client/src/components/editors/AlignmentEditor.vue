@@ -13,7 +13,7 @@
 
   import Quill from '../../modules/quill/AdeleQuill';
   import EditorMixins from '../../mixins/EditorMixins'
-  import SaveBar from "../ui/save-bar";
+  import SaveBar from "../ui/SaveBar";
 
   export default {
     name: "alignment-editor",

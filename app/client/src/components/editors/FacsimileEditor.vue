@@ -43,7 +43,7 @@
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
   import InEditorActions from './InEditorActions';
-  import SaveBar from "../ui/save-bar";
+  import SaveBar from "../ui/SaveBar";
   import ModalConfirmFacsimileDelete from "../forms/ModalConfirmFacsimileDelete";
   import FacsimileZoneListForm from "../forms/FacsimileZoneListForm";
 

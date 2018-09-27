@@ -85,7 +85,7 @@
   import NoteForm from '../forms/NoteForm';
   import NotesListForm from '../forms/NotesListForm';
   import ModalConfirmNoteDelete from '../forms/ModalConfirmNoteDelete';
-  import SaveBar from "../ui/save-bar";
+  import SaveBar from "../ui/SaveBar";
   import TextfieldForm from "../forms/TextfieldForm";
 
   export default {

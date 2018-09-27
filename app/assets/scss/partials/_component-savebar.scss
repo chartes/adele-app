@@ -9,3 +9,10 @@
    text-align: center;
    z-index: 1;
  }
+.save-bar__container {
+   max-width: 33.33%;
+}
+
+.save-bar__message, .save-bar__working, .save-bar__error {
+   border-color: transparent;
+}

@@ -48,7 +48,7 @@
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
   import InEditorActions from './InEditorActions';
-  import SaveBar from "../ui/save-bar";
+  import SaveBar from "../ui/SaveBar";
   import SpeechpartForm from "../forms/SpeechpartForm";
   import ModalConfirmSpeechpartDelete from "../forms/ModalConfirmSpeechpartDelete";
 
