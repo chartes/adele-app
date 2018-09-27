@@ -21,7 +21,7 @@
 
 <script>
 
-  import tab from './tab.vue';
+  import tab from './Tab.vue';
 
   export default {
 

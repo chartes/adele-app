@@ -51,8 +51,8 @@
 
 <script>
 
-  import Tabs from '../ui/tabs.vue'
-  import Tab from '../ui/tab.vue'
+  import Tabs from '../ui/Tabs.vue'
+  import Tab from '../ui/Tab.vue'
   import FacsimileEditor from './FacsimileEdition';
   import TranscriptionEdition from './TranscriptionEdition';
   import TranslationEdition from "./TranslationEdition";

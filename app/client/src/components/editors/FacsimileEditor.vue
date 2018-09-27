@@ -19,8 +19,7 @@
 
             <facsimile-zone-list-form
                     v-if="facsimileEditMode == 'new' || facsimileEditMode == 'edit'"
-                    :facsimile="currentFacsimile"
-                    :facsimileId="selectedZoneId"
+                    :zoneId="selectedZoneId"
                     :submit="updateAlignment"
                     :cancel="closeFragmentsListEdit"
             />
