@@ -1,3 +1,4 @@
+import omit from 'lodash/omit';
 import Delta from 'quill-delta';
 
 //function get
@@ -22,6 +23,10 @@ const filterDeltaForSpeechParts = (delta) => {
 }
 const removeFromDelta = (delta, arrAttributesToRemove) => {
   let filteredDelta = new Delta();
+
+
+
+
   delta.forEach(function (op) {
     let newOp = {};
     let type;

@@ -13,7 +13,7 @@
             </div>
         </div>
 
-        <tabs>
+        <tabs :on-tab-change="onTabChange">
 
             <tab name="Édition" :selected="true">
                 <transcription-edition/>
@@ -103,6 +103,9 @@
       },
       save () {
         this.$store.dispatch('transcription/save')
+      },
+      onTabChange (oldTabName, newTabName) {
+        if (oldTabName !== 'Notice' && this.savingStatus === 'tobesaved') this.save()
       }
     },
     computed: {
@@ -116,7 +119,7 @@
       },
       ...mapState('user', ['author']),
       ...mapState('document', ['document']),
-      ...mapState('transcription', ['transcriptionLoading', 'transcription']),
+      ...mapState('transcription', ['transcriptionLoading', 'transcription', 'savingStatus']),
       ...mapState('translation', ['translation', 'translationLoading']),
       ...mapGetters('user', ['currentUserIsStudent']),
     }

@@ -27,6 +27,12 @@
 
     name: "tabs",
 
+    props: {
+      onTabChange: {
+        type: Function
+      }
+    },
+
     components: { tab },
 
     data() {
@@ -41,10 +47,13 @@
 
     methods: {
       selectTab (selectedTab) {
+        let oldTab;
         this.tabs.forEach(t => {
           t.isActive = t.name === selectedTab.name;
+          if (t.isActive) oldTab = t;
         });
         selectedTab.isActive = true;
+        if (this.onTabChange) this.onTabChange(oldTab.name, selectedTab.name)
       }
     }
 
