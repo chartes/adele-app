@@ -55,20 +55,14 @@
                         );
                     },
                     saveAnnotations: function(annotations) {
-                        /*
-                            should I overwrite annotations' user_id(username?) field
-                            so it is not saved under the current user id ?
-                         */
-                        return axios.post(
-                            `/adele/api/1.0/documents/${doc_id}/annotations`,
-                            {"data": annotations},
-                            auth_header
-                        );
+                       return  axios.post(
+                           `http://localhost:5000/adele/api/1.0/documents/${doc_id}/annotations/${canvas_name}`,
+                           {"data": annotations},  auth_header
+                       )
                     },
                     loadDefaultAnnotationType: function() {
                        return axios.get('/adele/api/1.0/annotation-types', null).then((response) => {
-                           // unbox the JSONAPI format & find the "annotation" type
-                           // (== not the transcription zone type but the free annotations)
+                           // unbox the JSONAPI format & find a default annotation type
                            for (let a of response.data.data) {
                                if (a.label === "transcription") {
                                    return new Promise(resolve => resolve(a));
