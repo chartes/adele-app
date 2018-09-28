@@ -203,7 +203,26 @@ const actions = {
   },
   reset ({ commit }) {
     commit('RESET')
-  }
+  },
+  create ({ commit, rootState, rootGetters }) {
+    const auth = rootGetters['user/authHeader'];
+    const data = { data: [{
+        "content" : '<p></p>',
+        "username": rootState.user.currentUser.username
+      }]};
+    return new Promise( ( resolve, reject ) => {
+      axios.post(`/adele/api/1.0/documents/${rootState.document.document.id}/translations`, data, auth)
+        .then( response => {
+          if (response.data.errors) {
+            reject(response.data.errors);
+          }
+          else resolve( response.data )
+        })
+        .catch( error => {
+          reject( error )
+        });
+    } );
+  },
 
 };
 

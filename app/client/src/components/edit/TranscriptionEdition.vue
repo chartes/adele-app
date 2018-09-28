@@ -81,7 +81,6 @@
     },
     methods: {
       toggle (what) {
-        console.log('toggle', what)
         this.visibility[what] = !this.visibility[what];
       },
       createTranscription () {
@@ -93,8 +92,12 @@
           });
       },
       createTranslation () {
-
         this.$refs.createTranslationButton.setAttribute('disabled','disabled');
+        this.$store.dispatch('translation/create')
+          .then(data => {
+            console.log('translation created', data)
+            this.$store.dispatch('translation/fetch');
+          });
       },
     },
     computed: {
@@ -119,10 +122,10 @@
       },
 
       displayTranscriptionEditor () {
-        return !!this.translationWithNotes
+        return !!this.transcriptionWithNotes && !this.transcriptionLoading
       },
       displayTranslationEditor () {
-        return !!this.translationWithNotes
+        return !!this.translationWithNotes && !this.translationLoading
       },
 
       allowedToCreateTranscription () {
@@ -136,10 +139,18 @@
         return (
           !this.translationLoading
           && this.currentUserIsAuthor
-          && ( (this.currentUserIsStudent && this.referenceTranscription)
-            || (this.currentUserIsTeacher && this.transcription)
+          && (
+            (this.currentUserIsStudent && this.hasReferenceTranscription)
+            || ((!this.currentUserIsStudent) && this.hasTranscription)
           )
         )
+      },
+
+      hasTranscription () {
+        return !!this.transcriptionWithNotes;
+      },
+      hasReferenceTranscription () {
+        return !!this.referenceTranscription
       },
 
       ...mapGetters('document', ['manifestURL']),
