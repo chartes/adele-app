@@ -120,9 +120,10 @@ def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
     return res
 
 
-def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, format="text/plain"):
+def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, metadata=None, format="text/plain"):
     """
 
+    :param metadata:
     :param canvas_url:
     :param manifest_url:
     :param img:
@@ -132,6 +133,8 @@ def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, con
     :param format:
     :return:
     """
+    if metadata is None:
+        metadata = {}
     if len(fragment_coords.split(",")) == 4:
         specific_resource = make_specific_rectangular_resource(manifest_url, canvas_url, img, fragment_coords)
     else:
@@ -143,7 +146,8 @@ def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, con
         "resource": {
             "@type": "cnt:ContentAsText",
             "chars": content,
-            "format": format
+            "format": format,
+            "metadata": metadata
         },
         "on": specific_resource
     }

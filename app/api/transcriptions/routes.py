@@ -1207,15 +1207,18 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
 
                         if response is None:
                             try:
-
                                 # DELETE the old data
                                 for old_al in AlignmentImage.query.filter(
                                         AlignmentImage.transcription_id == transcription.id,
-                                        AlignmentImage.user_id == int(user_id)
+                                        AlignmentImage.user_id == int(user_id),
+                                        AlignmentImage.canvas_idx.in_(set([int(alignment["canvas_idx"]) for alignment in alignments]))
                                 ).all():
+                                    print("delete alignment image:", old_al)
                                     db.session.delete(old_al)
 
+                                db.session.commit()
                                 for alignment in alignments:
+                                    print("alignment data:", alignment)
                                     zone = ImageZone.query.filter(
                                         ImageZone.zone_id == int(alignment["zone_id"]),
                                         ImageZone.manifest_url == manifest_url,
@@ -1223,8 +1226,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                         ImageZone.img_idx == int(alignment["img_idx"]),
                                         ImageZone.canvas_idx == int(alignment["canvas_idx"]),
                                     ).one()
-                                    print(int(alignment["zone_id"]), int(user_id), alignment["img_idx"], alignment["canvas_idx"])
-
+                                    print("image zone to align:", zone)
                                     new_al = AlignmentImage(
                                         transcription_id=transcription.id,
                                         user_id=user_id,
@@ -1236,6 +1238,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                         ptr_transcription_end=alignment["ptr_end"]
                                     )
                                     db.session.add(new_al)
+                                    print("new image zone alignement created")
 
                                 db.session.commit()
                             except Exception as e:

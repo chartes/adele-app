@@ -424,7 +424,7 @@ def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=
                 annotations.append(
                     make_annotation(
                         request.url_root[0:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
-                        canvas["@id"], first_img, zone.coords, res_uri, tr_seg, "text/plain")
+                        canvas["@id"], first_img, zone.coords, res_uri, tr_seg, format="text/plain")
                 )
 
             annotation_list = make_annotation_list("f1", doc_id, annotations, transcription_zone_type.serialize())
@@ -552,14 +552,13 @@ def api_documents_annotations_zone(api_version, doc_id, canvas_name, zone_id, us
     return APIResponseFactory.jsonify(response)
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations", methods=["POST"])
+@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>", methods=["POST"])
 @auth.login_required
-def api_post_documents_annotations(api_version, doc_id):
+def api_post_documents_annotations(api_version, doc_id, canvas_name):
     """
         {
             "data" : [{
-                "canvas_idx" : 0,
-                "img_idx" : 0,
+                "zone_id" : 1,
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>"
                 "zone_type_id" : 1,
@@ -568,14 +567,13 @@ def api_post_documents_annotations(api_version, doc_id):
         ...
             },
             {
-                "canvas_idx" : 0,
-                "img_idx" : 0,
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>"
                 "zone_type_id" : 1,
                 "username" : "Professeur1"  (optionnal)
             }]
         }
+    :param canvas_name:
     :param api_version:
     :param doc_id:
     :return: the inserted annotations
@@ -599,38 +597,31 @@ def api_post_documents_annotations(api_version, doc_id):
                 url_for('api_bp.api_documents_manifest_url_origin', api_version=api_version, doc_id=doc_id)
             )
             manifest_url = json_obj["data"]['manifest_url']
-            # get the zone_id max
-            try:
-                img_zone_max_zone_id = db.session.query(func.max(ImageZone.zone_id)).filter(
-                    ImageZone.manifest_url == manifest_url,
-                    ImageZone.img_idx == data[0]["img_idx"],
-                    ImageZone.canvas_idx == data[0]["canvas_idx"],
-                ).group_by(
-                    ImageZone.manifest_url, ImageZone.canvas_idx, ImageZone.img_idx
-                ).one()
-                img_zone_max_zone_id = img_zone_max_zone_id[0] + 1
-            except (NoResultFound, IndexError):
-                # it is the first zone for this image in this manifest
-                img_zone_max_zone_id = 1
+            canvas_idx = get_canvas_idx_from_name(api_version, doc_id, canvas_name)
+            img_idx = 0
 
-            """
+            """ 
                 Delete annotations for the implicated canvases
             """
-            canvas_idx = set([anno["canvas_idx"] for anno in data])
-            for c_idx in canvas_idx:
-                old_zones = ImageZone.query.filter(
-                    ImageZone.canvas_idx == c_idx,
-                    ImageZone.manifest_url == manifest_url,
-                    ImageZone.user_id == user.id
-                ).all()
-                for old_zone in old_zones:
-                    db.session.delete(old_zone)
+            print(data)
+            print("delete image zones:")
+            print("deleting zones for canvas ", canvas_idx)
+            for old_zone in ImageZone.query.filter(
+                ImageZone.canvas_idx == canvas_idx,
+                ImageZone.img_idx == img_idx,
+                ImageZone.manifest_url == manifest_url,
+                ImageZone.user_id == user.id
+            ).all():
+                print("deleting zone ", old_zone.zone_id)
+                db.session.delete(old_zone)
             db.session.commit()
 
             """
                 Insert the new annotations
             """
+            print("posting new image zones")
             for anno in data:
+                print("posting anno", anno)
                 user_id = user.id
                 # teacher and admin MAY post/put/delete for others
                 if (user.is_teacher or user.is_admin) and "username" in anno:
@@ -646,21 +637,39 @@ def api_post_documents_annotations(api_version, doc_id):
                         })
                         break
 
+                if "zone_id" not in anno:
+                    # it's a new zone, let's get it a new zone_id
+                    try:
+                        img_zone_max_zone_id = db.session.query(func.max(ImageZone.zone_id)).filter(
+                            ImageZone.manifest_url == manifest_url,
+                            ImageZone.img_idx == img_idx,
+                            ImageZone.canvas_idx == canvas_idx,
+                            ImageZone.user_id == user.id
+                        ).group_by(
+                            ImageZone.manifest_url, ImageZone.canvas_idx, ImageZone.img_idx, ImageZone.user_id
+                        ).one()
+                        zone_id = img_zone_max_zone_id[0] + 1
+                    except (NoResultFound, IndexError):
+                        # it is the first zone for this image in this manifest
+                        zone_id = 1
+                else:
+                    zone_id = anno["zone_id"]
+
                 # INSERT data but dont commit yet
                 img_zone = ImageZone(
                     manifest_url=manifest_url,
-                    canvas_idx=anno["canvas_idx"],
-                    img_idx=anno["img_idx"],
+                    canvas_idx=canvas_idx,
+                    img_idx=img_idx,
                     note=anno["content"],
                     coords=anno["coords"],
-                    zone_id=img_zone_max_zone_id,
+                    zone_id=zone_id,
                     zone_type_id=anno["zone_type_id"],
                     user_id=user_id
                 )
 
                 db.session.add(img_zone)
                 new_img_zones.append(img_zone)
-                img_zone_max_zone_id += 1
+
         if response is None:
             try:
                 db.session.commit()
@@ -672,140 +681,140 @@ def api_post_documents_annotations(api_version, doc_id):
 
         if response is None:
             response = APIResponseFactory.make_response(data=[z.serialize() for z in new_img_zones])
-    print(response)
-    return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations", methods=["PUT"])
-@auth.login_required
-def api_put_documents_annotations(api_version, doc_id):
-    """
-        {
-            "data" : [{
-                "canvas_idx" : 0,
-                "img_idx" : 0,
-                "zone_id" : 32,
-                "coords" : "10,40,500,50",
-                "content": "Je suis une première annotation avec <b>du markup</b>",
-                "zone_type_id" : 1,
-                "username": "Eleve1"    (optionnal)
-            },
-        ...
-            },
-            {
-                "canvas_idx" : 0,
-                "img_idx" : 0,
-                "zone_id" : 30,
-                "coords" : "30,40,500,50",
-                "content": "Je suis une n-ième annotation avec <b>du markup</b>",
-                "zone_type_id" : 1,
-                "username": "Professeur1"    (optionnal)
-            }]
-        }
-    :param api_version:
-    :param doc_id:
-    :param zone_id:
-    :return: the updated annotations
-    """
-
-    data = request.get_json()
-    response = None
-
-    if "data" in data:
-        data = data["data"]
-
-        if not isinstance(data, list):
-            data = [data]
-
-        # find which zones to update
-        img_zones = []
-        user = current_app.get_current_user()
-        if user.is_anonymous:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden", "details": "Cannot update data"
-            })
-        else:
-            for anno in data:
-
-                user_id = user.id
-                # teacher and admin MAY post/put/delete for others
-                if (user.is_teacher or user.is_admin) and "username" in anno:
-                    usr = current_app.get_user_from_username(anno["username"])
-                    if usr is not None:
-                        user_id = usr.id
-                elif "username" in anno:
-                    usr = current_app.get_user_from_username(anno["username"])
-                    if usr is not None and usr.id != user.id:
-                        response = APIResponseFactory.make_response(errors={
-                            "status": 403, "title": "Access forbidden", "details": "Cannot update data"
-                        })
-                        break
-
-                json_obj = query_json_endpoint(
-                    request,
-                    url_for('api_bp.api_documents_manifest_url_origin', api_version=api_version, doc_id=doc_id)
-                )
-                manifest_url = json_obj["data"]['manifest_url']
-
-                try:
-                    img_zone = ImageZone.query.filter(
-                        ImageZone.zone_id == anno["zone_id"],
-                        ImageZone.manifest_url == manifest_url,
-                        ImageZone.img_idx == anno["img_idx"],
-                        ImageZone.canvas_idx == anno["canvas_idx"],
-                        ImageZone.user_id == user_id
-                    ).one()
-                    img_zones.append((user_id, img_zone))
-                except NoResultFound as e:
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 404,
-                        "title": "Image zone {0} not found".format(anno["zone_id"]),
-                        "details": "Cannot update image zone: {0}".format(str(e))
-                    })
-                    break
-
-        if response is None:
-            # update the annotations
-            for i, (user_id, img_zone) in enumerate(img_zones):
-                anno = data[i]
-                img_zone.coords = anno["coords"]
-                img_zone.note = anno["content"]
-                img_zone.zone_type_id = anno["zone_type_id"]
-                db.session.add(img_zone)
-
-            try:
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot update data", "details": str(e)
-                })
-
-            if response is None:
-                updated_zones = []
-                # perform a GET to retrieve the freshly updated data
-                for user_id, img_zone in img_zones:
-                    json_obj = query_json_endpoint(
-                        request,
-                        url_for(
-                            "api_bp.api_documents_annotations_zone",
-                            api_version=api_version,
-                            doc_id=doc_id,
-                            zone_id=img_zone.zone_id,
-                            user_id=user_id
-                        ),
-                        user=user
-                    )
-                    if "errors" not in json_obj:
-                        updated_zones.append(json_obj)
-
-                response = APIResponseFactory.make_response(data=updated_zones)
-    else:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Cannot update data", "details": "Check your request syntax"
-        })
 
     return APIResponseFactory.jsonify(response)
+
+
+#@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations", methods=["PUT"])
+#@auth.login_required
+#def api_put_documents_annotations(api_version, doc_id):
+#    """
+#        {
+#            "data" : [{
+#                "canvas_idx" : 0,
+#                "img_idx" : 0,
+#                "zone_id" : 32,
+#                "coords" : "10,40,500,50",
+#                "content": "Je suis une première annotation avec <b>du markup</b>",
+#                "zone_type_id" : 1,
+#                "username": "Eleve1"    (optionnal)
+#            },
+#        ...
+#            },
+#            {
+#                "canvas_idx" : 0,
+#                "img_idx" : 0,
+#                "zone_id" : 30,
+#                "coords" : "30,40,500,50",
+#                "content": "Je suis une n-ième annotation avec <b>du markup</b>",
+#                "zone_type_id" : 1,
+#                "username": "Professeur1"    (optionnal)
+#            }]
+#        }
+#    :param api_version:
+#    :param doc_id:
+#    :param zone_id:
+#    :return: the updated annotations
+#    """
+#
+#    data = request.get_json()
+#    response = None
+#
+#    if "data" in data:
+#        data = data["data"]
+#
+#        if not isinstance(data, list):
+#            data = [data]
+#
+#        # find which zones to update
+#        img_zones = []
+#        user = current_app.get_current_user()
+#        if user.is_anonymous:
+#            response = APIResponseFactory.make_response(errors={
+#                "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+#            })
+#        else:
+#            for anno in data:
+#
+#                user_id = user.id
+#                # teacher and admin MAY post/put/delete for others
+#                if (user.is_teacher or user.is_admin) and "username" in anno:
+#                    usr = current_app.get_user_from_username(anno["username"])
+#                    if usr is not None:
+#                        user_id = usr.id
+#                elif "username" in anno:
+#                    usr = current_app.get_user_from_username(anno["username"])
+#                    if usr is not None and usr.id != user.id:
+#                        response = APIResponseFactory.make_response(errors={
+#                            "status": 403, "title": "Access forbidden", "details": "Cannot update data"
+#                        })
+#                        break
+#
+#                json_obj = query_json_endpoint(
+#                    request,
+#                    url_for('api_bp.api_documents_manifest_url_origin', api_version=api_version, doc_id=doc_id)
+#                )
+#                manifest_url = json_obj["data"]['manifest_url']
+#
+#                try:
+#                    img_zone = ImageZone.query.filter(
+#                        ImageZone.zone_id == anno["zone_id"],
+#                        ImageZone.manifest_url == manifest_url,
+#                        ImageZone.img_idx == anno["img_idx"],
+#                        ImageZone.canvas_idx == anno["canvas_idx"],
+#                        ImageZone.user_id == user_id
+#                    ).one()
+#                    img_zones.append((user_id, img_zone))
+#                except NoResultFound as e:
+#                    response = APIResponseFactory.make_response(errors={
+#                        "status": 404,
+#                        "title": "Image zone {0} not found".format(anno["zone_id"]),
+#                        "details": "Cannot update image zone: {0}".format(str(e))
+#                    })
+#                    break
+#
+#        if response is None:
+#            # update the annotations
+#            for i, (user_id, img_zone) in enumerate(img_zones):
+#                anno = data[i]
+#                img_zone.coords = anno["coords"]
+#                img_zone.note = anno["content"]
+#                img_zone.zone_type_id = anno["zone_type_id"]
+#                db.session.add(img_zone)
+#
+#            try:
+#                db.session.commit()
+#            except Exception as e:
+#                db.session.rollback()
+#                response = APIResponseFactory.make_response(errors={
+#                    "status": 403, "title": "Cannot update data", "details": str(e)
+#                })
+#
+#            if response is None:
+#                updated_zones = []
+#                # perform a GET to retrieve the freshly updated data
+#                for user_id, img_zone in img_zones:
+#                    json_obj = query_json_endpoint(
+#                        request,
+#                        url_for(
+#                            "api_bp.api_documents_annotations_zone",
+#                            api_version=api_version,
+#                            doc_id=doc_id,
+#                            zone_id=img_zone.zone_id,
+#                            user_id=user_id
+#                        ),
+#                        user=user
+#                    )
+#                    if "errors" not in json_obj:
+#                        updated_zones.append(json_obj)
+#
+#                response = APIResponseFactory.make_response(data=updated_zones)
+#    else:
+#        response = APIResponseFactory.make_response(errors={
+#            "status": 403, "title": "Cannot update data", "details": "Check your request syntax"
+#        })
+#
+#    return APIResponseFactory.jsonify(response)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>", methods=["DELETE"])
