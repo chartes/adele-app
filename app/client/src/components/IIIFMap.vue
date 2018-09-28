@@ -67,6 +67,18 @@
                     onDeleteAnnotation: function(zone_id) {
                         console.log("propagate deletion of image zone: ", zone_id);
                     },
+                    getAnnotationId: function(annotation) {
+                       let zone_id;
+
+                       try {
+                           zone_id = annotation.resource["@id"].split("/");
+                           zone_id = zone_id[zone_id.length - 3];
+                       } catch(e) {
+                           zone_id = null;
+                       }
+
+                       return zone_id;
+                    },
                     loadDefaultAnnotationType: function() {
                        return axios.get('/adele/api/1.0/annotation-types', null).then((response) => {
                            // unbox the JSONAPI format & find a default annotation type

@@ -17,6 +17,18 @@
                        return new Promise(resolve => resolve(response.data));}
                    );
                },
+               getAnnotationId: function(annotation) {
+                       let zone_id;
+
+                       try {
+                           zone_id = annotation.resource["@id"].split("/");
+                           zone_id = zone_id[zone_id.length - 1];
+                       } catch(e) {
+                           zone_id = null;
+                       }
+
+                       return zone_id;
+               },
                loadDefaultAnnotationType: function() {
                    return axios.get("{{ url_for('api_bp.api_annotations_types', api_version=1.0) }}", null).then((response) => {
                        // unbox the JSONAPI format & find the "annotation" type
@@ -29,12 +41,9 @@
                        return new Promise(resolve => resolve(response.data.data[0]));
                    });
                },
-               saveAnnotations: function(annotations) {
-
-               },
-               saveAnnotationAlignments: function(annotations) {
-
-               }
+               saveAnnotations: function(annotations) {},
+               saveAnnotationAlignments: function(annotations) {},
+               onDeleteAnnotation: function(zone_id) {}
            },
            {direction: "center", className: "facsimileToolTip"}, // Tooltip options
            {{enable_edition|lower}});
