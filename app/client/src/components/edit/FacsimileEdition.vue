@@ -6,7 +6,7 @@
         </div>
         <div class="column is-half">
             <h2 class="subtitle">Transcription</h2>
-            <facsimiles-editior :initialContent="transcriptionWithFacsimile" />
+            <facsimiles-editor :initialContent="transcriptionWithFacsimile" />
         </div>
     </div>
 </template>
