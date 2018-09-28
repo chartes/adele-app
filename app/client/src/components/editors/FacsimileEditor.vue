@@ -44,7 +44,7 @@
   import FacsimileZoneListForm from "../forms/FacsimileZoneListForm";
 
   export default {
-    name: "facsimiles-editior",
+    name: "facsimile-editior",
     props: ['initialContent'],
     mixins: [EditorMixins],
     components: {

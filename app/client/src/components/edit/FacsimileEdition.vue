@@ -16,11 +16,11 @@
   import { mapGetters, mapState } from 'vuex'
   import IIIFMap from '../IIIFMap';
   import LoadingIndicator from "../ui/LoadingIndicator";
-  import FacsimilesEditior from "../editors/FacsimileEditor";
+  import FacsimilesEditor from "../editors/FacsimileEditor";
 
   export default {
-    name: "transcription-edition",
-    components: {FacsimilesEditior, LoadingIndicator, IIIFMap },
+    name: "facsimile-edition",
+    components: {FacsimilesEditor, LoadingIndicator, IIIFMap },
     data () {
       return {  }
     },
