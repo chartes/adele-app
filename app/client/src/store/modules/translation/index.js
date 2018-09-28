@@ -5,7 +5,7 @@ import TEItoQuill, {
   insertSegments, stripSegments, quillToTEI, convertLinebreakTEIToQuill, insertNotesAndSegments,
   convertLinebreakQuillToTEI
 } from '../../../modules/quill/MarkupUtils'
-import {removeFromDelta} from "../../../modules/quill/DeltaUtils";
+import {filterDeltaOperations} from "../../../modules/quill/DeltaUtils";
 
 const translationShadowQuillElement = document.createElement('div');
 const notesShadowQuillElement = document.createElement('div');
@@ -68,9 +68,8 @@ const mutations = {
 
     console.log("STORE MUTATION translation/ADD_OPERATION")
 
-    const deltaFilteredForContent = removeFromDelta(payload, ['note','speechpart']);
-    const deltaFilteredForNotes = removeFromDelta(payload, ['segment','speechpart']);
-    const deltaFilteredForSpeechparts = removeFromDelta(payload, ['note','segment']);
+    const deltaFilteredForContent = filterDeltaOperations(translationShadowQuill, payload, 'content');
+    const deltaFilteredForNotes = filterDeltaOperations(notesShadowQuill, payload, 'notes');
 
     translationShadowQuill.updateContents(deltaFilteredForContent);
     notesShadowQuill.updateContents(deltaFilteredForNotes);

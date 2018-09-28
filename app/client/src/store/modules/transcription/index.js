@@ -15,7 +15,7 @@ import {
   computeSpeechpartsPointers,
   computeImageAlignmentsPointers
 } from '../../../modules/quill/MarkupUtils'
-import {removeFromDelta} from '../../../modules/quill/DeltaUtils'
+import {filterDeltaOperations} from '../../../modules/quill/DeltaUtils'
 
 
 const transcriptionShadowQuillElement = document.createElement('div');
@@ -108,12 +108,12 @@ const mutations = {
   },
   ADD_OPERATION (state, payload) {
 
-    console.log("STORE MUTATION transcription/ADD_OPERATION", payload)
+    console.log("STORE MUTATION transcription/ADD_OPERATION", payload.ops)
 
-    const deltaFilteredForContent = removeFromDelta(payload, ['note','speechpart', 'zone']);
-    const deltaFilteredForNotes = removeFromDelta(payload, ['segment','speechpart', 'zone']);
-    const deltaFilteredForSpeechparts = removeFromDelta(payload, ['segment', 'note', 'zone']);
-    const deltaFilteredForFacsimile = removeFromDelta(payload, ['note', 'segment','speechpart']);
+    const deltaFilteredForContent = filterDeltaOperations(transcriptionShadowQuill, payload, 'content')
+    const deltaFilteredForNotes = filterDeltaOperations(notesShadowQuill, payload, 'notes')
+    const deltaFilteredForSpeechparts = filterDeltaOperations(speechpartsShadowQuill, payload, 'speechparts')
+    const deltaFilteredForFacsimile = filterDeltaOperations(facsimileShadowQuill, payload, 'facsimile')
 
     transcriptionShadowQuill.updateContents(deltaFilteredForContent);
     notesShadowQuill.updateContents(deltaFilteredForNotes);

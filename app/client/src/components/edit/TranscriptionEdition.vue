@@ -119,7 +119,7 @@
       },
 
       displayTranscriptionEditor () {
-        return !!this.transcriptionWithSpeechparts
+        return !!this.translationWithNotes
       },
       displayTranslationEditor () {
         return !!this.translationWithNotes
