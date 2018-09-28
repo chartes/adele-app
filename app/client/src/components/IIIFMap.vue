@@ -31,6 +31,10 @@
             function getAuthorId() {
                 return store.getters['user/author'].id;
             }
+
+            function saveAll() {
+                store.dispatch("transcription/save");
+            }
             /*
                 Comment recharger Liiiflet quand on change de user :
                 - Faire une méthode Liiiflet.reset et pouvoir l'appeler depuis swapAuthor de Vue ?
@@ -54,7 +58,7 @@
                             return new Promise(resolve => resolve(response.data));}
                         );
                     },
-                    saveAnnotations: function(annotations) {
+                    saveAnnotations: function(canvas_name, annotations) {
                        return  axios.post(
                            `http://localhost:5000/adele/api/1.0/documents/${doc_id}/annotations/${canvas_name}`,
                            {"data": annotations},  auth_header
@@ -72,11 +76,8 @@
                        });
                     },
                     saveAnnotationAlignments: function(annotations) {
-                        //TODO
                         console.log("SAVE ANNOTATIONS ALIGNMENTS");
-                        for(let a of annotations) {
-                            console.log(a);
-                        }
+                        saveAll();
                     }
                 },
                 { direction: "center", className: "facsimileToolTip"},
