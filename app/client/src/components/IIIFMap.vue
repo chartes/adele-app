@@ -60,7 +60,7 @@
                     },
                     saveAnnotations: function(canvas_name, annotations) {
                        return  axios.post(
-                           `http://localhost:5000/adele/api/1.0/documents/${doc_id}/annotations/${canvas_name}`,
+                           `/adele/api/1.0/documents/${doc_id}/annotations/${canvas_name}`,
                            {"data": annotations},  auth_header
                        )
                     },
