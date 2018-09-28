@@ -1,6 +1,8 @@
 import Quill from 'quill';
 import Delta from 'quill-delta';
 
+import PlainClipboard from './PlainClipboard'
+
 import BoldBlot from './blots/typo/Bold';
 import ItalicBlot from './blots/typo/Italic';
 import SmallCapsBlot from './blots/typo/SmallCaps';
@@ -23,6 +25,8 @@ import ZoneBlot from './blots/editorial/Zone';
 import List from 'quill/formats/list';
 
 import SpeechpartBlot from './blots/editorial/SpeechpartBlot';
+
+Quill.register('modules/clipboard', PlainClipboard, true);
 
 Quill.register(LineBreak, true);
 
