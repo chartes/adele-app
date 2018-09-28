@@ -64,6 +64,9 @@
                            {"data": annotations},  auth_header
                        )
                     },
+                    onDeleteAnnotation: function(zone_id) {
+                        console.log("propagate deletion of image zone: ", zone_id);
+                    },
                     loadDefaultAnnotationType: function() {
                        return axios.get('/adele/api/1.0/annotation-types', null).then((response) => {
                            // unbox the JSONAPI format & find a default annotation type
