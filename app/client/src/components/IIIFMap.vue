@@ -51,7 +51,6 @@
                     },
                     loadAnnotations: function(annotation_list_url) {
                         return axios.get(annotation_list_url, auth_header).then(response => {
-                            // unbox the JSONAPI format
                             return new Promise(resolve => resolve(response.data));}
                         );
                     },
@@ -75,7 +74,7 @@
                                    return new Promise(resolve => resolve(a));
                                }
                            }
-                           return new Promise(resolve => resolve(response.data[0]));
+                           return new Promise(resolve => resolve(response.data.data[0]));
                        });
                     },
                     saveAnnotationAlignments: function(annotations) {

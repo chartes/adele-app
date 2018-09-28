@@ -228,7 +228,7 @@ def api_documents_annotations(api_version, doc_id):
                 for oc in [oc for oc in canvas["otherContent"] if oc["@type"] == "sc:AnnotationList"]:
                     # make a call to api_documents_manifest_annotations_list
                     try:
-                        resp = op.open(oc["@id"], timeout=10).read()
+                        resp = op.open(oc["@id"], timeout=20).read()
                     except HTTPError as e:
                         response = APIResponseFactory.make_response(
                             errors={"details": str(e),
@@ -484,6 +484,7 @@ def api_documents_annotations_zone(api_version, doc_id, canvas_name, zone_id, us
             sequence = json_obj["data"]
             try:
                 img = Image.query.filter(Image.doc_id == doc_id).first()
+
                 # select annotations zones
                 img_zone = ImageZone.query.filter(
                     ImageZone.zone_id == zone_id,
@@ -491,16 +492,17 @@ def api_documents_annotations_zone(api_version, doc_id, canvas_name, zone_id, us
                     ImageZone.user_id == user_id,
                     ImageZone.canvas_idx == get_canvas_idx_from_name(api_version, doc_id, canvas_name)
                 ).one()
-            except NoResultFound:
+            except NoResultFound as e:
                 response = APIResponseFactory.make_response(
                     errors={
                         "status": 404,
-                        "title": "The current user has no annotation {0} for the document {1}".format(zone_id, doc_id)
+                        "title": "The current user has no annotation {0} for the document {1}".format(zone_id, doc_id),
+                        "details": str(e)
                     }
                 )
 
     if response is None:
-        kargs = {"doc_id": doc_id, "api_version": api_version, "zone_id": img_zone.zone_id}
+        kargs = {"doc_id": doc_id, "api_version": api_version, "zone_id": img_zone.zone_id, 'canvas_name': canvas_name}
         if user_id is not None:
             kargs["user_id"] = user_id
         res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
