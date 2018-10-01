@@ -189,7 +189,7 @@
 
       submit () {
         let data = Object.assign({}, this.form);
-        data.acte_types = this.form.acte_types.map(item => item.id);
+        data.acte_type_id = this.form.acte_types.map(item => item.id);
         data.country_id = this.form.countries.map(item => item.id);
         data.district_id = this.form.districts.map(item => item.id);
         data.language_code = this.form.languages.map(item => item.code);
