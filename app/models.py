@@ -158,7 +158,7 @@ class Commentary(db.Model):
             'content': self.content,
             'notes': [
                 dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
-                for n in self.notes
+                for n in self.notes if n.note is not None
             ]
         }
 
