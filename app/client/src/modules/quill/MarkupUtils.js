@@ -86,6 +86,7 @@ const TEIToQuill = (teiString) => {
 
 const quillToTEI = quillString => {
 
+  quillString = quillString.replace(/&nbsp;/gi, '&#160;');
   const xmlDoc = parser.parseFromString('<doc>'+quillString+'</doc>',"text/xml");
   let newDoc;
   newDoc = recurChange(xmlDoc.documentElement, MAPPING_QUILL_TO_TEI);
