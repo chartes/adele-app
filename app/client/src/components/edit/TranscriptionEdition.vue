@@ -87,7 +87,6 @@
         this.$refs.createTranscriptionButton.setAttribute('disabled','disabled');
         this.$store.dispatch('transcription/create')
           .then(data => {
-            console.log('transcription created', data)
             this.$store.dispatch('transcription/fetch');
           });
       },
@@ -95,7 +94,6 @@
         this.$refs.createTranslationButton.setAttribute('disabled','disabled');
         this.$store.dispatch('translation/create')
           .then(data => {
-            console.log('translation created', data)
             this.$store.dispatch('translation/fetch');
           });
       },

@@ -7,7 +7,11 @@
         <div class="columns">
             <div class="column">
                 <h1 class="title is-size-5"  style="display: inline-block; margin-bottom: 0.5em;" >Document {{ document.id }}</h1>
-                <a class="button is-link is-small" v-if="document.whitelist && !currentUserIsStudent" style="margin-left: 20px" @click="swapUser = true">
+                <a class="button is-link is-small"
+                   v-if="allowedToSwapAuthor"
+                   style="margin-left: 20px"
+                   @click="swapUser = true"
+                >
                     <i class="fas fa-user-circle" style="margin-right: 8px"></i>{{ author.username }}
                 </a>
             </div>
@@ -20,17 +24,24 @@
             </tab>
 
             <tab name="Facsimilé">
-                <div v-if="!!transcription">
+                <div v-if="hasTranscription">
                     <facsimile-editor></facsimile-editor>
                 </div>
                 <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer le facsimilé.'"/>
             </tab>
 
             <tab name="Parties du discours">
-                <div v-if="!!transcription">
+                <div v-if="hasTranscription">
                     <speechparts-edition/>
                 </div>
                 <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer les parties du discours.'"/>
+            </tab>
+
+            <tab name="Commentaires">
+                <div v-if="hasTranscription">
+                    <commentaries-edition/>
+                </div>
+                <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer les commentaires.'"/>
             </tab>
 
             <tab v-if="!currentUserIsStudent" name="Notice">
@@ -57,7 +68,6 @@
   import TranscriptionEdition from './TranscriptionEdition';
   import TranslationEdition from "./TranslationEdition";
   import AlignmentEdition from "./AlignmentEdition";
-  import SpeechpartsEditor from "../editors/SpeechpartsEditor";
   import SpeechpartsEdition from "./SpeechpartsEdition";
   import NoticeEdition from "./NoticeEdition";
   import {mapState, mapGetters} from 'vuex';
@@ -65,18 +75,19 @@
   import AuthorSwapListForm from "../forms/AuthorSwapListForm";
   import MinimalMessage from "../ui/MinimalMessage";
   import SaveBar from "../ui/SaveBar";
+  import CommentariesEdition from "./CommentariesEdition";
 
   export default {
     name: "document-edition",
 
     components: {
+      CommentariesEdition,
       SaveBar,
       MinimalMessage,
       AuthorSwapListForm,
       LoadingIndicator,
       NoticeEdition,
       SpeechpartsEdition,
-      SpeechpartsEditor,
       AlignmentEdition,
       TranslationEdition,
       FacsimileEditor,
@@ -109,13 +120,13 @@
       }
     },
     computed: {
-      enabledSwapAuthor () {
+      hasTranscription () {
+        return !!this.transcription
+      },
+      allowedToSwapAuthor () {
         return (
-          this.$store.getters['user/currentUserIsTeacher']
-          && this.document.whitelist
-          && this.document.whitelist.users
-          && this.document.whitelist.users.length > 0
-        );
+          this.document.whitelist && !this.currentUserIsStudent
+        )
       },
       ...mapState('user', ['author']),
       ...mapState('document', ['document']),

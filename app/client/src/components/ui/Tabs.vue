@@ -2,7 +2,7 @@
 
   <div>
 
-    <div class="tabs">
+    <div class="tabs" :class="tabsStyle">
       <ul>
         <li v-for="tab in tabs"
             :class="{ 'is-active': tab.isActive }"
@@ -28,8 +28,13 @@
     name: "tabs",
 
     props: {
+      tabsStyle: {
+        type: String,
+        default: ''
+      },
       onTabChange: {
-        type: Function
+        type: Function,
+        default: null
       }
     },
 

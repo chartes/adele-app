@@ -146,6 +146,7 @@ const actions = {
 
     this.dispatch('noteTypes/fetch')
       .then(() => this.dispatch('speechpartTypes/fetch', doc_id))
+      .then(() => this.dispatch('commentaries/fetchTypes'))
       .then(() => this.dispatch('notes/fetch', doc_id))
       .then(() => this.dispatch('speechparts/fetch', { doc_id, user_id }))
       .then(() => this.dispatch('facsimile/fetchCanvasNames'))
@@ -154,6 +155,7 @@ const actions = {
       .then(() => this.dispatch('transcription/fetchAlignments', { doc_id, user_id }))
       .then(() => this.dispatch('transcription/fetchTranscriptionFromUser', { doc_id, user_id }))
       .then(() => this.dispatch('translation/fetch', { doc_id, user_id }))
+      .then(() => this.dispatch('commentaries/fetch', { doc_id, user_id }))
 
   },
   fetchTranscriptionFromUser ({commit, state, rootState}, {doc_id, user_id}) {

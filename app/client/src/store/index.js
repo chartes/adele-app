@@ -4,6 +4,7 @@ import Vuex from 'vuex';
 import user from './modules/user'
 import document from './modules/document'
 import actTypes from './modules/actTypes'
+import commentaries from './modules/commentaries'
 import countries from './modules/countries'
 import districts from './modules/districts'
 import facsimile from './modules/facsimile'
@@ -23,6 +24,7 @@ Vue.use(Vuex);
 export default new Vuex.Store({
     modules: {
       actTypes,
+      commentaries,
       countries,
       districts,
       document,
