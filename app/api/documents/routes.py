@@ -243,10 +243,11 @@ def api_post_documents(api_version):
                     tmp_doc.date_update = now
 
                 if response is None:
-                    tmp_doc["user_id"] = user.id
                     if is_post_method:
+                        tmp_doc["user_id"] = user.id
                         doc = Document(**tmp_doc)
                     else:
+                        #tmp_doc["user_id"] = user.id
                         doc = tmp_doc
 
                     db.session.add(doc)
