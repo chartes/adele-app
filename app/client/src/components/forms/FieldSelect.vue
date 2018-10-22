@@ -6,10 +6,10 @@
                 <select v-model="val" @change="onChange(val)">
                     <option
                             v-if="hasOptions"
-                            v-for="opt in options"
+                            v-for="opt, index in options"
                             :key="opt.id"
                             :value="opt.id"
-                            :selected="optionSelected"
+                            :selected="optionSelected(opt.id, index)"
                             v-html="opt.label"
                     ></option>
                 </select>
@@ -38,7 +38,7 @@
     },
     data() {
       return {
-        val: this.$props.selected || null
+        val: this.$props.selected || this.$props.options[0].id
       }
     },
     mounted(){
