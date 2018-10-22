@@ -428,7 +428,7 @@ const actions = {
     commit('SAVING_STATUS', 'tobesaved')
   },
   reset({commit}) {
-    console.warn('STORE ACTION transcription/reset');
+    commit('RESET')
   }
 
 };

@@ -8,7 +8,7 @@
     >
         <div class="authors-list-form">
             <a class="authors-list-item list-item"
-               :key="currentUser.id"
+               :key="'me'"
                @click="selectItem(currentUser)"
                :class="{ selected: currentUser.id == id }"
             >Vous-même ({{ currentUser.username }})</a>
