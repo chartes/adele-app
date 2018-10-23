@@ -66,6 +66,10 @@ const actions = {
   },
   fetchFragments ({ commit, rootState, state }) {
 
+    if (!rootState.document.manifestUrl) {
+      return;
+    }
+
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
     const canvas = state.canvasNames[state.currentCanvas];
@@ -91,6 +95,10 @@ const actions = {
   },
   fetchAlignments ({ commit, rootState, state }) {
 
+    if (!rootState.document.manifestUrl) {
+      return;
+    }
+
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
 
@@ -104,6 +112,9 @@ const actions = {
   },
 
   addAlignment ({commit, rootState, state}, alignment) {
+    if (!rootState.document.manifestUrl) {
+      return;
+    }
     console.log("STORE ACTION facsimile/addAlignment", alignment)
   },
 };
