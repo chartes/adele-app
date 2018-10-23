@@ -227,7 +227,11 @@ const actions = {
     commit('SAVING_STATUS', 'saving');
 
     return dispatch('saveContent')
-      .then(response => dispatch('saveImageAlignments'))
+      .then(response => {
+        if (rootState.document.manifestUrl) {
+          dispatch('saveImageAlignments')
+        }
+      })
       .then(reponse => {
         if (rootState.translation.translation.id) {
           // Saves alignment if translation exists
