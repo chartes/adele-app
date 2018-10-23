@@ -99,7 +99,7 @@
                 this.drawMode
             );
 
-          this.refreshInterval = setInterval(() =>  {if (liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
+          this.refreshInterval = setInterval(() =>  {if (liiiflet && liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
         },
 
       beforeDestroy () {

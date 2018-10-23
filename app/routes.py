@@ -277,12 +277,12 @@ def get_document_search_fields(docs):
         {
             "label": "Siècle du document",
             "name": "creation",
-            "value": sorted(set([(doc.creation_lab, doc.creation) for doc in docs if doc.creation_lab is not None]))
+            "value": sorted(set([(doc.creation_lab, doc.creation) for doc in docs if doc.creation_lab is not None and doc.creation is not None]))
         },
         {
             "label": "Siècle de la copie",
             "name": "copy_cent",
-            "value": sorted(set([(doc.copy_year, doc.copy_cent) for doc in docs if doc.copy_cent is not None]))
+            "value": sorted(set([(doc.copy_year, doc.copy_cent) for doc in docs if doc.copy_cent is not None and doc.copy_year is not None]))
         },
         {
             "label": "Pays",
