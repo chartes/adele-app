@@ -15,7 +15,8 @@ class TranscriptionNoteBinder(object):
         notes = []
         for tr in transcriptions:
             for thn in tr.notes:
-                notes.append(thn.note)
+                if thn.note is not None:
+                    notes.append(thn.note)
         return notes
 
     @staticmethod
@@ -61,7 +62,8 @@ class TranslationNoteBinder(object):
         notes = []
         for tr in translations:
             for thn in tr.notes:
-                notes.append(thn.note)
+                if thn.note is not None:
+                    notes.append(thn.note)
         return notes
 
     @staticmethod
@@ -106,7 +108,8 @@ class CommentaryNoteBinder(object):
         notes = []
         for tr in commentaries:
             for thn in tr.notes:
-                notes.append(thn.note)
+                if thn.note is not None:
+                    notes.append(thn.note)
         return notes
 
     @staticmethod
