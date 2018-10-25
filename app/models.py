@@ -149,7 +149,10 @@ class Commentary(db.Model):
     type = db.relationship("CommentaryType", backref="commentary")
 
     def serialize(self):
-
+        print(self.notes, [
+                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end, "note": (n.commentary_id, n.note_id, n.note, n.commentary)})
+                for n in self.notes
+            ])
         return {
             'id': self.id,
             'doc_id': self.doc_id,
@@ -514,7 +517,7 @@ class Transcription(db.Model):
             'content': self.content,
             'notes': [
                 dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
-                for n in self.notes
+                for n in self.notes if n.note is not None
             ]
         }
 
@@ -544,7 +547,7 @@ class Translation(db.Model):
             'content': self.content,
             'notes': [
                 dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
-                for n in self.notes
+                for n in self.notes if n.note is not None
             ]
         }
 

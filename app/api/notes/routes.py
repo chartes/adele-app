@@ -251,6 +251,7 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>")
 def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=None):
     user = current_app.get_current_user()
+    print("user:", user)
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, CommentaryNoteBinder)
 
 
