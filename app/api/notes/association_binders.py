@@ -105,7 +105,6 @@ class CommentaryNoteBinder(object):
     def get_notes(doc_id):
         # TODO gérer erreur
         commentaries = Commentary.query.filter(Commentary.doc_id == doc_id).all()
-        print("hello", doc_id)
         notes = []
         for tr in commentaries:
             for thn in tr.notes:

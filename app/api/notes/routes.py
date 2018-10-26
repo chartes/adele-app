@@ -184,10 +184,10 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
             "status": 403, "title": "Access forbidden"
         })
     elif user.is_anonymous:
-        tr = get_reference_translation(doc_id)
+        tr = get_reference_transcription(doc_id)
         if tr is None:
             response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Translation not found"
+                "status": 404, "title": "Transcription not found"
             })
         else:
             user_id = tr.user_id
@@ -205,8 +205,8 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
     if response is None:
 
         all_notes = binder.get_notes(doc_id)
-
         notes = []
+
         for note in all_notes:
             if user_id is None:
                 if note_id is None:
@@ -220,12 +220,7 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
                     notes.append(note)
 
         if response is None:
-            if len(notes) == 0:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404, "title": "Notes not found"
-                })
-            else:
-                response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
+            response = APIResponseFactory.make_response(data=[note.serialize() for note in notes])
 
     return APIResponseFactory.jsonify(response)
 
@@ -251,7 +246,6 @@ def api_documents_translations_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>")
 def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=None):
     user = current_app.get_current_user()
-    print("user:", user)
     return api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, CommentaryNoteBinder)
 
 
