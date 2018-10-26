@@ -13,19 +13,20 @@
                 <div class="field">
                     <p class="control">
                         <label class="label">Contenu</label>
-                        <div class="editor-area">
-                            <div class="editor-controls" ref="controls">
-                                <editor-button :selected="buttons.bold" :active="editorHasFocus" :callback="simpleFormat" :format="'bold'"/>
-                                <editor-button :selected="buttons.italic" :active="editorHasFocus" :callback="simpleFormat" :format="'italic'"/>
-                                <editor-button :selected="buttons.superscript" :active="editorHasFocus" :callback="simpleFormat" :format="'superscript'"/>
-                                <editor-button :selected="buttons.smallcaps" :active="editorHasFocus" :callback="simpleFormat" :format="'smallcaps'"/>
-                                <editor-button :selected="buttons.underline" :active="editorHasFocus" :callback="simpleFormat" :format="'underline'"/>
-                                <editor-button :selected="buttons.del" :active="editorHasFocus" :callback="simpleFormat" :format="'del'"/>
-                            </div>
-                            <div class="quill-editor" ref="editor" spellcheck="false"></div>
+                    <div class="editor-area">
+                        <div class="editor-controls" ref="controls">
+                            <editor-button :selected="buttons.bold" :active="editorHasFocus" :callback="simpleFormat" :format="'bold'"/>
+                            <editor-button :selected="buttons.italic" :active="editorHasFocus" :callback="simpleFormat" :format="'italic'"/>
+                            <editor-button :selected="buttons.superscript" :active="editorHasFocus" :callback="simpleFormat" :format="'superscript'"/>
+                            <editor-button :selected="buttons.smallcaps" :active="editorHasFocus" :callback="simpleFormat" :format="'smallcaps'"/>
+                            <editor-button :selected="buttons.underline" :active="editorHasFocus" :callback="simpleFormat" :format="'underline'"/>
+                            <editor-button :selected="buttons.del" :active="editorHasFocus" :callback="simpleFormat" :format="'del'"/>
                         </div>
+                        <div class="quill-editor" ref="editor" spellcheck="false"/>
+                    </div>
                     </p>
                 </div>
+                <loading-indicator :active="loading" :full-page="true"/>
             </form>
         </div>
     </modal-form>
@@ -40,11 +41,13 @@
   import ModalForm from './ModalForm';
   import FieldSelect from './FieldSelect';
   import EditorButton from '../editors/EditorButton.vue';
+  import LoadingIndicator from '../ui/LoadingIndicator';
 
   export default {
     name: "note-form",
     mixins: [EditorMixins],
     components: {
+      LoadingIndicator,
       EditorButton,
       FieldSelect,
       ModalForm
@@ -63,6 +66,7 @@
           underline: false,
           del: false,
         },
+        loading: false,
       }
     },
     mounted () {
@@ -90,7 +94,11 @@
       },
 
       submitAction () {
-        this.$props.submit(this.form);
+        if (!this.noteId) {
+          this.loading = true;
+        }
+        this.submit(this.form)
+
       },
       cancelAction () {
         this.$props.cancel();

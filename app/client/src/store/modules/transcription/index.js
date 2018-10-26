@@ -156,6 +156,9 @@ const actions = {
       .then(() => this.dispatch('transcription/fetchTranscriptionFromUser', { doc_id, user_id }))
       .then(() => this.dispatch('translation/fetch', { doc_id, user_id }))
       .then(() => this.dispatch('commentaries/fetch', { doc_id, user_id }))
+      .catch(err => {
+        console.error("Une erreur est survenue", err)
+      })
 
   },
   fetchTranscriptionFromUser ({commit, state, rootState}, {doc_id, user_id}) {

@@ -36,7 +36,7 @@
                 :unlink="unlinkNote"
                 :delete="setNoteEditModeDelete"/>
             <new-note-actions
-                v-show="defineNewNote"
+                v-if="defineNewNote"
                 :modeNew="setNoteEditModeNew"
                 :modeLink="setNoteEditModeList"
                 :cancel="newNoteChoiceClose"

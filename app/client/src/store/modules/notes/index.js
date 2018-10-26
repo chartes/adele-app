@@ -16,9 +16,8 @@ const mutations = {
   },
   NEW (state, note) {
     state.newNote = note;
-    console.log('NEW', state, state.notes, state.notes.push)
+    console.log('NEW NOTE', note, state.newNote, state.notes.length)
     state.notes.push(note);
-    console.log("ADD_NEW_NOTE", state.newNote);
   },
   UPDATE_ONE (state, note) {
     state.notes.push(note);
@@ -31,10 +30,12 @@ const mutations = {
 
 const actions = {
 
-  fetch ({ commit, getters, rootGetters }, docId) {
+  fetch ({ commit, rootState }, docId) {
     console.log('STORE ACTION notes/fetch')
-    return axios.get(`/adele/api/1.0/documents/${docId}/notes`)
+    const config = { auth: { username: rootState.user.authToken, password: undefined }};
+    return axios.get(`/adele/api/1.0/documents/${docId}/notes`, config)
       .then( (response) => {
+        console.log(response.data)
         commit('UPDATE_ALL', response.data.data)
       }).catch(function(error) {
         console.log(error);
@@ -52,7 +53,7 @@ const actions = {
     };
     return axios.post(`/adele/api/1.0/notes`, newNotes, config)
       .then( response => {
-        const note = response.data.data;
+        const note = response.data.data[0];
         commit('NEW', note);
       })
   },

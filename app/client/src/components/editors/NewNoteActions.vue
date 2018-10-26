@@ -18,7 +18,7 @@
                             </a>
                         </p>
                     </div>
-                    <div class="field">
+                    <div class="field" v-if="!notes || notes.length === 0">
                         <p class="control">
                             <a class="button is-info" @click="modeLink">
                                 <span class="icon is-small">
@@ -38,6 +38,7 @@
 </template>
 
 <script>
+    import {mapState} from 'vuex'
   export default {
     name: "new-note-actions",
     props: {
@@ -54,19 +55,28 @@
         //required: true
       }
     },
+    mounted () {
+      if (!this.notes || this.notes.length === 0) {
+          console.log('=> new and first')
+        this.chooseModeNew()
+      }
+    },
     methods: {
       chooseModeNew () {
-        this.$props.modeNew();
+        this.modeNew();
       },
       chooseModeLink () {
-        this.$props.modeLink();
+        this.modeLink();
       },
       chooseModeAction () {
-        this.$props.chooseMode();
+        this.chooseMode();
       },
       cancelAction () {
-        this.$props.cancel();
+        this.cancel();
       }
+    },
+    computed: {
+      ...mapState('notes', ['notes'])
     }
   }
 </script>
