@@ -194,7 +194,9 @@
         data.district_id = this.form.districts.map(item => item.id);
         data.language_code = this.form.languages.map(item => item.code);
         data.tradition_id = this.form.traditions.map(item => item.id);
-        data.institution_id = data.institution.id;
+        if (data.institution ) {
+          data.institution_id =  data.institution.id;
+        }
         console.log('submit', data);
         this.status = 'saving';
 
