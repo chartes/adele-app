@@ -280,42 +280,42 @@ const actions = {
           else resolve( response.data )
         })
         .catch( error => {
-          console.error("error", error)
+          console.error("error", error);
           reject( error )
         });
     } );
   },
   saveNotes ({ commit, rootState, state, rootGetters }) {
 
-    console.warn('STORE ACTION transcription/saveNotes');
+      console.warn('STORE ACTION transcription/saveNotes');
 
-    // compute notes pointers
-    let sanitizedWithNotes = stripSegments(state.transcriptionWithNotes);
-    sanitizedWithNotes = convertLinebreakQuillToTEI(sanitizedWithNotes);
-    const notes = computeNotesPointers(sanitizedWithNotes);
-    notes.forEach(note => {
-      let found = rootState.notes.notes.find((element) => {
-        return element.id === note.note_id;
+      // compute notes pointers
+      let sanitizedWithNotes = stripSegments(state.transcriptionWithNotes);
+
+      sanitizedWithNotes = convertLinebreakQuillToTEI(sanitizedWithNotes);
+      const notes = computeNotesPointers(sanitizedWithNotes);
+      notes.forEach(note => {
+          let found = rootState.notes.notes.find((element) => {
+              return element.id === note.note_id;
+          });
+          note.content = found.content;
+          note.transcription_username = rootState.user.author.username;
+          note.note_type = found.note_type.id;
       });
-      note.content = found.content;
-    });
+      const auth = rootGetters['user/authHeader'];
 
-    const auth = rootGetters['user/authHeader'];
-
-    return new Promise( ( resolve, reject ) => {
-      axios.put(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/notes`, { data: notes }, auth)
-        .then( response => {
-          if (response.data.errors) {
-            console.error("error", response.data.errors);
-            reject(response.data.errors);
-          }
-          else resolve( response.data )
-        })
-        .catch( error => {
-          console.error("error", error)
-          reject( error )
-        });
-    } );
+      return new Promise((resolve, reject) => {
+          axios.put(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/notes`, {data: notes}, auth)
+              .then(response => {
+                  if (response.data.errors) {
+                      console.error("error", response.data.errors);
+                      reject(response.data.errors);
+                  }
+                  else {
+                      resolve(response.data);
+                  }
+              });
+      })
   },
   saveSpeechparts ({ commit, rootState, state, rootGetters }) {
 
@@ -349,7 +349,7 @@ const actions = {
           else resolve( response.data )
         })
         .catch( error => {
-          console.error("error", error)
+          console.error("error", error);
           reject( error )
         });
     } );

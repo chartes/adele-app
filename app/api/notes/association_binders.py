@@ -1,6 +1,7 @@
 from app import db
-from app.models import Transcription, TranscriptionHasNote, Translation, Commentary, CommentaryHasNote, TranslationHasNote, \
-    Note
+from app.models import Transcription, TranscriptionHasNote, Translation, Commentary, CommentaryHasNote, \
+    TranslationHasNote, \
+    Note, User
 
 
 class TranscriptionNoteBinder(object):
@@ -31,22 +32,29 @@ class TranscriptionNoteBinder(object):
         transcription_has_note.ptr_start = data["ptr_start"]
         transcription_has_note.ptr_end = data["ptr_end"]
         note.transcription = [transcription_has_note]
+
         return note
 
     @staticmethod
     def update(doc_id, data):
         # TODO gérer erreur
         # get the note to update
-        note = Note.query.filter(Note.id == data["note_id"]).one()
-        note.content = data["content"]
+        print("UPDATE NOTE", data)
+        note = Note.query.filter(Note.id == data["note_id"]).first()
+        try:
 
-        transcription_has_note = note.transcription[0]
-        transcription_has_note.ptr_start = data["ptr_start"]
-        transcription_has_note.ptr_end = data["ptr_end"]
+            note.content = data["content"]
+            if "type_id" in data:
+                note.type_id = data["type_id"]
+            db.session.add(note)
+            if "transcription_username" in data and not note.transcription:
+                tr_usr = User.query.filter(User.username == data["transcription_username"]).one()
+                note = TranscriptionNoteBinder.bind(note, data, tr_usr.id, doc_id)
+                db.session.add(note)
 
-        db.session.add(note)
-        db.session.add(transcription_has_note)
-
+        except Exception as e:
+            print(e)
+            db.session.rollback()
         return note
 
 
@@ -84,15 +92,22 @@ class TranslationNoteBinder(object):
     def update(doc_id, data):
         # TODO gérer erreur
         # get the note to update
-        note = Note.query.filter(Note.id == data["note_id"]).one()
+        print("UPDATE NOTE", data)
+        note = Note.query.filter(Note.id == data["note_id"]).first()
+        try:
 
-        translation_has_note = note.translation[0]
-        translation_has_note.ptr_start = data["ptr_start"]
-        translation_has_note.ptr_end = data["ptr_end"]
+            note.content = data["content"]
+            if "type_id" in data:
+                note.type_id = data["type_id"]
+            db.session.add(note)
+            if "transcription_username" in data and not note.transcription:
+                tr_usr = User.query.filter(User.username == data["transcription_username"]).one()
+                note = TranslationNoteBinder.bind(note, data, tr_usr.id, doc_id)
+                db.session.add(note)
 
-        db.session.add(note)
-        db.session.add(translation_has_note)
-
+        except Exception as e:
+            print(e)
+            db.session.rollback()
         return note
 
 
@@ -131,13 +146,20 @@ class CommentaryNoteBinder(object):
     def update(doc_id, data):
         # TODO gérer erreur
         # get the note to update
-        note = Note.query.filter(Note.id == data["note_id"]).one()
+        print("UPDATE NOTE", data)
+        note = Note.query.filter(Note.id == data["note_id"]).first()
+        try:
 
-        commentary_has_note = note.commentary[0]
-        commentary_has_note.ptr_start = data["ptr_start"]
-        commentary_has_note.ptr_end = data["ptr_end"]
+            note.content = data["content"]
+            if "type_id" in data:
+                note.type_id = data["type_id"]
+            db.session.add(note)
+            if "transcription_username" in data and not note.transcription:
+                tr_usr = User.query.filter(User.username == data["transcription_username"]).one()
+                note = CommentaryNoteBinder.bind(note, data, tr_usr.id, doc_id)
+                db.session.add(note)
 
-        db.session.add(note)
-        db.session.add(commentary_has_note)
-
+        except Exception as e:
+            print(e)
+            db.session.rollback()
         return note
