@@ -96,7 +96,8 @@
                     }
                 },
                 { direction: "center", className: "facsimileToolTip"},
-                this.drawMode
+                this.drawMode,
+                {zoomControl: true}
             );
 
           this.refreshInterval = setInterval(() =>  {if (liiiflet && liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
