@@ -202,6 +202,9 @@
 
         this.$store.dispatch('document/save', data).then(response => {
           this.status = 'success';
+          setTimeout(() => {
+            this.status = '';
+          }, 2000)
         }).catch(e => {
           this.status = 'error';
         })
