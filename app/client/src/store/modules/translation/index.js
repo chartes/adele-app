@@ -13,7 +13,6 @@ let translationShadowQuill;
 let notesShadowQuill;
 
 const state = {
-
   translationLoading: true,
   translation: false,
   translationContent: false,
@@ -177,7 +176,7 @@ const actions = {
         return element.id === note.note_id;
       });
       note.content = found.content;
-      note.transcription_username = rootState.user.author.username;
+      note.translation_username = rootState.user.author.username;
       note.note_type = found.note_type.id;
     });
 

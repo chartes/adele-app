@@ -18,7 +18,7 @@
                             </a>
                         </p>
                     </div>
-                    <div class="field" v-if="!notes || notes.length === 0">
+                    <div class="field" v-if="notes && notes.length > 0">
                         <p class="control">
                             <a class="button is-info" @click="modeLink">
                                 <span class="icon is-small">
