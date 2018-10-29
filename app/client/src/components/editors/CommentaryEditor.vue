@@ -5,6 +5,8 @@
                 <label>Structure éditoriale</label>
                 <editor-button :selected="buttons.paragraph" :active="editorHasFocus" :callback="simpleFormat" :format="'paragraph'"/>
                 <editor-button :selected="buttons.verse" :active="editorHasFocus" :callback="simpleFormat" :format="'verse'"/>
+                <editor-button :selected="buttons.list" :active="editorHasFocus" :callback="simpleFormat" :format="'list'"/>
+                <editor-button :selected="buttons.colbreak" :active="editorHasFocus" :callback="simpleFormat" :format="'colbreak'"/>
                 <editor-button :active="isNoteButtonActive" :callback="newNoteChoiceOpen" :format="'note'"/>
             </div>
             <div class="editor-controls-group">
@@ -17,8 +19,8 @@
             </div>
             <div class="editor-controls-group">
                 <label>Enrichissements sémantiques</label>
-                <editor-button :selected="buttons.del" :active="editorHasFocus" :callback="simpleFormat" :format="'del'"/>
                 <editor-button :selected="buttons.expan" :active="editorHasFocus" :callback="simpleFormat" :format="'expan'"/>
+                <editor-button :selected="buttons.link" :active="editorHasFocus" :callback="simpleFormat" :format="'link'"/>
                 <editor-button :selected="buttons.person" :active="editorHasFocus" :callback="displayPersonForm" :format="'person'"/>
                 <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="displayLocationForm" :format="'location'"/>
             </div>
@@ -70,7 +72,7 @@
         />
         <p>&nbsp;</p>
         <p class="has-text-centered">
-            <save-button :status="status" :text="'Enregistrer les modifications'" :action="save"/>
+            <save-button :status="status" :text="buttonText" :action="save"/>
         </p>
     </div>
 </template>
@@ -150,7 +152,6 @@
     methods: {
 
       onTextChange (delta, oldDelta, source) {
-        console.warn('onTranscriptionTextChange', this.type)
         this.lastOperations = delta;
         if (this.editorInited) this.$store.dispatch(this.storeActions.changed,
           {type: this.type, content: this.editorContentElement.children[0].innerHTML})
@@ -162,7 +163,6 @@
       },
 
       save () {
-        console.log("SAVE", this.type, this.editorContentElement.children[0].innerHTML)
         this.$store.dispatch('commentaries/save', this.type).then(response => {
           this.status = 'success';
           this.buttonText = texts.success;

@@ -1,10 +1,10 @@
 import Quill from 'quill';
 
-let Block = Quill.import('blots/block');
+let Embed = Quill.import('blots/embed');
 
-class DivisionBlot extends Block { }
-DivisionBlot.blotName = 'division';
-DivisionBlot.tagName = 'div';
+class DivisionBlot extends Embed { }
+DivisionBlot.blotName = 'colbreak';
+DivisionBlot.tagName = 'cb';
 
 export default DivisionBlot;
 

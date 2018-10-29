@@ -192,7 +192,6 @@
 
       this.form = Object.assign({}, this.document);
 
-      console.log('this.$store.getters[\'institutions/getInstitutionById\']', this.$store.getters['institutions/getInstitutionById'])
     },
     methods: {
 
@@ -270,7 +269,6 @@
 
     computed: {
       institutionId () {
-        console.log('institutionId',  this.form.institution)
         return this.form.institution ? this.form.institution.id : null;
       },
       ...mapGetters('institutions', ['institutionsSelect']),
