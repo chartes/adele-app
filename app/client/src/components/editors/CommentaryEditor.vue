@@ -91,6 +91,13 @@
   import TextfieldForm from "../forms/TextfieldForm";
   import SaveButton from '../ui/SaveButton';
 
+  const texts = {
+    normal: 'Enregistrer les modifications',
+    working: 'Enregistrement en cours...',
+    success: 'Enregistrement terminé',
+    error: 'Enregistrement terminé',
+  }
+
   export default {
     name: "commentary-editor",
     props: ['initialContent', 'type'],
@@ -109,7 +116,8 @@
     },
     data() {
       return {
-        status: '',
+        status: 'normal',
+        buttonText: texts.normal,
         storeActions: {
           changed: 'commentaries/changed'
         },
@@ -155,7 +163,22 @@
 
       save () {
         console.log("SAVE", this.type, this.editorContentElement.children[0].innerHTML)
-        this.$store.dispatch('commentaries/save', this.type)
+        this.$store.dispatch('commentaries/save', this.type).then(response => {
+          this.status = 'success';
+          this.buttonText = texts.success;
+          setTimeout(() => {
+            this.status = 'normal';
+            this.buttonText = texts.normal;
+          }, 2000)
+        }).catch(e => {
+          this.status = 'error';
+          this.buttonText = texts.error;
+          console.error(e)
+          setTimeout(() => {
+            this.status = 'normal';
+            this.buttonText = texts.normal;
+          }, 2000)
+        })
       }
 
     },

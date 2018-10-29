@@ -6,26 +6,18 @@
                @click="action"
                :key="status"
             >
-                <span v-if="status === 'normal'" class="icon is-small">
-                    <i class="fas fa-save"></i>
-                </span>
-                <span v-if="status === 'success'" class="icon is-small">
-                    <i class="fas fa-check"></i>
-                </span>
-                <span v-if="status === 'error'" class="icon is-small">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </span>
-                &nbsp; {{ buttonText }}
+              <save-button-icon :status="status"/> &nbsp {{ buttonText }}
             </a>
 
     </transition>
 </template>
 
 <script>
+  import SaveButtonIcon from './SaveButtonIcon';
   export default {
 
     name: "save-bar-button",
-
+    components: {SaveButtonIcon},
     props: {
       visible: {
         type: Boolean,

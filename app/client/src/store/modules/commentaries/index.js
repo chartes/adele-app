@@ -125,7 +125,7 @@ const actions = {
       "data": {
         "doc_id": rootState.document.document.id,
         "type_id": typeId,
-        "user_id": rootState.user.currentUser.username,
+        "user_id": rootState.user.currentUser.id,
         "content": sanitized
       }
     }
@@ -147,7 +147,7 @@ const actions = {
 
 
   },
-  saveNotes ({ commit, rootState }, typeId) {
+  saveNotes ({ commit, rootState, rootGetters }, typeId) {
     console.log('STORE ACTION commentaries/saveContent', typeId);
     const auth = rootGetters['user/authHeader'];
     const comm = state.commentaries.find(c => c.type === typeId)

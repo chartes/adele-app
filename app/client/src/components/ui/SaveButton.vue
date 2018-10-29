@@ -1,11 +1,29 @@
 <template>
-    <button class="save-button button" @click.prevent="clickHandler" :class="statusClass">{{ statustext }}</button>
+  <button class="save-button button" @click.prevent="clickHandler" :class="buttonClass">
+    <save-button-icon :status="status"/>
+     &nbsp; {{ statustext }}
+  </button>
 </template>
 
 <script>
+  import SaveButtonIcon from './SaveButtonIcon';
   export default {
     name: "save-button",
-    props: ['status', 'text', 'action'],
+    components: {SaveButtonIcon},
+    props: {
+      status: {
+        type: String,
+        default: 'normal'
+      },
+      text: {
+        type: String,
+        default: 'Enregistrer'
+      },
+      action: {
+        type: Function,
+        required: true
+      }
+    },
     methods: {
       clickHandler () {
         this.$el.blur();
@@ -14,15 +32,13 @@
     },
     computed: {
 
-      statusClass () {
-        if (this.status === 'saving') {
-          return 'is-loading is-primary is-outlined';
-        } else if (this.status === 'error') {
-          return 'is-danger is-outlined';
-        } else if (this.status === 'success') {
-          return 'is-success is-outlined';
+      buttonClass () {
+        switch (this.status) {
+          case 'normal': return 'is-primary'
+          case 'working': return 'is-loading disabled save-bar__working'
+          case 'success': return 'disabled disabled save-bar__message has-text-success'
+          case 'error': return 'disabled disabled save-bar__error has-text-danger'
         }
-        return 'is-primary';
       },
       statustext () {
         if (this.status === 'loading') {
@@ -39,5 +55,5 @@
 </script>
 
 <style scoped>
-
+  button.disabled { pointer-events: none; }
 </style>

@@ -109,7 +109,7 @@
 
         <div class="columns">
             <div class="column">
-                <save-button :status="status" :text="'Enregistrer les modifications'" :action="submit"/>
+                <save-button :status="status" :text="buttonText" :action="submit"/>
             </div>
         </div>
 
@@ -118,6 +118,7 @@
 
 <script>
 
+
   import { mapState, mapGetters } from 'vuex';
   import { getNewQuill } from '../../modules/quill/AdeleQuill';
   import FieldSelect from '../forms/FieldSelect';
@@ -125,6 +126,13 @@
   import EditorButton from "../editors/EditorButton";
   import FieldMultiselect from "../forms/FieldMultiselect";
   import SaveButton from "../ui/SaveButton";
+
+  const texts = {
+    normal: 'Enregistrer les modifications',
+    working: 'Enregistrement en cours...',
+    success: 'Enregistrement terminé',
+    error: 'Enregistrement terminé',
+  }
 
   export default {
     components: {
@@ -138,7 +146,8 @@
 
     data () {
       return {
-        status: '',
+        status: 'normal',
+        buttonText: texts.normal,
         form: {
         },
         centuries: [
@@ -197,16 +206,24 @@
         if (data.institution ) {
           data.institution_id =  data.institution.id;
         }
-        console.log('submit', data);
-        this.status = 'saving';
+        this.status = 'working';
+        this.buttonText = texts.working;
+
 
         this.$store.dispatch('document/save', data).then(response => {
           this.status = 'success';
+          this.buttonText = texts.success;
           setTimeout(() => {
-            this.status = '';
+            this.status = 'normal';
+            this.buttonText = texts.normal;
           }, 2000)
         }).catch(e => {
           this.status = 'error';
+          this.buttonText = texts.error;
+          setTimeout(() => {
+            this.status = 'normal';
+            this.buttonText = texts.normal;
+          }, 2000)
         })
 
       },
@@ -226,31 +243,24 @@
       },
 
       onChangeCountries (countries) {
-        console.log('onChangeCountries', countries);
         this.form.countries = countries;
       },
       onChangeDistricts (districts) {
-        console.log('onChangeDistricts', districts);
         this.form.districts = districts;
       },
       onChangeActTypes (actTypes) {
-        console.log('onChangeActTypes', actTypes);
         this.form.acte_types = actTypes;
       },
       onChangeTraditions (traditions) {
-        console.log('onChangeTraditions', traditions);
         this.form.traditions = traditions;
       },
       onChangeLanguages (languages) {
-        console.log('onChangeLanguages', languages);
         this.form.languages = languages;
       },
       onChangeEditors (editors) {
-        console.log('onChangeEditors', editors);
         this.form.editors = editors;
       },
       onChangeCentury (century) {
-        console.log('onChangeCentury', century);
         this.form.copy_cent = century;
       },
       onChangeInstitution (institutionId) {
