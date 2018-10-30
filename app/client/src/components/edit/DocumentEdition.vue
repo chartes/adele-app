@@ -2,7 +2,7 @@
 
     <div>
 
-        <loading-indicator :active="transcriptionLoading && translationLoading" :full-page="true"/>
+        <loading-indicator :active="transcriptionLoading || translationLoading" :full-page="true"/>
 
         <div class="columns">
             <div class="column">
