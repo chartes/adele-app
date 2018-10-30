@@ -126,10 +126,8 @@ const getters = {
 
 
   getZoneById: state => id => {
-    id = parseInt(id);
-    return state.fragments.find(fragment => {
-      return fragment.zone_id === id;
-    });
+    id = parseInt(id)
+    return state.fragments.find(fragment =>  fragment.zone_id === id)
   }
 
 };

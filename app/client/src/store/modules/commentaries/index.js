@@ -31,7 +31,6 @@ const mutations = {
   },
   UPDATE_COMMENTARY (state, {content, type}) {
     const comm = state.commentaries.find(c => c.type === type)
-    console.log(type, comm)
     comm.content = content
   },
   SAVED (state, payload) {
@@ -54,7 +53,6 @@ const actions = {
   fetch ({ commit }, {doc_id, user_id}) {
     axios.get(`/adele/api/1.0/documents/${ doc_id }/commentaries/from-user/${ user_id }`).then( response => {
       const respData = response.data.data;
-      console.log(respData)
       const isArray = Array.isArray(respData);
       const commentaries = isArray ? respData : [respData];
       let hasTypes = {};
@@ -70,7 +68,6 @@ const actions = {
         })
         hasTypes[comm.type.label] = true
       });
-      console.log("comms", commentariesFormatted)
       commit('UPDATE', { commentaries: commentariesFormatted, hasTypes })
     });
   },
@@ -96,7 +93,6 @@ const actions = {
     return axios.post(`/adele/api/1.0/documents/${ doc_id }/commentaries`, newCommentaryData, config).then( response => {
       const respData = response.data.data;
       const isArray = Array.isArray(respData)
-      console.log('commentary created', response)
       const commentaries = isArray ? respData : [respData];
       let hasTypes = {};
       commentaries.forEach(comm => { hasTypes[comm.type.label] = true; });
@@ -114,7 +110,6 @@ const actions = {
       })
   },
   saveContent ({ commit, rootState, rootGetters }, typeId) {
-    console.log('STORE ACTION commentaries/saveContent', typeId);
 
     const auth = rootGetters['user/authHeader'];
     const comm = state.commentaries.find(c => c.type === typeId)
