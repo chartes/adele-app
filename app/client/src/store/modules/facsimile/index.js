@@ -64,9 +64,9 @@ const actions = {
 
 
   },
-  fetchFragments ({ commit, rootState, state }) {
+  fetchFragments ({ commit, rootState, rootGetters, state }) {
 
-    if (!rootState.document.manifestUrl) {
+    if (!rootGetters['document/manifestURL']) {
       return;
     }
 
@@ -76,7 +76,6 @@ const actions = {
 
     return axios.get(`/adele/api/1.0/documents/${doc_id}/annotations/${canvas}/fragments/from-user/${user_id}`).then( response => {
       let data = response.data.data;
-      console.log("STORE ACTION facsimile/fetchAnnotations", data);
       let fragments = data.fragments.map((frag) => {
         return {
           zone_id: frag.zone.zone_id,
@@ -93,9 +92,9 @@ const actions = {
     });
 
   },
-  fetchAlignments ({ commit, rootState, state }) {
+  fetchAlignments ({ commit, rootState, rootGetters }) {
 
-    if (!rootState.document.manifestUrl) {
+    if (!rootGetters['document/manifestURL']) {
       return;
     }
 
@@ -104,7 +103,7 @@ const actions = {
 
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`).then( response => {
       let data = response.data.data;
-      console.log("STORE ACTION facsimile/fetchAlignments", data);
+      console.warn("STORE ACTION facsimile/fetchAlignments", data);
       commit('UPDATE_ALIGNMENTS', data);
 
     });

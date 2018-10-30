@@ -54,7 +54,6 @@ var EditorMixin = {
      */
 
     onTextChange (delta, oldDelta, source) {
-      console.warn('onTranscriptionTextChange', delta, oldDelta, source, 'inited', this.editorInited)
       this.lastOperations = delta;
       if (this.editorInited) this.$store.dispatch(this.storeActions.changed, delta)
     },

@@ -107,7 +107,6 @@
       ...mapGetters('user', ['authHeader']),
       ...mapState('document', ['document'])
 
-
     },
 
     beforeDestroy () {
