@@ -19,7 +19,8 @@ const state = {
   translationWithNotes: false,
   translationSaved: true,
   translationError: false,
-  translationAlignments: []
+  translationAlignments: [],
+  referenceTranslation: false
 };
 
 const mutations = {
@@ -47,6 +48,9 @@ const mutations = {
 
     if (translationShadowQuillElement) translationShadowQuillElement.innerHTML = "";
     if (notesShadowQuillElement) notesShadowQuillElement.innerHTML = "";
+  },
+  REFERENCE(state, payload) {
+    state.referenceTranslation = payload
   },
   LOADING_STATUS (state, payload) {
     state.translationLoading = payload;
@@ -125,7 +129,34 @@ const actions = {
       commit('UPDATE', data);
     });
 
+  },
+  fetchReference ({commit}, {doc_id}) {
 
+    console.log('STORE ACTION translation/fetchReference', doc_id);
+
+    return axios.get(`/adele/api/1.0/documents/${doc_id}/translations/reference`).then( response => {
+
+      commit('LOADING_STATUS', false);
+
+
+      if (response.data.errors && response.data.errors.status === 404) {
+        console.warn("NO reference translation found");
+        return;
+      }
+      let translation = false;
+
+      if (response.data.data) {
+        translation = response.data.data;
+      }
+
+      if (!translation) return commit('REFERENCE', false);
+
+      let quillContent = TEIToQuill(translation.content);
+      const withNotes = insertNotesAndSegments(quillContent, translation.notes, [], 'translation');
+      translation.content = withNotes
+
+      commit('REFERENCE', translation)
+    })
   },
   save ({ commit, dispatch }) {
 
@@ -228,11 +259,6 @@ const actions = {
 };
 
 const getters = {
-  translation: state => state.translation,
-  translationContent: state => !!state.translation ? state.translation.content : null,
-  translationWithNotes: state => state.translationWithNotes,
-  translationWithSegments: state => state.translationWithSegments,
-  translationIsSaved: state => state.translationSaved,
 };
 
 const translationModule = {

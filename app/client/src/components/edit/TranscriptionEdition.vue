@@ -29,8 +29,9 @@
 
             <div class="column" v-show="visibility.transcription" :class="columnSize">
 
-                <h2 class="subtitle">Transcription</h2>
-                <transcription-editor v-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
+                <h2 class="subtitle">Transcription <small v-if="displayReferenceTranscription" class="tag is-dark is-round">Référence</small></h2>
+                <div v-if="displayReferenceTranscription" v-html="referenceTranscription.content"></div>
+                <transcription-editor v-else-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
                 <div v-else>
                     <minimal-message v-if="!transcriptionLoading" :body="'Aucune transcription pour le moment'"/>
                     <p v-if="allowedToCreateTranscription"><a ref="createTranscriptionButton" class="button is-link" @click="createTranscription">Ajouter une transcription</a></p>
@@ -40,8 +41,9 @@
 
             <div class="column" v-show="visibility.translation" :class="columnSize">
 
-                <h2 class="subtitle">Traduction</h2>
-                <translation-editor v-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
+                <h2 class="subtitle">Traduction <small v-if="displayReferenceTranslation" class="tag is-dark is-round">Référence</small></h2>
+                <div v-if="displayReferenceTranslation" v-html="referenceTranslation.content"></div>
+                <translation-editor v-else-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
                 <div v-else>
                     <minimal-message v-if="!translationLoading" :body="'Aucune traduction pour le moment'"/>
                     <p v-if="allowedToCreateTranslation"><a ref="createTranslationButton" class="button is-link" @click="createTranslation">Ajouter une traduction</a></p>
@@ -150,10 +152,20 @@
       hasReferenceTranscription () {
         return !!this.referenceTranscription
       },
+      hasReferenceTranslation () {
+        return !!this.referenceTranslation
+      },
+
+      displayReferenceTranscription () {
+        return this.hasReferenceTranscription && this.currentUserIsStudent
+      },
+      displayReferenceTranslation () {
+        return this.hasReferenceTranslation && this.currentUserIsStudent
+      },
 
       ...mapGetters('document', ['manifestURL']),
       ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading']),
-      ...mapState('translation', ['translationWithNotes', 'translationLoading']),
+      ...mapState('translation', ['translationWithNotes', 'translationLoading', 'referenceTranslation']),
       ...mapState('user', ['currentUser', 'author']),
       ...mapGetters('user', ['currentUserIsAuthor', 'currentUserIsStudent', 'currentUserIsTeacher']),
     }

@@ -66,7 +66,6 @@
   import Tab from '../ui/Tab.vue'
   import FacsimileEditor from './FacsimileEdition';
   import TranscriptionEdition from './TranscriptionEdition';
-  import TranslationEdition from "./TranslationEdition";
   import AlignmentEdition from "./AlignmentEdition";
   import SpeechpartsEdition from "./SpeechpartsEdition";
   import NoticeEdition from "./NoticeEdition";
@@ -89,7 +88,6 @@
       NoticeEdition,
       SpeechpartsEdition,
       AlignmentEdition,
-      TranslationEdition,
       FacsimileEditor,
       TranscriptionEdition,
       Tabs,

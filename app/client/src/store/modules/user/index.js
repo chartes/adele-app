@@ -46,36 +46,27 @@ const actions = {
 const checkRole = (user, role) => {
   let theRole = '';
   if (!(user && user.roles)) return false;
-  console.log("checkRole", user, role, user.roles.length)
   switch (user.roles.length) {
     case 1: theRole = 'student'; break;
     case 2: theRole = 'teacher'; break;
     case 3: theRole = 'admin'; break;
   }
-  console.log('=>', theRole, theRole === role)
   return theRole === role;
-  //return user && user.roles.indexOf(role) > -1;
 };
 
 const getters = {
 
-  authToken: state => state.authToken,
   authHeader: state => { return { auth: { username: state.authToken, password: undefined }}},
-  currentUser: state => state.currentUser,
-  author: state => state.author,
   currentUserIsAdmin: state => {
-    console.log("currentUserIsAdmin", checkRole(state.currentUser, 'admin'))
     return checkRole(state.currentUser, 'admin')
   },
   currentUserIsAuthor: state => {
     return state.currentUser.id === state.author.id;
   },
   currentUserIsTeacher: state => {
-    console.log("currentUserIsTeacher", checkRole(state.currentUser, 'teacher'))
     return checkRole(state.currentUser, 'teacher')
   },
   currentUserIsStudent: state => {
-    console.log("currentUserIsStudent", checkRole(state.currentUser, 'student'))
     return checkRole(state.currentUser, 'student')
   },
 

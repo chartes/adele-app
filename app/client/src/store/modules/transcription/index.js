@@ -84,6 +84,9 @@ const mutations = {
     if (facsimileShadowQuillElement && facsimileShadowQuillElement.children[0]) facsimileShadowQuillElement.children[0].innerHTML = "";
 
   },
+  REFERENCE(state, payload) {
+    state.referenceTranscription = payload
+  },
   LOADING_STATUS (state, payload) {
     state.transcriptionLoading = payload;
   },
@@ -142,7 +145,6 @@ const actions = {
 
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
-    console.log('STORE ACTION transcription/fetch', doc_id, user_id);
 
     this.dispatch('noteTypes/fetch')
       .then(() => this.dispatch('speechpartTypes/fetch', doc_id))
@@ -154,7 +156,9 @@ const actions = {
       .then(() => this.dispatch('facsimile/fetchAlignments'))
       .then(() => this.dispatch('transcription/fetchAlignments', { doc_id, user_id }))
       .then(() => this.dispatch('transcription/fetchTranscriptionFromUser', { doc_id, user_id }))
+      .then(() => this.dispatch('transcription/fetchReference', { doc_id }))
       .then(() => this.dispatch('translation/fetch', { doc_id, user_id }))
+      .then(() => this.dispatch('translation/fetchReference', { doc_id, user_id }))
       .then(() => this.dispatch('commentaries/fetch', { doc_id, user_id }))
       .catch(err => {
         console.error("Une erreur est survenue", err)
@@ -162,6 +166,7 @@ const actions = {
 
   },
   fetchTranscriptionFromUser ({commit, state, rootState}, {doc_id, user_id}) {
+
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/from-user/${user_id}`).then( response => {
 
       commit('LOADING_STATUS', false);
@@ -203,6 +208,34 @@ const actions = {
       }
       const alignments = response.data.data && Array.isArray(response.data.data[0]) ? response.data.data : [response.data.data]
       commit('ALIGNMENTS', alignments);
+    })
+  },
+  fetchReference ({commit}, {doc_id}) {
+
+    console.log('STORE ACTION transcription/fetchReference', doc_id);
+
+    return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/reference`).then( response => {
+
+      commit('LOADING_STATUS', false);
+
+
+      if (response.data.errors && response.data.errors.status === 404) {
+        console.warn("NO reference transcription found");
+        return;
+      }
+      let transcription = false;
+
+      if (response.data.data) {
+        transcription = response.data.data;
+      }
+
+      if (!transcription) return commit('REFERENCE', false);
+
+      let quillContent = TEIToQuill(transcription.content);
+      const withNotes = insertNotesAndSegments(quillContent, transcription.notes, [], 'transcription');
+      transcription.content = withNotes
+
+      commit('REFERENCE', transcription)
     })
   },
   create ({ commit, rootState, rootGetters }) {
@@ -441,11 +474,7 @@ const actions = {
 };
 
 const getters = {
-  transcription: state => state.transcription,
-  transcriptionContent: state => state.transcriptionContent,
-  transcriptionWithNotes: state => state.transcriptionWithNotes,
-  transcriptionWithSegments: state => state.transcriptionWithSegments,
-  transcriptionIsSaved: state => state.transcriptionSaved,
+
 };
 
 const transcriptionModule = {

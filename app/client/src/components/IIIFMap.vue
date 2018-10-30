@@ -29,7 +29,7 @@
 
             const store = this.$store;
             function getAuthorId() {
-                return store.getters['user/author'].id;
+                return store.state.user.author.id;
             }
 
             function saveAll() {
