@@ -26,11 +26,11 @@ const mutations = {
     state.commentaryTypes = payload
   },
   UPDATE (state, { commentaries, hasTypes}) {
-    state.commentaries = commentaries
+    state.commentaries = commentaries;
     state.hasCommentaryTypes = hasTypes
   },
   UPDATE_COMMENTARY (state, {content, type}) {
-    const comm = state.commentaries.find(c => c.type === type)
+    const comm = state.commentaries.find(c => c.type === type);
     comm.content = content
   },
   SAVED (state, payload) {
@@ -65,9 +65,10 @@ const actions = {
           typeLabel: comm.type.label,
           content: withNotes,
           notes: comm.notes
-        })
+        });
         hasTypes[comm.type.label] = true
       });
+
       commit('UPDATE', { commentaries: commentariesFormatted, hasTypes })
     });
   },
@@ -93,10 +94,24 @@ const actions = {
     return axios.post(`/adele/api/1.0/documents/${ doc_id }/commentaries`, newCommentaryData, config).then( response => {
       const respData = response.data.data;
       const isArray = Array.isArray(respData)
+
       const commentaries = isArray ? respData : [respData];
       let hasTypes = {};
-      commentaries.forEach(comm => { hasTypes[comm.type.label] = true; });
-      commit('UPDATE', { commentaries, hasTypes })
+
+      let commentariesFormatted = [];
+      commentaries.forEach(comm => {
+        let quillContent = TEIToQuill(comm.content);
+        let withNotes = insertNotes(quillContent, comm.notes);
+        commentariesFormatted.push({
+          type: comm.type.id,
+          typeLabel: comm.type.label,
+          content: withNotes,
+          notes: comm.notes
+        });
+        hasTypes[comm.type.label] = true;
+      });
+      console.log(commentariesFormatted);
+      commit('UPDATE', { commentaries: commentariesFormatted, hasTypes })
     });
   },
 

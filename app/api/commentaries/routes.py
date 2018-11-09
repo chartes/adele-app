@@ -229,15 +229,13 @@ def api_post_commentary(api_version, doc_id):
                     })
 
                 if response is None:
-                    data = []
-                    for c in created_data:
-                        json_obj = query_json_endpoint(
+                    json_obj = query_json_endpoint(
                             request,
                             url_for("api_bp.api_commentary", api_version=api_version,
-                                    doc_id=c.doc_id, user_id=c.user_id, type_id=c.type_id),
+                                    doc_id=c.doc_id, user_id=c.user_id),
                             user=user
-                        )
-                        data.append(json_obj["data"])
+                    )
+                    data = json_obj["data"]
                     response = APIResponseFactory.make_response(data=data)
 
         except NoResultFound:
@@ -324,7 +322,7 @@ def api_put_commentary(api_version, doc_id):
                                     doc_id=c.doc_id, user_id=c.user_id, type_id=c.type_id),
                             user=user
                         )
-                        data.append(json_obj["data"])
+                        data.extend(json_obj["data"])
                     response = APIResponseFactory.make_response(data=data)
 
         except NoResultFound:

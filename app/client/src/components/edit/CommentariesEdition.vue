@@ -13,7 +13,7 @@
 
       <tabs tabs-style="is-toggle">
 
-        <tab :selected="index == 0"
+        <tab :selected="index === 0"
              v-for="comm, index in commentaries"
              :key="comm.type"
              :name="comm.typeLabel"
