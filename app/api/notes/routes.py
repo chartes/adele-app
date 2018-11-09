@@ -313,6 +313,12 @@ def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
     if len(errors) != 0 and len(data) == 0:
         response = APIResponseFactory.make_response(errors=errors)
     else:
+        # remove duplicates (eg. a note from commentary is the same as the note from the transcription)
+        dedup_data = {}
+        for d in data:
+            dedup_data[d["id"]] = d
+        data = list(dedup_data.values())
+
         response = APIResponseFactory.make_response(data=data)
 
     return APIResponseFactory.jsonify(response)

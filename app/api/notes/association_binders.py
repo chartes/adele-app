@@ -130,16 +130,18 @@ class CommentaryNoteBinder(object):
     @staticmethod
     def bind(note, data, usr_id, doc_id):
         # TODO gerer erreur
-        commentary = Commentary.query.filter(Commentary.user_id == usr_id,
-                                             Commentary.doc_id == doc_id,
-                                             Commentary.type_id == data["type_id"]).first()
+        commentary = Commentary.query.filter(Commentary.doc_id == doc_id,
+                                             Commentary.user_id == usr_id,
+                                             Commentary.type_id == data["commentary_type_id"]).one()
         commentary_has_note = CommentaryHasNote()
         commentary_has_note.commentary = commentary
         commentary_has_note.commentary_id = commentary.id
         commentary_has_note.note = note
+        commentary_has_note.note_id = note.id
         commentary_has_note.ptr_start = data["ptr_start"]
         commentary_has_note.ptr_end = data["ptr_end"]
         note.commentary = [commentary_has_note]
+        print(note)
         return note
 
     @staticmethod
@@ -149,17 +151,19 @@ class CommentaryNoteBinder(object):
         print("UPDATE NOTE", data)
         note = Note.query.filter(Note.id == data["note_id"]).first()
         try:
-
+            print("note: ", note)
             note.content = data["content"]
             if "type_id" in data:
                 note.type_id = data["type_id"]
             db.session.add(note)
-            if "transcription_username" in data and not note.transcription:
-                tr_usr = User.query.filter(User.username == data["transcription_username"]).one()
+            if "commentary_username" in data and not note.commentary:
+                print("bind")
+                tr_usr = User.query.filter(User.username == data["commentary_username"]).one()
                 note = CommentaryNoteBinder.bind(note, data, tr_usr.id, doc_id)
+                print("updating : ", note)
                 db.session.add(note)
 
         except Exception as e:
-            print(e)
+            print("Exception: ", e)
             db.session.rollback()
         return note

@@ -160,7 +160,7 @@ const actions = {
   saveNotes ({ commit, rootState, rootGetters }, typeId) {
     console.log('STORE ACTION commentaries/saveContent', typeId);
     const auth = rootGetters['user/authHeader'];
-    const comm = state.commentaries.find(c => c.type === typeId)
+    const comm = state.commentaries.find(c => c.type === typeId);
     let sanitizedWithNotes = stripSegments(comm.content);
     sanitizedWithNotes = convertLinebreakQuillToTEI(sanitizedWithNotes);
     const notes = computeNotesPointers(sanitizedWithNotes);
@@ -170,8 +170,10 @@ const actions = {
       });
       note.content = found.content;
       note.commentary_username = rootState.user.author.username;
+      note.commentary_type_id = comm.type;
       note.note_type = found.note_type.id;
     });
+
 
     return new Promise((resolve, reject) => {
       axios.put(`/adele/api/1.0/documents/${rootState.document.document.id}/commentaries/notes`, {data: notes}, auth)
