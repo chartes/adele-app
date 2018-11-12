@@ -36,7 +36,7 @@
 
   import {getNewQuill} from '../../modules/quill/AdeleQuill';
   import EditorMixins from '../../mixins/EditorMixins'
-  import { mapGetters } from 'vuex';
+  import { mapState } from 'vuex';
   import ModalForm from './ModalForm';
   import FieldSelect from './FieldSelect';
   import EditorButton from '../editors/EditorButton.vue';
@@ -102,7 +102,7 @@
       }
     },
     computed: {
-      ...mapGetters('speechpartTypes', ['speechpartTypes'])
+      ...mapState('speechpartTypes', ['speechpartTypes'])
     }
   }
 </script>

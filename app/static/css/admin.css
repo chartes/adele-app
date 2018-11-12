@@ -482,7 +482,9 @@
           font-size: 1em;
           margin: 0 auto;
           width: 100%;
-          border: 1px solid #eee; }
+          border: 1px solid #eee;
+          max-height: 80vh;
+          overflow: scroll; }
 
           .editor-controls {
             display: flex;
