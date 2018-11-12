@@ -1,4 +1,3 @@
-
 <div class="content" id="transcription-container">{{ transcription }}</div>
 <div class="content" id="translation-container">{{ translation }}</div>
 <div class="" id="transcription-alignment-container">
@@ -16,7 +15,8 @@
         </tbody>
     </table>
 </div>
-
-<script type="text/javascript">
-
-</script>
+<aside id="notes-container">
+    {% for note in notes %}
+        <div class="note-content" data-note-id="{{'%010d' % note.id}}">{{note.content|safe}}</div>
+    {% endfor %}
+</aside>

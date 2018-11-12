@@ -157,3 +157,12 @@
   margin: auto;
   width : 90%;
 }
+
+.note-placeholder:hover {
+  cursor: pointer;
+}
+
+.note-content {
+  display: none;
+  font-weight: bold;
+}
