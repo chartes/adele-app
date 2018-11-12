@@ -20,10 +20,7 @@ const mutations = {
     state.notes.push(note);
   },
   UPDATE_ONE (state, note) {
-    state.notes.push(note);
-    console.log("UPDATE_NOTE", note);
-    let foundNote = state.notes.find(n => n.id === note.id);
-    console.log('foundNote', foundNote)
+    state.notes = [...state.notes.filter(n => n.id !== note.id), note];
   }
 
 };
@@ -70,8 +67,7 @@ const actions = {
     };
     return axios.put(`/adele/api/1.0/notes`, theNote, config)
       .then( response => {
-        console.log(response.data)
-        const note = response.data.data;
+        const note = response.data.data[0];
         commit('UPDATE_ONE', note);
       })
   },
