@@ -41,7 +41,7 @@
 
 <script>
 
-  import { mapGetters } from 'vuex';
+  import { mapGetters, mapState } from 'vuex';
   import EditorButton from './EditorButton.vue';
   import EditorMixins from '../../mixins/EditorMixins'
   import InEditorActions from './InEditorActions';
@@ -205,8 +205,8 @@
         const cond = this.editorHasFocus && this.buttons.speechpart;
         return cond;
       },
-      ...mapGetters('transcription', ['transcription']),
-      ...mapGetters('speechparts', ['newSpeechpart']),
+      ...mapState('transcription', ['transcription']),
+      ...mapState('speechparts', ['newSpeechpart']),
       ...mapGetters('speechpartTypes', ['getSpeechpartTypeById']),
     }
   }

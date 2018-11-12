@@ -29,7 +29,6 @@ const actions = {
 
 const getters = {
 
-  speechpartTypes: state => state.speechpartTypes,
   getSpeechpartTypeById: state => (id) => state.speechpartTypes.find(spt => spt.id === id)
 
 };
