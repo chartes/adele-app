@@ -91,6 +91,21 @@
                     $('#tab-transcription').html(data);
                     $('#transcription-container').css('display', 'none');
                     $('#translation-container').css('display', 'none');
+
+                    /* style notes */
+                    for(const notePlaceHolder of document.getElementsByClassName("note-placeholder"))  {
+                        const noteId = notePlaceHolder.dataset.noteId;
+                        const noteContent = $(".note-content[data-note-id='"+noteId+"']").get();
+                        $(notePlaceHolder).hover(function(){
+                         
+                         //mouseenter
+                         $(noteContent).css('display', 'block');
+                       },
+                       function(){
+                         //mouseleave
+                         $(".note-content").css('display', 'none');
+                       });
+                    };
                });
            }
 

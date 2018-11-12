@@ -10,7 +10,7 @@ from app.models import Document, Language, ActeType, Tradition, Country, Distric
     Whitelist, AlignmentTranslation
 
 # tags to represent notes in view mode
-btag = "<span class='note-placeholder note-{:010d}'>"
+btag = "<span class='note-placeholder' data-note-id='{:010d}'>"
 etag = "</span>"
 
 
@@ -428,7 +428,6 @@ def add_notes_refs_to_text(text, notes):
             "text_after": text_with_notes[end_offset:]
         }
         text_with_notes = "{text_before}{btag}{text_between}{etag}{text_after}".format(**kwargs)
-        print(note["id"], text_with_notes)
 
     return text_with_notes
 
@@ -449,7 +448,7 @@ def view_document_transcription(doc_id):
 
     tr = Markup(_content) if tr else ""
     return render_template('main/fragments/document_view/_transcription.html',
-                           transcription=tr)
+                           transcription=tr, notes=_tr["notes"])
 
 
 @app_bp.route('/documents/<doc_id>/view/translation')
@@ -462,7 +461,7 @@ def view_document_translation(doc_id):
 
     tr = Markup(_content) if tr else ""
     return render_template('main/fragments/document_view/_translation.html',
-                           translation=tr)
+                           translation=tr,  notes=_tr["notes"])
 
 
 def add_notes_refs(tr, tl):
@@ -475,7 +474,6 @@ def add_notes_refs(tr, tl):
     def insert_notes_into_al(content, notes, get_al_start_ptr, get_al_end_ptr):
         offset = 0
         content_w_notes = []
-        current_note_id = None
 
         for num_al, al in enumerate(all_al):
 
@@ -489,14 +487,14 @@ def add_notes_refs(tr, tl):
             for note in notes:
                 if int(note["ptr_start"]) < al_ptr_start and \
                    int(note["ptr_end"]) > al_ptr_end:
-                    overlapping_note = note
+                    overlapping_note = note  # note englobant au moins une ligne en totalité
                 elif (al_ptr_start <= int(note["ptr_start"]) <= al_ptr_end) and \
                    (al_ptr_start <= int(note["ptr_end"]) <= al_ptr_end):
                     between_notes.append(note)
                 elif int(note["ptr_start"]) <= al_ptr_end <= int(note["ptr_end"]):
-                    after_notes.append(note)
+                    after_notes.append(note) # note finissant sur la ligne suivante
                 elif int(note["ptr_start"]) <= al_ptr_start <= int(note["ptr_end"]):
-                    before_notes.append(note) # note commencant sur la ligne précédente
+                    before_notes.append(note)  # note commencant sur la ligne précédente
 
             # transcription al
             ptr_start = al_ptr_start + offset
@@ -507,8 +505,8 @@ def add_notes_refs(tr, tl):
 
             text = content[ptr_start:ptr_end]
 
-            if overlapping_note and current_note_id:
-                text = "{btag}{al}{etag}".format(btag=btag.format(current_note_id), etag=etag, al=text)
+            if overlapping_note:
+                text = "{btag}{al}{etag}".format(btag=btag.format(overlapping_note["id"]), etag=etag, al=text)
             elif len(before_notes) > 0:
                 current_note_id = before_notes[0]["id"]
                 text = "{btag}{al}".format(btag=btag.format(current_note_id), al=text)
@@ -526,7 +524,10 @@ def add_notes_refs(tr, tl):
     tr_w_notes = insert_notes_into_al(tr_c, tr_notes, lambda al: al.ptr_transcription_start, lambda al: al.ptr_transcription_end)
     tl_w_notes = insert_notes_into_al(tl_c, tl_notes, lambda al: al.ptr_translation_start, lambda al: al.ptr_translation_end)
 
-    return tr_w_notes, tl_w_notes
+    notes = {n["id"]: n for n in tr_notes + tl_notes}
+    notes = list(notes.values())
+
+    return tr_w_notes, tl_w_notes, notes
 
 
 @app_bp.route('/documents/<doc_id>/view/transcription-alignment')
@@ -536,13 +537,14 @@ def view_document_transcription_alignment(doc_id):
     translation = get_reference_translation(doc_id)
     transcription = get_reference_transcription(doc_id)
 
-    tr_w_notes, tl_w_notes = add_notes_refs(transcription.serialize(), translation.serialize())
+    tr_w_notes, tl_w_notes, notes = add_notes_refs(transcription.serialize(), translation.serialize())
 
     return render_template('main/fragments/document_view/_transcription_alignment.html',
                            doc_id=doc_id,
                            transcription=Markup("".join(tr_w_notes)),
                            translation=Markup("".join(tl_w_notes)),
-                           alignment=[z for z in zip(tr_w_notes, tl_w_notes)])
+                           alignment=[z for z in zip(tr_w_notes, tl_w_notes)],
+                           notes=notes)
 
 
 @app_bp.route('/documents/<doc_id>/view/commentaries')

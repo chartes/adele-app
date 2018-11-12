@@ -1,9 +1,8 @@
 <div class="content" id="transcription-container">
     {{ transcription  }}
-    <div id="transcription-notes">
-
-    </div>
+    <aside id="notes-container">
+        {% for note in notes %}
+        <div class="note-content" data-note-id="{{ '%010d' % note.id}}">{{note.content|safe}}</div>
+        {% endfor %}
+    </aside>
 </div>
-<script type="text/javascript">
-    //alert("hello!");
-</script>
