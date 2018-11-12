@@ -1,4 +1,5 @@
-<svg viewBox="0 0 18 18" style="enable-background:new 0 0 750 700;" xml:space="preserve">
-<path class="ql-stroke" d="M5,4h4.5C10.9,4,12,5.1,12,6.5l0,0C12,7.9,10.9,9,9.5,9H5l0,0V4L5,4z"/>
-<path class="ql-stroke" d="M5,9h5.5c1.4,0,2.5,1.1,2.5,2.5l0,0c0,1.4-1.1,2.5-2.5,2.5H5l0,0V9L5,9z"/>
+<svg viewBox="0 0 24 24">
+    <path class="ql-stroke" d="M3.75,23.248H13.5a6.75,6.75,0,0,0,0-13.5h.75a4.5,4.5,0,1,0,0-9H3.75"/>
+    <line class="ql-stroke" x1="6.75" y1="0.748" x2="6.75" y2="23.248"/>
+    <line class="ql-stroke" x1="13.5" y1="9.748" x2="6.75" y2="9.748"/>
 </svg>

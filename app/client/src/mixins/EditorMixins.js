@@ -91,6 +91,13 @@ var EditorMixin = {
       this.editor.setSelection(range.index + 1, Quill.sources.SILENT);
 
     },
+    insertColBreak () {
+
+      let range = this.editor.getSelection(true);
+      this.editor.updateContents(getNewDelta().retain(range.index).delete(range.length).insert({ colbreak: true }), Quill.sources.USER);
+      this.editor.setSelection(range.index + 1, Quill.sources.SILENT);
+
+    },
 
     updateButtons (formats) {
       for (let key in this.buttons) {

@@ -449,7 +449,7 @@
                                                                                                                                                                                                                                   height: 100%; }
                                                                                                                                                                                                                                   .editor-controls .ql-stroke {
                                                                                                                                                                                                                                     stroke: #000;
-                                                                                                                                                                                                                                    stroke-width: 1.5;
+                                                                                                                                                                                                                                    stroke-width: 1.5px;
                                                                                                                                                                                                                                     fill: none; }
                                                                                                                                                                                                                                     .editor-controls .ql-path {
                                                                                                                                                                                                                                       stroke: #000; }
@@ -506,6 +506,9 @@
       display: block;
       font-size: 60%;
       font-variant: small-caps; }
+      .editor-controls-group .button {
+        padding-bottom: calc(.5em - 1px);
+        padding-top: calc(.5em - 1px); }
 
 .editor-container {
   position: relative; }
@@ -579,18 +582,27 @@ zone {
         border: none;
         background-color: inherit; }
 
-#speech-parts-toc {
-  margin-bottom: 20px; }
+cb {
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  background: #bbb url(/adele/static/images/columns-break.svg) no-repeat 50% 50%;
+  background-size: 16px 16px;
+  vertical-align: middle;
+  border-radius: 4px; }
 
-  .ql-editor {
-    counter-reset: segment-count 0; }
-    .ql-editor segment {
-      display: inline-block; }
-      .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
-      .ql-editor segment:before {
+  #speech-parts-toc {
+    margin-bottom: 20px; }
+
+    .ql-editor {
+      counter-reset: segment-count 0; }
+      .ql-editor segment {
         display: inline-block; }
-    .ql-editor span.br {
-      display: block; }
+        .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
+        .ql-editor segment:before {
+          display: inline-block; }
+      .ql-editor span.br {
+        display: block; }
 
 #transcription-editor segment:before, #transcription-editor p:before,
 #transcription-editor l:before, #transcription-editor .segment-bullet:before,

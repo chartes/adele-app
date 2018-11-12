@@ -1,6 +1,8 @@
 module.exports = {
   'blockquote'  : require('../../assets/icons/blockquote.svg'),
   'bold'        : require('../../assets/icons/bold.svg'),
+  'book'        : require('../../assets/icons/book.svg'),
+  'colbreak'    : require('../../assets/icons/columns-break.svg'),
   'color'       : require('../../assets/icons/color.svg'),
   'del'         : require('../../assets/icons/del.svg'),
   'expan'       : require('../../assets/icons/expan.svg'),

@@ -1,13 +1,12 @@
-import Quill from 'quill';
+import Parchment from 'parchment';
 
-let Embed = Quill.import('blots/embed');
+class ColumnBreakBlot extends Parchment.Embed {
+  static create(value) {
+    let node = super.create();
+    return node;
+  }
+}
+ColumnBreakBlot.blotName = 'colbreak';
+ColumnBreakBlot.tagName = 'cb';
 
-class DivisionBlot extends Embed { }
-DivisionBlot.blotName = 'colbreak';
-DivisionBlot.tagName = 'cb';
-
-export default DivisionBlot;
-
-
-// TODO check TEI ou html5
-// TODO garder ou supprimer
+export default ColumnBreakBlot;

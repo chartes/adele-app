@@ -64,6 +64,10 @@ html, body {
     font-size: 60%;
     font-variant: small-caps;
   }
+  .button {
+    padding-bottom: calc(.5em - 1px);
+    padding-top: calc(.5em - 1px);
+  }
 }
 .editor-container {
     position: relative;
@@ -173,6 +177,16 @@ zone {
     border: none;
     background-color: inherit;
   }
+}
+
+cb {
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  background: #bbb url(/adele/static/images/columns-break.svg) no-repeat 50% 50%;
+  background-size: 16px 16px;
+  vertical-align: middle;
+  border-radius: 4px;
 }
 
 #speech-parts-toc {
