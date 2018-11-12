@@ -23,14 +23,14 @@
             </div>
 
             <speechpart-form
-                    v-if="speechpartEditMode == 'new' || speechpartEditMode == 'edit'"
+                    v-if="speechpartEditMode === 'new' || speechpartEditMode === 'edit'"
                     :speechpart="currentSpeechpart"
                     :speechpartId="selectedSpeechpartId"
                     :submit="updateSpeechpart"
                     :cancel="closeSpeechpartEdit"
             />
             <modal-confirm-speechpart-delete
-                    v-if="speechpartEditMode == 'delete'"
+                    v-if="speechpartEditMode === 'delete'"
                     :cancel="closeSpeechpartEdit"
                     :submit="deleteSpeechpart"
             />
