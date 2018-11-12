@@ -153,8 +153,10 @@
 
       onTextChange (delta, oldDelta, source) {
         this.lastOperations = delta;
-        if (this.editorInited) this.$store.dispatch(this.storeActions.changed,
-          {type: this.type, content: this.editorContentElement.children[0].innerHTML})
+        if (this.editorInited) {
+          this.$store.dispatch(this.storeActions.changed,
+            {type: this.type, content: this.editorContentElement.innerHTML})
+        }
       },
 
       updateContent () {
