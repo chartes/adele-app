@@ -25,6 +25,7 @@ import ZoneBlot from './blots/editorial/Zone';
 import List from 'quill/formats/list';
 
 import SpeechpartBlot from './blots/editorial/SpeechpartBlot';
+import ColumnBreakBlot from './blots/editorial/ColumnBreak';
 
 Quill.register('modules/clipboard', PlainClipboard, true);
 
@@ -51,6 +52,7 @@ Quill.register(Paragraph, true);
 Quill.register(Verse, true);
 Quill.register(NoteBlot, true);
 Quill.register(ZoneBlot, true);
+Quill.register(ColumnBreakBlot, true);
 //Quill.register(List, true);
 //Quill.register(ListItem, true);
 

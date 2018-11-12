@@ -6,7 +6,7 @@
                 <editor-button :selected="buttons.paragraph" :active="editorHasFocus" :callback="simpleFormat" :format="'paragraph'"/>
                 <editor-button :selected="buttons.verse" :active="editorHasFocus" :callback="simpleFormat" :format="'verse'"/>
                 <editor-button :selected="buttons.list" :active="editorHasFocus" :callback="simpleFormat" :format="'list'"/>
-                <editor-button :selected="buttons.colbreak" :active="editorHasFocus" :callback="simpleFormat" :format="'colbreak'"/>
+                <editor-button :selected="buttons.colbreak" :active="editorHasFocus" :callback="insertColBreak" :format="'colbreak'"/>
                 <editor-button :active="isNoteButtonActive" :callback="newNoteChoiceOpen" :format="'note'"/>
             </div>
             <div class="editor-controls-group">

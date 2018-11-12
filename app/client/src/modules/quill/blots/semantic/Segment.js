@@ -4,7 +4,6 @@
  Utilisation : transcription, traduction (indique le début d'un segment de traduction pour l'alignement)
 */
 
-import Quill from 'quill';
 import Parchment from 'parchment';
 
 class SegmentBlot extends Parchment.Embed {
