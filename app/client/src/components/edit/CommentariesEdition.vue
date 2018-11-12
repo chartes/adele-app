@@ -3,8 +3,8 @@
 
     <div class="column is-half">
 
-      <h2 class="subtitle">Image</h2>
-      <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
+      <h2 class="subtitle">Transcription</h2>
+      <transcription-read-only-editor  :initialContent="transcriptionWithNotes"/>
 
     </div>
     <div class="column is-half">
@@ -44,11 +44,12 @@
   import Tabs from "../ui/Tabs";
   import Tab from "../ui/Tab";
   import CommentaryEditor from '../editors/CommentaryEditor';
+  import TranscriptionReadOnlyEditor from '../editors/TranscriptionReadOnlyEditor';
 
   export default {
 
     name: "commentaries-edition",
-    components: {CommentaryEditor, Tab, Tabs, IIIFMap},
+    components: {TranscriptionReadOnlyEditor, CommentaryEditor, Tab, Tabs, IIIFMap},
 
     created () {
       //this.$store.dispatch('commentaryTypes/fetch')
@@ -63,6 +64,7 @@
     },
 
     computed: {
+      ...mapState('transcription', ['transcriptionWithNotes', 'referenceTranscription']),
       ...mapState('commentaries', ['commentaries', 'hasCommentaryTypes', 'commentaryTypes']),
       ...mapGetters('commentaries', ['missingCommentaryTypes']),
       ...mapGetters('document', ['manifestURL']),
