@@ -10,35 +10,13 @@
             </tr>
         </thead>
         <tbody id="alignment-table-body">
+            {% for tr, tl in alignment %}
+                <tr><td>{{tr}}</td><td>{{tl}}</td></tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
 
 <script type="text/javascript">
-    let url = "{{ url_for('api_bp.api_documents_transcriptions_alignments_reference', api_version='1.0', doc_id='DOC_ID_PLACEHOLDER') }}";
-    url = url.replace('DOC_ID_PLACEHOLDER', {{doc_id}});
 
-    let xmlhttp = new XMLHttpRequest();
-
-    xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState === XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
-            if (xmlhttp.status === 200) {
-                const data = JSON.parse(xmlhttp.responseText);
-                if (!data.errors){
-                    const transcription = document.getElementById('transcription-container').innerHTML;
-                    const translation = document.getElementById('translation-container').innerHTML;
-                    let tbody = document.getElementById("alignment-table-body");
-                    // set segment alignment
-                    for (const al of data.data) {
-                        const al_trc = transcription.substr(al[0], al[1]-al[0]);
-                        const al_trl = translation.substr(al[2], al[3]-al[2]);
-                        tbody.innerHTML += '<tr><td>'+ al_trc +'</td><td>'+ al_trl +'</td></tr>';
-                    }
-                }
-            }
-        }
-    };
-
-    xmlhttp.open("GET", url, true);
-    xmlhttp.send();
 </script>
