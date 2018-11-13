@@ -23,6 +23,7 @@
                 <editor-button :selected="buttons.expan" :active="editorHasFocus" :callback="simpleFormat" :format="'expan'"/>
                 <editor-button :selected="buttons.link" :active="editorHasFocus" :callback="simpleFormat" :format="'link'"/>
                 <editor-button :selected="buttons.quote" :active="editorHasFocus" :callback="simpleFormat" :format="'quote'"/>
+                <editor-button :selected="buttons.cite" :active="editorHasFocus" :callback="displayCiteForm" :format="'cite'"/>
                 <editor-button :selected="buttons.person" :active="editorHasFocus" :callback="displayPersonForm" :format="'person'"/>
                 <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="displayLocationForm" :format="'location'"/>
             </div>
@@ -142,6 +143,7 @@
           list: false,
           verse: false,
           blockquote: false,
+          cite: false,
         }
       }
     },

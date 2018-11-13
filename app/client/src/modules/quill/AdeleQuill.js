@@ -14,6 +14,7 @@ import LinkBlot from './blots/semantic/Link';
 import BlockquoteBlot from './blots/semantic/Blockquote';
 import InlinequoteBlot from './blots/semantic/Inlinequote';
 import PersonBlot from './blots/semantic/Person';
+import CiteBlot from './blots/semantic/Cite';
 import LocationBlot from './blots/semantic/Location';
 import SegmentBlot from './blots/semantic/Segment';
 
@@ -44,6 +45,7 @@ Quill.register(LinkBlot, true);
 Quill.register(BlockquoteBlot, true);
 Quill.register(InlinequoteBlot, true);
 Quill.register(LocationBlot, true);
+Quill.register(CiteBlot, true);
 Quill.register(PersonBlot, true);
 Quill.register(SegmentBlot, true);
 

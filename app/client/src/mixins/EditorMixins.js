@@ -161,6 +161,19 @@ var EditorMixin = {
         title: '<i class="fas fa-user"></i> Identifier une personne',
         label: 'Nom de la personne'
       });
+    },
+
+    /**************
+     *
+     * PERSON METHODS
+     */
+
+    displayCiteForm() {
+      this.displayTextfieldForm ({
+        format: 'cite',
+        title: '<i class="fas fa-book"></i> Ajouter une mention bibliographique',
+        label: 'Référence'
+      });
     }
 
 
