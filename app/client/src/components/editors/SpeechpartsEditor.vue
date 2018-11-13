@@ -121,9 +121,9 @@
         const isNewSpeechpart = this.speechpartEditMode === 'new';
         const action = isNewSpeechpart ? 'add' : 'update';
         sp.speech_part_type = this.getSpeechpartTypeById(sp.type_id);
-        this.editor.format('speechpart',  this.$store.state.speechparts.speechparts.length);
-        this.$store.dispatch('speechparts/add', sp);
-        this.closeSpeechpartEdit();
+        this.editor.format('speechpart', this.$store.state.speechparts.speechparts.length.toString());
+        this.$store.dispatch(`speechparts/${action}`, sp)
+        this.closeSpeechpartEdit()
       },
       deleteSpeechpart() {
         this.editor.format('speechpart', false);
