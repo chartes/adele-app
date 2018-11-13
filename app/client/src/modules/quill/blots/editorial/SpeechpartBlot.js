@@ -11,7 +11,7 @@ class SpeechpartBlot extends Inline {
 
   static formats(domNode) {
     let id = domNode.getAttribute('id');
-    return id || true;
+    return id;
   }
 
 

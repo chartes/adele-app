@@ -372,6 +372,8 @@ const computeAlignmentPointers  = (htmlWithSegments) => {
 
 const computeSpeechpartsPointers  = (htmlWithSpeechparts) => {
 
+  console.log("computeSpeechpartsPointers", htmlWithSpeechparts)
+
   const regexpStart = /<speechpart id="((\d+)|temp)">/;
   const regexpEnd = /<\/speechpart>/;
   let resStart, resEnd;
@@ -379,6 +381,7 @@ const computeSpeechpartsPointers  = (htmlWithSpeechparts) => {
   while((resStart = regexpStart.exec(htmlWithSpeechparts)) !== null) {
     htmlWithSpeechparts = htmlWithSpeechparts.replace(regexpStart, '');
     resEnd = regexpEnd.exec(htmlWithSpeechparts);
+    console.log(" ", resStart, resEnd)
     htmlWithSpeechparts = htmlWithSpeechparts.replace(regexpEnd, '');
     speechparts.push({
       "index" : parseInt(resStart[1]),
@@ -386,6 +389,7 @@ const computeSpeechpartsPointers  = (htmlWithSpeechparts) => {
       "ptr_end": resEnd.index
     });
   }
+  console.log("speechparts pointers", speechparts)
   return speechparts;
 }
 const computeImageAlignmentsPointers  = (htmlWithFacsimile) => {
@@ -394,7 +398,6 @@ const computeImageAlignmentsPointers  = (htmlWithFacsimile) => {
   const regexpEnd = /<\/zone>/;
   let resStart, resEnd;
   const alignments = [];
-  console.log("htmlWithFacsimile", htmlWithFacsimile)
   while((resStart = regexpStart.exec(htmlWithFacsimile)) !== null) {
     htmlWithFacsimile = htmlWithFacsimile.replace(regexpStart, '');
     resEnd = regexpEnd.exec(htmlWithFacsimile);

@@ -50,7 +50,8 @@ const filterDeltaForSpeechParts = (delta) => {
 }
 const filterDeltaOperations = (quillInstance, delta, mode) => {
 
-  console.log("filterDeltaOperations", mode, delta, delta.ops)
+  const ops = [...delta.ops]
+  if (mode === 'speechparts') console.log("filterDeltaOperations", mode, delta.ops, ops)
 
   // Renvoie un nouveau delta filtré selon arrAttributesToRemove
 
@@ -89,17 +90,18 @@ const filterOperation = (quillInstance, operation, mode, insertionIndex) => {
     newOp[type] = operation[type];
   }
 
+  // TO DO vérifier que la suppression de ce qui suit ne crée pas des effets de bord
   // Copie les formats de l'instance quill au point d'insertion
-  let formats = quillInstance.getFormat(insertionIndex);
+  /*let formats = quillInstance.getFormat(insertionIndex);
   if (type !== 'delete') {
     formats = _pick(formats, filters.keepFormats);
     if (!_isEmpty(formats)) newOp.attributes = formats;
-  }
+  }*/
 
   // Copie les attributs (styles) si existent
   if (operation.attributes) {
     let attr = Object.assign({}, _omit(operation.attributes, filters.removeAttributes));
-    newOp.attributes = Object.assign(formats, attr);
+    newOp.attributes = Object.assign(newOp.attributes || {}, attr);
   }
   return newOp;
 }

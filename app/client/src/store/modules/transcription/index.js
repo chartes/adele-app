@@ -70,7 +70,7 @@ const mutations = {
   },
   RESET(state) {
 
-    console.log("STORE MUTATION transcription/RESET")
+    //console.log("STORE MUTATION transcription/RESET")
     state.transcription = false;
     state.transcriptionAlignments = [];
     state.transcriptionContent = false;
@@ -91,14 +91,14 @@ const mutations = {
     state.transcriptionLoading = payload;
   },
   SAVING_STATUS (state, payload) {
-    console.log("STORE MUTATION transcription/SAVING_STATUS", payload)
+    //console.log("STORE MUTATION transcription/SAVING_STATUS", payload)
     state.savingStatus = payload;
   },
   ALIGNMENTS(state, payload) {
     state.transcriptionAlignments = payload;
   },
   UPDATE (state, payload) {
-    console.log("STORE MUTATION transcription/UPDATE")
+    //console.log("STORE MUTATION transcription/UPDATE")
     state.transcription = payload.transcription;
     state.transcriptionWithNotes = payload.withNotes;
     state.transcriptionWithSpeechparts = payload.withSpeechparts;
@@ -106,12 +106,12 @@ const mutations = {
   },
   CHANGED (state) {
     // transcription changed and needs to be saved
-    console.log("STORE MUTATION transcription/CHANGED")
+    //console.log("STORE MUTATION transcription/CHANGED")
     state.transcriptionSaved = false;
   },
   ADD_OPERATION (state, payload) {
 
-    console.log("STORE MUTATION transcription/ADD_OPERATION", payload.ops)
+    //console.log("STORE MUTATION transcription/ADD_OPERATION", payload.ops)
 
     const deltaFilteredForContent = filterDeltaOperations(transcriptionShadowQuill, payload, 'content')
     const deltaFilteredForNotes = filterDeltaOperations(notesShadowQuill, payload, 'notes')
@@ -131,7 +131,7 @@ const mutations = {
   },
   SAVED (state) {
     // transcription saved
-    console.log("STORE MUTATION transcription/SAVED")
+    //console.log("STORE MUTATION transcription/SAVED")
     state.transcriptionSaved = true;
   }
 
@@ -201,7 +201,7 @@ const actions = {
   },
   fetchAlignments ({commit}, {doc_id, user_id}) {
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/from-user/${user_id}`).then( response => {
-      console.log("STORE ACTION transcription/fetchAlignments", response)
+      //console.log("STORE ACTION transcription/fetchAlignments", response)
       if (response.data.errors) {
         commit('ALIGNMENTS', []);
         return;
@@ -212,7 +212,7 @@ const actions = {
   },
   fetchReference ({commit}, {doc_id}) {
 
-    console.log('STORE ACTION transcription/fetchReference', doc_id);
+    //console.log('STORE ACTION transcription/fetchReference', doc_id);
 
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/reference`).then( response => {
 
@@ -258,7 +258,7 @@ const actions = {
     } );
   },
   save ({dispatch, commit, rootState}) {
-    console.log('STORE ACTION transcription/save');
+    //console.log('STORE ACTION transcription/save');
 
     commit('SAVING_STATUS', 'saving');
 
@@ -282,19 +282,19 @@ const actions = {
         else return true;
       })
       .then(function(values) {
-        console.log('all saved', values);
+        //console.log('all saved', values);
         commit('SAVED');
         commit('SAVING_STATUS', 'uptodate');
       })
       .catch( error => {
-        console.log('something bad happened', error);
+        console.error('something bad happened', error);
         commit('SAVING_STATUS', 'error');
         //dispatch( 'error', { error } )
       });
 
   },
   saveContent ({ state, rootGetters, rootState }) {
-    console.log('STORE ACTION transcription/saveContent', rootState);
+    //console.log('STORE ACTION transcription/saveContent', rootState);
     const auth = rootGetters['user/authHeader'];
     const tei = quillToTEI(state.transcriptionContent);
     const sanitized = stripSegments(tei);
@@ -356,7 +356,9 @@ const actions = {
     console.warn('STORE ACTION transcription/saveSpeechparts');
 
     // compute notes pointers
+    //console.log("state.transcriptionWithSpeechparts", sanitizedWithSpeechparts)
     let sanitizedWithSpeechparts = stripSegments(state.transcriptionWithSpeechparts);
+    //console.log("sanitizedWithSpeechparts", sanitizedWithSpeechparts)
     sanitizedWithSpeechparts = convertLinebreakQuillToTEI(sanitizedWithSpeechparts);
     const speechparts = computeSpeechpartsPointers(sanitizedWithSpeechparts);
 
@@ -371,6 +373,7 @@ const actions = {
       username: rootState.user.author.username,
       speech_parts: speechparts
     }
+    //console.log("saveSpeechparts", speechparts)
 
     return new Promise( ( resolve, reject ) => {
       return axios.post(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/alignments/discours`, { data: data }, auth)

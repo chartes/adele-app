@@ -25,10 +25,7 @@ const mutations = {
     state.mouseOverY = posY;
   },
   UPDATE_ONE (state, speechpart) {
-    //state.speechparts.push(speechpart);
-    console.log("STORE ACTION speechpart/UPDATE_ONE", speechpart);
-    let foundSpeechpart = state.speechparts.find(n => n.id === speechpart.id);
-    console.log('speechpart foundSpeechpart', foundSpeechpart)
+    state.speechparts = [...state.speechparts.filter(sp => sp.id !== speechpart.id), speechpart];
   }
 
 };
@@ -54,6 +51,7 @@ const actions = {
 
   update ({ commit, getters, rootState }, speechpart) {
     console.log("STORE ACTION speechparts/update", speechpart);
+    return commit('UPDATE_ONE', speechpart);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theSpeechpart = {
       data: [{
@@ -65,9 +63,9 @@ const actions = {
     };
     return axios.put(`/adele/api/1.0/speechparts`, theSpeechpart, config)
       .then( response => {
-        console.log(response.data)
         const speechpart = response.data.data;
         commit('UPDATE_ONE', speechpart);
+        return speechpart;
       })
   },
   delete ({ commit, getters, rootState }, speechpart) {
@@ -83,7 +81,6 @@ const actions = {
     };
     return axios.delete(`/adele/api/1.0/speechparts`, theSpeechpart, config)
       .then( response => {
-        console.log(response.data)
         const speechpart = response.data.data;
         commit('UPDATE_ONE', speechpart);
       })

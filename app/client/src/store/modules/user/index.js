@@ -12,11 +12,11 @@ const mutations = {
 
   UPDATE_CURRENT_USER (state, payload) {
     state.currentUser = payload;
-    console.log('STORE MUTATION user/UPDATE_CURRENT_USER')
+    //console.log('STORE MUTATION user/UPDATE_CURRENT_USER')
   },
   UPDATE_AUTHOR (state, payload) {
     state.author = payload;
-    console.log('STORE MUTATION user/UPDATE_AUTHOR', state.author.id, state.author)
+    //console.log('STORE MUTATION user/UPDATE_AUTHOR', state.author.id, state.author)
   },
   UPDATE_AUTH_TOKEN (state, payload) {
     state.authToken = payload;
@@ -37,7 +37,7 @@ const actions = {
     commit('UPDATE_AUTH_TOKEN', token)
   },
   setAuthor({ commit }, author) {
-    console.log('STORE ACTION user/setAuthor', author.id, author)
+    //console.log('STORE ACTION user/setAuthor', author.id, author)
     commit('UPDATE_AUTHOR', author)
   }
 
