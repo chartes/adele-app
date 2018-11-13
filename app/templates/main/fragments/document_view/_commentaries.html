@@ -1,22 +1,15 @@
 
-<div class="content" id="commentaries-toc">
-    {% if commentaries|length > 0 %}
-        <div class='title is-3'>Sommaire</div>
-        <table class='table is-hoverable'>
-            <tbody>
-            {% for com in commentaries %}
-                <tr><td><a href='#commentary-{{com.id}}'>Commentaire {{com.type.label | lower}}</a></td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
-</div>
 
-<p class="content" id="commentaries-container">
+<div class="content" id="commentaries-container">
     {% for com in commentaries %}
-        <div class='commentary' id='commentary-{{com.id}}'>
-            <div class='title is-5'>Commentaire {{com.type.label|lower}}</div>
-            <p>{{com.content}}</p>
-        </div>
+        <article class='commentary' id='commentary-{{com["id"]}}'>
+            <header class='title is-5'>Commentaire {{com["label"]|lower}}</header>
+            <p>{{com["content"]}}</p>
+        </article>
     {% endfor %}
-</p>
+    <aside id="notes-container">
+    {% for note in notes %}
+    <div class="note-content" data-note-id="{{ '%010d' % note.id}}">{{note.content|safe}}</div>
+    {% endfor %}
+    </aside>
+</div>

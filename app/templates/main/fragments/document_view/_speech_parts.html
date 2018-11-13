@@ -6,6 +6,11 @@
         </nav>
     </div>
     <div id="speech-parts-container">{{ transcription }}</div>
+    <aside id="notes-container">
+    {% for note in notes %}
+        <div class="note-content" data-note-id="speechpart-{{loop.index0}}">{{note|safe}}</div>
+    {% endfor %}
+    </aside>
 </div>
 
 <script type="text/javascript">
@@ -70,7 +75,7 @@
     let id = 0;
     let offset = 0;
     for (sp of speech_parts){
-        const b = "<speechpart id='"+ id +"' class='speech-part-type-" + sp.speech_part_type_id + "'>";
+        const b = "<speechpart id='"+ id +"' data-note-id='speechpart-"+id+"' class='note-placeholder speech-part-type-" + sp.speech_part_type_id + "'>";
         const e = "</speechpart>";
         tr = tr.insert(sp.ptr_start + offset, b);
         tr = tr.insert(sp.ptr_end + b.length + offset, e);

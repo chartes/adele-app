@@ -14,9 +14,9 @@
             {% endfor %}
         </tbody>
     </table>
-</div>
-<aside id="notes-container">
+    <aside id="notes-container">
     {% for note in notes %}
         <div class="note-content" data-note-id="{{'%010d' % note.id}}">{{note.content|safe}}</div>
     {% endfor %}
-</aside>
+    </aside>
+</div>

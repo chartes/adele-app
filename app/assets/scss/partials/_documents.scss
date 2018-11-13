@@ -161,8 +161,49 @@
 .note-placeholder:hover {
   cursor: pointer;
 }
+.note-placeholder {
+  text-decoration: underline #1d1d1d;
+}
+
+speechpart.note-placeholder {
+  text-decoration: initial;
+}
+
 
 .note-content {
   display: none;
   font-weight: bold;
+}
+
+/* Tippy tooltip themes
+*/
+/* If `animateFill: true` (default) */
+.tippy-tooltip.light-theme .tippy-backdrop {
+  background-color: whitesmoke;
+  color: #333;
+}
+
+/* If `animateFill: false` */
+.tippy-tooltip.light-theme {
+  background-color: whitesmoke;
+  border: 1px solid dimgrey;
+  color: black;
+}
+
+/* Default (sharp) arrow */
+.tippy-popper[x-placement^='top'] .tippy-tooltip.light-theme .tippy-arrow {
+  border-top-color: dimgrey;
+}
+.tippy-popper[x-placement^='bottom'] .tippy-tooltip.light-theme .tippy-arrow {
+  border-bottom-color: dimgrey;
+}
+.tippy-popper[x-placement^='left'] .tippy-tooltip.light-theme .tippy-arrow {
+  border-left-color: dimgrey;
+}
+.tippy-popper[x-placement^='right'] .tippy-tooltip.light-theme .tippy-arrow {
+  border-right-color: dimgrey;
+}
+/* Round arrow */
+.tippy-tooltip.light-theme .tippy-roundarrow {
+  fill: dimgrey;
 }
