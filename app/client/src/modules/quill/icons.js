@@ -13,6 +13,7 @@ module.exports = {
   'note'        : require('../../assets/icons/note.svg'),
   'paragraph'   : require('../../assets/icons/paragraph.svg'),
   'person'      : require('../../assets/icons/person.svg'),
+  'quote'       : require('../../assets/icons/quote.svg'),
   'subscript'   : require('../../assets/icons/subscript.svg'),
   'superscript' : require('../../assets/icons/superscript.svg'),
   'underline'   : require('../../assets/icons/underline.svg'),

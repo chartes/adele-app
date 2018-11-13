@@ -4,8 +4,9 @@
             <div class="editor-controls-group">
                 <label>Structure éditoriale</label>
                 <editor-button :selected="buttons.paragraph" :active="editorHasFocus" :callback="simpleFormat" :format="'paragraph'"/>
-                <editor-button :selected="buttons.verse" :active="editorHasFocus" :callback="simpleFormat" :format="'verse'"/>
                 <editor-button :selected="buttons.list" :active="editorHasFocus" :callback="simpleFormat" :format="'list'"/>
+                <editor-button :selected="buttons.blockquote" :active="editorHasFocus" :callback="simpleFormat" :format="'blockquote'"/>
+                <editor-button :selected="buttons.verse" :active="editorHasFocus" :callback="simpleFormat" :format="'verse'"/>
                 <editor-button :selected="buttons.colbreak" :active="editorHasFocus" :callback="insertColBreak" :format="'colbreak'"/>
                 <editor-button :active="isNoteButtonActive" :callback="newNoteChoiceOpen" :format="'note'"/>
             </div>
@@ -21,6 +22,7 @@
                 <label>Enrichissements sémantiques</label>
                 <editor-button :selected="buttons.expan" :active="editorHasFocus" :callback="simpleFormat" :format="'expan'"/>
                 <editor-button :selected="buttons.link" :active="editorHasFocus" :callback="simpleFormat" :format="'link'"/>
+                <editor-button :selected="buttons.quote" :active="editorHasFocus" :callback="simpleFormat" :format="'quote'"/>
                 <editor-button :selected="buttons.person" :active="editorHasFocus" :callback="displayPersonForm" :format="'person'"/>
                 <editor-button :selected="buttons.location" :active="editorHasFocus" :callback="displayLocationForm" :format="'location'"/>
             </div>
@@ -137,6 +139,9 @@
           note: false,
           segment: false,
           paragraph: false,
+          list: false,
+          verse: false,
+          blockquote: false,
         }
       }
     },

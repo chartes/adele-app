@@ -1,5 +1,6 @@
 import Quill, {getNewQuill, options} from '../modules/quill/AdeleQuill';
 import { getNewDelta } from '../modules/quill/DeltaUtils';
+import _isEmpty from 'lodash/isEmpty';
 
 var EditorMixin = {
 
@@ -62,6 +63,7 @@ var EditorMixin = {
         this.setRangeBound(range);
         let formats = this.editor.getFormat(range.index, range.length);
         this.updateButtons(formats);
+        console.log("onSelection", range, formats)
         if (!!formats.note) {
           this.onNoteSelected(formats.note, range);
           this.buttons.note = false;
@@ -100,6 +102,7 @@ var EditorMixin = {
     },
 
     updateButtons (formats) {
+      if (_isEmpty(formats)) formats = { paragraph: true }
       for (let key in this.buttons) {
         this.buttons[key] = !!formats[key];
       }

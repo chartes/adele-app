@@ -1,6 +1,20 @@
-<svg viewbox="0 0 18 18">
-  <rect class="ql-fill ql-stroke" height="3" width="3" x="4" y="5"></rect>
-  <rect class="ql-fill ql-stroke" height="3" width="3" x="11" y="5"></rect>
-  <path class="ql-even ql-fill ql-stroke" d="M7,8c0,4.031-3,5-3,5"></path>
-  <path class="ql-even ql-fill ql-stroke" d="M14,8c0,4.031-3,5-3,5"></path>
+<svg viewBox="0 0 24 24">
+<g>
+	<path class="ql-stroke" d="M19.9,23.5c2,0,3.6-1.6,3.6-3.6v-0.5"/>
+	<circle class="ql-stroke" cx="21.8" cy="19.3" r="1.7"/>
+	<path class="ql-stroke" d="M15.5,23.5c2,0,3.6-1.6,3.6-3.6v-0.5"/>
+	<circle class="ql-stroke" cx="17.4" cy="19.3" r="1.7"/>
+</g>
+<path class="ql-stroke" d="M9.5,21.6h-9"/>
+<path class="ql-stroke" d="M9.5,17.8h-9"/>
+<path class="ql-stroke" d="M23.5,13.9h-23"/>
+<path class="ql-stroke" d="M23.5,10.1h-23"/>
+<path class="ql-stroke" d="M23.5,6.2h-9"/>
+<path class="ql-stroke" d="M23.5,2.4h-9"/>
+<g>
+	<path class="ql-stroke" d="M4.1,0.5c-2,0-3.6,1.6-3.6,3.6v0.5"/>
+	<circle class="ql-stroke" cx="2.2" cy="4.7" r="1.7"/>
+	<path class="ql-stroke" d="M8.5,0.5c-2,0-3.6,1.6-3.6,3.6v0.5"/>
+	<circle class="ql-stroke" cx="6.6" cy="4.7" r="1.7"/>
+</g>
 </svg>
