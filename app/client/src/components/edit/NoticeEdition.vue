@@ -74,7 +74,7 @@
                 </div>
                 <div class="field">
                     <p class="control">
-                        <label class="label">Argument</label>
+                        <label class="label">Regeste</label>
                     </p>
                     <div class="editor-area">
                         <div class="editor-controls" ref="controls">
