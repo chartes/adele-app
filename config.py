@@ -67,7 +67,7 @@ class Config(object):
 
 class DevelopmentConfig(Config):
 
-    COPY = True
+    COPY = False
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
     #APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé

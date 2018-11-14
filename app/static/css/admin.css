@@ -550,58 +550,48 @@
 smallcaps {
   font-variant: small-caps; }
 
-  zone {
-    border-bottom: 2px solid; }
-    zone:nth-child(2n) {
-      border-color: #b5e7a0; }
-      zone:nth-child(2n+1) {
-        border-color: #eca1a6; }
-        zone.unselected {
-          border: none;
-          background-color: inherit; }
+  cb {
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    background: #bbb url(/adele/static/images/columns-break.svg) no-repeat 50% 50%;
+    background-size: 16px 16px;
+    vertical-align: middle;
+    border-radius: 4px; }
 
-cb {
-  display: inline-block;
-  width: 26px;
-  height: 26px;
-  background: #bbb url(/adele/static/images/columns-break.svg) no-repeat 50% 50%;
-  background-size: 16px 16px;
-  vertical-align: middle;
-  border-radius: 4px; }
+    persname, placename, cite, note, speechpart, zone {
+      display: inline;
+      padding: 0.25em 0.25em 0.25em 1.25em;
+      border-radius: 5px;
+      background: transparent no-repeat 0.25em center;
+      background-size: 12px 12px; }
 
-  persname, placename, cite, note, speechpart {
-    display: inline;
-    padding: 0.25em 0.25em 0.25em 1.25em;
-    border-radius: 5px;
-    background: transparent no-repeat 0.25em center;
-    background-size: 12px 12px; }
+      persname {
+        background-color: rgba(45, 112, 223, 0.15);
+        background-image: url(/adele/static/images/ico-person.svg); }
 
-    persname {
-      background-color: rgba(45, 112, 223, 0.15);
-      background-image: url(/adele/static/images/ico-person.svg); }
+        placename {
+          background-color: rgba(35, 209, 96, 0.15);
+          background-image: url(/adele/static/images/ico-location.svg); }
 
-      placename {
-        background-color: rgba(35, 209, 96, 0.15);
-        background-image: url(/adele/static/images/ico-location.svg); }
+          note {
+            background-color: rgba(147, 87, 169, 0.15);
+            background-image: url(/adele/static/images/ico-note.svg); }
 
-        note {
-          background-color: rgba(147, 87, 169, 0.15);
-          background-image: url(/adele/static/images/ico-note.svg); }
+            cite {
+              background-color: rgba(255, 221, 73, 0.15);
+              background-image: url(/adele/static/images/ico-cite.svg); }
 
-          cite {
-            background-color: rgba(255, 221, 73, 0.15);
-            background-image: url(/adele/static/images/ico-cite.svg); }
-
-            speechpart {
-              margin-right: 0.25em;
-              padding-left: 0.25em; }
-              speechpart:nth-child(2n) {
-                background-color: #b7e3e4; }
-                speechpart:nth-child(2n+1) {
-                  background-color: #fedccc; }
-                  speechpart.unselected {
-                    border: none;
-                    background-color: inherit; }
+              speechpart, zone {
+                margin-right: 0.25em;
+                padding-left: 0.25em; }
+                speechpart:nth-child(2n), zone:nth-child(2n) {
+                  background-color: #b7e3e4; }
+                  speechpart:nth-child(2n+1), zone:nth-child(2n+1) {
+                    background-color: #fedccc; }
+                    speechpart.unselected, zone.unselected {
+                      border: none;
+                      background-color: inherit; }
 
 #speech-parts-toc {
   margin-bottom: 20px; }

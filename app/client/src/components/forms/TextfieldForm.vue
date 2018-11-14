@@ -1,24 +1,24 @@
 <template>
 
-    <modal-form
-            :title="title"
-            :cancel="cancelAction"
-            :submit="submitAction"
-            :remove="remove"
-            :valid="form.length >= 1"
-            :submitting="false"
-    >
-        <div class="location-form textinput-form">
-            <form @submit.prevent="">
-                <div class="field">
-                    <label class="label">{{label}}</label>
-                    <div class="control">
-                        <input class="input" type="text" v-model="form">
-                    </div>
-                </div>
-            </form>
+  <modal-form
+          :title="title"
+          :cancel="cancelAction"
+          :submit="submitAction"
+          :remove="remove"
+          :valid="form.length >= 1"
+          :submitting="false"
+  >
+    <div class="location-form textinput-form">
+      <form @submit.prevent="">
+        <div class="field">
+          <label class="label">{{label}}</label>
+          <div class="control">
+            <input ref="field" class="input" type="text" v-model="form">
+          </div>
         </div>
-    </modal-form>
+      </form>
+    </div>
+  </modal-form>
 
 </template>
 
@@ -45,6 +45,7 @@
       }
     },
     mounted () {
+      this.$refs.field.focus()
     },
     methods: {
 

@@ -107,7 +107,6 @@
     },
     watch: {
       savingStatus (newStatus, oldStatus) {
-        console.info("transcription status", oldStatus, '=>', newStatus)
         if (oldStatus === 'saving' && newStatus === 'uptodate') {
           this.liiiflet.refresh()
         }
@@ -128,3 +127,22 @@
 
 }
 </script>
+
+<style>
+    /*.leaflet-tooltip {
+        color: #f00;
+    }
+    .leaflet-tooltip-top,
+    .leaflet-tooltip-bottom,
+    .leaflet-tooltip-left,
+    .leaflet-tooltip-right {
+        background: red;
+    }
+    .leaflet-tooltip.facsimileToolTip {
+        min-width: 20vw;
+        max-width: 40vw;
+        white-space: normal;
+        //border: 1px solid red;
+
+    }*/
+</style>

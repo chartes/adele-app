@@ -5,17 +5,11 @@
             :submitText="'Oui je veux le supprimer'"
             :cancel="cancelAction"
             :submit="submitAction"
+            class="has-text-danger"
     >
-        <article class="message is-danger">
-            <div class="message-header">
-                <p>Danger</p>
-            </div>
-            <div class="message-body">
-                <p>Vous êtes sur le point de supprimer un alignement image/texte.</p>
-                <p><strong>Cette action ne peut pas être annulée.</strong></p>
-
-            </div>
-        </article>
+        <p><b>Danger</b></p>
+        <p>Vous êtes sur le point de supprimer un alignement image/texte.</p>
+        <p><b>Cette action ne peut pas être annulée.</b></p>
     </modal-confirm>
 
 

@@ -5,18 +5,13 @@
             :submitText="'Oui je veux la supprimer'"
             :cancel="cancelAction"
             :submit="submitAction"
+            class="has-text-danger"
     >
-        <article class="message is-danger">
-            <div class="message-header">
-                <p>Danger</p>
-            </div>
-            <div class="message-body">
+                <p><b>Danger</b></p>
                 <p>Vous êtes sur le point de supprimer une note.</p>
                 <p>La note sera également perdue pour la transcription de ce document, sa traduction et ses commentaires.</p>
-                <p><strong>Cette action ne peut pas être annulée.</strong></p>
+                <p><b>Cette action ne peut pas être annulée.</b></p>
 
-            </div>
-        </article>
     </modal-confirm>
 
 

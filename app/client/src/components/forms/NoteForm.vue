@@ -76,6 +76,7 @@
       this.editor.on('selection-change', this.onFocus);
       this.editor.on('text-change', this.onTextChange);
       this.textLength = this.editor.getLength();
+      this.editor.focus()
     },
     methods: {
 

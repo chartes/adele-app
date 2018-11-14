@@ -131,21 +131,6 @@ smallcaps {
   font-variant: small-caps;
 }
 
-zone {
-  border-bottom: 2px solid;
-
-  &:nth-child(2n) {
-    border-color: #b5e7a0;
-  }
-  &:nth-child(2n+1) {
-    border-color: #eca1a6;
-  }
-  &.unselected{
-    border: none;
-    background-color: inherit;
-  }
-}
-
 cb {
   display: inline-block;
   width: 26px;
@@ -156,7 +141,7 @@ cb {
   border-radius: 4px;
 }
 
-persname, placename, cite, note, speechpart {
+persname, placename, cite, note, speechpart, zone {
   display: inline;
   padding: .25em .25em .25em 1.25em;
   border-radius: 5px;
@@ -179,7 +164,7 @@ cite {
   background-color: rgba(255, 221, 73, .15);
   background-image: url(/adele/static/images/ico-cite.svg);
 }
-speechpart {
+speechpart, zone {
 
   margin-right: .25em;
   padding-left: .25em;
