@@ -50,9 +50,9 @@
                         <li><a class="button tag is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=doc.id)}}"><i class="fas fa-edit"></i><p>Éditer</p></a></li>
                         {% endif %}
                         <li class="tab is-active"><input type="hidden" value="tab-notice"/><a>Notice</a></li>
-                        <li class="tab"><input type="hidden" value="tab-transcription"/><a>Transcription</a></li>
-                        <li class="tab"><input type="hidden" value="tab-commentaries"/><a>Commentaires</a></li>
-                        <li class="tab"><input type="hidden" value="tab-speech-parts"/><a>Parties du discours</a></li>
+                        <li class="tab" style="display:none;"><input type="hidden" value="tab-transcription"/><a>Transcription</a></li>
+                        <li class="tab" style="display:none;"><input type="hidden" value="tab-commentaries"/><a>Commentaires</a></li>
+                        <li class="tab" style="display:none;"><input type="hidden" value="tab-speech-parts"/><a>Parties du discours</a></li>
                         </ul>
                     </div>
                     <div class="tab-content" id="tab-notice"></div>
@@ -95,7 +95,6 @@
                     $('#tab-transcription').html(data);
                     $('#transcription-container').css('display', 'none');
                     $('#translation-container').css('display', 'none');
-
                });
            }
 
@@ -157,7 +156,7 @@
            });
 
            /*
-                Load data & select the notice tab;
+                Load data & show tabs & style tooltips;
            */
             new Promise(function(resolve, reject) {
                  resolve(load_notice_tab()
@@ -165,7 +164,30 @@
                     .then(() => load_commentaries_tab())
                     .then(() => load_speech_parts_tab()))
             }).then(function() {
-                 /* style notes */
+
+                 // hide translation if there is none
+                 if (document.querySelector("#translation-container").textContent.trim().length === 0) {
+                     $('#visibility-translation').click();
+                 }
+
+                 // show the tab if there is content
+                 if (document.querySelector("#commentaries-container").textContent.trim().length !== 0) {
+                     document.querySelector("input[value='tab-commentaries']").parentElement.style.display = "block"
+                 }
+
+                 // show the tab if there is content
+                 const tr = document.querySelector("#transcription-container").textContent.trim();
+                 const tl = document.querySelector("#translation-container").textContent.trim()
+                 if (tr.length !== 0 || tl.length !== 0 ) {
+                     document.querySelector("input[value='tab-transcription']").parentElement.style.display = "block"
+                 }
+
+                 // show the tab if there is content
+                 if (document.querySelector("#speech-parts-container").textContent.trim().length !== 0) {
+                     document.querySelector("input[value='tab-speech-parts']").parentElement.style.display = "block"
+                 }
+
+                 /* style notes tooltip */
                  for(const notePlaceHolder of document.getElementsByClassName("note-placeholder"))  {
                      const noteId = notePlaceHolder.dataset.noteId;
                      const noteContent = document.querySelector(".note-content[data-note-id='"+noteId+"']");
@@ -182,9 +204,12 @@
                      });
 
                  }
+
             });
 
+
             go_to_tab('tab-notice');
+
 
 
            /*
@@ -194,9 +219,10 @@
            // recompute the liiiflet map size after it changed
            function toggleLiiifletFullscreen(t){
                // show/hide liiiflet/text columns
-               $(t).find('.active,.inactive').toggle();
-               liiiflet.map.invalidateSize(true);
-               //liiiflet.setAnnotations();
+               if (typeof liiiflet !== "undefined") {
+                   $(t).find('.active,.inactive').toggle();
+                    liiiflet.map.invalidateSize(true);
+               }
            }
 
            function toggleTextCol(t) {

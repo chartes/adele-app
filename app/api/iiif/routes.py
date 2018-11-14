@@ -48,14 +48,15 @@ def make_manifest(api_version, doc_id, user_id, reference=False):
             if reference:
                 kwargs.pop("user_id")
 
+            root_url = request.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
             canvas["otherContent"].extend([
                 {
                     "@type": "sc:AnnotationList",
-                    "@id": request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_list", **kwargs)
+                    "@id": root_url + url_for("api_bp.api_documents_annotations_list", **kwargs)
                 },
                 {
                     "@type": "sc:AnnotationList",
-                    "@id":  request.url_root[0:-1] + url_for("api_bp.api_documents_transcriptions_list", **kwargs)
+                    "@id":  root_url + url_for("api_bp.api_documents_transcriptions_list", **kwargs)
                 }
             ])
 

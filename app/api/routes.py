@@ -5,7 +5,7 @@ import sys
 from flask_user import roles_required
 from urllib.request import build_opener
 
-from flask import request
+from flask import request, current_app
 
 from app import auth, db, api_bp
 from app.api.response import APIResponseFactory
@@ -23,7 +23,8 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
     if direct:
         url = endpoint_url
     else:
-        url = "{root}{endpoint}".format(root=request_obj.url_root, endpoint=endpoint_url)
+        root_url = request.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
+        url = "{root}{endpoint}".format(root=root_url, endpoint=endpoint_url)
 
     headers = {'Content-Type': 'application/json;charset=UTF-8'}
 

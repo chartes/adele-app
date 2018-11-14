@@ -537,7 +537,21 @@ def view_document_transcription_alignment(doc_id):
     translation = get_reference_translation(doc_id)
     transcription = get_reference_transcription(doc_id)
 
-    tr_w_notes, tl_w_notes, notes = add_notes_refs(transcription.serialize(), translation.serialize())
+    tr_w_notes, tl_w_notes = [], []
+    notes = []
+
+    if not transcription or not translation:
+        # no alignment
+        if transcription:
+            _tr = transcription.serialize()
+            tr_w_notes = add_notes_refs_to_text(_tr["content"], _tr["notes"])
+            notes = _tr["notes"]
+        elif translation:
+            _tl = translation.serialize()
+            tl_w_notes = add_notes_refs_to_text(_tl["content"], _tl["notes"])
+            notes = _tl["notes"]
+    else:
+        tr_w_notes, tl_w_notes, notes = add_notes_refs(transcription.serialize(), translation.serialize())
 
     return render_template('main/fragments/document_view/_transcription_alignment.html',
                            doc_id=doc_id,
@@ -574,12 +588,15 @@ def view_document_speech_parts(doc_id):
     from .api.transcriptions.routes import get_reference_transcription
     transcription = get_reference_transcription(doc_id)
 
-    speech_parts = get_reference_alignment_discours(doc_id)
-    speech_parts = sorted(speech_parts, key=lambda s: s.ptr_start)
-    notes = [sp.note for sp in speech_parts]
+    speech_parts = []
+    notes = []
+    if transcription:
+        speech_parts = get_reference_alignment_discours(doc_id)
+        speech_parts = sorted(speech_parts, key=lambda s: s.ptr_start)
+        notes = [sp.note for sp in speech_parts]
 
     return render_template('main/fragments/document_view/_speech_parts.html',
-                           transcription=Markup(transcription.content),
+                           transcription=Markup(transcription.content) if transcription else "",
                            speech_parts=speech_parts,
                            notes=notes)
 
