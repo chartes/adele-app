@@ -1,17 +1,18 @@
 
-<div>
-    <div>
-        <nav class="breadcrumb has-bullet-separator" aria-label="breadcrumbs">
-            <ul id="speech-parts-toc"></ul>
-        </nav>
-    </div>
-    <div id="speech-parts-container">{{ transcription }}</div>
-    <aside id="notes-container">
-    {% for note in notes %}
-        <div class="note-content" data-note-id="speechpart-{{loop.index0}}">{{note|safe}}</div>
-    {% endfor %}
-    </aside>
-</div>
+{% if  speech_parts|length > 0 %}
+<nav class="breadcrumb has-bullet-separator" aria-label="breadcrumbs">
+        <ul id="speech-parts-toc"></ul>
+</nav>
+{% endif %}
+
+<div id="speech-parts-container">{{ transcription }}</div>
+
+<aside id="notes-container">
+{% for note in notes %}
+    <div class="note-content" data-note-id="speechpart-{{loop.index0}}">{{note|safe}}</div>
+{% endfor %}
+</aside>
+
 
 <script type="text/javascript">
     /*
@@ -84,6 +85,5 @@
     }
     container.innerHTML = tr;
 
-    console.log(speech_parts);
 </script>
 

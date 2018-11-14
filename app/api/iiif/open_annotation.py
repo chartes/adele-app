@@ -14,6 +14,7 @@ def make_annotation_list(list_id, doc_id, annotations, annotation_type):
     :return:
     """
     url = "%s%s" % (current_app.config["APP_DOMAIN_NAME"], current_app.config["APP_URL_PREFIX"])
+    print("url", url)
     return {
         "@context": "http://iiif.io/api/presentation/2/context.json",
         "@id": "http://{0}/api/1.0/documents/{1}/{2}s/list/{3}".format(url, doc_id, annotation_type.get('label'), list_id),

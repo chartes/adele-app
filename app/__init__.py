@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, request, Blueprint
+from flask import Flask, request, Blueprint, url_for
 from flask_mail import Mail
 from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
@@ -22,6 +22,22 @@ babel = Babel()
 
 api_bp = Blueprint('api_bp', __name__, template_folder='templates')
 app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
+
+
+class PrefixMiddleware(object):
+
+    def __init__(self, app, prefix=''):
+        self.app = app
+        self.prefix = prefix
+
+    def __call__(self, environ, start_response):
+
+        if environ['PATH_INFO'].startswith(self.prefix):
+            environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
+            environ['SCRIPT_NAME'] = self.prefix
+            return self.app(environ, start_response)
+
+
 
 
 from sqlalchemy.engine import Engine
@@ -61,6 +77,7 @@ def create_app(config_name="dev"):
         app.config.from_object(config[config_name])
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix=app.config["APP_URL_PREFIX"])
 
     config[config_name].init_app(app)
 
@@ -69,7 +86,8 @@ def create_app(config_name="dev"):
     app.scss = Scss(app)
     babel.init_app(app)
 
-    CORS(app, resources={r"%s/api/*" % app.config["APP_URL_PREFIX"]: {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+
 
     # Use the browser's language preferences to select an available translation
     @babel.localeselector
@@ -107,6 +125,9 @@ def create_app(config_name="dev"):
 
         def verify_password(self, password, password_hash):
             return check_password_hash(password_hash, password)
+
+        def _endpoint_url(self, endpoint):
+            return url_for(endpoint) if endpoint else url_for('app_bp.index')
 
     # Initialize Flask-User
     user_manager = CustomUserManager(app, db,
@@ -169,8 +190,8 @@ def create_app(config_name="dev"):
     from app import routes
     from app.api import routes as api_routes
 
-    app_bp.url_prefix = app.config["APP_URL_PREFIX"]
-    api_bp.url_prefix = app.config["APP_URL_PREFIX"]
+    #app_bp.url_prefix = app.config["APP_URL_PREFIX"]
+    #api_bp.url_prefix = app.config["APP_URL_PREFIX"]
 
     app.register_blueprint(app_bp)
     app.register_blueprint(api_bp)
