@@ -103,7 +103,6 @@ def api_put_speech_part_type(api_version):
                             request,
                             url_for("api_bp.api_speech_part_type", api_version=api_version, speech_part_type_id=a.id)
                         )
-                        print(json_obj)
                         data.append(json_obj["data"])
                     response = APIResponseFactory.make_response(data=data)
 

@@ -103,7 +103,6 @@ def api_put_country(api_version):
                             request,
                             url_for("api_bp.api_country", api_version=api_version, country_id=a.id)
                         )
-                        print(json_obj)
                         data.append(json_obj["data"])
                     response = APIResponseFactory.make_response(data=data)
 

@@ -169,7 +169,6 @@
                  for(const notePlaceHolder of document.getElementsByClassName("note-placeholder"))  {
                      const noteId = notePlaceHolder.dataset.noteId;
                      const noteContent = document.querySelector(".note-content[data-note-id='"+noteId+"']");
-                     console.log("register note tooltip", noteId);
                      tippy(notePlaceHolder, {
                          content: noteContent.textContent,
                          arrow: true,
