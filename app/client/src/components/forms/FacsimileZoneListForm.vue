@@ -1,5 +1,4 @@
 <template>
-
     <modal-form
             :title="'Choisissez une zone'"
             :cancel="cancelAction"
@@ -18,31 +17,34 @@
                 </div>
             </a>
         </div>
+        <loading-indicator :active="loading"/>
     </modal-form>
-
-
-
 </template>
 
 <script>
 
   import { mapGetters } from 'vuex'
   import ModalForm from './ModalForm';
+  import LoadingIndicator from '../ui/LoadingIndicator';
 
   export default {
     name: "facsimile-zone-list-form",
     props: ['title', 'zoneId', 'cancel', 'submit'],
     components: {
+      LoadingIndicator,
       ModalForm
     },
     data() {
       return {
-        selected: null
+        selected: null,
+        loading: false
       }
     },
     mounted () {
       console.log('FacsimileZoneListForm mounted', this.zoneId)
       this.selected = this.zoneId
+      this.loading = true
+      this.$store.dispatch('facsimile/fetchFragments').then(() => { this.loading = false })
     },
     methods: {
       selectItem (zoneId) {

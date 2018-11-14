@@ -186,7 +186,6 @@ const actions = {
       const withNotes = insertNotesAndSegments(quillContent, transcription.notes, state.transcriptionAlignments, 'transcription');
       const withSpeechparts = insertSpeechparts(quillContent, rootState.speechparts.speechparts);
       const withFacsimile = insertFacsimileZones(quillContent, rootState.facsimile.alignments);
-
       const data = {
         transcription: transcription,
         content: convertLinebreakTEIToQuill(content),
@@ -257,14 +256,16 @@ const actions = {
         });
     } );
   },
-  save ({dispatch, commit, rootState}) {
+  save ({dispatch, commit, rootState, rootGetters}) {
     //console.log('STORE ACTION transcription/save');
 
     commit('SAVING_STATUS', 'saving');
 
     return dispatch('saveContent')
       .then(response => {
-        if (rootState.document.manifestUrl) {
+        console.warn("content saved", rootGetters['document/manifestURL'])
+        if (rootGetters['document/manifestURL']) {
+          console.warn("content saved", rootGetters['document/manifestURL'])
           dispatch('saveImageAlignments')
         }
       })

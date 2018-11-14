@@ -4,8 +4,9 @@
             :title="title"
             :cancel="cancelAction"
             :submit="submitAction"
+            :remove="remove"
             :valid="form.length >= 1"
-            :submittin="null"
+            :submitting="false"
     >
         <div class="location-form textinput-form">
             <form @submit.prevent="">
@@ -36,6 +37,7 @@
       value: { type: String, default: '' },
       cancel: { type: Function },
       submit: { type: Function },
+      remove: { type: Function },
     },
     data() {
       return {
@@ -50,6 +52,9 @@
         this.$props.submit(this.form);
       },
       cancelAction () {
+        this.$props.cancel();
+      },
+      removeAction () {
         this.$props.cancel();
       }
     }

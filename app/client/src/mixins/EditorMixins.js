@@ -136,6 +136,15 @@ var EditorMixin = {
       let formats = this.editor.getFormat();
       this.updateButtons(formats)
     },
+    removeFormat () {
+      console.log("removeFormat", this.formTextfield.format)
+      const formatName = this.formTextfield.format;
+      const selection = this.editor.getSelection();
+      this.editor.format(formatName, '');
+      this.cancelTextfieldForm();
+      let formats = this.editor.getFormat(selection.index, selection.length);
+      this.updateButtons(formats);
+    },
 
     /**************
      *

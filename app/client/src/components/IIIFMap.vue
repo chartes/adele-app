@@ -19,6 +19,7 @@
     props: ['manifest', 'drawMode', 'displayAnnotationsMode'],
     data() {
       return {
+        liiiflet: null,
         error: undefined,
         refreshInterval: null,
       }
@@ -30,7 +31,7 @@
           - Faire une méthode Liiiflet.reset et pouvoir l'appeler depuis swapAuthor de Vue ?
       */
 
-      const liiiflet = new Liiiflet(
+      this.liiiflet = new Liiiflet(
         "liiiflet-map",
         {
           loadManifest: this.loadManifest,
@@ -46,7 +47,9 @@
         {zoomControl: true}
       );
 
-      this.refreshInterval = setInterval(() =>  {if (liiiflet && liiiflet.map) liiiflet.map.invalidateSize(true)}, 400);
+      this.refreshInterval = setInterval(() =>  {
+        if (this.liiiflet && this.liiiflet.map) this.liiiflet.map.invalidateSize(true)
+      }, 400);
     },
 
     methods: {
@@ -98,6 +101,7 @@
       saveAnnotationAlignments: function(annotations) {
         console.log("SAVE ANNOTATIONS ALIGNMENTS");
         this.$store.dispatch("transcription/save");
+
       }
 
     },
@@ -115,6 +119,3 @@
 
 }
 </script>
-
-<style scoped>
-</style>

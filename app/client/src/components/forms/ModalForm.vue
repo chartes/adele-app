@@ -12,6 +12,9 @@
             <footer class="modal-card-foot">
                 <button class="button is-success" :disabled="!valid || submitting" @click="submit">Valider</button>
                 <button class="button" :disabled="submitting" @click="cancel">Annuler</button>
+                <div style="float: right;width: 100%;text-align: right;" v-if="remove">
+                    <button class="button is-danger" :disabled="submitting" @click="remove">Supprimer</button>
+                </div>
             </footer>
         </div>
     </div>
@@ -21,6 +24,14 @@
 
   export default {
     name: "modal-form",
-    props: ['title', 'cancel', 'submit', 'valid', 'submitText', 'submitting'],
+    props: {
+      title: { type: String, default: ''},
+      cancel: { type: Function, required: true},
+      submit: { type: Function, required: true},
+      remove: { type: Function},
+      valid: { type: Boolean, required: true},
+      submitText: { type: String, default: 'Soumettre'},
+      submitting: { type: Boolean, default: false},
+    }
   }
 </script>

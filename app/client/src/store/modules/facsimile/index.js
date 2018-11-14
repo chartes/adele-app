@@ -36,6 +36,7 @@ const mutations = {
 
   UPDATE_FRAGMENTS (state, payload) {
     state.fragments = payload;
+    console.warn("STORE MUTATION UPDATE_FRAGMENTS")
   },
 
   UPDATE_ALIGNMENTS (state, payload) {
@@ -51,7 +52,6 @@ const actions = {
 
     return axios.get(`/adele/api/1.0/documents/${rootState.document.document.id}/first-sequence`).then( response => {
       let data = response.data.data;
-      console.log("STORE ACTION facsimile/fetchCanvasNames")
       if (!data || !data.canvases) return;
       let canvasNames = data.canvases.map((canvas) => {
         let idParts = canvas['@id'].split('/');
@@ -69,6 +69,7 @@ const actions = {
     if (!rootGetters['document/manifestURL']) {
       return;
     }
+    console.warn("STORE ACTION facsimile/fetchFragments");
 
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
@@ -122,12 +123,7 @@ const getters = {
 
   annotationFragments: state => state.fragments.filter(frag => frag.zone_type === 'annotation'),
   transcriptionFragments: state => state.fragments.filter(frag => frag.zone_type === 'transcription'),
-
-
-  getZoneById: state => id => {
-    id = parseInt(id)
-    return state.fragments.find(fragment =>  fragment.zone_id === id)
-  }
+  getZoneById: state => id => state.fragments.find(fragment =>  fragment.zone_id === parseInt(id))
 
 };
 

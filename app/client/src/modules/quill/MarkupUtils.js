@@ -204,6 +204,7 @@ const insertNotes = (text, notes) => {
 const insertFacsimileZones = (text, zones) => {
   let result = text;
   let indexCorrection = 0;
+  let count = 0;
   zones.forEach(zone => {
     let opening = `<zone id="${zone.zone_id}">`;
     let closing = '</zone>'
@@ -211,6 +212,7 @@ const insertFacsimileZones = (text, zones) => {
     indexCorrection += opening.length;
     result = result.insert(zone.ptr_end + indexCorrection, closing);
     indexCorrection += closing.length;
+    count++
   })
   return result;
 };
@@ -372,7 +374,7 @@ const computeAlignmentPointers  = (htmlWithSegments) => {
 
 const computeSpeechpartsPointers  = (htmlWithSpeechparts) => {
 
-  console.log("computeSpeechpartsPointers", htmlWithSpeechparts)
+  //console.log("computeSpeechpartsPointers", htmlWithSpeechparts)
 
   const regexpStart = /<speechpart id="((\d+)|temp)">/;
   const regexpEnd = /<\/speechpart>/;
@@ -389,7 +391,7 @@ const computeSpeechpartsPointers  = (htmlWithSpeechparts) => {
       "ptr_end": resEnd.index
     });
   }
-  console.log("speechparts pointers", speechparts)
+  //console.log("speechparts pointers", speechparts)
   return speechparts;
 }
 const computeImageAlignmentsPointers  = (htmlWithFacsimile) => {

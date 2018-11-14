@@ -50,21 +50,23 @@ const filterDeltaForSpeechParts = (delta) => {
 }
 const filterDeltaOperations = (quillInstance, delta, mode) => {
 
-  const ops = [...delta.ops]
-  if (mode === 'speechparts') console.log("filterDeltaOperations", mode, delta.ops, ops)
-
   // Renvoie un nouveau delta filtré selon arrAttributesToRemove
+
+  const ops = [...delta.ops]
+  if (mode === 'speechparts') {
+    console.log("filterDeltaOperations", mode, delta.ops, ops)
+  }
 
   let filteredDelta = new Delta();
   let insertionIndex = 0;
 
-  let firstOperation = Object.assign({}, delta.ops[0]);
+  let firstOperation = Object.assign({}, ops[0]);
   if (firstOperation.retain) {
     insertionIndex = firstOperation.retain;
   }
   firstOperation = filterOperation(quillInstance, firstOperation, mode, 0);
   filteredDelta.ops.push(firstOperation);
-  let restOperations = _values(_omit(delta.ops, [0]))
+  let restOperations = _values(_omit(ops, [0]))
 
   if (restOperations.length > 0) {
 
@@ -82,6 +84,7 @@ const filterOperation = (quillInstance, operation, mode, insertionIndex) => {
   const filters = deltaOperationsFilters[mode]
   let newOp = {};
   let type = getOperationType(operation)
+  logOperation(operation)
 
   // Copie le type d'operation
   if (operation[type] !== null && typeof operation[type] === 'object') {
@@ -92,11 +95,11 @@ const filterOperation = (quillInstance, operation, mode, insertionIndex) => {
 
   // TO DO vérifier que la suppression de ce qui suit ne crée pas des effets de bord
   // Copie les formats de l'instance quill au point d'insertion
-  /*let formats = quillInstance.getFormat(insertionIndex);
+  let formats = quillInstance.getFormat(insertionIndex);
   if (type !== 'delete') {
     formats = _pick(formats, filters.keepFormats);
     if (!_isEmpty(formats)) newOp.attributes = formats;
-  }*/
+  }
 
   // Copie les attributs (styles) si existent
   if (operation.attributes) {
@@ -105,7 +108,7 @@ const filterOperation = (quillInstance, operation, mode, insertionIndex) => {
   }
   return newOp;
 }
-const getOperationType = (operation) => {
+const getOperationType = operation => {
   if (operation.retain) {
     return 'retain';
   } else if (operation.insert) {
@@ -113,6 +116,11 @@ const getOperationType = (operation) => {
   } else if (operation.delete) {
     return 'delete';
   }
+}
+const logOperation = operation => {
+  const t = getOperationType(operation)
+  const type = 'type: ' + t + '(' + operation[t]  + ')'
+  console.log('logOperation', type)
 }
 
 const removeNotesFromDelta = (delta) => {

@@ -10,13 +10,11 @@ const state = {
 const mutations = {
 
   UPDATE_ALL (state, notes) {
-    console.log("UPDATE_NOTES");
     notes = Array.isArray(notes) ? notes : [notes];
     state.notes = notes;
   },
   NEW (state, note) {
     state.newNote = note;
-    console.log('NEW NOTE', note, state.newNote, state.notes.length)
     state.notes.push(note);
   },
   UPDATE_ONE (state, note) {
@@ -28,18 +26,15 @@ const mutations = {
 const actions = {
 
   fetch ({ commit, rootState }, docId) {
-    console.log('STORE ACTION notes/fetch')
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     return axios.get(`/adele/api/1.0/documents/${docId}/notes`, config)
       .then( (response) => {
-        console.log(response.data)
         commit('UPDATE_ALL', response.data.data)
       }).catch(function(error) {
-        console.log(error);
+        console.error('Error:', error)
       });
   },
   add ({ commit, getters, rootState }, newNote) {
-    console.log("STORE ACTION addNote", newNote);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const newNotes = {
       data: [{
@@ -55,7 +50,6 @@ const actions = {
       })
   },
   update ({ commit, getters, rootState }, note) {
-    console.log("STORE ACTION updateNote", note);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theNote = {
       data: [{
@@ -72,7 +66,6 @@ const actions = {
       })
   },
   delete ({ commit, getters, rootState }, note) {
-    console.log("STORE ACTION updateNote", note);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theNote = {
       data: [{
@@ -84,7 +77,6 @@ const actions = {
     };
     return axios.delete(`/adele/api/1.0/notes`, theNote, config)
       .then( response => {
-        console.log(response.data)
         const note = response.data.data;
         commit('UPDATE_ONE', note);
       })

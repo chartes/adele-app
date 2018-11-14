@@ -59,7 +59,9 @@
             :label="formTextfield.label"
             :value="formTextfield.value"
             :submit="submitTextfieldForm"
-            :cancel="cancelTextfieldForm"/>
+            :cancel="cancelTextfieldForm"
+            :remove="removeFormat"
+        />
         <note-form
                 v-if="noteEditMode == 'new' || noteEditMode == 'edit'"
                 :title="noteEditMode == 'new' ? 'nouvelle note' : 'Éditer la note'"
