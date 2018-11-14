@@ -550,37 +550,15 @@
 smallcaps {
   font-variant: small-caps; }
 
-  speechpart {
+  zone {
     border-bottom: 2px solid; }
-    speechpart:nth-child(8n) {
-      border-color: #d6cbd3; }
-      speechpart:nth-child(8n+1) {
+    zone:nth-child(2n) {
+      border-color: #b5e7a0; }
+      zone:nth-child(2n+1) {
         border-color: #eca1a6; }
-        speechpart:nth-child(8n+2) {
-          border-color: #bdcebe; }
-          speechpart:nth-child(8n+3) {
-            border-color: #ada397; }
-            speechpart:nth-child(8n+4) {
-              border-color: #f7cac9; }
-              speechpart:nth-child(8n+5) {
-                border-color: #dac292; }
-                speechpart:nth-child(8n+6) {
-                  border-color: #b5e7a0; }
-                  speechpart:nth-child(8n+7) {
-                    border-color: #b9936c; }
-                    speechpart.unselected {
-                      border: none;
-                      background-color: inherit; }
-
-zone {
-  border-bottom: 2px solid; }
-  zone:nth-child(2n) {
-    border-color: #b5e7a0; }
-    zone:nth-child(2n+1) {
-      border-color: #eca1a6; }
-      zone.unselected {
-        border: none;
-        background-color: inherit; }
+        zone.unselected {
+          border: none;
+          background-color: inherit; }
 
 cb {
   display: inline-block;
@@ -591,7 +569,7 @@ cb {
   vertical-align: middle;
   border-radius: 4px; }
 
-  persname, placename, cite, note {
+  persname, placename, cite, note, speechpart {
     display: inline;
     padding: 0.25em 0.25em 0.25em 1.25em;
     border-radius: 5px;
@@ -614,18 +592,29 @@ cb {
             background-color: rgba(255, 221, 73, 0.15);
             background-image: url(/adele/static/images/ico-cite.svg); }
 
-            #speech-parts-toc {
-              margin-bottom: 20px; }
+            speechpart {
+              margin-right: 0.25em;
+              padding-left: 0.25em; }
+              speechpart:nth-child(2n) {
+                background-color: #b7e3e4; }
+                speechpart:nth-child(2n+1) {
+                  background-color: #fedccc; }
+                  speechpart.unselected {
+                    border: none;
+                    background-color: inherit; }
 
-              .ql-editor {
-                counter-reset: segment-count 0; }
-                .ql-editor segment {
-                  display: inline-block; }
-                  .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
-                  .ql-editor segment:before {
-                    display: inline-block; }
-                .ql-editor span.br {
-                  display: block; }
+#speech-parts-toc {
+  margin-bottom: 20px; }
+
+  .ql-editor {
+    counter-reset: segment-count 0; }
+    .ql-editor segment {
+      display: inline-block; }
+      .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
+      .ql-editor segment:before {
+        display: inline-block; }
+    .ql-editor span.br {
+      display: block; }
 
 #transcription-editor segment:before, #transcription-editor p:before,
 #transcription-editor l:before, #transcription-editor .segment-bullet:before,

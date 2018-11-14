@@ -130,39 +130,6 @@ abbr, ex {
 smallcaps {
   font-variant: small-caps;
 }
-speechpart {
-  border-bottom: 2px solid ;
-
-  &:nth-child(8n) {
-    border-color: #d6cbd3;
-  }
-  &:nth-child(8n+1) {
-     border-color: #eca1a6;
-  }
-  &:nth-child(8n+2) {
-     border-color: #bdcebe;
-  }
-  &:nth-child(8n+3) {
-     border-color: #ada397;
-  }
-  &:nth-child(8n+4) {
-     border-color: #f7cac9;
-  }
-    &:nth-child(8n+5) {
-     border-color: #dac292;
-  }
-    &:nth-child(8n+6) {
-     border-color: #b5e7a0;
-  }
-    &:nth-child(8n+7) {
-     border-color:  #b9936c;
-  }
-
-  &.unselected{
-    border: none;
-    background-color: inherit;
-  }
-}
 
 zone {
   border-bottom: 2px solid;
@@ -189,7 +156,7 @@ cb {
   border-radius: 4px;
 }
 
-persname, placename, cite, note {
+persname, placename, cite, note, speechpart {
   display: inline;
   padding: .25em .25em .25em 1.25em;
   border-radius: 5px;
@@ -212,6 +179,26 @@ cite {
   background-color: rgba(255, 221, 73, .15);
   background-image: url(/adele/static/images/ico-cite.svg);
 }
+speechpart {
+
+  margin-right: .25em;
+  padding-left: .25em;
+
+  &:nth-child(2n) {
+    background-color: #b7e3e4;
+    //background-image: url(/adele/static/images/ico-note.svg);
+  }
+  &:nth-child(2n+1) {
+    background-color: #fedccc;
+    //background-image: url(/adele/static/images/ico-note.svg);
+  }
+
+  &.unselected{
+    border: none;
+    background-color: inherit;
+  }
+}
+
 
 #speech-parts-toc {
   margin-bottom: 20px;

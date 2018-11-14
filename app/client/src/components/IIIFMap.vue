@@ -105,11 +105,20 @@
       }
 
     },
+    watch: {
+      savingStatus (newStatus, oldStatus) {
+        console.info("transcription status", oldStatus, '=>', newStatus)
+        if (oldStatus === 'saving' && newStatus === 'uptodate') {
+          this.liiiflet.refresh()
+        }
+      }
+    },
 
     computed: {
 
       ...mapGetters('user', ['authHeader']),
-      ...mapState('document', ['document'])
+      ...mapState('document', ['document']),
+      ...mapState('transcription', ['savingStatus']),
 
     },
 
