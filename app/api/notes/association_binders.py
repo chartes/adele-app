@@ -141,7 +141,6 @@ class CommentaryNoteBinder(object):
         commentary_has_note.ptr_start = data["ptr_start"]
         commentary_has_note.ptr_end = data["ptr_end"]
         note.commentary = [commentary_has_note]
-        print(note)
         return note
 
     @staticmethod
@@ -151,16 +150,13 @@ class CommentaryNoteBinder(object):
         print("UPDATE NOTE", data)
         note = Note.query.filter(Note.id == data["note_id"]).first()
         try:
-            print("note: ", note)
             note.content = data["content"]
             if "type_id" in data:
                 note.type_id = data["type_id"]
             db.session.add(note)
             if "commentary_username" in data and not note.commentary:
-                print("bind")
                 tr_usr = User.query.filter(User.username == data["commentary_username"]).one()
                 note = CommentaryNoteBinder.bind(note, data, tr_usr.id, doc_id)
-                print("updating : ", note)
                 db.session.add(note)
 
         except Exception as e:

@@ -550,9 +550,22 @@ def view_document_transcription_alignment(doc_id):
 @app_bp.route('/documents/<doc_id>/view/commentaries')
 def view_document_commentaries(doc_id):
     from .api.commentaries.routes import get_reference_commentaries
-    commentaries = get_reference_commentaries(doc_id)
+
+    commentaries = []
+    notes = []
+    for com in get_reference_commentaries(doc_id):
+        _c = com.serialize()
+        content = add_notes_refs_to_text(_c["content"], _c["notes"])
+        if content != "<p></p>":
+            commentaries.append({
+                "id": com.id,
+                "content": Markup(content),
+                "label": com.type.label
+            })
+            notes.extend(_c["notes"])
+
     return render_template('main/fragments/document_view/_commentaries.html',
-                           commentaries=commentaries)
+                           commentaries=commentaries, notes=notes)
 
 
 @app_bp.route('/documents/<doc_id>/view/speech-parts')
@@ -560,14 +573,15 @@ def view_document_speech_parts(doc_id):
     from .api.transcriptions.routes import get_reference_alignment_discours
     from .api.transcriptions.routes import get_reference_transcription
     transcription = get_reference_transcription(doc_id)
-    transcription = Markup(transcription.content) if transcription else ""
-    speech_parts = get_reference_alignment_discours(doc_id)
 
+    speech_parts = get_reference_alignment_discours(doc_id)
     speech_parts = sorted(speech_parts, key=lambda s: s.ptr_start)
+    notes = [sp.note for sp in speech_parts]
 
     return render_template('main/fragments/document_view/_speech_parts.html',
-                           transcription=transcription,
-                           speech_parts=speech_parts)
+                           transcription=Markup(transcription.content),
+                           speech_parts=speech_parts,
+                           notes=notes)
 
 
 @app_bp.route('/documents/<doc_id>/edition')

@@ -860,72 +860,102 @@ l {
     .note-placeholder:hover {
       cursor: pointer; }
 
-      .note-content {
-        display: none;
-        font-weight: bold; }
+      .note-placeholder {
+        text-decoration: underline #1d1d1d; }
 
-        .help {
-          font-size: 1em; }
+        speechpart.note-placeholder {
+          text-decoration: initial; }
 
-          .login-form {
-            margin: auto;
-            margin-top: 120px; }
+          .note-content {
+            display: none;
+            font-weight: bold; }
 
-            .login-form .message {
-              width: 700px;
-              margin: auto; }
+            .tippy-tooltip.light-theme .tippy-backdrop {
+              background-color: whitesmoke;
+              color: #333; }
 
-              .login-form .message-body {
-                width: 460px;
-                margin: auto; }
+              .tippy-tooltip.light-theme {
+                background-color: whitesmoke;
+                border: 1px solid dimgrey;
+                color: black; }
 
-                .register-form {
-                  margin: auto;
-                  margin-top: 120px; }
+                .tippy-popper[x-placement^='top'] .tippy-tooltip.light-theme .tippy-arrow {
+                  border-top-color: dimgrey; }
 
-                  .register-form .message {
-                    width: 800px;
-                    margin: auto; }
+                  .tippy-popper[x-placement^='bottom'] .tippy-tooltip.light-theme .tippy-arrow {
+                    border-bottom-color: dimgrey; }
 
-                    .register-form .message-body {
-                      width: 700px;
-                      margin: auto; }
+                    .tippy-popper[x-placement^='left'] .tippy-tooltip.light-theme .tippy-arrow {
+                      border-left-color: dimgrey; }
 
-                      .register-form .message-body input {
-                        width: 400px; }
+                      .tippy-popper[x-placement^='right'] .tippy-tooltip.light-theme .tippy-arrow {
+                        border-right-color: dimgrey; }
 
-                        .register-form .message-body .submit {
-                          width: initial; }
+                        .tippy-tooltip.light-theme .tippy-roundarrow {
+                          fill: dimgrey; }
 
-                          .column {
-                            padding-bottom: 0.25em; }
+                          .help {
+                            font-size: 1em; }
 
-                            .submit-group {
-                              margin-top: 18px; }
+                            .login-form {
+                              margin: auto;
+                              margin-top: 120px; }
 
-                              .submit {
-                                margin-top: 12px;
-                                margin-bottom: 12px; }
+                              .login-form .message {
+                                width: 700px;
+                                margin: auto; }
 
-                                #user-management {
-                                  margin-top: 32px; }
-                                  #user-management .user-messages {
-                                    height: 30px;
-                                    margin-left: 12px; }
-                                    #user-management #empty-tile {
-                                      height: 170px; }
-                                      #user-management .arrow-btn {
-                                        width: 40px !important;
-                                        height: 60px !important;
-                                        margin-left: 43% !important; }
-                                        #user-management #field-add-userlist {
-                                          margin-left: 20px; }
-                                          #user-management .delete-btn {
-                                            margin-top: 12px; }
-                                            #user-management .user-row:hover {
-                                              cursor: pointer; }
-                                              #user-management .field:not(:last-child) {
-                                                margin-bottom: 0; }
+                                .login-form .message-body {
+                                  width: 460px;
+                                  margin: auto; }
+
+                                  .register-form {
+                                    margin: auto;
+                                    margin-top: 120px; }
+
+                                    .register-form .message {
+                                      width: 800px;
+                                      margin: auto; }
+
+                                      .register-form .message-body {
+                                        width: 700px;
+                                        margin: auto; }
+
+                                        .register-form .message-body input {
+                                          width: 400px; }
+
+                                          .register-form .message-body .submit {
+                                            width: initial; }
+
+                                            .column {
+                                              padding-bottom: 0.25em; }
+
+                                              .submit-group {
+                                                margin-top: 18px; }
+
+                                                .submit {
+                                                  margin-top: 12px;
+                                                  margin-bottom: 12px; }
+
+                                                  #user-management {
+                                                    margin-top: 32px; }
+                                                    #user-management .user-messages {
+                                                      height: 30px;
+                                                      margin-left: 12px; }
+                                                      #user-management #empty-tile {
+                                                        height: 170px; }
+                                                        #user-management .arrow-btn {
+                                                          width: 40px !important;
+                                                          height: 60px !important;
+                                                          margin-left: 43% !important; }
+                                                          #user-management #field-add-userlist {
+                                                            margin-left: 20px; }
+                                                            #user-management .delete-btn {
+                                                              margin-top: 12px; }
+                                                              #user-management .user-row:hover {
+                                                                cursor: pointer; }
+                                                                #user-management .field:not(:last-child) {
+                                                                  margin-bottom: 0; }
 
 #document-list-table {
   margin-top: 32px; }

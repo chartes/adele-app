@@ -3,10 +3,14 @@
 {% from 'main/fragments/document_view/_liiiflet_viewer.html' import liiiflet_viewer %}
 
 {% block head_scripts %}
+    <script src="https://unpkg.com/tippy.js@3/dist/tippy.all.min.js"></script>
+
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="{{ url_for('app_bp.static', filename='js/jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('app_bp.static', filename='js/liiiflet.js') }}"></script>
     <link rel="stylesheet" href="{{url_for('app_bp.static', filename='css/liiiflet.css')}}"/>
+
+
 {% endblock head_scripts %}
 
 {% block content %}
@@ -75,7 +79,7 @@
            function load_notice_tab(){
                let url = "{{ url_for('app_bp.view_document_notice',  doc_id='DOC_ID_PLACEHOLDER') }}";
                url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
-               $.ajax({ url: url }).done(
+               return $.ajax({ url: url }).done(
                    function (data) {
                        $('#tab-notice').html(data);
                    }
@@ -85,34 +89,20 @@
            function load_transcription_tab(){
                let url = "{{ url_for('app_bp.view_document_transcription_alignment', doc_id='DOC_ID_PLACEHOLDER') }}";
                url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
-               $.ajax({
+               return $.ajax({
                    url: url
                }).done(function (data) {
                     $('#tab-transcription').html(data);
                     $('#transcription-container').css('display', 'none');
                     $('#translation-container').css('display', 'none');
 
-                    /* style notes */
-                    for(const notePlaceHolder of document.getElementsByClassName("note-placeholder"))  {
-                        const noteId = notePlaceHolder.dataset.noteId;
-                        const noteContent = $(".note-content[data-note-id='"+noteId+"']").get();
-                        $(notePlaceHolder).hover(function(){
-                         
-                         //mouseenter
-                         $(noteContent).css('display', 'block');
-                       },
-                       function(){
-                         //mouseleave
-                         $(".note-content").css('display', 'none');
-                       });
-                    };
                });
            }
 
            function load_commentaries_tab(){
                let url = "{{ url_for('app_bp.view_document_commentaries',  doc_id='DOC_ID_PLACEHOLDER') }}";
                url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
-               $.ajax({ url: url }).done(
+               return $.ajax({ url: url }).done(
                    function (data) {
                        $('#tab-commentaries').html(data);
                    }
@@ -122,7 +112,7 @@
            function load_speech_parts_tab(){
                let url = "{{ url_for('app_bp.view_document_speech_parts',  doc_id='DOC_ID_PLACEHOLDER') }}";
                url = url.replace('DOC_ID_PLACEHOLDER', {{doc.id}});
-               $.ajax({ url: url }).done(
+               return $.ajax({ url: url }).done(
                    function (data) {
                        $('#tab-speech-parts').html(data);
                    }
@@ -169,12 +159,33 @@
            /*
                 Load data & select the notice tab;
            */
-           load_notice_tab();
-           load_transcription_tab(); // also load translation & speech-parts
-           load_commentaries_tab();
-           load_speech_parts_tab();
+            new Promise(function(resolve, reject) {
+                 resolve(load_notice_tab()
+                    .then(() => load_transcription_tab())
+                    .then(() => load_commentaries_tab())
+                    .then(() => load_speech_parts_tab()))
+            }).then(function() {
+                 /* style notes */
+                 for(const notePlaceHolder of document.getElementsByClassName("note-placeholder"))  {
+                     const noteId = notePlaceHolder.dataset.noteId;
+                     const noteContent = document.querySelector(".note-content[data-note-id='"+noteId+"']");
+                     tippy(notePlaceHolder, {
+                         content: noteContent.textContent,
+                         arrow: true,
+                         arrowType: 'round',
+                         size: 'large',
+                         duration: 200,
+                         animation: 'scale',
+                         allowHTML: true,
+                         theme: 'dark',
+                         placement: 'right'
+                     });
 
-           go_to_tab('tab-notice');
+                 }
+            });
+
+            go_to_tab('tab-notice');
+
 
            /*
                 set up visibility filters
