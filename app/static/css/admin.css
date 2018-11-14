@@ -591,18 +591,41 @@ cb {
   vertical-align: middle;
   border-radius: 4px; }
 
-  #speech-parts-toc {
-    margin-bottom: 20px; }
+  persname, placename, cite, note {
+    display: inline;
+    padding: 0.25em 0.25em 0.25em 1.25em;
+    border-radius: 5px;
+    background: transparent no-repeat 0.25em center;
+    background-size: 12px 12px; }
 
-    .ql-editor {
-      counter-reset: segment-count 0; }
-      .ql-editor segment {
-        display: inline-block; }
-        .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
-        .ql-editor segment:before {
-          display: inline-block; }
-      .ql-editor span.br {
-        display: block; }
+    persname {
+      background-color: rgba(45, 112, 223, 0.15);
+      background-image: url(/adele/static/images/ico-person.svg); }
+
+      placename {
+        background-color: rgba(35, 209, 96, 0.15);
+        background-image: url(/adele/static/images/ico-location.svg); }
+
+        note {
+          background-color: rgba(147, 87, 169, 0.15);
+          background-image: url(/adele/static/images/ico-note.svg); }
+
+          cite {
+            background-color: rgba(255, 221, 73, 0.15);
+            background-image: url(/adele/static/images/ico-cite.svg); }
+
+            #speech-parts-toc {
+              margin-bottom: 20px; }
+
+              .ql-editor {
+                counter-reset: segment-count 0; }
+                .ql-editor segment {
+                  display: inline-block; }
+                  .ql-editor p:before, .ql-editor l:before, .ql-editor .segment-bullet:before,
+                  .ql-editor segment:before {
+                    display: inline-block; }
+                .ql-editor span.br {
+                  display: block; }
 
 #transcription-editor segment:before, #transcription-editor p:before,
 #transcription-editor l:before, #transcription-editor .segment-bullet:before,
@@ -630,27 +653,24 @@ cb {
 l {
   font-family: Georgia, Times New Roman, serif; }
 
-  note {
-    text-decoration: underline; }
-
-    .in-editor-actions, .note-actions, .speechpart-actions, .new-speechpart-actions {
-      z-index: 1000;
+  .in-editor-actions, .note-actions, .speechpart-actions, .new-speechpart-actions {
+    z-index: 1000;
+    position: absolute;
+    transform: translateX(-50%);
+    background: #fff;
+    padding: 0.5em;
+    box-shadow: rgba(0, 0, 0, 0.3) 2px 3px 5px; }
+    .in-editor-actions::before, .note-actions::before, .speechpart-actions::before,
+    .new-speechpart-actions::before {
+      content: '';
       position: absolute;
-      transform: translateX(-50%);
+      top: 0;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      transform: rotate(45deg) translateX(-50%);
       background: #fff;
-      padding: 0.5em;
-      box-shadow: rgba(0, 0, 0, 0.3) 2px 3px 5px; }
-      .in-editor-actions::before, .note-actions::before, .speechpart-actions::before,
-      .new-speechpart-actions::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 10px;
-        height: 10px;
-        transform: rotate(45deg) translateX(-50%);
-        background: #fff;
-        z-index: -1; }
+      z-index: -1; }
 
 .note-actions .button, .new-note-actions .button, .speechpart-actions .button,
 .new-speechpart-actions .button {
@@ -837,68 +857,75 @@ l {
     margin: auto;
     width: 90%; }
 
-    .help {
-      font-size: 1em; }
+    .note-placeholder:hover {
+      cursor: pointer; }
 
-      .login-form {
-        margin: auto;
-        margin-top: 120px; }
+      .note-content {
+        display: none;
+        font-weight: bold; }
 
-        .login-form .message {
-          width: 700px;
-          margin: auto; }
+        .help {
+          font-size: 1em; }
 
-          .login-form .message-body {
-            width: 460px;
-            margin: auto; }
+          .login-form {
+            margin: auto;
+            margin-top: 120px; }
 
-            .register-form {
-              margin: auto;
-              margin-top: 120px; }
+            .login-form .message {
+              width: 700px;
+              margin: auto; }
 
-              .register-form .message {
-                width: 800px;
+              .login-form .message-body {
+                width: 460px;
                 margin: auto; }
 
-                .register-form .message-body {
-                  width: 700px;
-                  margin: auto; }
+                .register-form {
+                  margin: auto;
+                  margin-top: 120px; }
 
-                  .register-form .message-body input {
-                    width: 400px; }
+                  .register-form .message {
+                    width: 800px;
+                    margin: auto; }
 
-                    .register-form .message-body .submit {
-                      width: initial; }
+                    .register-form .message-body {
+                      width: 700px;
+                      margin: auto; }
 
-                      .column {
-                        padding-bottom: 0.25em; }
+                      .register-form .message-body input {
+                        width: 400px; }
 
-                        .submit-group {
-                          margin-top: 18px; }
+                        .register-form .message-body .submit {
+                          width: initial; }
 
-                          .submit {
-                            margin-top: 12px;
-                            margin-bottom: 12px; }
+                          .column {
+                            padding-bottom: 0.25em; }
 
-                            #user-management {
-                              margin-top: 32px; }
-                              #user-management .user-messages {
-                                height: 30px;
-                                margin-left: 12px; }
-                                #user-management #empty-tile {
-                                  height: 170px; }
-                                  #user-management .arrow-btn {
-                                    width: 40px !important;
-                                    height: 60px !important;
-                                    margin-left: 43% !important; }
-                                    #user-management #field-add-userlist {
-                                      margin-left: 20px; }
-                                      #user-management .delete-btn {
-                                        margin-top: 12px; }
-                                        #user-management .user-row:hover {
-                                          cursor: pointer; }
-                                          #user-management .field:not(:last-child) {
-                                            margin-bottom: 0; }
+                            .submit-group {
+                              margin-top: 18px; }
+
+                              .submit {
+                                margin-top: 12px;
+                                margin-bottom: 12px; }
+
+                                #user-management {
+                                  margin-top: 32px; }
+                                  #user-management .user-messages {
+                                    height: 30px;
+                                    margin-left: 12px; }
+                                    #user-management #empty-tile {
+                                      height: 170px; }
+                                      #user-management .arrow-btn {
+                                        width: 40px !important;
+                                        height: 60px !important;
+                                        margin-left: 43% !important; }
+                                        #user-management #field-add-userlist {
+                                          margin-left: 20px; }
+                                          #user-management .delete-btn {
+                                            margin-top: 12px; }
+                                            #user-management .user-row:hover {
+                                              cursor: pointer; }
+                                              #user-management .field:not(:last-child) {
+                                                margin-bottom: 0; }
 
 #document-list-table {
   margin-top: 32px; }

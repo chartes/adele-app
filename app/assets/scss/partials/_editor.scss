@@ -189,6 +189,30 @@ cb {
   border-radius: 4px;
 }
 
+persname, placename, cite, note {
+  display: inline;
+  padding: .25em .25em .25em 1.25em;
+  border-radius: 5px;
+  background: transparent no-repeat .25em center;
+  background-size: 12px 12px;
+}
+persname {
+  background-color: rgba(45, 112, 223, .15);
+  background-image: url(/adele/static/images/ico-person.svg);
+}
+placename {
+  background-color: rgba(35, 209, 96, .15);
+  background-image: url(/adele/static/images/ico-location.svg);
+}
+note {
+  background-color: rgba(147, 87, 169, .15);
+  background-image: url(/adele/static/images/ico-note.svg);
+}
+cite {
+  background-color: rgba(255, 221, 73, .15);
+  background-image: url(/adele/static/images/ico-cite.svg);
+}
+
 #speech-parts-toc {
   margin-bottom: 20px;
 }
@@ -230,7 +254,7 @@ l {
   font-family: Georgia, Times New Roman, serif;
 }
 note {
-    text-decoration: underline;
+    //text-decoration: underline;
 }
 
 .in-editor-actions, .note-actions, .speechpart-actions, .new-speechpart-actions {
