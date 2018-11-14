@@ -27,6 +27,7 @@
                 <div v-if="hasTranscription">
                     <facsimile-editor></facsimile-editor>
                 </div>
+                <minimal-message v-else-if="!hasImage" :body="'Aucun manifeste pour le moment. Un manifeste est nécessaire pour éditer le facsimilé.'"/>
                 <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer le facsimilé.'"/>
             </tab>
 
@@ -120,6 +121,9 @@
     computed: {
       hasTranscription () {
         return !!this.transcription
+      },
+      hasImage () {
+        return !!this.document.length
       },
       allowedToSwapAuthor () {
         return (

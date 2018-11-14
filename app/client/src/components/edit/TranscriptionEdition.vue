@@ -10,7 +10,7 @@
         <p class="has-text-right is-size-7" style="margin-bottom: 1em">
             <span class="tag">
                 Affichage : &nbsp;&nbsp;&nbsp;
-                <visibility-toggle :action="toggle" :param="'image'" :visible="visibility.image">image</visibility-toggle>
+                <visibility-toggle v-if="hasImage" :action="toggle" :param="'image'" :visible="visibility.image">image</visibility-toggle>
                 &nbsp;&nbsp;&nbsp;
                 <visibility-toggle :action="toggle" :param="'transcription'" :visible="visibility.transcription">transcription</visibility-toggle>
                 &nbsp;&nbsp;&nbsp;
@@ -20,7 +20,7 @@
 
         <div class="columns">
 
-            <div class="column" v-show="visibility.image" :class="columnSize">
+            <div class="column" v-show="visibility.image && hasImage" :class="columnSize">
 
                 <h2 class="subtitle">Image</h2>
                 <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
@@ -104,7 +104,7 @@
 
       nbCols () {
         let size = 0;
-        if (this.visibility.image) size++;
+        if (this.visibility.image && this.hasImage) size++;
         if (this.visibility.transcription) size++;
         if (this.visibility.translation) size++;
         return size;
@@ -149,6 +149,9 @@
       hasTranscription () {
         return !!this.transcriptionWithNotes;
       },
+      hasImage () {
+        return !!this.document.images.length;
+      },
       hasReferenceTranscription () {
         return !!this.referenceTranscription
       },
@@ -164,6 +167,7 @@
       },
 
       ...mapGetters('document', ['manifestURL']),
+      ...mapState('document', ['document']),
       ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading']),
       ...mapState('translation', ['translationWithNotes', 'translationLoading', 'referenceTranslation']),
       ...mapState('user', ['currentUser', 'author']),
