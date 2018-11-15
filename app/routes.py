@@ -129,7 +129,7 @@ def dashboard_documents():
 @login_required
 def dashboard_document_list():
     user = current_app.get_current_user()
-    docs = user.documents_i_can_edit
+    docs = user.documents_from_my_whitelists
     return render_template_with_token('main/fragments/_document_management_list.html', docs=docs, current_user=user)
 
 

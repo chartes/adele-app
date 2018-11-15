@@ -239,6 +239,14 @@ class Document(db.Model):
                                        primaryjoin=(association_document_linked_to_document.c.doc_id==id),
                                        secondaryjoin=(association_document_linked_to_document.c.linked_doc_id==id))
 
+    @property
+    def is_closed(self):
+        if not self.date_closing:
+            return False
+        else:
+            doc_closing_time = datetime.datetime.strptime(self.date_closing, '%Y-%m-%d %H:%M:%S')
+            return datetime.datetime.now() > doc_closing_time
+
     def serialize(self):
         return {
             'id': self.id,
@@ -622,10 +630,12 @@ class User(db.Model, UserMixin):
 
     @property
     def documents_i_can_edit(self):
-        all_docs = Document.query.all()
-        docs = []
+
         if self.is_anonymous:
             return []
+
+        all_docs = Document.query.all()
+        docs = []
         if self.is_admin:
             docs = all_docs
         else:
@@ -633,21 +643,21 @@ class User(db.Model, UserMixin):
                 if doc.user_id == self.id or (doc.whitelist and self in doc.whitelist.users):
                     if self.is_teacher:
                         docs.append(doc)
-                    else:
-                        if doc.date_closing:
-                            # check the closing date
-                            now = datetime.datetime.now()
-                            doc_closing_time = datetime.datetime.strptime(doc.date_closing, '%Y-%m-%d %H:%M:%S')
-                            if now > doc_closing_time:
-                                pass
-                                #print("document edition is closed")
-                            else:
-                                docs.append(doc)
-                            pass
-                        else:
-                            docs.append(doc)
+                    elif not doc.is_closed:
+                        docs.append(doc)
         return docs
 
+    @property
+    def documents_from_my_whitelists(self):
+        if self.is_anonymous:
+            return []
+
+        docs = []
+        for doc in Document.query.all():
+            if doc.whitelist:
+                if self in doc.whitelist.users:
+                    docs.append(doc)
+        return docs
 
 class UserInvitation(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
