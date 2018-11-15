@@ -1,57 +1,57 @@
 <template>
-    <div id="transcription-edition" :class="isNight">
+  <div id="transcription-edition" :class="isNight">
 
-        <transition name="fade">
-            <div id="joke" v-if="nbCols === 0">
-                <img id="astronaut" src="/adele/static/images/astronaut.svg"/>
-            </div>
-        </transition>
+    <transition name="fade">
+      <div id="joke" v-if="nbCols === 0">
+        <img id="astronaut" src="/adele/static/images/astronaut.svg"/>
+      </div>
+    </transition>
 
-        <p class="has-text-right is-size-7" style="margin-bottom: 1em">
-            <span class="tag">
-                Affichage : &nbsp;&nbsp;&nbsp;
-                <visibility-toggle v-if="hasImage" :action="toggle" :param="'image'" :visible="visibility.image">image</visibility-toggle>
-                &nbsp;&nbsp;&nbsp;
-                <visibility-toggle :action="toggle" :param="'transcription'" :visible="visibility.transcription">transcription</visibility-toggle>
-                &nbsp;&nbsp;&nbsp;
-                <visibility-toggle :action="toggle" :param="'translation'" :visible="visibility.translation">traduction</visibility-toggle>
-            </span>
-        </p>
+    <p class="has-text-right is-size-7" style="margin-bottom: 1em">
+      <span class="tag">
+        Affichage : &nbsp;&nbsp;&nbsp;
+        <visibility-toggle v-if="hasImage" :action="toggle" :param="'image'" :visible="visibility.image">image</visibility-toggle>
+        &nbsp;&nbsp;&nbsp;
+        <visibility-toggle :action="toggle" :param="'transcription'" :visible="visibility.transcription">transcription</visibility-toggle>
+        &nbsp;&nbsp;&nbsp;
+        <visibility-toggle :action="toggle" :param="'translation'" :visible="visibility.translation">traduction</visibility-toggle>
+      </span>
+    </p>
 
-        <div class="columns">
+    <div class="columns">
 
-            <div class="column" v-show="visibility.image && hasImage" :class="columnSize">
+      <div class="column" v-show="visibility.image && hasImage" :class="columnSize">
 
-                <h2 class="subtitle">Image</h2>
-                <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
+        <h2 class="subtitle">Image</h2>
+        <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
 
-            </div>
+      </div>
 
-            <div class="column" v-show="visibility.transcription" :class="columnSize">
+      <div class="column" v-show="visibility.transcription" :class="columnSize">
 
-                <h2 class="subtitle">Transcription <small v-if="displayReferenceTranscription" class="tag is-dark is-round">Référence</small></h2>
-                <div v-if="displayReferenceTranscription" v-html="referenceTranscription.content"></div>
-                <transcription-editor v-else-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
-                <div v-else>
-                    <minimal-message v-if="!transcriptionLoading" :body="'Aucune transcription pour le moment'"/>
-                    <p v-if="allowedToCreateTranscription"><a ref="createTranscriptionButton" class="button is-link" @click="createTranscription">Ajouter une transcription</a></p>
-                </div>
-
-            </div>
-
-            <div class="column" v-show="visibility.translation" :class="columnSize">
-
-                <h2 class="subtitle">Traduction <small v-if="displayReferenceTranslation" class="tag is-dark is-round">Référence</small></h2>
-                <div v-if="displayReferenceTranslation" v-html="referenceTranslation.content"></div>
-                <translation-editor v-else-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
-                <div v-else>
-                    <minimal-message v-if="!translationLoading" :body="'Aucune traduction pour le moment'"/>
-                    <p v-if="allowedToCreateTranslation"><a ref="createTranslationButton" class="button is-link" @click="createTranslation">Ajouter une traduction</a></p>
-                </div>
-
-            </div>
+        <h2 class="subtitle">Transcription <small v-if="displayReferenceTranscription" class="tag is-dark is-round">Référence</small></h2>
+        <div v-if="displayReferenceTranscription" v-html="referenceTranscription.content"></div>
+        <transcription-editor v-else-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
+        <div v-else>
+          <minimal-message v-if="!transcriptionLoading" :body="'Aucune transcription pour le moment'"/>
+          <p v-if="allowedToCreateTranscription"><a ref="createTranscriptionButton" class="button is-link" @click="createTranscription">Ajouter une transcription</a></p>
         </div>
+
+      </div>
+
+      <div class="column" v-show="visibility.translation" :class="columnSize">
+
+        <h2 class="subtitle">Traduction <small v-if="displayReferenceTranslation" class="tag is-dark is-round">Référence</small></h2>
+        <div v-if="displayReferenceTranslation" v-html="referenceTranslation.content"></div>
+        <translation-editor v-else-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
+        <div v-else>
+          <minimal-message v-if="!translationLoading" :body="'Aucune traduction pour le moment'"/>
+          <p v-if="allowedToCreateTranslation"><a ref="createTranslationButton" class="button is-link" @click="createTranslation">Ajouter une traduction</a></p>
+        </div>
+
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
@@ -177,29 +177,29 @@
 </script>
 
 <style scoped>
-    #joke {
-        background: #000 url(/adele/static/images/solar-system.svg) no-repeat 50% 50%;
-        background-size: cover;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
+  #joke {
+    background: #000 url(/adele/static/images/solar-system.svg) no-repeat 50% 50%;
+    background-size: cover;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+  #astronaut {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    animation: astronaut-rotation 5s infinite linear;
+  }
+  @keyframes astronaut-rotation {
+    0% {
+      transform: translate(-50%, -50%) rotate(-30deg);
     }
-    #astronaut {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-30deg);
-        animation: astronaut-rotation 5s infinite linear;
+    100% {
+      transform: translate(-50%, -50%) rotate(330deg);
     }
-    @keyframes astronaut-rotation {
-        0% {
-            transform: translate(-50%, -50%) rotate(-30deg);
-        }
-        100% {
-            transform: translate(-50%, -50%) rotate(330deg);
-        }
-    }
+  }
 </style>

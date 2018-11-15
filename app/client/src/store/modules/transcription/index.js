@@ -51,19 +51,19 @@ const mutations = {
     if (!transcriptionShadowQuill) {
 
       transcriptionShadowQuillElement.innerHTML = payload.content || "";
-      transcriptionShadowQuill = new Quill(transcriptionShadowQuillElement);
+      transcriptionShadowQuill = new Quill(transcriptionShadowQuillElement)
       state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
 
       notesShadowQuillElement.innerHTML = payload.withNotes || "";
-      notesShadowQuill = new Quill(notesShadowQuillElement);
+      notesShadowQuill = new Quill(notesShadowQuillElement)
       state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
 
       speechpartsShadowQuillElement.innerHTML = payload.withSpeechparts || "";
-      speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement);
+      speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement)
       state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
 
       facsimileShadowQuillElement.innerHTML = payload.withFacsimile || "";
-      facsimileShadowQuill = new Quill(facsimileShadowQuillElement);
+      facsimileShadowQuill = new Quill(facsimileShadowQuillElement)
       state.transcriptionWithFacsimile = facsimileShadowQuillElement.children[0].innerHTML;
 
     }
@@ -111,17 +111,15 @@ const mutations = {
   },
   ADD_OPERATION (state, payload) {
 
-    //console.log("STORE MUTATION transcription/ADD_OPERATION", payload.ops)
-
     const deltaFilteredForContent = filterDeltaOperations(transcriptionShadowQuill, payload, 'content')
     const deltaFilteredForNotes = filterDeltaOperations(notesShadowQuill, payload, 'notes')
     const deltaFilteredForSpeechparts = filterDeltaOperations(speechpartsShadowQuill, payload, 'speechparts')
     const deltaFilteredForFacsimile = filterDeltaOperations(facsimileShadowQuill, payload, 'facsimile')
 
-    transcriptionShadowQuill.updateContents(deltaFilteredForContent);
-    notesShadowQuill.updateContents(deltaFilteredForNotes);
-    speechpartsShadowQuill.updateContents(deltaFilteredForSpeechparts);
-    facsimileShadowQuill.updateContents(deltaFilteredForFacsimile);
+    transcriptionShadowQuill.updateContents(deltaFilteredForContent)
+    notesShadowQuill.updateContents(deltaFilteredForNotes)
+    speechpartsShadowQuill.updateContents(deltaFilteredForSpeechparts)
+    facsimileShadowQuill.updateContents(deltaFilteredForFacsimile)
 
     state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
@@ -401,7 +399,9 @@ const actions = {
     sanitizedWithFacsimile = convertLinebreakQuillToTEI(sanitizedWithFacsimile);
     const imageAlignments = computeImageAlignmentsPointers(sanitizedWithFacsimile);
     imageAlignments.forEach(ia => {
+      console.log(ia)
       let found = rootGetters['facsimile/getZoneById'](ia.zone_id);
+      console.log('found', found)
       ia.canvas_idx = found.canvas_idx;
       ia.img_idx = found.img_idx;
     });

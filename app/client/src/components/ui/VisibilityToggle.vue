@@ -12,18 +12,8 @@
     props: ['visible', 'action', 'param'],
     methods: {
       clickHandler () {
-        console.log('clickHandler')
         this.action(this.param);
-      }
-    },
-    computed: {
-      iconClass () {
-        return this.visible ? 'fa-eye' : 'fa-eye-slash'
       }
     }
   }
 </script>
-
-<style scoped>
-
-</style>

@@ -1,36 +1,36 @@
 <template>
-    <div>
-        <div class="editor-area">
-            <div class="editor-controls" ref="controls">
-                <div class="editor-controls-group">
-                    <label>Structure éditoriale</label>
-                    <editor-button :active="isZoneButtonActive" :callback="setFacsimileEditModeNew" :format="'zone'"/>
-                </div>
-            </div>
-            <div class="editor-container">
-                <div class="quill-editor" ref="editor" spellcheck="false"></div>
-                <in-editor-actions
-                        v-show="selectedZoneId && this.editor.hasFocus()"
-                        :style="actionsPosition"
-                        refs="facsimileActions"
-                        :edit="setFacsimileEditModeEdit"
-                        :delete="setFacsimileEditModeDelete"/>
-            </div>
-
-            <facsimile-zone-list-form
-                    v-if="facsimileEditMode == 'new' || facsimileEditMode == 'edit'"
-                    :zoneId="selectedZoneId"
-                    :submit="updateAlignment"
-                    :cancel="closeFragmentsListEdit"
-            />
-            <modal-confirm-facsimile-delete
-                    v-if="facsimileEditMode == 'delete'"
-                    :cancel="closeFragmentsListEdit"
-                    :submit="deleteTextAlignment"
-            />
-
+  <div>
+    <div class="editor-area">
+      <div class="editor-controls" ref="controls">
+        <div class="editor-controls-group">
+          <label>Structure éditoriale</label>
+          <editor-button :active="isZoneButtonActive" :callback="setFacsimileEditModeNew" :format="'zone'"/>
         </div>
+      </div>
+      <div class="editor-container">
+        <div class="quill-editor" ref="editor" spellcheck="false"></div>
+        <in-editor-actions
+                v-show="selectedZoneId && this.editor.hasFocus()"
+                :style="actionsPosition"
+                refs="facsimileActions"
+                :edit="setFacsimileEditModeEdit"
+                :delete="setFacsimileEditModeDelete"/>
+      </div>
+
+      <facsimile-zone-list-form
+              v-if="facsimileEditMode == 'new' || facsimileEditMode == 'edit'"
+              :zoneId="selectedZoneId"
+              :submit="updateAlignment"
+              :cancel="closeFragmentsListEdit"
+      />
+      <modal-confirm-facsimile-delete
+              v-if="facsimileEditMode == 'delete'"
+              :cancel="closeFragmentsListEdit"
+              :submit="deleteTextAlignment"
+      />
+
     </div>
+  </div>
 </template>
 
 <script>
@@ -173,8 +173,27 @@
         return this.editorHasFocus && this.buttons.zone;
       },
       ...mapState('transcription', ['transcription']),
-      ...mapState('facsimile', ['newFacsimileZone', 'fragments']),
+      ...mapState('facsimile', ['newFacsimileZone', 'fragments', 'deletedFacsimileZoneId']),
       ...mapGetters('facsimile', ['getZoneById']),
+    },
+
+    watch: {
+      deletedFacsimileZoneId (zoneId) {
+        console.log('deletedFacsimileZoneId', zoneId)
+        const c = this.editor.getContents()
+        console.log('editor content', c)
+        let index = 0;
+        c.ops.forEach(op => {
+          console.log("op", op.attributes && op.attributes.zone ? op.attributes.zone : null, op.attributes && op.attributes.zone && op.attributes.zone === zoneId)
+          if (op.attributes && op.attributes.zone && op.attributes.zone === zoneId) {
+            this.editor.formatText(index, op.insert.length, {zone: false}, 'api')
+          }
+          index += op.insert.length
+          console.log("next index", index)
+
+        })
+      }
     }
+
   }
 </script>

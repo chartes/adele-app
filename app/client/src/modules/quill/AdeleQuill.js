@@ -28,6 +28,16 @@ import List from 'quill/formats/list';
 import SpeechpartBlot from './blots/editorial/SpeechpartBlot';
 import ColumnBreakBlot from './blots/editorial/ColumnBreak';
 
+//import Inline from 'quill/blots/inline';
+
+let Inline = Quill.import('blots/inline');
+
+Inline.order = [
+  'cursor', 'inline',   // Must be lower
+  'del', 'zone', 'speechpart', 'person', 'location', 'note', 'underline', 'strike', 'italic', 'bold', 'script',
+  'link', 'code'        // Must be higher
+];
+
 Quill.register('modules/clipboard', PlainClipboard, true);
 
 Quill.register(LineBreak, true);

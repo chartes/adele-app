@@ -22,7 +22,8 @@ const state = {
   fragments: [],
   alignments: [],
   loading: false,
-  newFacsimileZone: false
+  newFacsimileZone: false,
+  deletedFacsimileZoneId: false,
 
 };
 
@@ -36,11 +37,16 @@ const mutations = {
 
   UPDATE_FRAGMENTS (state, payload) {
     state.fragments = payload;
-    console.warn("STORE MUTATION UPDATE_FRAGMENTS")
   },
 
   UPDATE_ALIGNMENTS (state, payload) {
     state.alignments = payload;
+  },
+  UPDATE_CANVAS (state, payload) {
+    state.currentCanvas = payload;
+  },
+  DELETE_ZONE (state, payload) {
+    state.deletedFacsimileZoneId = payload;
   },
 
 
@@ -62,15 +68,12 @@ const actions = {
 
     })
 
-
   },
   fetchFragments ({ commit, rootState, rootGetters, state }) {
 
     if (!rootGetters['document/manifestURL']) {
       return;
     }
-    console.warn("STORE ACTION facsimile/fetchFragments");
-
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
     const canvas = state.canvasNames[state.currentCanvas];
@@ -98,13 +101,11 @@ const actions = {
     if (!rootGetters['document/manifestURL']) {
       return;
     }
-
     const doc_id = rootState.document.document.id;
     const user_id = rootState.user.author.id;
 
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/images/from-user/${user_id}`).then( response => {
       let data = response.data.data;
-      console.warn("STORE ACTION facsimile/fetchAlignments", data);
       commit('UPDATE_ALIGNMENTS', data);
 
     });
@@ -115,7 +116,13 @@ const actions = {
     if (!rootState.document.manifestUrl) {
       return;
     }
-    console.log("STORE ACTION facsimile/addAlignment", alignment)
+  },
+
+  updateCanvas ({commit}, canvasIndex) {
+    commit('UPDATE_CANVAS', canvasIndex)
+  },
+  deleteFacsimileZone ({commit}, zoneId) {
+    commit('DELETE_ZONE', zoneId)
   },
 };
 

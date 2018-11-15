@@ -12,11 +12,9 @@ const state = {
 const mutations = {
 
   UPDATE_ALL (state, speechparts) {
-    console.log("STORE ACTION speechpart/UPDATE_ALL", speechparts);
     state.speechparts = speechparts;
   },
   NEW (state, speechpart) {
-    console.log("STORE ACTION speechpart/NEW", speechpart);
     state.newSpeechpart = speechpart;
     state.speechparts.push(speechpart);
   },
@@ -33,7 +31,6 @@ const mutations = {
 const actions = {
 
   fetch ({ commit, getters, rootGetters }, { doc_id, user_id }) {
-    console.log('STORE ACTION speechparts/fetch', doc_id, user_id)
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/discours/from-user/${user_id}`)
       .then( (response) => {
         commit('UPDATE_ALL', response.data.data)
@@ -42,7 +39,6 @@ const actions = {
       });
   },
   add ({ commit, getters, rootState }, newSpeechpart) {
-    console.log("STORE ACTION speechparts/add", newSpeechpart, rootState);
     commit('NEW', newSpeechpart);
   },
   mouseover ({ commit, getters, rootState }, { speechpart, posY} ) {
@@ -50,7 +46,6 @@ const actions = {
   },
 
   update ({ commit, getters, rootState }, speechpart) {
-    console.log("STORE ACTION speechparts/update", speechpart);
     return commit('UPDATE_ONE', speechpart);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theSpeechpart = {
@@ -69,7 +64,6 @@ const actions = {
       })
   },
   delete ({ commit, getters, rootState }, speechpart) {
-    console.log("STORE ACTION speechparts/delete", speechpart);
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
     const theSpeechpart = {
       data: [{

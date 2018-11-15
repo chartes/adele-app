@@ -38,6 +38,7 @@
           loadAnnotations: this.loadAnnotations,
           saveAnnotations: this.saveAnnotations,
           onDeleteAnnotation: this.onDeleteAnnotation,
+          onPageChange: this.onPageChange,
           getAnnotationId: this.getAnnotationId,
           loadDefaultAnnotationType: this.loadDefaultAnnotationType,
           saveAnnotationAlignments: this.saveAnnotationAlignments
@@ -75,6 +76,11 @@
       },
       onDeleteAnnotation (zone_id) {
         console.log("propagate deletion of image zone: ", zone_id);
+        this.$store.dispatch('facsimile/deleteFacsimileZone', zone_id)
+      },
+      onPageChange (canvas_idx) {
+        console.log("page changed: ", canvas_idx);
+        this.$store.dispatch('facsimile/updateCanvas', canvas_idx)
       },
       getAnnotationId (annotation) {
         let zone_id
@@ -107,6 +113,7 @@
     },
     watch: {
       savingStatus (newStatus, oldStatus) {
+        console.log('savingStatus', newStatus, oldStatus)
         if (oldStatus === 'saving' && newStatus === 'uptodate') {
           this.liiiflet.refresh()
         }

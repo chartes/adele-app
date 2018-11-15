@@ -7,7 +7,7 @@ import Delta from 'quill-delta';
 
 const globalFilters = {
   removeAttributes: ['color','background'],
-  keepFormats: ['bold', 'italic', 'smallcaps', 'underline', 'del', 'expan', 'superscript', 'location', 'person']
+  keepFormats: ['bold', 'italic', 'smallcaps', 'underline', 'del', 'expan', 'superscript', 'location', 'person', 'cite']
 }
 const deltaOperationsFilters = {
   content: {
@@ -53,9 +53,6 @@ const filterDeltaOperations = (quillInstance, delta, mode) => {
   // Renvoie un nouveau delta filtré selon arrAttributesToRemove
 
   const ops = [...delta.ops]
-  if (mode === 'speechparts') {
-    console.log("filterDeltaOperations", mode, delta.ops, ops)
-  }
 
   let filteredDelta = new Delta();
   let insertionIndex = 0;
@@ -84,7 +81,6 @@ const filterOperation = (quillInstance, operation, mode, insertionIndex) => {
   const filters = deltaOperationsFilters[mode]
   let newOp = {};
   let type = getOperationType(operation)
-  logOperation(operation)
 
   // Copie le type d'operation
   if (operation[type] !== null && typeof operation[type] === 'object') {
@@ -93,10 +89,9 @@ const filterOperation = (quillInstance, operation, mode, insertionIndex) => {
     newOp[type] = operation[type];
   }
 
-  // TO DO vérifier que la suppression de ce qui suit ne crée pas des effets de bord
   // Copie les formats de l'instance quill au point d'insertion
   let formats = quillInstance.getFormat(insertionIndex);
-  if (type !== 'delete') {
+  if (type === 'insert') {
     formats = _pick(formats, filters.keepFormats);
     if (!_isEmpty(formats)) newOp.attributes = formats;
   }
@@ -117,10 +112,14 @@ const getOperationType = operation => {
     return 'delete';
   }
 }
-const logOperation = operation => {
-  const t = getOperationType(operation)
-  const type = 'type: ' + t + '(' + operation[t]  + ')'
-  console.log('logOperation', type)
+const operationToString = operation => {
+  const t = getOperationType(operation);
+  let attributes, attrString = '';
+  if (operation.attributes) {
+    attributes = operation.attributes
+    attrString = Object.keys(attributes).map(attr => attr + ': '+attributes[attr]).join(', ')
+  }
+  return `${t} (${operation[t]}) { ${attrString} }`
 }
 
 const removeNotesFromDelta = (delta) => {
