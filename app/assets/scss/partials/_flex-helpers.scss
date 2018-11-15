@@ -1,0 +1,11 @@
+.is-flex-column {
+  display: flex;
+  flex-direction: column;
+
+  & > * {
+    flex: 0 0 auto;
+  }
+}
+.is-flex-fill {
+  flex-grow: 1;
+}

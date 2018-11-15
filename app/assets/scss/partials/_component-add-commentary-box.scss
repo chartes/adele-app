@@ -1,0 +1,22 @@
+.add-commentary-box {
+
+   margin-top: 3rem;
+   padding: 1.5rem;
+   border: 1px solid #f5f5f5;
+   border-radius: 5px;
+
+   .box-title {
+      margin-bottom: 1rem;
+   }
+
+   .box-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -.5rem;
+   }
+
+}
+.button-commentary {
+   width: calc(33% - 1rem);
+   margin: .5rem;
+}
