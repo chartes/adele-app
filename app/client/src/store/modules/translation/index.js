@@ -106,7 +106,6 @@ const actions = {
       commit('LOADING_STATUS', false);
 
       if (response.data.errors && response.data.errors.status === 404) {
-        console.log("NO translation found");
         return;
       }
 
@@ -140,7 +139,6 @@ const actions = {
 
 
       if (response.data.errors && response.data.errors.status === 404) {
-        console.warn("NO reference translation found");
         return;
       }
       let translation = false;
@@ -196,7 +194,7 @@ const actions = {
   },
   saveNotes ({ commit, rootGetters, state, rootState }) {
 
-    console.log('STORE ACTION translation/saveNotes');
+    console.warn('STORE ACTION translation/saveNotes');
 
     // compute notes pointers
     let sanitizedWithNotes = stripSegments(state.translationWithNotes);
@@ -210,7 +208,6 @@ const actions = {
       note.translation_username = rootState.user.author.username;
       note.note_type = found.note_type.id;
     });
-
     const auth = rootGetters['user/authHeader'];
 
     return new Promise( ( resolve, reject ) => {

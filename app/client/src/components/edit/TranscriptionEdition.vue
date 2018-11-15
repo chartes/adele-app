@@ -1,11 +1,7 @@
 <template>
   <div id="transcription-edition" :class="isNight">
 
-    <transition name="fade">
-      <div id="joke" v-if="nbCols === 0">
-        <img id="astronaut" src="/adele/static/images/astronaut.svg"/>
-      </div>
-    </transition>
+    <joke v-if="nbCols === 0"/>
 
     <p class="has-text-right is-size-7" style="margin-bottom: 1em">
       <span class="tag">
@@ -62,10 +58,14 @@
   import TranslationEditor from "../editors/TranslationEditor";
   import VisibilityToggle from "../ui/VisibilityToggle";
   import MinimalMessage from "../ui/MinimalMessage";
+  import Joke from '../ui/Joke';
+  import EditionColumnsToggleMixins from '../../mixins/EditionColumnsToggle'
 
   export default {
     name: "transcription-edition",
+    mixins: [EditionColumnsToggleMixins],
     components: {
+      Joke,
       MinimalMessage,
       VisibilityToggle,
       IIIFMap,
@@ -82,9 +82,6 @@
       }
     },
     methods: {
-      toggle (what) {
-        this.visibility[what] = !this.visibility[what];
-      },
       createTranscription () {
         this.$refs.createTranscriptionButton.setAttribute('disabled','disabled');
         this.$store.dispatch('transcription/create')
@@ -109,18 +106,6 @@
         if (this.visibility.translation) size++;
         return size;
       },
-      columnSize () {
-        if (this.nbCols == 2) {
-          return 'is-half'
-        } else if (this.nbCols == 3) {
-          return 'is-one-third'
-        }
-        return false;
-      },
-      isNight () {
-        return this.nbCols ? 'is-night' : '';
-      },
-
       displayTranscriptionEditor () {
         return !!this.transcriptionWithNotes && !this.transcriptionLoading
       },
@@ -175,31 +160,3 @@
     }
   }
 </script>
-
-<style scoped>
-  #joke {
-    background: #000 url(/adele/static/images/solar-system.svg) no-repeat 50% 50%;
-    background-size: cover;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-  }
-  #astronaut {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    animation: astronaut-rotation 5s infinite linear;
-  }
-  @keyframes astronaut-rotation {
-    0% {
-      transform: translate(-50%, -50%) rotate(-30deg);
-    }
-    100% {
-      transform: translate(-50%, -50%) rotate(330deg);
-    }
-  }
-</style>

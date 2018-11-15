@@ -399,9 +399,7 @@ const actions = {
     sanitizedWithFacsimile = convertLinebreakQuillToTEI(sanitizedWithFacsimile);
     const imageAlignments = computeImageAlignmentsPointers(sanitizedWithFacsimile);
     imageAlignments.forEach(ia => {
-      console.log(ia)
       let found = rootGetters['facsimile/getZoneById'](ia.zone_id);
-      console.log('found', found)
       ia.canvas_idx = found.canvas_idx;
       ia.img_idx = found.img_idx;
     });
