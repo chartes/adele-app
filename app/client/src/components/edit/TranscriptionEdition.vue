@@ -16,10 +16,10 @@
 
     <div class="columns">
 
-      <div class="column" v-show="visibility.image && hasImage" :class="columnSize">
+      <div class="column is-flex-column" v-show="visibility.image && hasImage" :class="columnSize">
 
         <h2 class="subtitle">Image</h2>
-        <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" ></IIIFMap>
+        <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" class="is-flex-fill" ></IIIFMap>
 
       </div>
 

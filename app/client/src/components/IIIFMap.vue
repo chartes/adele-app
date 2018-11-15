@@ -1,8 +1,6 @@
 <template>
-    <div>
-        <div id="liiiflet-map" v-if="!error" class="iiif-map" ref="map"></div>
-        <a-message v-if="error" :title="'Erreur'" :body="error" :type="'is-danger'"/>
-    </div>
+  <div id="liiiflet-map" v-if="!error" class="iiif-map" ref="map"></div>
+  <a-message v-else :title="'Erreur'" :body="error" :type="'is-danger'"/>
 </template>
 
 <script>

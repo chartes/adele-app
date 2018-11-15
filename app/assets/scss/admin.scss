@@ -2,6 +2,7 @@
 //@import "partials/leaflet";
 //@import "partials/leaflet.iiifmap";
 //@import "partials/leaflet.adele";
+@import "partials/flex-helpers";
 @import "partials/quill.core";
 //@import "fragments/quill.adele";
 @import "partials/quill.icons";
@@ -11,5 +12,6 @@
 @import "partials/users";
 @import "partials/dashboard";
 @import "partials/loading";
+@import "partials/component-add-commentary-box";
 @import "partials/component-savebar";
 @import "partials/component-transitions";

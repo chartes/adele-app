@@ -1,7 +1,7 @@
 <template>
-    <div v-if="isActive">
+    <div class="tab">
 
-      <slot></slot>
+      <slot v-if="isActive"></slot>
 
     </div>
 </template>

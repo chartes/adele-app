@@ -10,7 +10,7 @@
       </ul>
     </div>
 
-    <div class="tabs-content">
+    <div class="tabs-content is-flex-fill">
 
       <slot></slot>
 

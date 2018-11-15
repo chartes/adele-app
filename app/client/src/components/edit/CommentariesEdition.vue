@@ -11,7 +11,7 @@
 
       <h2 class="subtitle">Commentaires</h2>
 
-      <tabs tabs-style="is-toggle">
+      <tabs tabs-style="is-boxed is-small">
 
         <tab :selected="index === 0"
              v-for="comm, index in commentaries"
@@ -23,15 +23,14 @@
 
       </tabs>
 
-      <hr>
-
-      <p>Créer un nouveau commentaire :</p>
-      <p>&nbsp;</p>
-      <p>
-        <a class="button" v-for="ct in missingCommentaryTypes" @click="createNewCommentary(ct.id, ct.label)">
-          {{ ct.label }}
-        </a>
-      </p>
+      <div class="add-commentary-box">
+        <p class="box-title">Créer un nouveau commentaire :</p>
+        <div class="box-buttons">
+          <a class="button button-commentary" v-for="ct in missingCommentaryTypes" @click="createNewCommentary(ct.id, ct.label)">
+            {{ ct.label }}
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -1,6 +1,6 @@
 <template>
 
-  <div>
+  <div id="document-edition">
 
     <loading-indicator :active="transcriptionLoading || translationLoading" :full-page="true"/>
 
@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <tabs :on-tab-change="onTabChange">
+    <tabs :on-tab-change="onTabChange" class="is-flex-column">
 
       <tab name="Édition" :selected="true">
         <transcription-edition/>
