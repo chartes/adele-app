@@ -32,10 +32,13 @@ import ColumnBreakBlot from './blots/editorial/ColumnBreak';
 
 let Inline = Quill.import('blots/inline');
 
+
+// Lower index means deeper in the DOM tree, since not found (-1) is for embeds
 Inline.order = [
   'cursor', 'inline',   // Must be lower
-  'del', 'zone', 'speechpart', 'person', 'location', 'note', 'underline', 'strike', 'italic', 'bold', 'script',
-  'link', 'code'        // Must be higher
+  'expan', 'underline', 'strike', 'italic', 'bold', 'script',
+  'del', 'link', 'code',
+  'person', 'location', 'note', 'zone', 'speechpart',          // Must be higher
 ];
 
 Quill.register('modules/clipboard', PlainClipboard, true);
