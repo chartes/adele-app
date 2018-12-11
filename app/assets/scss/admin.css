@@ -91,6 +91,18 @@
   margin-right: 14px;
 }
 
+.is-flex-column {
+  display: flex;
+  flex-direction: column;
+}
+.is-flex-column > * {
+  flex: 0 0 auto;
+}
+
+.is-flex-fill {
+  flex-grow: 1;
+}
+
 /*!
  * Quill Editor v1.3.5
  * https://quilljs.com/
@@ -605,7 +617,7 @@
 }
 .editor-controls .ql-stroke {
   stroke: #000;
-  stroke-width: 1.5;
+  stroke-width: 1.5px;
   fill: none;
 }
 .editor-controls .ql-path {
@@ -649,6 +661,8 @@ html, body {
   margin: 0 auto;
   width: 100%;
   border: 1px solid #eee;
+  max-height: 80vh;
+  overflow: scroll;
 }
 
 .editor-controls {
@@ -677,6 +691,10 @@ html, body {
   display: block;
   font-size: 60%;
   font-variant: small-caps;
+}
+.editor-controls-group .button {
+  padding-bottom: calc(.5em - 1px);
+  padding-top: calc(.5em - 1px);
 }
 
 .editor-container {
@@ -738,48 +756,55 @@ smallcaps {
   font-variant: small-caps;
 }
 
-speechpart {
-  border-bottom: 2px solid;
-}
-speechpart:nth-child(8n) {
-  border-color: #d6cbd3;
-}
-speechpart:nth-child(8n+1) {
-  border-color: #eca1a6;
-}
-speechpart:nth-child(8n+2) {
-  border-color: #bdcebe;
-}
-speechpart:nth-child(8n+3) {
-  border-color: #ada397;
-}
-speechpart:nth-child(8n+4) {
-  border-color: #f7cac9;
-}
-speechpart:nth-child(8n+5) {
-  border-color: #dac292;
-}
-speechpart:nth-child(8n+6) {
-  border-color: #b5e7a0;
-}
-speechpart:nth-child(8n+7) {
-  border-color: #b9936c;
-}
-speechpart.unselected {
-  border: none;
-  background-color: inherit;
+cb {
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  background: #bbb url(/adele/static/images/columns-break.svg) no-repeat 50% 50%;
+  background-size: 16px 16px;
+  vertical-align: middle;
+  border-radius: 4px;
 }
 
-zone {
-  border-bottom: 2px solid;
+persname, placename, cite, note, speechpart, zone {
+  display: inline;
+  padding: 0.25em 0.25em 0.25em 1.25em;
+  border-radius: 5px;
+  background: transparent no-repeat 0.25em center;
+  background-size: 12px 12px;
 }
-zone:nth-child(2n) {
-  border-color: #b5e7a0;
+
+persname {
+  background-color: rgba(45, 112, 223, 0.15);
+  background-image: url(/adele/static/images/ico-person.svg);
 }
-zone:nth-child(2n+1) {
-  border-color: #eca1a6;
+
+placename {
+  background-color: rgba(35, 209, 96, 0.15);
+  background-image: url(/adele/static/images/ico-location.svg);
 }
-zone.unselected {
+
+note {
+  background-color: rgba(147, 87, 169, 0.15);
+  background-image: url(/adele/static/images/ico-note.svg);
+}
+
+cite {
+  background-color: rgba(255, 221, 73, 0.15);
+  background-image: url(/adele/static/images/ico-cite.svg);
+}
+
+speechpart, zone {
+  margin-right: 0.25em;
+  padding-left: 0.25em;
+}
+speechpart:nth-child(2n), zone:nth-child(2n) {
+  background-color: #b7e3e4;
+}
+speechpart:nth-child(2n+1), zone:nth-child(2n+1) {
+  background-color: #fedccc;
+}
+speechpart.unselected, zone.unselected {
   border: none;
   background-color: inherit;
 }
@@ -825,10 +850,6 @@ zone.unselected {
 
 l {
   font-family: Georgia, Times New Roman, serif;
-}
-
-note {
-  text-decoration: underline;
 }
 
 .in-editor-actions, .note-actions, .speechpart-actions, .new-speechpart-actions {
@@ -1081,6 +1102,60 @@ note {
   width: 90%;
 }
 
+.note-placeholder:hover {
+  cursor: pointer;
+}
+
+.note-placeholder {
+  text-decoration: underline #1d1d1d;
+}
+
+speechpart.note-placeholder {
+  text-decoration: initial;
+}
+
+.note-content {
+  display: none;
+  font-weight: bold;
+}
+
+/* Tippy tooltip themes
+*/
+/* If `animateFill: true` (default) */
+.tippy-tooltip.light-theme .tippy-backdrop {
+  background-color: whitesmoke;
+  color: #333;
+}
+
+/* If `animateFill: false` */
+.tippy-tooltip.light-theme {
+  background-color: whitesmoke;
+  border: 1px solid dimgrey;
+  color: black;
+}
+
+/* Default (sharp) arrow */
+.tippy-popper[x-placement^=top] .tippy-tooltip.light-theme .tippy-arrow {
+  border-top-color: dimgrey;
+}
+
+.tippy-popper[x-placement^=bottom] .tippy-tooltip.light-theme .tippy-arrow {
+  border-bottom-color: dimgrey;
+}
+
+.tippy-popper[x-placement^=left] .tippy-tooltip.light-theme .tippy-arrow {
+  border-left-color: dimgrey;
+}
+
+.tippy-popper[x-placement^=right] .tippy-tooltip.light-theme .tippy-arrow {
+  border-right-color: dimgrey;
+}
+
+/* Round arrow */
+.tippy-tooltip.light-theme .tippy-roundarrow {
+  fill: dimgrey;
+}
+
 .help {
   font-size: 1em;
 }
@@ -1272,6 +1347,26 @@ note {
   content: "";
   display: block;
   position: relative;
+}
+
+.add-commentary-box {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  border: 1px solid #f5f5f5;
+  border-radius: 5px;
+}
+.add-commentary-box .box-title {
+  margin-bottom: 1rem;
+}
+.add-commentary-box .box-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -0.5rem;
+}
+
+.button-commentary {
+  width: calc(33% - 1rem);
+  margin: 0.5rem;
 }
 
 .save-bar {

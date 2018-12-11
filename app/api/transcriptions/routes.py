@@ -201,6 +201,21 @@ def api_post_documents_transcriptions(api_version, doc_id):
 
                     db.session.add(new_transcription)
                     created_users.add(user)
+
+                    if user.is_admin:
+                        # create a reference transcription if not exist
+                        if Transcription.query.filter(
+                                Transcription.user_id == user_id,
+                                Transcription.doc_id == doc.user_id
+                        ).first() is None:
+                            new_ref_transcription = Transcription(
+                                id=transcription_max_id+1,
+                                content="<p></p>",
+                                doc_id=doc_id,
+                                user_id=doc.user_id
+                            )
+                            db.session.add(new_ref_transcription)
+
             try:
                 db.session.commit()
             except Exception as e:
