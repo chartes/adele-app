@@ -22,7 +22,7 @@ def get_reference_transcription(doc_id):
     :param doc_id:
     :return:
     """
-    doc = Document.query.filter(Document.id == doc_id).first()
+    doc = Document.query.filter(Document.id == doc_id).one()
     transcription = Transcription.query.filter(
         doc_id == Transcription.doc_id,
         doc.user_id == Transcription.user_id
@@ -205,8 +205,8 @@ def api_post_documents_transcriptions(api_version, doc_id):
                     if user.is_admin:
                         # create a reference transcription if not exist
                         if Transcription.query.filter(
-                                Transcription.user_id == user_id,
-                                Transcription.doc_id == doc.user_id
+                                Transcription.user_id == doc.user_id,
+                                Transcription.doc_id == doc_id
                         ).first() is None:
                             new_ref_transcription = Transcription(
                                 id=transcription_max_id+1,

@@ -47,7 +47,6 @@ const mutations = {
 
 
   INIT(state, payload) {
-
     if (!transcriptionShadowQuill) {
 
       transcriptionShadowQuillElement.innerHTML = payload.content || "";
@@ -70,7 +69,7 @@ const mutations = {
   },
   RESET(state) {
 
-    //console.log("STORE MUTATION transcription/RESET")
+    console.log("STORE MUTATION transcription/RESET")
     state.transcription = false;
     state.transcriptionAlignments = [];
     state.transcriptionContent = false;
@@ -230,7 +229,7 @@ const actions = {
 
       let quillContent = TEIToQuill(transcription.content);
       const withNotes = insertNotesAndSegments(quillContent, transcription.notes, [], 'transcription');
-      transcription.content = withNotes
+      transcription.content = withNotes;
 
       commit('REFERENCE', transcription)
     })

@@ -23,7 +23,7 @@
         <transcription-edition/>
       </tab>
 
-      <tab name="Facsimilé">
+      <tab name="Facsimilé" >
         <facsimile-editor v-if="hasTranscription"></facsimile-editor>
         <minimal-message v-else-if="!hasImage" :body="'Aucun manifeste pour le moment. Un manifeste est nécessaire pour éditer le facsimilé.'"/>
         <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer le facsimilé.'"/>
@@ -117,7 +117,7 @@
         return !!this.transcription
       },
       hasImage () {
-        return !!this.document.length
+        return !!this.document.images.length
       },
       allowedToSwapAuthor () {
         return (
@@ -126,7 +126,7 @@
       },
       ...mapState('user', ['author']),
       ...mapState('document', ['document']),
-      ...mapState('transcription', ['transcriptionLoading', 'transcription', 'savingStatus']),
+      ...mapState('transcription', ['transcriptionLoading', 'transcription', 'savingStatus', 'referenceTranscription']),
       ...mapState('translation', ['translation', 'translationLoading']),
       ...mapGetters('user', ['currentUserIsStudent']),
     }
