@@ -9,7 +9,8 @@ from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
 from app.api.transcriptions.routes import get_reference_transcription
 from app.api.translations.routes import get_reference_translation
-from app.models import Commentary, Note, NoteType, Document, User
+from app.models import Commentary, Note, NoteType, Document, User, Translation, TranslationHasNote, Transcription, \
+    TranscriptionHasNote
 
 """
 ===========================
@@ -254,6 +255,18 @@ def api_documents_commentaries_notes(api_version, doc_id, note_id=None, user_id=
 @api_bp.route("/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>")
 def api_documents_notes(api_version, doc_id, note_id=None, user_id=None):
     user = current_app.get_current_user()
+
+    if user.is_anonymous:
+        response = APIResponseFactory.make_response(data=[])
+        return APIResponseFactory.jsonify(response)
+
+    if not (user.is_admin or user.is_teacher):
+        user_id = user.id
+    print(user.id, user_id)
+    notes = Note.query.filter(Note.user_id == user_id).all()
+    response = APIResponseFactory.make_response(data=[n.serialize() for n in notes])
+    return APIResponseFactory.jsonify(response)
+
     args = {
         "api_version": api_version,
         "doc_id": doc_id,
@@ -408,6 +421,7 @@ def api_post_documents_binder_notes(request, user, api_version, doc_id, binder):
                     type_id=note_type.id,
                     note_type=note_type
                 )
+
                 try:
                     new_note = binder.bind(new_note, n_data, tr_usr.id, doc_id)
                 except Exception as e:
@@ -504,8 +518,9 @@ def api_put_documents_binder_notes(request, user, api_version, doc_id, binder):
                 try:
                     # todo gérer la secu dans le update
                     updated_note = binder.update(doc_id, n_data)
-                    # save which users to retrieve later
-                    updated_notes.add(updated_note)
+                    if updated_note:
+                        # save which users to retrieve later
+                        updated_notes.add(updated_note)
                 except NoResultFound:
                     response = APIResponseFactory.make_response(errors={
                         "status": 403,
@@ -628,6 +643,23 @@ def api_post_documents_commentaries_notes(api_version, doc_id):
 @auth.login_required
 def api_put_documents_transcriptions_notes(api_version, doc_id):
     user = current_app.get_current_user()
+
+    #delete the notes binding not present in the payload
+    if user.is_admin or user.is_teacher:
+        data = request.get_json()
+        if not isinstance(data["data"], list):
+            data = [data["data"]]
+        for txt in data:
+            if "transcription_username" in data:
+                usr = User.query.filter(User.username == txt["transcription_username"]).first()
+                user_id = usr.id
+            else:
+                user_id = user.id
+            t = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user_id).first()
+            for thn in TranscriptionHasNote.query.filter(TranscriptionHasNote.transcription_id == t.id).all():
+                db.session.delete(thn)
+            db.session.commit()
+
     return api_put_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
 
 
@@ -635,6 +667,23 @@ def api_put_documents_transcriptions_notes(api_version, doc_id):
 @auth.login_required
 def api_put_documents_translations_notes(api_version, doc_id):
     user = current_app.get_current_user()
+
+    #delete the notes binding not present in the payload
+    if user.is_admin or user.is_teacher:
+        data = request.get_json()
+        if not isinstance(data["data"], list):
+            data = [data["data"]]
+        for txt in data:
+            if "translation_username" in data:
+                usr = User.query.filter(User.username == txt["translation_username"]).first()
+                user_id = usr.id
+            else:
+                user_id = user.id
+            t = Translation.query.filter(Translation.doc_id == doc_id, Translation.user_id == user_id).first()
+            for thn in TranslationHasNote.query.filter(TranslationHasNote.translation_id == t.id).all():
+                db.session.delete(thn)
+            db.session.commit()
+
     return api_put_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
 
 

@@ -31,7 +31,10 @@ class TranscriptionNoteBinder(object):
         transcription_has_note.note = note
         transcription_has_note.ptr_start = data["ptr_start"]
         transcription_has_note.ptr_end = data["ptr_end"]
-        note.transcription = [transcription_has_note]
+        if note.transcription:
+            note.transcription = [transcription_has_note] + note.transcription
+        else:
+            note.transcription = [transcription_has_note]
 
         return note
 
@@ -47,7 +50,7 @@ class TranscriptionNoteBinder(object):
             if "type_id" in data:
                 note.type_id = data["type_id"]
             db.session.add(note)
-            if "transcription_username" in data and not note.transcription:
+            if "transcription_username" in data:
                 tr_usr = User.query.filter(User.username == data["transcription_username"]).one()
                 note = TranscriptionNoteBinder.bind(note, data, tr_usr.id, doc_id)
                 db.session.add(note)
@@ -85,25 +88,27 @@ class TranslationNoteBinder(object):
         translation_has_note.note = note
         translation_has_note.ptr_start = data["ptr_start"]
         translation_has_note.ptr_end = data["ptr_end"]
-        note.translation = [translation_has_note]
+        if note.translation:
+            note.translation = [translation_has_note] + note.translation
+        else:
+            note.translation = [translation_has_note]
+
         return note
 
     @staticmethod
     def update(doc_id, data):
         # TODO gérer erreur
         # get the note to update
-        print("UPDATE NOTE", data)
         note = Note.query.filter(Note.id == data["note_id"]).first()
         try:
 
             note.content = data["content"]
             if "type_id" in data:
                 note.type_id = data["type_id"]
+            if "translation_username" in data:
+                tr_usr = User.query.filter(User.username == data["translation_username"]).one()
+            note = TranslationNoteBinder.bind(note, data, tr_usr.id, doc_id)
             db.session.add(note)
-            if "transcription_username" in data and not note.transcription:
-                tr_usr = User.query.filter(User.username == data["transcription_username"]).one()
-                note = TranslationNoteBinder.bind(note, data, tr_usr.id, doc_id)
-                db.session.add(note)
 
         except Exception as e:
             print(e)
@@ -141,6 +146,10 @@ class CommentaryNoteBinder(object):
         commentary_has_note.ptr_start = data["ptr_start"]
         commentary_has_note.ptr_end = data["ptr_end"]
         note.commentary = [commentary_has_note]
+        if note.commentary:
+            note.commentary = [commentary_has_note] + note.commentary
+        else:
+            note.commentary = [commentary_has_note]
         return note
 
     @staticmethod

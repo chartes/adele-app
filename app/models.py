@@ -504,8 +504,8 @@ class TranscriptionHasNote(db.Model):
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="transcription", cascade="all, delete-orphan",single_parent=True)
-    transcription = db.relationship("Transcription", back_populates="notes", cascade="all, delete-orphan", single_parent=True)
+    note = db.relationship("Note", back_populates="transcription", single_parent=True)
+    transcription = db.relationship("Transcription", back_populates="notes", single_parent=True)
 
 
 class Transcription(db.Model):
@@ -514,7 +514,7 @@ class Transcription(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan", passive_deletes=True)
+    notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
 
     def serialize(self):
 
@@ -535,8 +535,8 @@ class TranslationHasNote(db.Model):
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="translation", cascade="all, delete-orphan", single_parent=True)
-    translation = db.relationship("Translation", back_populates="notes", cascade="all, delete-orphan", single_parent=True)
+    note = db.relationship("Note", back_populates="translation",  single_parent=True)
+    translation = db.relationship("Translation", back_populates="notes",  single_parent=True)
 
 
 class Translation(db.Model):
@@ -545,7 +545,7 @@ class Translation(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan", passive_deletes=True)
+    notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
