@@ -112,7 +112,7 @@
     watch: {
       savingStatus (newStatus, oldStatus) {
         console.log('savingStatus', newStatus, oldStatus)
-        if (oldStatus === 'saving' && newStatus === 'uptodate') {
+        if (oldStatus === 'saving' && newStatus === 'uptodate' && this.liiiflet && this.liiiflet.map) {
           this.liiiflet.refresh()
         }
       }

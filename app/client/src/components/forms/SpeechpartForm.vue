@@ -66,7 +66,6 @@
       }
     },
     mounted () {
-        console.log("speechPartForm.mounted", this.speechpart)
       this.$refs.editor.innerHTML = !!this.$props.speechpart ? this.$props.speechpart.note ? this.$props.speechpart.note: '' : '';
       this.editor = getNewQuill(this.$refs.editor);
       this.editor.on('selection-change', this.onSelection);

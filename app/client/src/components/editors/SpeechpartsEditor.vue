@@ -102,6 +102,7 @@
         if (range) {
           this.setRangeBound(range);
           let formats = this.editor.getFormat(range.index, range.length);
+          console.log(formats);
           this.updateButtons(formats);
           if (!!formats.speechpart) {
             this.onSpeechpartSelected(formats.speechpart, range);
@@ -121,7 +122,10 @@
         const isNewSpeechpart = this.speechpartEditMode === 'new';
         const action = isNewSpeechpart ? 'add' : 'update';
         sp.speech_part_type = this.getSpeechpartTypeById(sp.type_id);
-        this.editor.format('speechpart', this.$store.state.speechparts.speechparts.length.toString());
+        const nb = this.$store.state.speechparts.speechparts.length;
+        console.log("sp in store:", this.$store.state.speechparts.speechparts, nb);
+
+        this.editor.format('speechpart', nb.toString());
         this.$store.dispatch(`speechparts/${action}`, sp)
         this.closeSpeechpartEdit()
       },
