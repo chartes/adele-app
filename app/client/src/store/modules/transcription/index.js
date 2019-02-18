@@ -47,7 +47,6 @@ const mutations = {
 
 
   INIT(state, payload) {
-
     if (!transcriptionShadowQuill) {
 
       transcriptionShadowQuillElement.innerHTML = payload.content || "";
@@ -72,7 +71,7 @@ const mutations = {
   },
   RESET(state) {
 
-    //console.log("STORE MUTATION transcription/RESET")
+    console.log("STORE MUTATION transcription/RESET");
     state.transcription = false;
     state.transcriptionAlignments = [];
     state.transcriptionContent = false;
@@ -238,7 +237,7 @@ const actions = {
 
       let quillContent = TEIToQuill(transcription.content);
       const withNotes = insertNotesAndSegments(quillContent, transcription.notes, [], 'transcription');
-      transcription.content = withNotes
+      transcription.content = withNotes;
 
       commit('REFERENCE', transcription)
     })
@@ -341,6 +340,7 @@ const actions = {
           let found = rootState.notes.notes.find((element) => {
               return element.id === note.note_id;
           });
+          console.log(rootState.notes.notes, notes, found);
           note.content = found.content;
           note.transcription_username = rootState.user.author.username;
           note.note_type = found.note_type.id;

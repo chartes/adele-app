@@ -33,7 +33,11 @@ const actions = {
   fetch ({ commit, getters, rootGetters }, { doc_id, user_id }) {
     return axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/alignments/discours/from-user/${user_id}`)
       .then( (response) => {
-        commit('UPDATE_ALL', response.data.data)
+        if (response.data && response.data.errors) {
+          commit('UPDATE_ALL', []);
+        } else {
+          commit('UPDATE_ALL', response.data.data);
+        }
       }).catch(function(error) {
         console.log(error);
       });

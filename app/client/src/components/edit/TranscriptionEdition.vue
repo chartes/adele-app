@@ -118,6 +118,7 @@
           !this.transcriptionLoading
           &&
           this.currentUserIsAuthor
+          && (this.hasReferenceTranscription || this.currentUserIsAdmin)
         )
       },
       allowedToCreateTranslation () {
@@ -156,7 +157,7 @@
       ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading']),
       ...mapState('translation', ['translationWithNotes', 'translationLoading', 'referenceTranslation']),
       ...mapState('user', ['currentUser', 'author']),
-      ...mapGetters('user', ['currentUserIsAuthor', 'currentUserIsStudent', 'currentUserIsTeacher']),
+      ...mapGetters('user', ['currentUserIsAuthor', 'currentUserIsStudent', 'currentUserIsTeacher', 'currentUserIsAdmin']),
     }
   }
 </script>

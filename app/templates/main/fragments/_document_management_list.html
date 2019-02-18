@@ -71,12 +71,14 @@
                 </a>
             </div>
             -->
+            {% if not d.is_closed or (current_user.is_teacher or current_user.is_admin) %}
             <div>
                 <a class="is-primary edit-document" href="{{url_for('app_bp.document_edit', doc_id=d.id)}}">
                     <i class="fas fa-edit"></i>
                     Éditer
                 </a>
             </div>
+            {% endif %}
             <!--
             <div>
                 <a class="is-light export-document" >

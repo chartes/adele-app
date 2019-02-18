@@ -34,56 +34,59 @@
         Insert speech parts TOC
     */
     let ul = document.getElementById('speech-parts-toc');
-    let already_inserted = [];
-    for (sp of speech_parts){
-        if (already_inserted.indexOf(sp.speech_part_type_id) === -1) {
-            let li = document.createElement('li');
-            let a = document.createElement('a');
-            a.innerText = sp.speech_part_type;
-            a.setAttribute('class', 'speech-part-type-' + sp.speech_part_type_id);
-            li.appendChild(a);
-            ul.appendChild(li);
+    if (ul) {
+        let already_inserted = [];
+        for (sp of speech_parts){
+            if (already_inserted.indexOf(sp.speech_part_type_id) === -1) {
+                let li = document.createElement('li');
+                let a = document.createElement('a');
+                a.innerText = sp.speech_part_type;
+                a.setAttribute('class', 'speech-part-type-' + sp.speech_part_type_id);
+                li.appendChild(a);
+                ul.appendChild(li);
 
-            already_inserted.push(sp.speech_part_type_id);
+                already_inserted.push(sp.speech_part_type_id);
+            }
         }
+
+        let elements = ul.getElementsByTagName('a');
+        for (let i in elements) {
+            if (!elements.hasOwnProperty(i)) continue;
+            elements[i].addEventListener( 'mouseover', function() {
+                for (let sp of document.getElementsByTagName("speechpart")){
+                  sp.classList.add("unselected");
+                  if (sp.classList.contains(elements[i].classList.toString())) {
+                      sp.classList.remove("unselected");
+                  }
+                }
+            });
+            elements[i].addEventListener( 'mouseout', function() {
+                for (let sp of document.getElementsByTagName("speechpart")){
+                    sp.classList.remove("unselected");
+                }
+            });
+        }
+
+        /*
+            Insert speech parts
+        */
+        String.prototype.insert = function(index, content) {
+           return [this.slice(0, index), content, this.slice(index)].join('');
+        };
+
+        let id = 0;
+        let offset = 0;
+        for (sp of speech_parts){
+            const b = "<speechpart id='"+ id +"' data-note-id='speechpart-"+id+"' class='note-placeholder speech-part-type-" + sp.speech_part_type_id + "'>";
+            const e = "</speechpart>";
+            tr = tr.insert(sp.ptr_start + offset, b);
+            tr = tr.insert(sp.ptr_end + b.length + offset, e);
+            offset += b.length + e.length;
+            id += 1;
+        }
+        container.innerHTML = tr;
     }
 
-    let elements = ul.getElementsByTagName('a');
-    for (let i in elements) {
-        if (!elements.hasOwnProperty(i)) continue;
-        elements[i].addEventListener( 'mouseover', function() {
-            for (let sp of document.getElementsByTagName("speechpart")){
-              sp.classList.add("unselected");
-              if (sp.classList.contains(elements[i].classList.toString())) {
-                  sp.classList.remove("unselected");
-              }
-            }
-        });
-        elements[i].addEventListener( 'mouseout', function() {
-            for (let sp of document.getElementsByTagName("speechpart")){
-                sp.classList.remove("unselected");
-            }
-        });
-    }
-
-    /*
-        Insert speech parts
-    */
-    String.prototype.insert = function(index, content) {
-       return [this.slice(0, index), content, this.slice(index)].join('');
-    };
-
-    let id = 0;
-    let offset = 0;
-    for (sp of speech_parts){
-        const b = "<speechpart id='"+ id +"' data-note-id='speechpart-"+id+"' class='note-placeholder speech-part-type-" + sp.speech_part_type_id + "'>";
-        const e = "</speechpart>";
-        tr = tr.insert(sp.ptr_start + offset, b);
-        tr = tr.insert(sp.ptr_end + b.length + offset, e);
-        offset += b.length + e.length;
-        id += 1;
-    }
-    container.innerHTML = tr;
 
 </script>
 

@@ -27,7 +27,8 @@ const actions = {
 
   fetch ({ commit, rootState }, docId) {
     const config = { auth: { username: rootState.user.authToken, password: undefined }};
-    return axios.get(`/adele/api/1.0/documents/${docId}/notes`, config)
+    const authorId = rootState.user.author.id;
+    return axios.get(`/adele/api/1.0/documents/${docId}/notes/from-user/${authorId}`, config)
       .then( (response) => {
         commit('UPDATE_ALL', response.data.data)
       }).catch(function(error) {

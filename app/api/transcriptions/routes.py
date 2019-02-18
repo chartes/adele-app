@@ -22,7 +22,7 @@ def get_reference_transcription(doc_id):
     :param doc_id:
     :return:
     """
-    doc = Document.query.filter(Document.id == doc_id).first()
+    doc = Document.query.filter(Document.id == doc_id).one()
     transcription = Transcription.query.filter(
         doc_id == Transcription.doc_id,
         doc.user_id == Transcription.user_id
@@ -115,7 +115,12 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
                 if len(transcriptions) == 0:
                     raise NoResultFound
 
-                response = APIResponseFactory.make_response(data=[tr.serialize() for tr in transcriptions])
+                data = []
+                for tr in transcriptions:
+                    t = tr.serialize()
+                    t["notes"] = [n for n in t["notes"] if n["user_id"] == int(user_id)]
+                    data.append(t)
+                response = APIResponseFactory.make_response(data=data)
             except NoResultFound:
                 response = APIResponseFactory.make_response(errors={
                     "status": 404, "title": "Transcription not found"
@@ -201,6 +206,21 @@ def api_post_documents_transcriptions(api_version, doc_id):
 
                     db.session.add(new_transcription)
                     created_users.add(user)
+
+                    if user.is_admin:
+                        # create a reference transcription if not exist
+                        if Transcription.query.filter(
+                                Transcription.user_id == doc.user_id,
+                                Transcription.doc_id == doc_id
+                        ).first() is None:
+                            new_ref_transcription = Transcription(
+                                id=transcription_max_id+1,
+                                content="<p></p>",
+                                doc_id=doc_id,
+                                user_id=doc.user_id
+                            )
+                            db.session.add(new_ref_transcription)
+
             try:
                 db.session.commit()
             except Exception as e:

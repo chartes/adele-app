@@ -267,9 +267,9 @@ def api_documents_annotations_list(api_version, doc_id, canvas_name, user_id=Non
     user = current_app.get_current_user()
     if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
-            response = make_annotation_list("f1", doc_id, [], zone_type.serialize())
+            response = make_annotation_list(canvas_name, doc_id, [], zone_type.serialize())
     elif user_id is not None:
-        response = make_annotation_list("f1", doc_id, [], zone_type.serialize())
+        response = make_annotation_list(canvas_name, doc_id, [], zone_type.serialize())
 
     if response is None:
         json_obj = query_json_endpoint(
@@ -326,7 +326,7 @@ def api_documents_annotations_list(api_version, doc_id, canvas_name, user_id=Non
                 )
                 annotations.append(new_annotation)
 
-            annotation_list = make_annotation_list("f1", doc_id, annotations, zone_type.serialize())
+            annotation_list = make_annotation_list(canvas_name, doc_id, annotations, zone_type.serialize())
             response = annotation_list
 
     return APIResponseFactory.jsonify(response)
@@ -348,14 +348,14 @@ def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=
 
     tr = get_reference_transcription(doc_id)
     if tr is None:
-        response = make_annotation_list("f1", doc_id, [], transcription_zone_type.serialize())
+        response = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
 
     user = current_app.get_current_user()
     if not user.is_anonymous:
         if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
-            response = make_annotation_list("f1", doc_id, [], transcription_zone_type.serialize())
+            response = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
     elif user_id is not None:
-        response = make_annotation_list("f1", doc_id, [], transcription_zone_type.serialize())
+        response = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
 
     if response is None:
         json_obj = query_json_endpoint(
@@ -428,7 +428,7 @@ def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=
                         canvas["@id"], first_img, zone.coords, res_uri, tr_seg, format="text/plain")
                 )
 
-            annotation_list = make_annotation_list("f1", doc_id, annotations, transcription_zone_type.serialize())
+            annotation_list = make_annotation_list(canvas_name, doc_id, annotations, transcription_zone_type.serialize())
             response = annotation_list
 
     return APIResponseFactory.jsonify(response)
