@@ -31,12 +31,12 @@ import ColumnBreakBlot from './blots/editorial/ColumnBreak';
 //import Inline from 'quill/blots/inline';
 
 let Inline = Quill.import('blots/inline');
-
+let Embed = Quill.import('blots/embed');
 
 // Lower index means deeper in the DOM tree, since not found (-1) is for embeds
 Inline.order = [
-  'cursor', 'inline',   // Must be lower
-  'expan', 'underline', 'strike', 'italic', 'bold', 'script',
+  'cursor', 'expan', 'inline',   // Must be lower
+  'underline', 'strike', 'italic', 'bold', 'script',
   'del', 'link', 'code',
   'person', 'location', 'note', 'zone', 'speechpart',          // Must be higher
 ];
@@ -119,10 +119,12 @@ function getNewQuill (elt, opt = null) {
   return quill;
 }
 
-export default Quill;
 export {
 
   getNewQuill,
+
+  Inline,
+  Embed,
 
   options,
 
@@ -137,4 +139,6 @@ export {
 
   SpeechpartBlot,
   ZoneBlot,
+
+  Quill as default
 }

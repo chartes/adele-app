@@ -574,33 +574,62 @@ smallcaps {
       border-radius: 5px;
       background: transparent no-repeat 0.25em center;
       background-size: 12px 12px; }
+      persname persname, persname placename, persname cite, persname note,
+      persname speechpart, persname zone, placename persname, placename placename,
+      placename cite, placename note, placename speechpart, placename zone,
+      cite persname, cite placename, cite cite, cite note, cite speechpart, cite zone,
+      note persname, note placename, note cite, note note, note speechpart, note zone,
+      speechpart persname, speechpart placename, speechpart cite, speechpart note,
+      speechpart speechpart, speechpart zone, zone persname, zone placename,
+      zone cite, zone note, zone speechpart, zone zone {
+        padding: 0 0.25em 0 1.25em;
+        background-color: transparent;
+        border: 1px solid transparent; }
+        persname persname, placename persname, cite persname, note persname,
+        speechpart persname, zone persname {
+          border-bottom-color: #2d70df; }
+          persname placename, placename placename, cite placename, note placename,
+          speechpart placename, zone placename {
+            border-bottom-color: #23d160; }
+            persname note, placename note, cite note, note note, speechpart note, zone note {
+              border-bottom-color: #ef6b30; }
+              persname cite, placename cite, cite cite, note cite, speechpart cite, zone cite {
+                border-bottom-color: #ffdd49; }
 
-      persname {
-        background-color: rgba(45, 112, 223, 0.15);
-        background-image: url(/adele/static/images/ico-person.svg); }
+persname {
+  background-color: rgba(45, 112, 223, 0.15);
+  background-image: url(/adele/static/images/ico-person.svg); }
+  persname::selection, persname *::selection {
+    background-color: rgba(45, 112, 223, 0.3); }
 
-        placename {
-          background-color: rgba(35, 209, 96, 0.15);
-          background-image: url(/adele/static/images/ico-location.svg); }
+placename {
+  background-color: rgba(35, 209, 96, 0.15);
+  background-image: url(/adele/static/images/ico-location.svg); }
+  placename::selection, placename *::selection {
+    background-color: rgba(35, 209, 96, 0.3); }
 
-          note {
-            background-color: rgba(147, 87, 169, 0.15);
-            background-image: url(/adele/static/images/ico-note.svg); }
+note {
+  background-color: rgba(239, 107, 48, 0.15);
+  background-image: url(/adele/static/images/ico-note.svg); }
+  note::selection, note *::selection {
+    background-color: rgba(239, 107, 48, 0.3); }
 
-            cite {
-              background-color: rgba(255, 221, 73, 0.15);
-              background-image: url(/adele/static/images/ico-cite.svg); }
+cite {
+  background-color: rgba(255, 221, 73, 0.15);
+  background-image: url(/adele/static/images/ico-cite.svg); }
+  cite::selection, cite *::selection {
+    background-color: rgba(255, 221, 73, 0.3); }
 
-              speechpart, zone {
-                margin-right: 0.25em;
-                padding-left: 0.25em; }
-                speechpart:nth-child(2n), zone:nth-child(2n) {
-                  background-color: #b7e3e4; }
-                  speechpart:nth-child(2n+1), zone:nth-child(2n+1) {
-                    background-color: #fedccc; }
-                    speechpart.unselected, zone.unselected {
-                      border: none;
-                      background-color: inherit; }
+speechpart, zone {
+  margin-right: 0.25em;
+  padding-left: 0.25em; }
+  speechpart:nth-child(2n), zone:nth-child(2n) {
+    background-color: rgba(183, 227, 228, 0.4); }
+    speechpart:nth-child(2n+1), zone:nth-child(2n+1) {
+      background-color: rgba(254, 220, 204, 0.4); }
+      speechpart.unselected, zone.unselected {
+        border: none;
+        background-color: inherit; }
 
 #speech-parts-toc {
   margin-bottom: 20px; }
