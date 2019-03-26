@@ -57,9 +57,6 @@ class Config(object):
     MAIL_PORT = int(os.getenv('MAIL_PORT') or 465)
     MAIL_USE_SSL = int(os.getenv('MAIL_USE_SSL') or True)
 
-    # used when generating the IIIF annotation lists urls
-    APP_DOMAIN_NAME = "adele.chartes.psl.eu" #TODO: vérifier si encore utilisé
-
     @staticmethod
     def init_app(app):
         pass
@@ -69,8 +66,7 @@ class DevelopmentConfig(Config):
 
     COPY = False
 
-    SECRET_KEY = 'you-will-never-guess-but-please-change-me'
-    #APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé
+    SECRET_KEY = 'you-will-never-guess-but-please-change-me!'
 
     MAIL_USERNAME = 'adele@chartes.psl.eu'
     USER_EMAIL_SENDER_NAME = 'Adele'
@@ -101,7 +97,6 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), DB_PATH, 'adele.sqlite')
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
-    APP_DOMAIN_NAME = "locahost:5000"  #TODO: vérifier si encore utilisé
 
     MAIL_USERNAME = 'adele@chartes.psl.eu'
     USER_EMAIL_SENDER_NAME = 'Adele'

@@ -1,5 +1,5 @@
 import pprint
-from flask import jsonify, current_app
+from flask import jsonify, current_app, request
 
 from config import Config
 
@@ -13,11 +13,11 @@ def make_annotation_list(list_id, doc_id, annotations, annotation_type):
     :param annotations:
     :return:
     """
-    url = "%s%s" % (current_app.config["APP_DOMAIN_NAME"], current_app.config["APP_URL_PREFIX"])
+    url = "%s%s" % (request.host_url[:-1], current_app.config["APP_URL_PREFIX"])
     print("url", url)
     return {
         "@context": "http://iiif.io/api/presentation/2/context.json",
-        "@id": "http://{0}/api/1.0/documents/{1}/{2}s/list/{3}".format(url, doc_id, annotation_type.get('label'), list_id),
+        "@id": "{0}/api/1.0/documents/{1}/{2}s/list/{3}".format(url, doc_id, annotation_type.get('label'), list_id),
         "@type": "sc:AnnotationList",
         "resources": annotations,
         "metadata": [
