@@ -48,15 +48,15 @@ def make_manifest(api_version, doc_id, user_id, reference=False):
             if reference:
                 kwargs.pop("user_id")
 
-            root_url = request.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
+            #root_url = request.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
             canvas["otherContent"].extend([
                 {
                     "@type": "sc:AnnotationList",
-                    "@id": root_url + url_for("api_bp.api_documents_annotations_list", **kwargs)
+                    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list", **kwargs)
                 },
                 {
                     "@type": "sc:AnnotationList",
-                    "@id":  root_url + url_for("api_bp.api_documents_transcriptions_list", **kwargs)
+                    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_transcriptions_list", **kwargs)
                 }
             ])
 
@@ -102,7 +102,7 @@ def api_documents_manifest_url_origin(api_version, doc_id):
         })
     else:
         url = img.manifest_url
-        #url = request.url_root[0:-1] + url_for("api_bp.api_documents_manifest", api_version=api_version, doc_id=doc_id)
+        #url = request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=api_version, doc_id=doc_id)
         response = APIResponseFactory.make_response(data={"manifest_url": url})
     return APIResponseFactory.jsonify(response)
 
@@ -317,10 +317,10 @@ def api_documents_annotations_list(api_version, doc_id, canvas_name, user_id=Non
                 kargs["canvas_name"] = canvas_name
                 if user_id is not None:
                     kargs["user_id"] = user_id
-                res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
+                res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
                 fragment_coords = img_zone.coords
                 new_annotation = make_annotation(
-                    request.url_root[0:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
+                    request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
                     canvas["@id"], img_json, fragment_coords, res_uri, img_zone.note,
                     format="text/plain"
                 )
@@ -405,7 +405,7 @@ def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=
                 if user_id is not None:
                     kargs["user_id"] = user_id
                 kargs["canvas_name"] = canvas_name
-                res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
+                res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
 
                 img_al = AlignmentImage.query.filter(
                     AlignmentImage.transcription_id == tr.id,
@@ -424,7 +424,7 @@ def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=
 
                 annotations.append(
                     make_annotation(
-                        request.url_root[0:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
+                        request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
                         canvas["@id"], first_img, zone.coords, res_uri, tr_seg, format="text/plain")
                 )
 
@@ -506,7 +506,7 @@ def api_documents_annotations_zone(api_version, doc_id, canvas_name, zone_id, us
         kargs = {"doc_id": doc_id, "api_version": api_version, "zone_id": img_zone.zone_id, 'canvas_name': canvas_name}
         if user_id is not None:
             kargs["user_id"] = user_id
-        res_uri = request.url_root[0:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
+        res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
 
         # if the note content is empty, then you need to fetch a transcription segment
         note_content = ""
@@ -542,7 +542,7 @@ def api_documents_annotations_zone(api_version, doc_id, canvas_name, zone_id, us
             img_json = canvas["images"][img_zone.img_idx]
             fragment_coords = img_zone.coords
             new_annotation = make_annotation(
-                request.url_root[0:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
+                request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
                 canvas["@id"], img_json, fragment_coords,
                 res_uri,
                 note_content,
