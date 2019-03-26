@@ -1,5 +1,16 @@
+
+import Quill from './AdeleQuill';
+
 const parser = new DOMParser();
 var xmlSerializer = new XMLSerializer();
+
+const inlineTagsToClean = ['i', 'ex', 'del', 'u', 'b']
+const regexpOpeningToClean = []
+const regexpClosingToClean = []
+inlineTagsToClean.forEach(tag => {
+  regexpOpeningToClean.push(new RegExp('</'+tag+'><note id="(\\d+)"><'+tag+'>', 'gi'))
+  regexpClosingToClean.push(new RegExp('</'+tag+'></note><'+tag+'>', 'gi'))
+})
 
 const MAPPING_QUILL_TO_TEI = {
   'h1': { tag: 'head', attr: 'type', attrValue:'h1'},
@@ -191,7 +202,23 @@ String.prototype.insert = function (index, string) {
 };
 
 const insertNotes = (text, notes) => {
-  let result = text;
+
+  console.group(`%c insertNotes`, 'color:orange')
+  const notePointers = computeQuillPointersFromTEIPointers(text, notes)
+  console.log("%c notePointers =>", 'color:orange', notePointers)
+
+  const shadowQuillElement = document.createElement('div');
+  shadowQuillElement.innerHTML = text;
+  let shadowQuill = new Quill(shadowQuillElement);
+
+  notePointers.forEach(note => {
+    shadowQuill.formatText(note.ptr_start, note.ptr_end - note.ptr_start, 'note', note.id, 'api')
+    console.log(`%c # ${shadowQuillElement.children[0].innerHTML}`, 'color:orange')
+  })
+  console.groupEnd()
+  return shadowQuillElement.children[0].innerHTML;
+
+  /*let result = text;
   let indexCorrection = 0;
   notes.forEach(note => {
     let opening = `<note id="${note.id}">`;
@@ -202,6 +229,7 @@ const insertNotes = (text, notes) => {
     indexCorrection += closing.length;
   })
   return result;
+  */
 };
 const insertFacsimileZones = (text, zones) => {
   let result = text;
@@ -219,40 +247,83 @@ const insertFacsimileZones = (text, zones) => {
   return result;
 };
 const insertSegments = (text, segments, translationOrTranscription) => {
-  const index = translationOrTranscription === 'transcription' ? 0 : 2;
+
+  /*const segmentsIndices = getRelevantSegmentsIndices(text, segments, translationOrTranscription)
+  console.log("%c insertSegments", 'color:red',translationOrTranscription, segments, segmentsIndices)
   const tag = `<segment></segment>`;
   const tagLength = tag.length;
   let result = text;
   let indexCorrection = 0;
-  segments.forEach(segment => {
-    let strAtInsertPoint = result.substr(segment[index] + indexCorrection, 3);
-    if (segment[index] + indexCorrection > 0 && strAtInsertPoint !== '<p>' && strAtInsertPoint !== '<l>' && strAtInsertPoint !== '<lb>') {
-      result = result.insert(segment[index] + indexCorrection, tag);
-      indexCorrection += tagLength;
-    }
+  segmentsIndices.forEach(segmentIndex => {
+    result = result.insert(segmentIndex + indexCorrection, tag);
+    indexCorrection += tagLength;
   });
-  return result;
+  return result;*/
+
+  const shadowQuillElement = document.createElement('div');
+  shadowQuillElement.innerHTML = text;
+  let shadowQuill = new Quill(shadowQuillElement);
+
+  let segmentsIndices = getRelevantSegmentsIndices(text, segments, translationOrTranscription)
+  segmentsIndices = computeQuillIndicesFromTEIIndices(text, segmentsIndices, translationOrTranscription)
+  console.log("%c segmentsIndices =>", 'color:orange', segmentsIndices)
+  let indexCorrection = 0;
+  segmentsIndices.forEach(segmentIndex => {
+    shadowQuill.insertEmbed(segmentIndex + indexCorrection, 'segment', true, 'api')
+    //console.log(`%c # ${shadowQuillElement.children[0].innerHTML}`, 'color:orange')
+    indexCorrection++
+  })
+  return shadowQuillElement.children[0].innerHTML
 };
 const insertNotesAndSegments  = (text, notes, segments, translationOrTranscription) => {
 
+  console.group(`%c insertNotesAndSegments ${translationOrTranscription}`, 'color:orange')
+  const notePointers = computeQuillPointersFromTEIPointers(text, notes)
+  console.log("%c notePointers =>", 'color:orange', notePointers)
+
+  const shadowQuillElement = document.createElement('div');
+  shadowQuillElement.innerHTML = text;
+  let shadowQuill = new Quill(shadowQuillElement);
+
+  notePointers.forEach(note => {
+    shadowQuill.formatText(note.ptr_start, note.ptr_end - note.ptr_start, 'note', note.id, 'api')
+    console.log(`%c # ${shadowQuillElement.children[0].innerHTML}`, 'color:orange')
+  })
+
+  console.log("%c insert segments =>", 'color:orange', segments)
+  let segmentsIndices = getRelevantSegmentsIndices(text, segments, translationOrTranscription)
+  segmentsIndices = computeQuillIndicesFromTEIIndices(text, segmentsIndices, translationOrTranscription)
+  console.log("%c segmentsIndices =>", 'color:orange', segmentsIndices)
+  let indexCorrection = 0;
+  segmentsIndices.forEach(segmentIndex => {
+    shadowQuill.insertEmbed(segmentIndex + indexCorrection, 'segment', true, 'api')
+    console.log(`%c # ${shadowQuillElement.children[0].innerHTML}`, 'color:orange')
+    indexCorrection++
+  })
+
+  console.groupEnd()
+  return shadowQuillElement.children[0].innerHTML;
+
+  //return text
+/*
   const index = translationOrTranscription === 'transcription' ? 0 : 2;
   let insertions = [];
+  segments.forEach(segment => {
+    if (segment[index]) insertions.push({index: segment[index], type: 'segment'});
+  });
   notes.forEach(note => {
     insertions.push({index: note.ptr_start, type: 'note_start', note: note});
     insertions.push({index: note.ptr_end, type: 'note_end'});
   });
   //console.log(insertions.length, "insertions after", notes.length,"notes")
-  segments.forEach(segment => {
-    if (segment[index]) insertions.push({index: segment[index], type: 'segment'});
-  });
   insertions.sort((a, b) => { return a.index - b.index; });
 
-  //console.log('')
-  //console.log('insertNotesAndSegments', translationOrTranscription)
-  //console.log('notes', notes)
-  //console.log('segments', segments)
-  //console.log(insertions)
-  //console.log('')
+  console.log('')
+  console.log('insertNotesAndSegments', translationOrTranscription)
+  console.log('insertNotesAndSegments', text)
+  console.log('notes', notes)
+  console.log(insertions)
+  console.log('')
 
   let result = text;
   let indexCorrection = 0;
@@ -281,12 +352,110 @@ const insertNotesAndSegments  = (text, notes, segments, translationOrTranscripti
         break;
     }
     result = result.insert(ins.index + indexCorrection, insertTag);
-    if (inserted) //console.log(" =>", result)
+    if (inserted) console.log(" =>", result)
     indexCorrection += insertTag.length;
   });
-
+  console.log('RES', result)
   return result
+  */
 }
+
+/*
+Converts TEI pointers which include some markup to quill pointers
+to be able to insert notes, segments, speechpart with quill's setFormat function
+ */
+const computeQuillPointersFromTEIPointers = (text, teiPointer) => {
+
+
+  if (!teiPointer || teiPointer.length === 0) {
+    return []
+  }
+
+  console.group(`%c computeQuillPointersFromTEIPointers ${text}`, 'color:green')
+  console.log(text)
+
+  // deals with space between beginning of the text and first note
+  const sanitizePattern = /<(([\/a-z])+\b[^>]*)>/gi
+  let count = 0;
+  let delta = 0;
+  const quillPointers = teiPointer.map(pointer => {
+
+    const start = count > 0 ? teiPointer[count-1].ptr_end : 0;
+    console.group("%c ###", 'color:green', count, pointer.ptr_start, pointer.ptr_end)
+
+    const startText = text.substring(start, pointer.ptr_start);
+    const startTextSanitized = startText.replace(sanitizePattern, '')
+    const deltaStart = startText.length - startTextSanitized.length;
+    delta -= deltaStart;
+    let startIndex = pointer.ptr_start + delta;
+    console.log(`%c before note (${start} => ${pointer.ptr_start}): '${startTextSanitized}' ${pointer.ptr_start}=>${startIndex} delta=${delta}`, 'color:green')
+
+    const linkedText =  text.substring(pointer.ptr_start, pointer.ptr_end);
+    const linkedTextSanitized = linkedText.replace(sanitizePattern, '')
+    const deltaLinked = linkedText.length - linkedTextSanitized.length;
+    delta -= deltaLinked;
+    let endIndex = pointer.ptr_end + delta;
+
+    console.log(`%c end note (${pointer.ptr_start} => ${pointer.ptr_end}: ${linkedTextSanitized}) ${pointer.ptr_end}=>${endIndex} delta=${delta}`, 'color:green')
+
+    let quillPointer = { ...pointer, ptr_start: startIndex, ptr_end: endIndex}
+    console.log("%c =>", 'color:green', startIndex, endIndex, quillPointer)
+    console.groupEnd()
+    count++;
+    return quillPointer
+  });
+  console.groupEnd()
+  return quillPointers
+}
+const computeQuillIndicesFromTEIIndices = (text, teiIndices) => {
+
+
+  if (!teiIndices || teiIndices.length === 0) {
+    return []
+  }
+
+  console.group(`%c computeQuillIndicesFromTEIIndices ${text}`, 'color:pink')
+  console.log(text)
+
+  // deals with space between beginning of the text and first note
+  const sanitizePattern = /<(([\/a-z])+\b[^>]*)>/gi
+  let count = 0;
+  let delta = 0;
+  const quillPointers = teiIndices.map(index => {
+
+    const start = count > 0 ? teiIndices[count-1] : 0;
+    console.group("%c ###", 'color:pink', count, start, index)
+
+    const startText = text.substring(start, index);
+    const startTextSanitized = startText.replace(sanitizePattern, '')
+    const deltaStart = startText.length - startTextSanitized.length;
+    delta -= deltaStart;
+    let startIndex = index + delta;
+    console.log(`%c before (${start} => ${index}): '${startTextSanitized}' =>${startIndex} delta=${delta}`, 'color:pink')
+
+    console.log("%c =>", 'color:pink', startIndex)
+    console.groupEnd()
+    count++;
+    return startIndex
+  });
+  console.groupEnd()
+  return quillPointers
+}
+
+/*
+Filter segment 4 dimensions array to remove segments corresponding to a block start or a line break
+Return a 2 dimensions array corresponding to transcription / translation
+ */
+const getRelevantSegmentsIndices = (text, segments, translationOrTranscription) => {
+  const index = translationOrTranscription === 'transcription' ? 0 : 2;
+  return segments.filter(seg => {
+    let strAtInsertPoint = text.substr(seg[index], 3);
+    return (seg[index] > 0 && strAtInsertPoint !== '<p>' && strAtInsertPoint !== '<l>' && strAtInsertPoint !== '<lb')
+  }).map(seg => seg[index])
+}
+
+
+
 const insertSpeechparts = (text, speechparts) => {
   let insertions = [];
   speechparts.forEach((note, index) => {
@@ -329,17 +498,55 @@ const computeNotesPointers  = (htmlWithNotes) => {
   const regexpEnd = /<\/note>/;
   let resStart, resEnd;
   const notes = [];
+
+  htmlWithNotes = sanitizeHtmlWithNotesForSave(htmlWithNotes)
+
+
+  console.group("%c ###########################################", 'color:DarkOrchid')
+  console.log("%c computeNotesPointers", 'color:DarkOrchid', htmlWithNotes)
+  console.log("%c ######", 'color:DarkOrchid')
+
   while((resStart = regexpStart.exec(htmlWithNotes)) !== null) {
+    console.log(`# ${htmlWithNotes}`, 'color:DarkOrchid')
+    console.log(`# resStart`, 'color:DarkOrchid', resStart)
     htmlWithNotes = htmlWithNotes.replace(regexpStart, '');
     resEnd = regexpEnd.exec(htmlWithNotes);
+    console.log(`# resEnd`, 'color:DarkOrchid', resEnd)
     htmlWithNotes = htmlWithNotes.replace(regexpEnd, '');
     notes.push({
       "note_id" : parseInt(resStart[1]),
       "ptr_start": resStart.index,
       "ptr_end": resEnd.index
     });
+    console.log('%c =>', 'color:DarkOrchid', {
+      "note_id" : parseInt(resStart[1]),
+      "ptr_start": resStart.index,
+      "ptr_end": resEnd.index
+    })
   }
+  console.warn('%c computeNotesPointers', 'color:DarkOrchid', notes.length, notes)
+
+  console.log("%c ###########################################", 'color:DarkOrchid')
+  console.groupEnd()
   return notes;
+}
+
+/*
+Sanitizes crossing tags caused by editor to be able to compute note pointers accurately
+Replace strings like </ex></note><ex> by </note>
+and like </ex><note id="xxx"><ex> by <note id="xxx">
+ */
+const sanitizeHtmlWithNotesForSave = htmlWithNotes => {
+  console.log(`%c sanitizeHtmlWithNotesForSave ${htmlWithNotes}`, 'color:DarkSlateGray' )
+  regexpClosingToClean.forEach(re => {
+    htmlWithNotes = htmlWithNotes.replace(re, '</note>')
+  })
+  regexpOpeningToClean.forEach(re => {
+    htmlWithNotes = htmlWithNotes.replace(re, '<note id="$1">')
+  })
+
+  console.log(`%c   => ${htmlWithNotes}`, 'color:DarkSlateGray' )
+  return htmlWithNotes;
 }
 const computeAlignmentPointers  = (htmlWithSegments) => {
 
@@ -415,12 +622,54 @@ const computeImageAlignmentsPointers  = (htmlWithFacsimile) => {
   return alignments;
 }
 
+/*
+const sanitizeHtmlWithNotesAfterInsertion = htmlWithNotes => {
 
+
+
+  return htmlWithNotes;
+}
+
+const testHtmlWithNotes = '<p><note id="1156">Om<ex>n</ex>ib<ex>u</ex></note><ex>s</ex> p<ex>re</ex>se<note id="1157">ntes litt<ex>e</ex></note><ex>r</ex>as insp<ex>e</ex>cturis, . . offic<ex>ialis</ex> Belvacen<ex>sis</ex>, sal<ex>u</ex>t<ex>em</ex> in D<ex>om</ex>in<ex>o</ex>. Nov<ex>er</ex>int univ<ex>er</ex>si q<ex>uo</ex>d i<ex>n</ex> n<ex>ost</ex>ra constituti p<ex>re</ex>senavo, die 1248, le lune post Jubilat<ex>e</ex>.</p>';
+const testHtmlWithNotesSanitized = '<p><note id="1156">Om<ex>n</ex>ib<ex>u</note>s</ex> p<ex>re</ex>sentes litt<ex>e<note id="1157">r</ex>as ins</note>p<ex>e</ex>cturis</p>';
+const resutlHtmlWithNotesSanitized  = sanitizeHtmlWithNotesForSave(testHtmlWithNotes)
+console.log('before saving', resutlHtmlWithNotesSanitized, resutlHtmlWithNotesSanitized === testHtmlWithNotesSanitized)
+const testHtmlWithoutNotes = '<p>Om<ex>n</ex>ib<ex>us</ex> p<ex>re</ex>sentes litt<ex>er</ex>as insp<ex>e</ex>cturis</p>';
+const testNotes = [
+  {
+    "ptr_start": 3,
+    "ptr_end": 22,
+    "id": 1156,
+    "user_id": 4,
+    "content": "<p>qssdqd</p>",
+    "note_type": {
+      "id": 0,
+      "label": "TERM"
+    }
+  },
+  {
+    "ptr_start": 57,
+    "ptr_end": 69,
+    "id": 1157,
+    "user_id": 4,
+    "content": "<p>qdsqd</p>",
+    "note_type": {
+      "id": 0,
+      "label": "TERM"
+    }
+  }
+]
+const resultWithNotesInserted = insertNotesAndSegments(testHtmlWithoutNotes, testNotes, [], 'transcription')
+console.log('after insertion', resultWithNotesInserted, resultWithNotesInserted === testHtmlWithNotesSanitized)
+const resultWithNotesInsertedAndSanitized = sanitizeHtmlWithNotesAfterInsertion(resultWithNotesInserted)
+console.log('after sanitization', resultWithNotesInsertedAndSanitized, resultWithNotesInsertedAndSanitized === testHtmlWithNotes)
+*/
 export {
   quillToTEI,
   TEIToQuill,
   convertLinebreakTEIToQuill,
   convertLinebreakQuillToTEI,
+  getRelevantSegmentsIndices,
   insertFacsimileZones,
   insertNotesAndSegments,
   insertNotes,
@@ -428,8 +677,11 @@ export {
   insertSpeechparts,
   stripNotes,
   stripSegments,
+  stripSpeechparts,
   computeAlignmentPointers,
   computeNotesPointers,
   computeSpeechpartsPointers,
-  computeImageAlignmentsPointers
+  computeImageAlignmentsPointers,
+
+  sanitizeHtmlWithNotesForSave
 };

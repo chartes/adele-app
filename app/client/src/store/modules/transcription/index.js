@@ -52,10 +52,12 @@ const mutations = {
       transcriptionShadowQuillElement.innerHTML = payload.content || "";
       transcriptionShadowQuill = new Quill(transcriptionShadowQuillElement)
       state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
+      console.log("INIT with content", state.transcriptionContent)
 
       notesShadowQuillElement.innerHTML = payload.withNotes || "";
       notesShadowQuill = new Quill(notesShadowQuillElement)
       state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
+      console.log("INIT with notes", state.transcriptionWithNotes)
 
       speechpartsShadowQuillElement.innerHTML = payload.withSpeechparts || "";
       speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement)
@@ -110,10 +112,14 @@ const mutations = {
   },
   ADD_OPERATION (state, payload) {
 
+    console.log(`%c ADD_OPERATION`, 'color:red', payload)
+
     const deltaFilteredForContent = filterDeltaOperations(transcriptionShadowQuill, payload, 'content')
     const deltaFilteredForNotes = filterDeltaOperations(notesShadowQuill, payload, 'notes')
     const deltaFilteredForSpeechparts = filterDeltaOperations(speechpartsShadowQuill, payload, 'speechparts')
     const deltaFilteredForFacsimile = filterDeltaOperations(facsimileShadowQuill, payload, 'facsimile')
+
+    console.log(`%c filtered`, 'color:red', deltaFilteredForContent)
 
     transcriptionShadowQuill.updateContents(deltaFilteredForContent)
     notesShadowQuill.updateContents(deltaFilteredForNotes)
@@ -124,6 +130,8 @@ const mutations = {
     state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithFacsimile = facsimileShadowQuillElement.children[0].innerHTML;
+
+    console.log(`%c filtered`, 'color:red', transcriptionShadowQuillElement.children[0].innerHTML)
 
   },
   SAVED (state) {
@@ -292,10 +300,11 @@ const actions = {
 
   },
   saveContent ({ state, rootGetters, rootState }) {
-    //console.log('STORE ACTION transcription/saveContent', rootState);
+    console.log('STORE ACTION transcription/saveContent', state.transcriptionContent);
     const auth = rootGetters['user/authHeader'];
     const tei = quillToTEI(state.transcriptionContent);
     const sanitized = stripSegments(tei);
+    console.log(`%c save transcription ${sanitized}`, 'color:red')
     const data = { data: [{
         "content" : sanitized,
         "username": rootState.user.author.username
@@ -323,7 +332,9 @@ const actions = {
       // compute notes pointers
       let sanitizedWithNotes = stripSegments(state.transcriptionWithNotes);
 
+      console.warn(sanitizedWithNotes)
       sanitizedWithNotes = convertLinebreakQuillToTEI(sanitizedWithNotes);
+      console.warn(sanitizedWithNotes)
       const notes = computeNotesPointers(sanitizedWithNotes);
       notes.forEach(note => {
           let found = rootState.notes.notes.find((element) => {
@@ -438,6 +449,7 @@ const actions = {
         ...(translationPointers[i] ? translationPointers[i] : [0,0])
       ]);
     }
+    console.log("Alignmant pointers", pointers)
     const auth = rootGetters['user/authHeader'];
     const data = { data: {
         username: rootState.user.author.username,

@@ -11,6 +11,7 @@ class SegmentBlot extends Parchment.Embed {
     let node = super.create();
     return node;
   }
+
 }
 SegmentBlot.blotName = 'segment';
 SegmentBlot.tagName = 'segment';

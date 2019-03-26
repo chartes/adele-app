@@ -116,7 +116,9 @@ const actions = {
       }
       let quillContent = TEIToQuill(translation.content);
       let content = insertSegments(quillContent, alignments, 'translation');
-      const withNotes = insertNotesAndSegments(quillContent, translation.notes, alignments, 'translation');
+      const withNotes = content
+        // TODO Remettre
+        //insertNotesAndSegments(quillContent, translation.notes, alignments, 'translation');
 
       const data = {
         translation: translation,
