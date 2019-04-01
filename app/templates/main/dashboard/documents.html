@@ -268,7 +268,7 @@
            $('#manifest-validation-info').html(info);
 
            if (manifest_url.length > 0) {
-              const validator_url = "http://iiif.io/api/presentation/validator/service/validate?format=json&version=2.1&url=" + manifest_url;
+              const validator_url = "https://iiif.io/api/presentation/validator/service/validate?format=json&version=2.1&url=" + manifest_url;
                $.ajax({
                     url : validator_url
                }).done(function(data) {
