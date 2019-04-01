@@ -791,93 +791,86 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
         :return:
         """
     response = None
+    data = request.get_json()
+    if "data" in data and "speech_parts" in data["data"]:
+        data = data["data"]
 
-    transcription = get_reference_transcription(doc_id)
+        user = current_app.get_current_user()
 
-    if transcription is None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Reference transcription not found"
-        })
-    else:
+        if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data[
+            "username"] != user.username):
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+
         if response is None:
-            data = request.get_json()
-            if "data" in data and "speech_parts" in data["data"]:
-                data = data["data"]
+            user_id = user.id
+            # teachers and admins can put/post/delete on others behalf
+            if (user.is_teacher or user.is_admin) and "username" in data:
+                user = current_app.get_user_from_username(data["username"])
+                if user is not None:
+                    user_id = user.id
 
-                user = current_app.get_current_user()
+            # let's make the new alignments from the data
+            if response is None:
 
-                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data[
-                    "username"] != user.username):
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Access forbidden"
-                    })
+                transcription = get_reference_transcription(doc_id)
+                if transcription is None:
+                    transcription = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user_id).first()
+
+                if not isinstance(data["speech_parts"], list):
+                    data = [data["speech_parts"]]
+                else:
+                    data = data["speech_parts"]
+
+                # DELETE the old data
+                for old_al in AlignmentDiscours.query.filter(
+                        AlignmentDiscours.transcription_id == transcription.id,
+                        AlignmentDiscours.user_id == user_id
+                    ).all():
+                    db.session.delete(old_al)
 
                 if response is None:
-                    user_id = user.id
-                    # teachers and admins can put/post/delete on others behalf
-                    if (user.is_teacher or user.is_admin) and "username" in data:
-                        user = current_app.get_user_from_username(data["username"])
-                        if user is not None:
-                            user_id = user.id
+                    try:
 
-                    # let's make the new alignments from the data
+                        for speech_part in data:
+                            part_type = SpeechPartType.query.filter(
+                                SpeechPartType.id == int(speech_part["type_id"])
+                            ).one()
+
+                            new_al = AlignmentDiscours(
+                                transcription_id=transcription.id,
+                                speech_part_type_id=part_type.id,
+                                user_id=user_id,
+                                ptr_start=speech_part["ptr_start"],
+                                ptr_end=speech_part["ptr_end"],
+                                note=speech_part.get("note")
+                            )
+                            db.session.add(new_al)
+
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403, "title": "Cannot insert data", "details": str(e)
+                        })
+
                     if response is None:
-
-                        if not isinstance(data["speech_parts"], list):
-                            data = [data["speech_parts"]]
+                        json_obj = query_json_endpoint(
+                            request,
+                            url_for(
+                                "api_bp.api_documents_transcriptions_alignments_discours",
+                                api_version=api_version,
+                                doc_id=doc_id,
+                                user_id=user_id
+                            ),
+                            user=user
+                        )
+                        if "data" in json_obj:
+                            response = APIResponseFactory.make_response(data=json_obj["data"])
                         else:
-                            data = data["speech_parts"]
+                            response = APIResponseFactory.make_response(data=json_obj["errors"])
 
-                        # DELETE the old data
-                        for old_al in AlignmentDiscours.query.filter(
-                                AlignmentDiscours.transcription_id == transcription.id,
-                                AlignmentDiscours.user_id == user_id
-                            ).all():
-                            db.session.delete(old_al)
-
-                        if response is None:
-                            try:
-                                for speech_part in data:
-                                    part_type = SpeechPartType.query.filter(
-                                        SpeechPartType.id == int(speech_part["type_id"])
-                                    ).one()
-
-                                    new_al = AlignmentDiscours(
-                                        transcription_id=transcription.id,
-                                        speech_part_type_id=part_type.id,
-                                        user_id=user_id,
-                                        ptr_start=speech_part["ptr_start"],
-                                        ptr_end=speech_part["ptr_end"],
-                                        note=speech_part.get("note")
-                                    )
-                                    db.session.add(new_al)
-
-                                db.session.commit()
-                            except Exception as e:
-                                db.session.rollback()
-                                response = APIResponseFactory.make_response(errors={
-                                    "status": 403, "title": "Cannot insert data", "details": str(e)
-                                })
-
-                            if response is None:
-                                json_obj = query_json_endpoint(
-                                    request,
-                                    url_for(
-                                        "api_bp.api_documents_transcriptions_alignments_discours",
-                                        api_version=api_version,
-                                        doc_id=doc_id,
-                                        user_id=user_id
-                                    ),
-                                    user=user
-                                )
-                                if "data" in json_obj:
-                                    response = APIResponseFactory.make_response(data=json_obj["data"])
-                                else:
-                                    response = APIResponseFactory.make_response(data=json_obj["errors"])
-        else:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Data is malformed"
-            })
     return APIResponseFactory.jsonify(response)
 
 
@@ -913,81 +906,70 @@ def api_put_documents_transcriptions_alignments_discours(api_version, doc_id):
         """
     response = None
 
-    transcription = get_reference_transcription(doc_id)
+    data = request.get_json()
+    if "data" in data and "speech_parts" in data["data"]:
+        data = data["data"]
 
-    if transcription is None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Reference transcription not found"
-        })
-    else:
+        user = current_app.get_current_user()
+
+        if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data[
+            "username"] != user.username):
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+
         if response is None:
-            data = request.get_json()
-            if "data" in data and "speech_parts" in data["data"]:
-                data = data["data"]
+            user_id = user.id
+            # teachers and admins can put/post/delete on others behalf
+            if (user.is_teacher or user.is_admin) and "username" in data:
+                user = current_app.get_user_from_username(data["username"])
+                if user is not None:
+                    user_id = user.id
 
-                user = current_app.get_current_user()
-
-                if user.is_anonymous or (not (user.is_teacher or user.is_admin) and "username" in data and data[
-                    "username"] != user.username):
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Access forbidden"
-                    })
+            # let's make the new alignments from the data
+            if response is None:
+                al_id = data.get("id")
+                if not isinstance(data["speech_parts"], list):
+                    data = [data["speech_parts"]]
+                else:
+                    data = data["speech_parts"]
 
                 if response is None:
-                    user_id = user.id
-                    # teachers and admins can put/post/delete on others behalf
-                    if (user.is_teacher or user.is_admin) and "username" in data:
-                        user = current_app.get_user_from_username(data["username"])
-                        if user is not None:
-                            user_id = user.id
+                    try:
+                        for speech_part in data:
+                            part_type = SpeechPartType.query.filter(
+                                SpeechPartType.id == int(speech_part["type_id"])
+                            ).one()
 
-                    # let's make the new alignments from the data
+                            al = AlignmentDiscours.query.filter(AlignmentDiscours.id == int(al_id)).first()
+                            al.ptr_start = speech_part['ptr_start']
+                            al.ptr_end = speech_part['ptr_end']
+                            al.type_id = part_type.id
+                            al.note = speech_part['note']
+
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        response = APIResponseFactory.make_response(errors={
+                            "status": 403, "title": "Cannot update data", "details": str(e)
+                        })
+
                     if response is None:
-                        al_id = data.get("id")
-                        if not isinstance(data["speech_parts"], list):
-                            data = [data["speech_parts"]]
+                        json_obj = query_json_endpoint(
+                            request,
+                            url_for(
+                                "api_bp.api_documents_transcriptions_alignments_discours",
+                                api_version=api_version,
+                                doc_id=doc_id,
+                                user_id=user_id
+                            ),
+                            user=user
+                        )
+                        if "data" in json_obj:
+                            response = APIResponseFactory.make_response(data=json_obj["data"])
                         else:
-                            data = data["speech_parts"]
+                            response = APIResponseFactory.make_response(data=json_obj["errors"])
 
-                        if response is None:
-                            try:
-                                for speech_part in data:
-                                    part_type = SpeechPartType.query.filter(
-                                        SpeechPartType.id == int(speech_part["type_id"])
-                                    ).one()
-
-                                    al = AlignmentDiscours.query.filter(AlignmentDiscours.id == int(al_id)).first()
-                                    al.ptr_start = speech_part['ptr_start']
-                                    al.ptr_end = speech_part['ptr_end']
-                                    al.type_id = part_type.id
-                                    al.note = speech_part['note']
-
-                                db.session.commit()
-                            except Exception as e:
-                                db.session.rollback()
-                                response = APIResponseFactory.make_response(errors={
-                                    "status": 403, "title": "Cannot update data", "details": str(e)
-                                })
-
-                            if response is None:
-                                json_obj = query_json_endpoint(
-                                    request,
-                                    url_for(
-                                        "api_bp.api_documents_transcriptions_alignments_discours",
-                                        api_version=api_version,
-                                        doc_id=doc_id,
-                                        user_id=user_id
-                                    ),
-                                    user=user
-                                )
-                                if "data" in json_obj:
-                                    response = APIResponseFactory.make_response(data=json_obj["data"])
-                                else:
-                                    response = APIResponseFactory.make_response(data=json_obj["errors"])
-        else:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Data is malformed"
-            })
     return APIResponseFactory.jsonify(response)
 
 

@@ -49,6 +49,7 @@ def make_manifest(api_version, doc_id, user_id, reference=False):
                 kwargs.pop("user_id")
 
             #root_url = request.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
+            print(request.host_url[:-1], request.is_secure)
             canvas["otherContent"].extend([
                 {
                     "@type": "sc:AnnotationList",

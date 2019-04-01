@@ -121,15 +121,16 @@ def dashboard():
 @login_required
 def dashboard_documents():
     user = current_app.get_current_user()
-    docs = user.documents_i_can_edit
-    return render_template_with_token('main/dashboard/documents.html', docs=docs, current_user=user)
+    #docs = user.documents_i_can_edit
+    return render_template_with_token('main/dashboard/documents.html',  current_user=user)
 
 
 @app_bp.route('/dashboard/document-list')
 @login_required
 def dashboard_document_list():
     user = current_app.get_current_user()
-    docs = user.documents_from_my_whitelists
+    #docs = user.documents_from_my_whitelists
+    docs = user.documents_i_can_edit
     return render_template_with_token('main/fragments/_document_management_list.html', docs=docs, current_user=user)
 
 

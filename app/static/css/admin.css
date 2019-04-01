@@ -3,7 +3,7 @@
   padding-bottom: 6rem; }
 
   .iiif-map {
-    min-height: 500px;
+    min-height: 620px;
     background: #333; }
 
     .navbar-item {
@@ -57,8 +57,7 @@
 .edit-document, .delete-document, .edit-manifest-info, .export-document {
   font-size: medium !important;
   text-decoration: none !important; }
-  .edit-document ; p, .delete-document ; p, .edit-manifest-info ; p,
-  .export-document ; p {
+  .edit-document p, .delete-document p, .edit-manifest-info p, .export-document p {
     margin-left: 6px !important; }
 
 .is-invisible {

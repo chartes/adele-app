@@ -86,7 +86,7 @@ const mutations = {
 
   },
   REFERENCE(state, payload) {
-    state.referenceTranscription = payload
+    state.referenceTranscription = payload;
   },
   LOADING_STATUS (state, payload) {
     state.transcriptionLoading = payload;
@@ -178,7 +178,7 @@ const actions = {
 
       if (response.data.errors && response.data.errors.status === 404) {
         console.warn("NO transcription found");
-        return;
+        //return this.dispatch('transcription/fetchReference', {doc_id});
       }
       let transcription = {content : " ", notes: []};
 

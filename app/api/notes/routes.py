@@ -656,9 +656,10 @@ def api_put_documents_transcriptions_notes(api_version, doc_id):
             else:
                 user_id = user.id
             t = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == user_id).first()
-            for thn in TranscriptionHasNote.query.filter(TranscriptionHasNote.transcription_id == t.id).all():
-                db.session.delete(thn)
-            db.session.commit()
+            if t:
+                for thn in TranscriptionHasNote.query.filter(TranscriptionHasNote.transcription_id == t.id).all():
+                    db.session.delete(thn)
+                db.session.commit()
 
     return api_put_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
 
@@ -680,9 +681,10 @@ def api_put_documents_translations_notes(api_version, doc_id):
             else:
                 user_id = user.id
             t = Translation.query.filter(Translation.doc_id == doc_id, Translation.user_id == user_id).first()
-            for thn in TranslationHasNote.query.filter(TranslationHasNote.translation_id == t.id).all():
-                db.session.delete(thn)
-            db.session.commit()
+            if t:
+                for thn in TranslationHasNote.query.filter(TranslationHasNote.translation_id == t.id).all():
+                    db.session.delete(thn)
+                db.session.commit()
 
     return api_put_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
 
