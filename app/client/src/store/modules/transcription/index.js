@@ -47,27 +47,27 @@ const mutations = {
 
 
   INIT(state, payload) {
-    if (!transcriptionShadowQuill) {
+    //if (!transcriptionShadowQuill) {
 
       transcriptionShadowQuillElement.innerHTML = payload.content || "";
-      transcriptionShadowQuill = new Quill(transcriptionShadowQuillElement)
+      transcriptionShadowQuill = new Quill(transcriptionShadowQuillElement);
       state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
-      console.log("INIT with content", state.transcriptionContent)
+      console.log("INIT with content", state.transcriptionContent);
 
       notesShadowQuillElement.innerHTML = payload.withNotes || "";
-      notesShadowQuill = new Quill(notesShadowQuillElement)
+      notesShadowQuill = new Quill(notesShadowQuillElement);
       state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
-      console.log("INIT with notes", state.transcriptionWithNotes)
+      console.log("INIT with notes", state.transcriptionWithNotes);
 
       speechpartsShadowQuillElement.innerHTML = payload.withSpeechparts || "";
-      speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement)
+      speechpartsShadowQuill = new Quill(speechpartsShadowQuillElement);
       state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
 
       facsimileShadowQuillElement.innerHTML = payload.withFacsimile || "";
-      facsimileShadowQuill = new Quill(facsimileShadowQuillElement)
+      facsimileShadowQuill = new Quill(facsimileShadowQuillElement);
       state.transcriptionWithFacsimile = facsimileShadowQuillElement.children[0].innerHTML;
 
-    }
+    //}
   },
   RESET(state) {
 
@@ -79,11 +79,12 @@ const mutations = {
     state.transcriptionWithSpeechparts = false;
     state.transcriptionWithFacsimile = false;
 
+    
     if (transcriptionShadowQuillElement && transcriptionShadowQuillElement.children[0]) transcriptionShadowQuillElement.children[0].innerHTML = "";
     if (notesShadowQuillElement && notesShadowQuillElement.children[0]) notesShadowQuillElement.children[0].innerHTML = "";
     if (speechpartsShadowQuillElement && speechpartsShadowQuillElement.children[0]) speechpartsShadowQuillElement.children[0].innerHTML = "";
     if (facsimileShadowQuillElement && facsimileShadowQuillElement.children[0]) facsimileShadowQuillElement.children[0].innerHTML = "";
-
+    
   },
   REFERENCE(state, payload) {
     state.referenceTranscription = payload;
@@ -112,25 +113,29 @@ const mutations = {
   },
   ADD_OPERATION (state, payload) {
 
-    console.log(`%c ADD_OPERATION`, 'color:red', payload)
+    console.log(`%c ADD_OPERATION`, 'color:red', payload);
 
-    const deltaFilteredForContent = filterDeltaOperations(transcriptionShadowQuill, payload, 'content')
-    const deltaFilteredForNotes = filterDeltaOperations(notesShadowQuill, payload, 'notes')
-    const deltaFilteredForSpeechparts = filterDeltaOperations(speechpartsShadowQuill, payload, 'speechparts')
-    const deltaFilteredForFacsimile = filterDeltaOperations(facsimileShadowQuill, payload, 'facsimile')
+    const deltaFilteredForContent = filterDeltaOperations(transcriptionShadowQuill, payload, 'content');
+    const deltaFilteredForNotes = filterDeltaOperations(notesShadowQuill, payload, 'notes');
+    const deltaFilteredForSpeechparts = filterDeltaOperations(speechpartsShadowQuill, payload, 'speechparts');
+    const deltaFilteredForFacsimile = filterDeltaOperations(facsimileShadowQuill, payload, 'facsimile');
 
-    console.log(`%c filtered`, 'color:red', deltaFilteredForContent)
-
-    transcriptionShadowQuill.updateContents(deltaFilteredForContent)
-    notesShadowQuill.updateContents(deltaFilteredForNotes)
-    speechpartsShadowQuill.updateContents(deltaFilteredForSpeechparts)
-    facsimileShadowQuill.updateContents(deltaFilteredForFacsimile)
+    console.log(`%c transcriptionShadowQuill`, 'color:blue', transcriptionShadowQuill);
+    console.log(`%c filtered`, 'color:red', deltaFilteredForContent);
+  
+    transcriptionShadowQuill.updateContents(deltaFilteredForContent);
+    console.log(`%c transcriptionShadowQuill`, 'color:blue', transcriptionShadowQuill);
+  
+    notesShadowQuill.updateContents(deltaFilteredForNotes);
+    speechpartsShadowQuill.updateContents(deltaFilteredForSpeechparts);
+    facsimileShadowQuill.updateContents(deltaFilteredForFacsimile);
 
     state.transcriptionContent = transcriptionShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithNotes = notesShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithSpeechparts = speechpartsShadowQuillElement.children[0].innerHTML;
     state.transcriptionWithFacsimile = facsimileShadowQuillElement.children[0].innerHTML;
-
+  
+  
     console.log(`%c filtered`, 'color:red', transcriptionShadowQuillElement.children[0].innerHTML)
 
   },
@@ -197,9 +202,9 @@ const actions = {
         withNotes: convertLinebreakTEIToQuill(withNotes),
         withSpeechparts: convertLinebreakTEIToQuill(withSpeechparts),
         withFacsimile: convertLinebreakTEIToQuill(withFacsimile),
-      }
+      };
 
-      commit('INIT', data)
+      commit('INIT', data);
       commit('UPDATE', data);
     })
   },
@@ -210,7 +215,7 @@ const actions = {
         commit('ALIGNMENTS', []);
         return;
       }
-      const alignments = response.data.data && Array.isArray(response.data.data[0]) ? response.data.data : [response.data.data]
+      const alignments = response.data.data && Array.isArray(response.data.data[0]) ? response.data.data : [response.data.data];
       commit('ALIGNMENTS', alignments);
     })
   },
@@ -268,9 +273,9 @@ const actions = {
 
     return dispatch('saveContent')
       .then(response => {
-        console.warn("content saved", rootGetters['document/manifestURL'])
+        console.warn("content saved", rootGetters['document/manifestURL']);
         if (rootGetters['document/manifestURL']) {
-          console.warn("content saved", rootGetters['document/manifestURL'])
+          console.warn("content saved", rootGetters['document/manifestURL']);
           dispatch('saveImageAlignments')
         }
       })
@@ -284,7 +289,7 @@ const actions = {
       .then(reponse => dispatch('saveSpeechparts'))
       .then(reponse => dispatch('saveNotes'))
       .then(reponse => {
-        if (rootState.translation.translation) return dispatch('translation/save', null, {root:true})
+        if (rootState.translation.translation) return dispatch('translation/save', null, {root:true});
         else return true;
       })
       .then(function(values) {
@@ -304,12 +309,13 @@ const actions = {
     const auth = rootGetters['user/authHeader'];
     const tei = quillToTEI(state.transcriptionContent);
     const sanitized = stripSegments(tei);
-    console.log(`%c save transcription ${sanitized}`, 'color:red')
+    console.log(`%c save transcription ${sanitized}`, 'color:red');
     const data = { data: [{
         "content" : sanitized,
         "username": rootState.user.author.username
       }]};
     const method  = (state.transcription && state.transcription.doc_id) ? axios.put : axios.post;
+    
     return new Promise( ( resolve, reject ) => {
       method(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions`, data, auth)
         .then( response => {
@@ -332,9 +338,9 @@ const actions = {
       // compute notes pointers
       let sanitizedWithNotes = stripSegments(state.transcriptionWithNotes);
 
-      console.warn(sanitizedWithNotes)
+      console.warn(sanitizedWithNotes);
       sanitizedWithNotes = convertLinebreakQuillToTEI(sanitizedWithNotes);
-      console.warn(sanitizedWithNotes)
+      console.warn(sanitizedWithNotes);
       const notes = computeNotesPointers(sanitizedWithNotes);
       notes.forEach(note => {
           let found = rootState.notes.notes.find((element) => {
@@ -382,7 +388,7 @@ const actions = {
     const data = {
       username: rootState.user.author.username,
       speech_parts: speechparts
-    }
+    };
     //console.log("saveSpeechparts", speechparts)
 
     return new Promise( ( resolve, reject ) => {
@@ -419,7 +425,7 @@ const actions = {
     const data = {
       username: rootState.user.author.username,
       alignments: imageAlignments
-    }
+    };
 
     return new Promise( ( resolve, reject ) => {
       return axios.post(`/adele/api/1.0/documents/${rootState.document.document.id}/transcriptions/alignments/images`, { data: data }, auth)
@@ -431,7 +437,7 @@ const actions = {
           else resolve( response.data )
         })
         .catch( error => {
-          console.error("error", error)
+          console.error("error", error);
           reject( error )
         });
     } );
@@ -449,7 +455,7 @@ const actions = {
         ...(translationPointers[i] ? translationPointers[i] : [0,0])
       ]);
     }
-    console.log("Alignmant pointers", pointers)
+    console.log("Alignmant pointers", pointers);
     const auth = rootGetters['user/authHeader'];
     const data = { data: {
         username: rootState.user.author.username,
@@ -465,20 +471,20 @@ const actions = {
           else resolve( response.data )
         })
         .catch( error => {
-          console.error("error", error)
+          console.error("error", error);
           reject( error )
         });
     } );
   },
   changed ({ commit }, deltas) {
     console.warn('STORE ACTION transcription/changed');
-    commit('ADD_OPERATION', deltas)
-    commit('CHANGED')
+    commit('ADD_OPERATION', deltas);
+    commit('CHANGED');
     commit('SAVING_STATUS', 'tobesaved')
   },
   translationChanged ({ commit }, deltas) {
     console.warn('STORE ACTION transcription/translationChanged');
-    commit('CHANGED')
+    commit('CHANGED');
     commit('SAVING_STATUS', 'tobesaved')
   },
   reset({commit}) {
@@ -497,6 +503,6 @@ const transcriptionModule = {
   mutations,
   actions,
   getters
-}
+};
 
 export default transcriptionModule;

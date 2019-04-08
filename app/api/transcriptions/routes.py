@@ -118,7 +118,7 @@ def api_documents_transcriptions(api_version, doc_id, user_id=None):
                 data = []
                 for tr in transcriptions:
                     t = tr.serialize()
-                    t["notes"] = [n for n in t["notes"] if n["user_id"] == int(user_id)]
+                    #t["notes"] = [n for n in t["notes"] if n["user_id"] == int(user_id)]
                     data.append(t)
                 response = APIResponseFactory.make_response(data=data)
             except NoResultFound:
