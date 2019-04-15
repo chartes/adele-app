@@ -1351,8 +1351,7 @@ def api_documents_clone_transcription(api_version, doc_id, user_id=None):
             # remove the old teacher's notes
             for thn in teacher_tr.notes:
                 db.session.delete(thn.note)
-                db.session.delete(thn)
-
+            teacher_tr.notes = []
         db.session.add(teacher_tr)
         db.session.commit()
 
