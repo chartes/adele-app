@@ -118,7 +118,11 @@
 	    },
 	    cloneTranscription() {
 		    console.log("cloning transcription");
-		    this.closeCloneTranscriptionMode();
+		    this.$store.dispatch('transcription/cloneContent')
+			    .then(data => {
+				    location.reload();
+				    //this.closeCloneTranscriptionMode();
+			    });
 	    }
     },
     computed: {
