@@ -14,8 +14,13 @@ const mutations = {
   },
   UPDATE_ALL (state, payload) {
     state.documents = payload;
-  }
-
+  },
+  PARTIAL_UPDATE_DOCUMENT(state, payload) {
+    state.document =  {
+      ...state.document,
+      ...payload
+    };
+  },
 };
 
 const actions = {
@@ -46,12 +51,9 @@ const actions = {
         });
     })
   },
-  fetchAll ({ commit }, id) {
-    return axios.get(`/adele/api/1.0/documents`).then( (response) => {
-      commit('UPDATE_DOCUMENT', response.data.data)
-    })
-  }
-
+  setValidationStage ({ commit }, {validationStage, validationStageLabel}) {
+    commit('PARTIAL_UPDATE_DOCUMENT', {validation_stage: validationStage, validation_stage_label: validationStageLabel})
+  },
 };
 
 const getters = {
