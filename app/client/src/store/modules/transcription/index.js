@@ -331,6 +331,26 @@ const actions = {
         });
     } );
   },
+  cloneContent: function ({state, rootGetters, rootState}) {
+    console.log('STORE ACTION transcription/cloneContent', state.transcriptionContent);
+    const auth = rootGetters['user/authHeader'];
+    console.log(`%c clone transcription`, 'color:red');
+    const doc_id = rootState.document.document.id;
+    const user_id = rootState.user.author.id;
+    return new Promise((resolve, reject) => {
+      axios.get(`/adele/api/1.0/documents/${doc_id}/transcriptions/clone/from-user/${user_id}`, auth)
+        .then(response => {
+          if (response.data.errors) {
+            console.error("error", response.data.errors);
+            reject(response.data.errors);
+          } else resolve(response.data)
+        })
+        .catch(error => {
+          console.error("error", error);
+          reject(error)
+        });
+    });
+  },
   saveNotes ({ commit, rootState, state, rootGetters }) {
 
       console.warn('STORE ACTION transcription/saveNotes');

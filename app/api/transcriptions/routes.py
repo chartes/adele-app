@@ -7,7 +7,7 @@ from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, api_bp
 from app.api.translations.routes import get_reference_translation
 from app.models import Transcription, User, Document, AlignmentTranslation, Translation, AlignmentDiscours, \
-    SpeechPartType, Note, AlignmentImage, ImageZone
+    SpeechPartType, Note, AlignmentImage, ImageZone, TranscriptionHasNote
 
 """
 ===========================
@@ -35,8 +35,8 @@ def get_reference_alignment_discours(doc_id):
     transcription = get_reference_transcription(doc_id)
     if transcription is not None:
         alignments = AlignmentDiscours.query.filter(
-                AlignmentDiscours.transcription_id == transcription.id,
-                AlignmentDiscours.user_id == transcription.user_id
+            AlignmentDiscours.transcription_id == transcription.id,
+            AlignmentDiscours.user_id == transcription.user_id
         ).all()
     return alignments
 
@@ -827,7 +827,7 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
                 for old_al in AlignmentDiscours.query.filter(
                         AlignmentDiscours.transcription_id == transcription.id,
                         AlignmentDiscours.user_id == user_id
-                    ).all():
+                ).all():
                     db.session.delete(old_al)
 
                 if response is None:
@@ -1227,7 +1227,7 @@ def api_post_documents_transcriptions_alignments_images(api_version, doc_id):
                                         ImageZone.user_id == int(user_id),
                                         ImageZone.img_idx == int(alignment["img_idx"]),
                                         ImageZone.canvas_idx == int(alignment["canvas_idx"]),
-                                    ).one()
+                                        ).one()
                                     print("image zone to align:", zone)
                                     new_al = AlignmentImage(
                                         transcription_id=transcription.id,
@@ -1324,4 +1324,51 @@ def api_delete_documents_transcriptions_alignments_images(api_version, doc_id, u
                         "status": 403, "title": "Cannot delete data", "details": str(e)
                     })
 
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/clone/from-user/<user_id>', methods=['GET'])
+@auth.login_required
+def api_documents_clone_transcription(api_version, doc_id, user_id=None):
+    response = None
+    teacher = current_app.get_current_user()
+    if teacher.is_anonymous or (not (teacher.is_teacher or teacher.is_admin)):
+        response = APIResponseFactory.make_response(errors={
+            "status": 403, "title": "Access forbidden"
+        })
+
+    print("cloning transcription (doc %s) from user %s" % (doc_id, user_id))
+
+    tr_to_be_cloned = Transcription.query.filter(Transcription.user_id == user_id, Transcription.doc_id == doc_id).first()
+    if tr_to_be_cloned:
+        teacher_tr = Transcription.query.filter(Transcription.user_id == teacher.id, Transcription.doc_id == doc_id).first()
+
+        if teacher_tr is None:
+            teacher_tr = Transcription(doc_id=doc_id, user_id=teacher.id, content=tr_to_be_cloned.content)
+        else:
+            # replace the teacher's tr content
+            teacher_tr.content = tr_to_be_cloned.content
+            # remove the old teacher's notes
+            for thn in teacher_tr.notes:
+                db.session.delete(thn.note)
+            teacher_tr.notes = []
+        db.session.add(teacher_tr)
+        db.session.commit()
+
+        # clone notes
+        for thn_to_be_cloned in tr_to_be_cloned.notes:
+            note = Note(type_id=thn_to_be_cloned.note.type_id, user_id=teacher.id, content=thn_to_be_cloned.note.content)
+            db.session.add(note)
+            db.session.flush()
+            teacher_tr.notes.append(
+                TranscriptionHasNote(ptr_start=thn_to_be_cloned.ptr_start,
+                                     ptr_end=thn_to_be_cloned.ptr_end,
+                                     note_id=note.id,
+                                     transcription_id=teacher_tr.id),
+            )
+
+        db.session.add(teacher_tr)
+        db.session.commit()
+
+    response = APIResponseFactory.make_response(data=[])
     return APIResponseFactory.jsonify(response)

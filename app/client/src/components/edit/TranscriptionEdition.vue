@@ -1,8 +1,6 @@
 <template>
   <div id="transcription-edition" :class="isNight">
 
-    <joke v-if="nbCols === 0"/>
-
     <p class="has-text-right is-size-7" style="margin-bottom: 1em">
       <span class="tag">
         Affichage : &nbsp;&nbsp;&nbsp;
@@ -25,7 +23,14 @@
 
       <div class="column" v-show="visibility.transcription" :class="columnSize">
 
-        <h2 class="subtitle">Transcription <small v-if="displayReferenceTranscription" class="tag is-dark is-round">Référence</small></h2>
+        <h2 class="subtitle">Transcription <small v-if="displayReferenceTranscription" class="tag is-dark is-round">Référence</small>
+          <span v-if="currentUserIsTeacher && currentUser.id !== author.id" style="margin-left: 8px" class="button is-link is-small" @click="openCloneTranscriptionDialog">
+            <i class="fas fa-copy" style="margin-right: 8px"></i>
+            Cloner
+          </span>
+        </h2>
+        
+        
         <div v-if="displayReferenceTranscription" v-html="referenceTranscription.content"></div>
         <transcription-editor v-else-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
         <div v-else>
@@ -47,6 +52,13 @@
 
       </div>
     </div>
+  
+    <modal-confirm-clone-transcription
+        v-if="cloneTranscriptionMode === 'clone'"
+        :cancel="closeCloneTranscriptionMode"
+        :submit="cloneTranscription">
+    </modal-confirm-clone-transcription>
+    
   </div>
 </template>
 
@@ -58,19 +70,19 @@
   import TranslationEditor from "../editors/TranslationEditor";
   import VisibilityToggle from "../ui/VisibilityToggle";
   import MinimalMessage from "../ui/MinimalMessage";
-  import Joke from '../ui/Joke';
   import EditionColumnsToggleMixins from '../../mixins/EditionColumnsToggle'
+  import ModalConfirmCloneTranscription from "../forms/ModalConfirmCloneTranscription";
 
   export default {
     name: "transcription-edition",
     mixins: [EditionColumnsToggleMixins],
     components: {
-      Joke,
       MinimalMessage,
       VisibilityToggle,
       IIIFMap,
       TranslationEditor,
-      TranscriptionEditor
+      TranscriptionEditor,
+	    ModalConfirmCloneTranscription
     },
     data() {
       return {
@@ -79,6 +91,7 @@
           transcription: true,
           translation: true,
         },
+	      cloneTranscriptionMode: false
       }
     },
     methods: {
@@ -96,6 +109,21 @@
             this.$store.dispatch('translation/fetch');
           });
       },
+      openCloneTranscriptionDialog() {
+      	this.cloneTranscriptionMode = "clone";
+      },
+	    closeCloneTranscriptionMode() {
+		    console.log("close transcriptipon mode");
+		    this.cloneTranscriptionMode = false;
+	    },
+	    cloneTranscription() {
+		    console.log("cloning transcription");
+		    this.$store.dispatch('transcription/cloneContent')
+			    .then(data => {
+				    location.reload();
+				    //this.closeCloneTranscriptionMode();
+			    });
+	    }
     },
     computed: {
 
