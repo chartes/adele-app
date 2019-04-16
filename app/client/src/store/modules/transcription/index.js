@@ -353,7 +353,7 @@ const actions = {
         });
     } );
   },
-  cloneContent: function ({state, rootGetters, rootState}) {
+  cloneContent: function ({dispatch, state, rootGetters, rootState}) {
     console.log('STORE ACTION transcription/cloneContent', state.transcriptionContent);
     const auth = rootGetters['user/authHeader'];
     console.log(`%c clone transcription`, 'color:red');
@@ -366,6 +366,9 @@ const actions = {
             console.error("error", response.data.errors);
             reject(response.data.errors);
           } else resolve(response.data)
+        })
+        .then(response => {
+          dispatch("unvalidate");
         })
         .catch(error => {
           console.error("error", error);

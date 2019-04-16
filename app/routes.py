@@ -6,6 +6,8 @@ from flask_user.forms import InviteUserForm
 from jinja2 import Markup
 
 from app import app_bp
+from app.api.transcriptions.routes import get_transcription
+from app.api.translations.routes import get_translation
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType, \
     Whitelist, AlignmentTranslation
 
@@ -440,9 +442,16 @@ def view_document_notice(doc_id):
 
 
 @app_bp.route('/documents/<doc_id>/view/transcription')
-def view_document_transcription(doc_id):
-    from .api.transcriptions.routes import get_reference_transcription
-    tr = get_reference_transcription(doc_id)
+@app_bp.route('/documents/<doc_id>/view/transcription/from-user/<user_id>')
+def view_document_transcription(doc_id, user_id=None):
+    current_user = current_app.get_current_user()
+    if user_id is not None and current_user.is_teacher:
+        tr = get_transcription(doc_id, user_id)
+    else:
+        from .api.transcriptions.routes import get_reference_transcription
+        tr = get_reference_transcription(doc_id)
+    if tr is None:
+        abort(404)
 
     _tr = tr.serialize()
     _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])
@@ -453,9 +462,16 @@ def view_document_transcription(doc_id):
 
 
 @app_bp.route('/documents/<doc_id>/view/translation')
-def view_document_translation(doc_id):
-    from .api.translations.routes import get_reference_translation
-    tr = get_reference_translation(doc_id)
+@app_bp.route('/documents/<doc_id>/view/translation/from-user/<user_id>')
+def view_document_translation(doc_id, user_id=None):
+    current_user = current_app.get_current_user()
+    if user_id is not None and current_user.is_teacher:
+        tr = get_translation(doc_id, user_id)
+    else:
+        from .api.translations.routes import get_reference_translation
+        tr = get_reference_translation(doc_id)
+    if tr is None:
+        abort(404)
 
     _tr = tr.serialize()
     _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])

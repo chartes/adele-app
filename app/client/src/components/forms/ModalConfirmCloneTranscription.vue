@@ -11,6 +11,7 @@
     <br/>
     <p>Vous copierez ainsi le contenu et les notes liées à la transcription de l'élève.</p>
     <p>Cette opération <b>écrasera votre propre version de la transcription et la remplacera par celle de l'élève.</b></p>
+    <p>Votre nouvelle transcription devra être de nouveau <b>validée</b> manuellement.</p>
     <p></p>
   </modal-confirm>
 

@@ -11,7 +11,6 @@ from app import auth, db
 from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
-from app.api.transcriptions.routes import get_reference_transcription
 from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl
 
 TR_ZONE_TYPE = 1    # transcriptions
@@ -347,6 +346,7 @@ def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=
 
     response = None
 
+    from app.api.transcriptions.routes import get_reference_transcription
     tr = get_reference_transcription(doc_id)
     if tr is None:
         response = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
@@ -466,6 +466,7 @@ def api_documents_annotations_zone(api_version, doc_id, canvas_name, zone_id, us
             })
 
         if response is None:
+            from app.api.transcriptions.routes import get_reference_transcription
             tr = get_reference_transcription(doc_id)
             if tr is not None:
                 user_id = tr.user_id

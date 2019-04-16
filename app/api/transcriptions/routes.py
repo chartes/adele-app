@@ -7,13 +7,21 @@ from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, api_bp
 from app.api.translations.routes import get_reference_translation
 from app.models import Transcription, User, Document, AlignmentTranslation, Translation, AlignmentDiscours, \
-    SpeechPartType, Note, AlignmentImage, ImageZone, VALIDATION_TRANSCRIPTION, TranscriptionHasNote
+    SpeechPartType, Note, AlignmentImage, ImageZone, TranscriptionHasNote, VALIDATION_TRANSCRIPTION
 
 """
 ===========================
     Transcriptions
 ===========================
 """
+
+
+def get_transcription(doc_id, user_id):
+    transcription = Transcription.query.filter(
+       doc_id == Transcription.doc_id,
+       user_id == Transcription.user_id
+    ).first()
+    return transcription
 
 
 def get_reference_transcription(doc_id):

@@ -14,6 +14,14 @@ from app.models import Translation, User, Document
 """
 
 
+def get_translation(doc_id, user_id):
+    translation = Translation.query.filter(
+        doc_id == Translation.doc_id,
+        user_id == Translation.user_id
+    ).first()
+    return translation
+
+
 def get_reference_translation(doc_id):
     """
 

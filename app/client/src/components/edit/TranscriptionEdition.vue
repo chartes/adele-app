@@ -7,22 +7,20 @@
         <visibility-toggle v-if="hasImage" :action="toggle" :param="'image'" :visible="visibility.image">image</visibility-toggle>
         &nbsp;&nbsp;&nbsp;
         <visibility-toggle :action="toggle" :param="'transcription'" :visible="visibility.transcription">transcription</visibility-toggle>
-        &nbsp;&nbsp;&nbsp;
-        <visibility-toggle :action="toggle" :param="'translation'" :visible="visibility.translation">traduction</visibility-toggle>
       </span>
     </p>
 
     <div class="columns">
 
       <div class="column is-flex-column" v-show="visibility.image && hasImage" :class="columnSize">
-
         <h2 class="subtitle">Image</h2>
         <IIIFMap :manifest="manifestURL" :draw-mode="false" :display-annotations-mode="false" class="is-flex-fill" ></IIIFMap>
-
       </div>
 
       <div class="column" v-show="visibility.transcription" :class="columnSize">
-        <h2 class="subtitle">Transcription <small v-if="displayReferenceTranscription" class="tag is-dark is-round">Référence</small>
+        <h2 class="subtitle">Transcription
+
+          <!-- Statut de la transcription (validée/non validée) -->
           <a v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
              style="margin-right: 8px;"
              class="button is-small is-light" @click="validateTranscription">
@@ -32,28 +30,40 @@
              style="margin-right: 8px; color: green"
              class="button is-small is-light"
              @click="unvalidateTranscription">validée</a>
-          <span v-if="currentUserIsTeacher && currentUser.id !== author.id" style="margin-left: 8px" class="button is-light is-small" @click="openCloneTranscriptionDialog">
+          
+          <!-- Éditer la transcription d'un élève-->
+          <span v-if="currentUserIsTeacher && currentUser.id !== author.id">
+            <span v-if="!editStudentTranscription" style="margin-left: 8px" class="button is-light is-small" @click="startEditingStudentTranscription">
+              <i class="fas fa-edit" style="margin-right: 8px"></i>
+              Éditer
+            </span>
+            <span v-else style="margin-left: 8px" class="button is-light is-small" :disabled="savingStatus !== 'uptodate'">
+              <i class="fas fa-edit" style="margin-right: 8px"></i>
+              Éditer
+            </span>
+          </span>
+          
+          <!-- Cloner la transcription d'un élève-->
+          <span v-if="currentUserIsTeacher && currentUser.id !== author.id"
+                style="margin-left: 8px" class="button is-light is-small"
+                @click="openCloneTranscriptionDialog"
+                :disabled="savingStatus !== 'uptodate'">
             <i class="fas fa-copy" style="margin-right: 8px"></i>
             Cloner
           </span>
         </h2>
-        <div v-if="displayReferenceTranscription" v-html="referenceTranscription.content"></div>
+  
+        <!--Le bloc transcription (afficher soit la version readonly soit l'éditeur-->
+        <div v-if="isReadOnly && !editStudentTranscription">
+          <div v-if="!!transcriptionViewContent" v-html="transcriptionViewContent"></div>
+          <div v-else>
+            <minimal-message v-if="!transcriptionLoading" :body="'Aucune transcription pour le moment'"/>
+          </div>
+        </div>
         <transcription-editor v-else-if="displayTranscriptionEditor" :initialContent="transcriptionWithNotes"/>
         <div v-else>
           <minimal-message v-if="!transcriptionLoading" :body="'Aucune transcription pour le moment'"/>
           <p v-if="allowedToCreateTranscription"><a ref="createTranscriptionButton" class="button is-link" @click="createTranscription">Ajouter une transcription</a></p>
-        </div>
-
-      </div>
-
-      <div class="column" v-show="visibility.translation" :class="columnSize">
-
-        <h2 class="subtitle">Traduction <small v-if="displayReferenceTranslation" class="tag is-dark is-round">Référence</small></h2>
-        <div v-if="displayReferenceTranslation" v-html="referenceTranslation.content"></div>
-        <translation-editor v-else-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
-        <div v-else>
-          <minimal-message v-if="!translationLoading" :body="'Aucune traduction pour le moment'"/>
-          <p v-if="allowedToCreateTranslation"><a ref="createTranslationButton" class="button is-link" @click="createTranslation">Ajouter une traduction</a></p>
         </div>
 
       </div>
@@ -73,11 +83,12 @@
   import { mapGetters, mapState } from 'vuex'
   import IIIFMap from '../IIIFMap';
   import TranscriptionEditor from '../editors/TranscriptionEditor'
-  import TranslationEditor from "../editors/TranslationEditor";
   import VisibilityToggle from "../ui/VisibilityToggle";
   import MinimalMessage from "../ui/MinimalMessage";
   import EditionColumnsToggleMixins from '../../mixins/EditionColumnsToggle'
   import ModalConfirmCloneTranscription from "../forms/ModalConfirmCloneTranscription";
+  import axios from 'axios';
+  import initTooltips from "../../modules/utils/tooltips";
 
   export default {
     name: "transcription-edition",
@@ -86,7 +97,6 @@
       MinimalMessage,
       VisibilityToggle,
       IIIFMap,
-      TranslationEditor,
       TranscriptionEditor,
 	    ModalConfirmCloneTranscription
     },
@@ -95,24 +105,31 @@
         visibility: {
           image: true,
           transcription: true,
-          translation: true,
+          translation: false,
         },
-	      cloneTranscriptionMode: false
+	      cloneTranscriptionMode: false,
+	      transcriptionViewContent: false,
+	      editStudentTranscription: false
       }
     },
+    created() {
+      this.getTranscriptionViewContent();
+    },
     methods: {
+    	getTranscriptionViewContent() {
+		    const viewUrl = this.currentUserIsAuthor ? `view/transcription` : `view/transcription/from-user/${this.author.id}`;
+		    this.transcriptionViewContent = false;
+		    this.stopEditingStudentTranscription();
+		    axios.get(viewUrl).then(response => {
+			    this.transcriptionViewContent = response.data;
+			    setTimeout(initTooltips, 1000);
+		    });
+      },
       createTranscription () {
         this.$refs.createTranscriptionButton.setAttribute('disabled','disabled');
         this.$store.dispatch('transcription/create')
           .then(data => {
             this.$store.dispatch('transcription/fetch');
-          });
-      },
-      createTranslation () {
-        this.$refs.createTranslationButton.setAttribute('disabled','disabled');
-        this.$store.dispatch('translation/create')
-          .then(data => {
-            this.$store.dispatch('translation/fetch');
           });
       },
       openCloneTranscriptionDialog() {
@@ -140,9 +157,15 @@
 				    console.log(data);
 			    });
 	    },
+      startEditingStudentTranscription() {
+    		this.editStudentTranscription = true;
+      },
+	    stopEditingStudentTranscription() {
+		    this.editStudentTranscription = false;
+	    }
     },
     computed: {
-
+      
       nbCols () {
         let size = 0;
         if (this.visibility.image && this.hasImage) size++;
@@ -150,11 +173,11 @@
         if (this.visibility.translation) size++;
         return size;
       },
+      isReadOnly() {
+      	return !this.currentUserIsAuthor || (this.currentUserIsTeacher && this.document.validation_stage_label !== 'none') || (!this.currentUserIsTeacher && this.document.validation_stage_label !== 'none')
+      },
       displayTranscriptionEditor () {
         return !!this.transcriptionWithNotes && !this.transcriptionLoading
-      },
-      displayTranslationEditor () {
-        return !!this.translationWithNotes && !this.translationLoading
       },
 
       allowedToCreateTranscription () {
@@ -165,17 +188,6 @@
           && (this.hasReferenceTranscription || this.currentUserIsAdmin)
         )
       },
-      allowedToCreateTranslation () {
-        return (
-          !this.translationLoading
-          && this.currentUserIsAuthor
-          && (
-            (this.currentUserIsStudent && this.hasReferenceTranscription)
-            || ((!this.currentUserIsStudent) && this.hasTranscription)
-          )
-        )
-      },
-
       hasTranscription () {
         return !!this.transcriptionWithNotes;
       },
@@ -185,23 +197,27 @@
       hasReferenceTranscription () {
         return !!this.referenceTranscription
       },
-      hasReferenceTranslation () {
-        return !!this.referenceTranslation
-      },
-
       displayReferenceTranscription () {
         return this.hasReferenceTranscription && this.currentUserIsStudent
       },
-      displayReferenceTranslation () {
-        return this.hasReferenceTranslation && this.currentUserIsStudent
-      },
-
       ...mapGetters('document', ['manifestURL']),
       ...mapState('document', ['document']),
-      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading']),
-      ...mapState('translation', ['translationWithNotes', 'translationLoading', 'referenceTranslation']),
+      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading', 'savingStatus']),
       ...mapState('user', ['currentUser', 'author']),
       ...mapGetters('user', ['currentUserIsAuthor', 'currentUserIsStudent', 'currentUserIsTeacher', 'currentUserIsAdmin']),
+    },
+    watch: {
+    	document() {
+		    this.getTranscriptionViewContent();
+      },
+	    author() {
+    		console.warn("author changed");
+		    this.getTranscriptionViewContent();
+	    },
+	    savingStatus(newval, oldval) {
+    		if (newval === 'uptodate' && oldval !== 'uptodate')
+		      this.stopEditingStudentTranscription();
+	    }
     }
   }
 </script>

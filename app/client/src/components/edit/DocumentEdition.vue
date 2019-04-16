@@ -12,20 +12,24 @@
            style="margin-left: 20px"
            @click="swapUser = true"
         >
-          <i class="fas fa-user-circle" style="margin-right: 8px"></i>{{ author.username }}
+          <i class="fas fa-user-circle" style="margin-right: 8px"></i>Travaux de {{ author.username }}
         </a>
       </div>
     </div>
 
     <tabs :on-tab-change="onTabChange" class="is-flex-column">
   
-      <tab v-if="!currentUserIsStudent" name="Notice" :selected="true">
+      <tab v-if="!currentUserIsStudent" name="Notice">
         <h1>Notice</h1>
         <notice-edition/>
       </tab>
       
-      <tab name="Transcription">
+      <tab name="Transcription" :selected="true">
         <transcription-edition/>
+      </tab>
+  
+      <tab name="Traduction">
+        <translation-edition/>
       </tab>
 
       <tab name="Facsimilé" >
@@ -64,6 +68,7 @@
   import Tab from '../ui/Tab.vue'
   import FacsimileEditor from './FacsimileEdition';
   import TranscriptionEdition from './TranscriptionEdition';
+  import TranslationEdition from './TranslationEdition';
   import AlignmentEdition from "./AlignmentEdition";
   import SpeechpartsEdition from "./SpeechpartsEdition";
   import NoticeEdition from "./NoticeEdition";
@@ -88,7 +93,8 @@
       AlignmentEdition,
       FacsimileEditor,
       TranscriptionEdition,
-      Tabs,
+	    TranslationEdition,
+	    Tabs,
       Tab
     },
     data () {

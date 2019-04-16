@@ -33,7 +33,6 @@
                 <div class="column is-5" id="img-col">
                     {% if doc.images|length > 0 %}
                     <figure class="image">
-                        <!-- <img src="http://193.48.42.68/loris/adele/dossiers/{{ doc.id }}.jpg/full/full/0/default.jpg" /> -->
                         {{ liiiflet_viewer(doc.id, doc.user_id, false, auth_token) }}
                     </figure>
                     <div id="iiif-map"></div>

@@ -7,8 +7,6 @@ from app import auth, db
 from app.api.notes.association_binders import TranscriptionNoteBinder, TranslationNoteBinder, CommentaryNoteBinder
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
-from app.api.transcriptions.routes import get_reference_transcription
-from app.api.translations.routes import get_reference_translation
 from app.models import Commentary, Note, NoteType, Document, User, Translation, TranslationHasNote, Transcription, \
     TranscriptionHasNote
 
@@ -125,6 +123,7 @@ def api_note_types(api_version):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/reference/notes')
 def api_documents_transcriptions_reference_notes(api_version, doc_id):
+    from app.api.transcriptions.routes import get_reference_transcription
     tr = get_reference_transcription(doc_id)
     if tr is None:
         response = APIResponseFactory.make_response(errors={
@@ -139,6 +138,7 @@ def api_documents_transcriptions_reference_notes(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/reference/notes')
 def api_documents_translations_reference_notes(api_version, doc_id):
+    from app.api.translations.routes import get_reference_translation
     tr = get_reference_translation(doc_id)
     if tr is None:
         response = APIResponseFactory.make_response(errors={
@@ -153,6 +153,7 @@ def api_documents_translations_reference_notes(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference/notes')
 def api_documents_commentaries_reference_notes(api_version, doc_id):
+    from app.api.transcriptions.routes import get_reference_transcription
     tr = get_reference_transcription(doc_id)
 
     if tr is None:
@@ -185,6 +186,7 @@ def api_documents_binder_notes(user, api_version, doc_id, note_id, user_id, bind
             "status": 403, "title": "Access forbidden"
         })
     elif user.is_anonymous:
+        from app.api.transcriptions.routes import get_reference_transcription
         tr = get_reference_transcription(doc_id)
         if tr is None:
             response = APIResponseFactory.make_response(errors={

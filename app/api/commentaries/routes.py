@@ -3,7 +3,6 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app import APIResponseFactory, db, auth
 from app.api.routes import api_bp, query_json_endpoint
-from app.api.transcriptions.routes import get_reference_transcription
 from app.models import Commentary, User
 
 
@@ -15,6 +14,7 @@ def get_reference_commentary(doc_id, type_id):
     """
     commentary = None
     try:
+        from app.api.transcriptions.routes import get_reference_transcription
         tr_ref = get_reference_transcription(doc_id)
         if tr_ref is None:
             return None
