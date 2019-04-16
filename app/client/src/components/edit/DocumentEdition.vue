@@ -18,8 +18,13 @@
     </div>
 
     <tabs :on-tab-change="onTabChange" class="is-flex-column">
-
-      <tab name="Édition" :selected="true">
+  
+      <tab v-if="!currentUserIsStudent" name="Notice" :selected="true">
+        <h1>Notice</h1>
+        <notice-edition/>
+      </tab>
+      
+      <tab name="Transcription">
         <transcription-edition/>
       </tab>
 
@@ -28,21 +33,19 @@
         <minimal-message v-else-if="!hasImage" :body="'Aucun manifeste pour le moment. Un manifeste est nécessaire pour éditer le facsimilé.'"/>
         <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer le facsimilé.'"/>
       </tab>
-
+      
+      <tab name="Commentaires">
+        <commentaries-edition v-if="hasTranscription"/>
+        <minimal-message v-else
+                         :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer les commentaires.'"/>
+      </tab>
+  
       <tab name="Parties du discours">
         <speechparts-edition  v-if="hasTranscription"/>
         <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer les parties du discours.'"/>
       </tab>
 
-      <tab name="Commentaires">
-        <commentaries-edition v-if="hasTranscription"/>
-        <minimal-message v-else :body="'Aucune transcription pour le moment. Une transcription est nécessaire pour éditer les commentaires.'"/>
-      </tab>
 
-      <tab v-if="!currentUserIsStudent" name="Notice">
-        <h1>Notice</h1>
-        <notice-edition/>
-      </tab>
 
     </tabs>
 
