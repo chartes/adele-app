@@ -8,7 +8,7 @@ from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
-    ImageUrl, Image
+    ImageUrl, Image, VALIDATION_TRANSCRIPTION, VALIDATION_NONE, get_stage
 
 """
 ===========================
@@ -69,6 +69,42 @@ def api_documents_unpublish(api_version, doc_id):
             "status": 404, "title": "Document {0} not found".format(doc_id)
         })
     return APIResponseFactory.jsonify(response)
+
+
+def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
+    try:
+        doc = Document.query.filter(Document.id == doc_id).one()
+        user = current_app.get_current_user()
+        if user.is_anonymous or not (user.is_teacher or user.is_admin) or (
+                user.is_teacher and not user.is_admin and doc.user_id != user.id):
+            response = APIResponseFactory.make_response(errors={
+                "status": 403, "title": "Access forbidden"
+            })
+        else:
+            doc.validation_stage = stage_id
+            db.session.commit()
+            response = APIResponseFactory.make_response(data={
+                "id": doc.validation_stage,
+                "validation_stage": doc.validation_stage,
+                "validation_stage_label": get_stage(doc.validation_stage)
+            })
+    except NoResultFound:
+        response = APIResponseFactory.make_response(errors={
+            "status": 404, "title": "Document {0} not found".format(doc_id)
+        })
+    return APIResponseFactory.jsonify(response)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
+@auth.login_required
+def api_documents_validate_transcription(api_version, doc_id):
+    return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_TRANSCRIPTION)
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
+@auth.login_required
+def api_documents_unvalidate_transcription(api_version, doc_id):
+    return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_NONE)
 
 
 @api_bp.route('/api/<api_version>/documents')

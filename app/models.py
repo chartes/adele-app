@@ -45,6 +45,23 @@ association_whitelist_has_user = db.Table('whitelist_has_user',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
 )
 
+VALIDATION_NONE = 0
+VALIDATION_TRANSCRIPTION = 1
+VALIDATION_TRANSLATION = 2
+VALIDATION_FACSIMILE = 3
+VALIDATION_COMMENTARIES = 4
+VALIDATION_SPEECHPARTS = 5
+
+def get_stage(stage_id):
+    return {
+        VALIDATION_NONE: 'none',
+        VALIDATION_TRANSCRIPTION: 'transcription',
+        VALIDATION_TRANSLATION: 'translation',
+        VALIDATION_FACSIMILE: 'facsimile',
+        VALIDATION_COMMENTARIES: 'commentaries',
+        VALIDATION_SPEECHPARTS: 'speechparts'
+    }[stage_id]
+
 
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -206,6 +223,8 @@ class Document(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey("user.id", ondelete='CASCADE'))
     whitelist_id = db.Column(db.Integer(), db.ForeignKey("whitelist.id"))
 
+    validation_stage = db.Column(db.Integer(), default=VALIDATION_NONE)
+
     # Relationships #
     whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id", backref=db.backref('documents'))
     user = db.relationship("User", primaryjoin="Document.user_id==User.id", backref=db.backref('documents'))
@@ -271,7 +290,9 @@ class Document(db.Model):
             'editors': [ed.serialize() for ed in self.editors],
             'languages': [lg.serialize() for lg in self.languages],
             'traditions': [tr.serialize() for tr in self.traditions],
-            'whitelist': self.whitelist.serialize() if self.whitelist is not None else None
+            'whitelist': self.whitelist.serialize() if self.whitelist is not None else None,
+            'validation_stage': self.validation_stage,
+            'validation_stage_label': get_stage(self.validation_stage)
         }
 
 
