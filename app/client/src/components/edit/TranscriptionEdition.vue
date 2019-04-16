@@ -32,7 +32,7 @@
              style="margin-right: 8px; color: green"
              class="button is-small is-light"
              @click="unvalidateTranscription">validée</a>
-          <span v-if="currentUserIsTeacher && currentUser.id !== author.id" style="margin-left: 8px" class="button is-link is-small" @click="openCloneTranscriptionDialog">
+          <span v-if="currentUserIsTeacher && currentUser.id !== author.id" style="margin-left: 8px" class="button is-light is-small" @click="openCloneTranscriptionDialog">
             <i class="fas fa-copy" style="margin-right: 8px"></i>
             Cloner
           </span>
@@ -119,11 +119,9 @@
       	this.cloneTranscriptionMode = "clone";
       },
 	    closeCloneTranscriptionMode() {
-		    console.log("close transcriptipon mode");
 		    this.cloneTranscriptionMode = false;
 	    },
 	    cloneTranscription() {
-		    console.log("cloning transcription");
 		    this.$store.dispatch('transcription/cloneContent')
 			    .then(data => {
 				    location.reload();
@@ -131,14 +129,12 @@
 			    });
 	    },
 	    validateTranscription() {
-		    console.log("validate transcription")
 		    this.$store.dispatch('transcription/validate')
 			    .then(data => {
 				    console.log(data);
 			    });
 	    },
 	    unvalidateTranscription() {
-		    console.log("unvalidate transcription")
 		    this.$store.dispatch('transcription/unvalidate')
 			    .then(data => {
 				    console.log(data);
