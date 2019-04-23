@@ -1,4 +1,4 @@
-**	✓ = Oui,  - = Non, ? = à discuter**
+**✓ = Oui,  - = Non, ? = à discuter**
 
 |                    |Visiteur	|Élève 	|Professeur |Admin |
 |--------------------|:--------:|:-----:|:---------:|:----:|
