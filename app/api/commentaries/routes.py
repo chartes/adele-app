@@ -36,7 +36,7 @@ def get_reference_commentaries(doc_id):
     :param doc_id:
     :return:
     """
-    tr_ref = get_reference_transcription(doc_id)
+    tr_ref = get_reference_commentary(doc_id)
     if tr_ref is None:
         commentaries = []
     else:

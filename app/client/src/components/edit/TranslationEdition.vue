@@ -22,20 +22,37 @@
       <div class="column" v-show="visibility.translation" :class="columnSize">
 
         <h2 class="subtitle">Traduction
-          <a v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
+          <button v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
+             :disabled="!translationSaved"
              style="margin-right: 8px;"
              class="button is-small is-light" @click="validateTranslation">
             non validée
-          </a>
-          <a v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label !== 'none'"
+          </button>
+          <button v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label !== 'none'"
              style="margin-right: 8px; color: green"
              class="button is-small is-light"
-             @click="unvalidateTranslation">validée</a>
-          <span v-if="currentUserIsTeacher && currentUser.id !== author.id" style="margin-left: 8px"
+             @click="unvalidateTranslation">validée
+          </button>
+
+          <!-- Éditer la traduction d'un élève-->
+          <span v-if="currentUserIsTeacher && currentUser.id !== author.id">
+            <button v-if="!editStudentTranslation" style="margin-left: 8px" class="button is-light is-small"
+                    @click="startEditingStudentTranslation">
+              <i class="fas fa-edit" style="margin-right: 8px"></i>
+              Éditer
+            </button>
+            <button v-else style="margin-left: 8px" class="button is-light is-small" :disabled="!translationSaved">
+              <i class="fas fa-edit" style="margin-right: 8px"></i>
+              Éditer
+            </button>
+          </span>
+          
+          <button v-if="currentUserIsTeacher && currentUser.id !== author.id" style="margin-left: 8px"
+                  :disabled="savingStatus !== 'uptodate'"
                 class="button is-light is-small" @click="openCloneTranslationDialog">
             <i class="fas fa-copy" style="margin-right: 8px"></i>
             Cloner
-          </span>
+          </button>
         </h2>
         <div v-if="displayReferenceTranslation" v-html="referenceTranslation.content"></div>
         <translation-editor v-else-if="displayTranslationEditor" :initialContent="translationWithNotes"/>
@@ -89,7 +106,8 @@
           translation: true,
         },
 	      cloneTranslationMode: false,
-        transcriptionViewContent: false
+        transcriptionViewContent: false,
+	      editStudentTranslation: false
       }
     },
     created() {
@@ -136,6 +154,12 @@
 				    console.log(data);
 			    });
 	    },
+	    startEditingStudentTranslation() {
+		    this.editStudentTranslation = true;
+	    },
+	    stopEditingStudentTranslation() {
+		    this.editStudentTranslation = false;
+	    }
     },
     computed: {
 
@@ -175,13 +199,17 @@
       ...mapGetters('document', ['manifestURL']),
       ...mapState('document', ['document']),
       ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts' ]),
-      ...mapState('translation', ['translationWithNotes', 'translationLoading', 'referenceTranslation']),
+      ...mapState('translation', ['translationWithNotes', 'translationLoading', 'referenceTranslation', 'translationSaved']),
       ...mapState('user', ['currentUser', 'author']),
       ...mapGetters('user', ['currentUserIsAuthor', 'currentUserIsStudent', 'currentUserIsTeacher', 'currentUserIsAdmin']),
     },
 	  watch: {
 		  document() {
 			  this.getTranscriptionViewContent();
+		  },
+		  translationSaved(newval, oldval) {
+			  if (newval && !oldval)
+				  this.stopEditingStudentTranslation();
 		  }
 	  }
   }

@@ -21,36 +21,37 @@
         <h2 class="subtitle">Transcription
 
           <!-- Statut de la transcription (validée/non validée) -->
-          <a v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
+          <button v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
+             :disabled="!transcriptionSaved"
              style="margin-right: 8px;"
              class="button is-small is-light" @click="validateTranscription">
             non validée
-          </a>
-          <a v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label !== 'none'"
+          </button>
+          <button v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label !== 'none'"
              style="margin-right: 8px; color: green"
              class="button is-small is-light"
-             @click="unvalidateTranscription">validée</a>
+             @click="unvalidateTranscription">validée</button>
           
           <!-- Éditer la transcription d'un élève-->
           <span v-if="currentUserIsTeacher && currentUser.id !== author.id">
-            <span v-if="!editStudentTranscription" style="margin-left: 8px" class="button is-light is-small" @click="startEditingStudentTranscription">
+            <button v-if="!editStudentTranscription" style="margin-left: 8px" class="button is-light is-small" @click="startEditingStudentTranscription">
               <i class="fas fa-edit" style="margin-right: 8px"></i>
               Éditer
-            </span>
-            <span v-else style="margin-left: 8px" class="button is-light is-small" :disabled="savingStatus !== 'uptodate'">
+            </button>
+            <button v-else style="margin-left: 8px" class="button is-light is-small" :disabled="!transcriptionSaved">
               <i class="fas fa-edit" style="margin-right: 8px"></i>
               Éditer
-            </span>
+            </button>
           </span>
           
           <!-- Cloner la transcription d'un élève-->
-          <span v-if="currentUserIsTeacher && currentUser.id !== author.id"
+          <button v-if="currentUserIsTeacher && currentUser.id !== author.id"
                 style="margin-left: 8px" class="button is-light is-small"
                 @click="openCloneTranscriptionDialog"
-                :disabled="savingStatus !== 'uptodate'">
+                :disabled="!transcriptionSaved">
             <i class="fas fa-copy" style="margin-right: 8px"></i>
             Cloner
-          </span>
+          </button>
         </h2>
   
         <!--Le bloc transcription (afficher soit la version readonly soit l'éditeur-->
@@ -202,7 +203,7 @@
       },
       ...mapGetters('document', ['manifestURL']),
       ...mapState('document', ['document']),
-      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading', 'savingStatus']),
+      ...mapState('transcription', ['transcriptionContent', 'transcriptionWithNotes', 'transcriptionWithSpeechparts', 'referenceTranscription', 'transcriptionLoading', 'transcriptionSaved']),
       ...mapState('user', ['currentUser', 'author']),
       ...mapGetters('user', ['currentUserIsAuthor', 'currentUserIsStudent', 'currentUserIsTeacher', 'currentUserIsAdmin']),
     },
@@ -214,8 +215,8 @@
     		console.warn("author changed");
 		    this.getTranscriptionViewContent();
 	    },
-	    savingStatus(newval, oldval) {
-    		if (newval === 'uptodate' && oldval !== 'uptodate')
+	    transcriptionSaved(newval, oldval) {
+    		if (newval && !oldval)
 		      this.stopEditingStudentTranscription();
 	    }
     }
