@@ -11,27 +11,32 @@ Le scénario de travail avec les élèves est le suivant :
   1. `teacher` [Le professeur crée un nouveau document.](#create_doc)
   1. `teacher` [Le professeur saisit la notice du nouveau document.](#update_meta)
   1. `teacher` [Le professeur assigne le nouveau document à une liste d’utilisateurs (groupe d’élèves).](#assignation_doc)
+
 1. Transcription
   1. `student` [Les élèves transcrivent le document.](#transcription)
   1. `teacher` [Le professeur consulte les transcriptions des élèves.](#view_student_transcription)
   1. `teacher` Le professeur transcrit OU [clone la transcription de son choix et la corrige](#clone_transcription).
   1. `teacher` Le professeur publie sa transcription de référence.
   1. `teacher` [Le professeur lie la transcription à l’image.](#facsim)
+
 1. Traduction (optionnelle)
   1. `student` [Les élèves traduisent la transcription de référence.](#traduction)
   1. `teacher` Le professeur consulte les traductions des élèves.
   1. `teacher` Le professeur traduit OU clone la traduction de son choix et la corrige.
   1. `teacher` Le professeur met à disposition des élèves sa traduction de référence.
+
 1. Parties du discours
   1. `student` [Les élèves identifient et commentent les parties du discours sur la transcription de référence.](#speech)
   1. `teacher` Le professeur consulte l’identification des parties des discours des élèves.
   1. `teacher` Le professeur identifie les parties du discours ou clone l’identification de son choix et la corrige. / et la publie ?
   1. [`teacher` Le professeur publie son identification des parties du discours ?]
+
 1. Commentaires
   1. `student` [Les élèves rédigent des commentaires libres.](#comment_edit)
   1. `teacher` Le professeur consulte les commentaires des élèves.
   1. `teacher` Le professeur rédige ses commentaires ET/OU clone des commentaires des élèves et les corrige.
   1. `teacher` Le professeur publie les commentaires de référence.
+
 1. Facsimilé
   1. `user ?` [Un utilisateur aligne la transcription à l’image.](#facsim)
 
