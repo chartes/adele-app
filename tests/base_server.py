@@ -125,9 +125,16 @@ class TestBaseServer(TestCase):
         #    self.assertEqual(status_code, json_loads(r.data)["errors"]["status"])
         #except Exception as e:
         self.assertStatus(r, status_code)
+        return r
+
+    def assert200(self, url, method='GET', **kwargs):
+        return self.assertStatusCode(200, url, method, **kwargs)
 
     def assert403(self, url, method='GET', **kwargs):
-        self.assertStatusCode(403, url, method, **kwargs)
+        return self.assertStatusCode(403, url, method, **kwargs)
+
+    def assert409(self, url, method='GET', **kwargs):
+        return self.assertStatusCode(409, url, method, **kwargs)
 
     def assert404(self, url, method='GET', **kwargs):
-        self.assertStatusCode(404, url, method, **kwargs)
+        return self.assertStatusCode(404, url, method, **kwargs)

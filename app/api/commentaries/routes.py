@@ -4,6 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import APIResponseFactory, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import Commentary, User
+from app.utils import make_403
 
 
 def get_reference_commentary(doc_id, type_id):
@@ -53,51 +54,41 @@ def get_reference_commentaries(doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>')
 def api_commentary(api_version, doc_id, user_id=None, type_id=None):
+
     user = current_app.get_current_user()
-    response = None
+    # if anonymous or mere student wants to read data of another student
+    if not (user.is_teacher or user.is_admin) and user_id is not None and int(user_id) != int(user.id):
+        return make_403()
+
+    if user_id is None or user.is_anonymous:
+        from app.api.transcriptions.routes import get_reference_transcription
+        tr = get_reference_transcription(doc_id)
+        user_id = tr.user_id
 
     if not user.is_anonymous:
-        # only teacher and admin can see everything
-        if not (user.is_teacher or user.is_admin) and user_id is not None and int(user_id) != int(user.id):
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
-    else:
-        if user_id is not None:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
-        else:
-            tr = get_reference_transcription(doc_id)
-            user_id = tr.user_id
+        # if mere student then get its own data
+        if not (user.is_teacher or user.is_admin) and type_id is not None and user_id is None:
+            user_id = user.id
 
-    if response is None:
+    if type_id is None:
+        type_id = Commentary.type_id
+    if user_id is None:
+        user_id = Commentary.user_id
 
-        if not user.is_anonymous:
-            if not (user.is_teacher or user.is_admin) and type_id is not None and user_id is None:
-                user_id = user.id
+    commentaries = Commentary.query.filter(
+        Commentary.doc_id == doc_id,
+        Commentary.user_id == user_id,
+        Commentary.type_id == type_id
+    ).all()
 
-        if response is None:
+    return APIResponseFactory.make_response(status=200, data=[c.serialize() for c in commentaries])
 
-            if type_id is None:
-                type_id = Commentary.type_id
-            if user_id is None:
-                user_id = Commentary.user_id
-
-            commentaries = Commentary.query.filter(
-                Commentary.doc_id == doc_id,
-                Commentary.user_id == user_id,
-                Commentary.type_id == type_id
-            ).all()
-
-            response = APIResponseFactory.make_response(data=[c.serialize() for c in commentaries])
-
-    return APIResponseFactory.jsonify(response)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference/of-type/<type_id>')
 def api_commentary_reference(api_version, doc_id, type_id=None):
+    from app.api.transcriptions.routes import get_reference_transcription
     tr = get_reference_transcription(doc_id)
     response = None
     if tr is None:

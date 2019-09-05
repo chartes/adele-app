@@ -74,7 +74,7 @@ class ActeType(db.Model):
         return {
             'id': self.id,
             'label': self.label,
-            'description': self.label
+            'description': self.description
         }
 
 

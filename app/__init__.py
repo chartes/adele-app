@@ -7,6 +7,7 @@ from flask_user import UserManager, user_sent_invitation, user_registered
 from flask_babelex import Babel
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from app.utils import make_403
 from config import config
 from app.api.response import APIResponseFactory
 from app.forms.register import CustomRegisterForm
@@ -57,15 +58,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 """
 
 
-def make_json_unauthorized_response():
-    resp = APIResponseFactory.jsonify(APIResponseFactory.make_response(errors={
-        "status": 403, "title": "Access forbidden"
-    }))
-    resp.status_code = 200
-    return resp
-
-
-auth.auth_error_callback = make_json_unauthorized_response
+auth.auth_error_callback = make_403
 
 
 def create_app(config_name="dev"):

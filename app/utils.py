@@ -1,6 +1,4 @@
 from flask_login import current_user
-from app import auth, models, APIResponseFactory
-from app.models import AnonymousUser
 
 """
 ========================================================
@@ -10,10 +8,13 @@ from app.models import AnonymousUser
 
 
 def get_user_from_username(username):
+    from app import models
     return models.User.query.filter(models.User.username == username).first()
 
 
 def get_current_user():
+    from app import auth, models
+    from app.models import AnonymousUser
     if auth.username() == "":
         user = current_user
         if user.is_anonymous:
@@ -28,11 +29,16 @@ def get_current_user():
     return user
 
 
+def make_403():
+    from app import APIResponseFactory
+    return APIResponseFactory.make_response(status=403, errors={
+        "status": 403, "title": "Access forbidden"
+    })
+
+
 def forbid_if_nor_teacher_nor_admin(app):
     user = app.get_current_user()
     if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        return False, APIResponseFactory.make_response(status=403, errors={
-            "status": 403, "title": "Access forbidden"
-        })
+        return False, make_403()
     else:
-        return True, _
+        return True, None
