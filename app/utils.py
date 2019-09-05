@@ -1,5 +1,5 @@
 from flask_login import current_user
-from app import auth, models
+from app import auth, models, APIResponseFactory
 from app.models import AnonymousUser
 
 """
@@ -26,3 +26,13 @@ def get_current_user():
             user = AnonymousUser()
 
     return user
+
+
+def forbid_if_nor_teacher_nor_admin(app):
+    user = app.get_current_user()
+    if user.is_anonymous or not (user.is_teacher or user.is_admin):
+        return False, APIResponseFactory.make_response(status=403, errors={
+            "status": 403, "title": "Access forbidden"
+        })
+    else:
+        return True, _

@@ -4,158 +4,147 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import APIResponseFactory, db, auth
 from app.api.routes import api_bp, query_json_endpoint
 from app.models import ActeType
+from app.utils import forbid_if_nor_teacher_nor_admin
 
 
 @api_bp.route('/api/<api_version>/acte-types')
 @api_bp.route('/api/<api_version>/acte-types/<acte_type_id>')
 def api_acte_type(api_version, acte_type_id=None):
-    try:
-        if acte_type_id is not None:
-            acte_types = [ActeType.query.filter(ActeType.id == acte_type_id).one()]
+    if acte_type_id is None:
+        acte_types = ActeType.query.all()
+    else:
+        # single
+        at = ActeType.query.filter(ActeType.id == acte_type_id).first()
+        if at is None:
+            return APIResponseFactory.make_response(status=404, errors={
+                "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
+            })
         else:
-            acte_types = ActeType.query.all()
-        response = APIResponseFactory.make_response(data=[a.serialize() for a in acte_types])
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
-        })
-    return APIResponseFactory.jsonify(response)
+            acte_types = [at]
+    return APIResponseFactory.make_response(status=200, data=[a.serialize() for a in acte_types])
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/acte-types/<acte_type_id>', methods=['DELETE'])
 @auth.login_required
 def api_delete_acte_type(api_version, acte_type_id=None):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
+
+    user_role_is_correct, access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if not user_role_is_correct:
+        return access_forbidden
+
+    try:
+        if acte_type_id is None:
+            acte_types = ActeType.query.all()
+        else:
+            acte_types = [ActeType.query.filter(ActeType.id == acte_type_id).one()]
+
+        for a in acte_types:
+            db.session.delete(a)
         try:
-            if acte_type_id is not None:
-                acte_types = [ActeType.query.filter(ActeType.id == acte_type_id).one()]
-            else:
-                acte_types = ActeType.query.all()
-
-            for a in acte_types:
-                db.session.delete(a)
-            try:
-                db.session.commit()
-                response = APIResponseFactory.make_response(data=[])
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot delete data", "details": str(e)
-                })
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
+            db.session.commit()
+            return APIResponseFactory.make_response(status=200, data=[])
+        except Exception as e:
+            db.session.rollback()
+            return APIResponseFactory.make_response(status=409, errors={
+                "status": 409, "title": "Cannot delete data", "details": str(e)
             })
-    return APIResponseFactory.jsonify(response)
 
+    except NoResultFound:
+        return APIResponseFactory.make_response(status=404, errors={
+            "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
+        })
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])
 @auth.login_required
 def api_put_acte_type(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
+
+    user_role_is_correct, access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if not user_role_is_correct:
+        return access_forbidden
+
+    try:
+        data = request.get_json()
+
+        if "data" in data:
+            data = data["data"]
+
+            if not isinstance(data, list):
+                data = [data]
+            try:
+                modifed_data = []
+                for acte_type in data:
+                    a = ActeType.query.filter(ActeType.id == acte_type["id"]).one()
+                    a.label = acte_type.get("label")
+                    a.description = acte_type.get("description")
+                    db.session.add(a)
+                    modifed_data.append(a)
+
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                return APIResponseFactory.make_response(status=409, errors={
+                    "status": 409, "title": "Cannot update data", "details": str(e)
+                })
+
+            data = []
+            for a in modifed_data:
+                json_obj = query_json_endpoint(
+                    request,
+                    url_for("api_bp.api_acte_type", api_version=api_version, acte_type_id=a.id)
+                )
+                data.append(json_obj["data"])
+            return APIResponseFactory.make_response(status=200, data=data)
+
+    except NoResultFound:
+        return APIResponseFactory.make_response(status=404, errors={
+            "status": 404, "title": "ActeType not found"
         })
-    if response is None:
-        try:
-            data = request.get_json()
 
-            if "data" in data:
-                data = data["data"]
-
-                if not isinstance(data, list):
-                    data = [data]
-                try:
-                    modifed_data = []
-                    for acte_type in data:
-                        a = ActeType.query.filter(ActeType.id == acte_type["id"]).one()
-                        a.label = acte_type.get("label")
-                        a.description = acte_type.get("description")
-                        db.session.add(a)
-                        modifed_data.append(a)
-
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot update data", "details": str(e)
-                    })
-
-                if response is None:
-                    data = []
-                    for a in modifed_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_acte_type", api_version=api_version, acte_type_id=a.id)
-                        )
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "ActeType not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['POST'])
 @auth.login_required
 def api_post_acte_type(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
+    user_role_is_correct, access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if not user_role_is_correct:
+        return access_forbidden
+
+
+    try:
+        data = request.get_json()
+
+        if "data" in data:
+            data = data["data"]
+
+            if not isinstance(data, list):
+                data = [data]
+
+            created_data = []
+            for acte_type in data:
+                a = ActeType(**acte_type)
+                db.session.add(a)
+                created_data.append(a)
+
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                return APIResponseFactory.make_response(status=409, errors={
+                    "status": 409, "title": "Cannot insert data", "details": str(e)
+                })
+
+            data = []
+            for a in created_data:
+                json_obj = query_json_endpoint(
+                    request,
+                    url_for("api_bp.api_acte_type", api_version=api_version, acte_type_id=a.id)
+                )
+                data.append(json_obj["data"])
+            return APIResponseFactory.make_response(status=200, data=data)
+
+    except NoResultFound:
+        return APIResponseFactory.make_response(status=404, errors={
+            "status": 404, "title": "ActeType not found"
         })
-    if response is None:
-        try:
-            data = request.get_json()
-
-            if "data" in data:
-                data = data["data"]
-
-                if not isinstance(data, list):
-                    data = [data]
-
-                created_data = []
-                for acte_type in data:
-                    a = ActeType(**acte_type)
-                    db.session.add(a)
-                    created_data.append(a)
-
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot insert data", "details": str(e)
-                    })
-
-                if response is None:
-                    data = []
-                    for a in created_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_acte_type", api_version=api_version, acte_type_id=a.id)
-                        )
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "ActeType not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
 

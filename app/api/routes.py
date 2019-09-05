@@ -45,7 +45,8 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
 
         response = json_loads(data)
     except Exception as e:
-        response = APIResponseFactory.make_response(errors={
+        response = APIResponseFactory.make_response(status=403,
+                                                    errors={
             "title": "Error : cannot {0} {1} | {2}".format(method, endpoint_url, headers),
             "details": str(e)
         })
@@ -59,52 +60,52 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
 ===========================
 """
 
-
-@api_bp.route("/api/user-role")
-@auth.login_required
-@roles_required("teacher", "admin")
-def api_test_user_role():
-    """
-    I cannot be accessed by a student
-    """
-    user = User.query.filter(User.username == auth.username()).one()
-    role_names = [r.name for r in user.roles]
-    return APIResponseFactory.jsonify(role_names)
-
-
-@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["DELETE"])
-@auth.login_required
-def api_test_auth_delete(api_version, doc_id):
-    user = User.query.filter(User.username == auth.username()).one()
-
-    for c in Commentary.query.filter(Commentary.doc_id == doc_id).all():
-        db.session.delete(c)
-    db.session.commit()
-
-    response = APIResponseFactory.make_response(data=[
-        user.serialize(), request.get_json(), [c.serialize() for c in Commentary.query.all()]
-    ])
-
-    return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["POST"])
-@auth.login_required
-def api_test_auth_post(api_version, doc_id):
-    user = User.query.filter(User.username == auth.username()).one()
-
-    data = request.get_json()
-    if "content" in data and "type_id" in data and "doc_id" in data:
-        c = Commentary(doc_id=data["doc_id"], type_id=data["type_id"],
-                       user_id=user.id, content=data["content"])
-        db.session.add(c)
-        db.session.commit()
-
-    response = APIResponseFactory.make_response(data=[
-        user.serialize(), request.get_json(), [c.serialize() for c in Commentary.query.all()]
-    ])
-
-    return APIResponseFactory.jsonify(response)
+#
+#@api_bp.route("/api/user-role")
+#@auth.login_required
+#@roles_required("teacher", "admin")
+#def api_test_user_role():
+#    """
+#    I cannot be accessed by a student
+#    """
+#    user = User.query.filter(User.username == auth.username()).one()
+#    role_names = [r.name for r in user.roles]
+#    return APIResponseFactory.jsonify(role_names)
+#
+#
+#@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["DELETE"])
+#@auth.login_required
+#def api_test_auth_delete(api_version, doc_id):
+#    user = User.query.filter(User.username == auth.username()).one()
+#
+#    for c in Commentary.query.filter(Commentary.doc_id == doc_id).all():
+#        db.session.delete(c)
+#    db.session.commit()
+#
+#    response = APIResponseFactory.make_response(data=[
+#        user.serialize(), request.get_json(), [c.serialize() for c in Commentary.query.all()]
+#    ])
+#
+#    return APIResponseFactory.jsonify(response)
+#
+#
+#@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["POST"])
+#@auth.login_required
+#def api_test_auth_post(api_version, doc_id):
+#    user = User.query.filter(User.username == auth.username()).one()
+#
+#    data = request.get_json()
+#    if "content" in data and "type_id" in data and "doc_id" in data:
+#        c = Commentary(doc_id=data["doc_id"], type_id=data["type_id"],
+#                       user_id=user.id, content=data["content"])
+#        db.session.add(c)
+#        db.session.commit()
+#
+#    response = APIResponseFactory.make_response(data=[
+#        user.serialize(), request.get_json(), [c.serialize() for c in Commentary.query.all()]
+#    ])
+#
+#    return APIResponseFactory.jsonify(response)
 
 
 """

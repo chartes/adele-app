@@ -7,7 +7,7 @@ from flask import Response
 class APIResponseFactory:
 
     @classmethod
-    def make_response(cls, data=(), errors=(), meta=(), links=()):
+    def make_response(cls, status, data=(), errors=(), meta=(), links=()):
 
         r = {}
 
@@ -32,19 +32,11 @@ class APIResponseFactory:
         if len(meta) > 0:
             r["meta"] = meta
 
-        return r
-
-    @classmethod
-    def jsonify(cls, res):
-        """
-
-        :param res:
-        :return:
-        """
         return Response(
-            json.dumps(res, indent=2, ensure_ascii=False),
+            json.dumps(r, indent=2, ensure_ascii=False),
+            status=status,
             content_type="application/json; charset=utf-8",
-            headers={"Access-Control-Allow-Origin" : "*"}
+            headers={"Access-Control-Allow-Origin": "*"}
         )
 
     @classmethod

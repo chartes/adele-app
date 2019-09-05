@@ -94,7 +94,7 @@ class DevelopmentConfig(Config):
 class TestConfig(Config):
 
     DB_PATH = os.path.join(basedir, "tests", "data")
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), DB_PATH, 'adele.sqlite')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), DB_PATH, 'adele.test.sqlite')
 
     SECRET_KEY = 'you-will-never-guess-but-please-change-me'
 

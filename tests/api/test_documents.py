@@ -80,8 +80,17 @@ class TestDocumentsAPI(TestBaseServer):
         self.assertEqual(1, len(json_loads(r.data)["data"]))
 
         self.post_with_auth("/adele/api/1.0/documents/add",
-                            data={"data": {"title": "Title1", "subtitle": "Subtitle1"}},
+                            data={"data": {"title": "Title2", "subtitle": "Subtitle2"}},
                             **ADMIN_USER)
+
+        self.post_with_auth("/adele/api/1.0/documents/add",
+                            data={"data": {"title": "Title3", "subtitle": "Subtitle3"}},
+                            **ADMIN_USER)
+
+        r = self.get("/adele/api/1.0/documents")
+        self.assertEqual(3, len(json_loads(r.data)["data"]))
+
+        self.delete_with_auth("/adele/api/1.0/documents/3", **ADMIN_USER)
         r = self.get("/adele/api/1.0/documents")
         self.assertEqual(2, len(json_loads(r.data)["data"]))
 

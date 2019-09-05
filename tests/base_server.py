@@ -95,7 +95,7 @@ class TestBaseServer(TestCase):
     def delete_with_auth(self, url, username, password):
         return self.delete(url, headers=make_auth_headers(username, password))
 
-    def assertStatusCode(self, status_code, url, method, **kwargs):
+    def assertStatusCode(self, status_code, url, method="GET", **kwargs):
         with_auth = 'username' in kwargs and 'password' in kwargs
 
         if method == "GET":
@@ -121,11 +121,10 @@ class TestBaseServer(TestCase):
         else:
             raise NotImplementedError
 
-        try:
-            self.assertEqual(status_code, json_loads(r.data)["errors"]["status"])
-        except Exception as e:
-            print(url, r.data)
-            self.assertStatus(r, status_code, str(e))
+        #try:
+        #    self.assertEqual(status_code, json_loads(r.data)["errors"]["status"])
+        #except Exception as e:
+        self.assertStatus(r, status_code)
 
     def assert403(self, url, method='GET', **kwargs):
         self.assertStatusCode(403, url, method, **kwargs)
