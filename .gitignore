@@ -14,3 +14,4 @@ node_modules/
 npm-debug.log*
 *.js.map
 report.html
+/tests/data/adele.test.sqlite

@@ -29,12 +29,13 @@ def get_reference_translation(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
-    translation = Translation.query.filter(
+    if doc is None:
+        return None
+
+    return Translation.query.filter(
         doc_id == Translation.doc_id,
         doc.user_id == Translation.user_id
     ).first()
-
-    return translation
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/reference')

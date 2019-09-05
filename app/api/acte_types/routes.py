@@ -1,10 +1,10 @@
-from flask import request, url_for, current_app
+from flask import request, current_app
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, db, auth
-from app.api.routes import api_bp, query_json_endpoint, json_loads
+from app import db, auth
+from app.api.routes import api_bp, json_loads
 from app.models import ActeType
-from app.utils import forbid_if_nor_teacher_nor_admin
+from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_409
 
 
 @api_bp.route('/api/<api_version>/acte-types')
@@ -16,12 +16,10 @@ def api_acte_type(api_version, acte_type_id=None):
         # single
         at = ActeType.query.filter(ActeType.id == acte_type_id).first()
         if at is None:
-            return APIResponseFactory.make_response(status=404, errors={
-                "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
-            })
+            return make_404("ActeType {0} not found".format(acte_type_id))
         else:
             acte_types = [at]
-    return APIResponseFactory.make_response(status=200, data=[a.serialize() for a in acte_types])
+    return make_200([a.serialize() for a in acte_types])
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['DELETE'])
@@ -29,9 +27,9 @@ def api_acte_type(api_version, acte_type_id=None):
 @auth.login_required
 def api_delete_acte_type(api_version, acte_type_id=None):
 
-    user_role_is_correct, access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if not user_role_is_correct:
-        return access_forbidden
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if access_is_forbidden:
+        return access_is_forbidden
 
     try:
         if acte_type_id is None:
@@ -43,25 +41,22 @@ def api_delete_acte_type(api_version, acte_type_id=None):
             db.session.delete(a)
         try:
             db.session.commit()
-            return APIResponseFactory.make_response(status=200, data=[])
+            return make_200([])
         except Exception as e:
             db.session.rollback()
-            return APIResponseFactory.make_response(status=409, errors={
-                "status": 409, "title": "Cannot delete data", "details": str(e)
-            })
+            return make_409(str(e))
 
     except NoResultFound:
-        return APIResponseFactory.make_response(status=404, errors={
-            "status": 404, "title": "ActeType {0} not found".format(acte_type_id)
-        })
+        return make_404("ActeType {0} not found".format(acte_type_id))
+
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])
 @auth.login_required
 def api_put_acte_type(api_version):
 
-    user_role_is_correct, access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if not user_role_is_correct:
-        return access_forbidden
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if access_is_forbidden:
+        return access_is_forbidden
 
     try:
         data = request.get_json()
@@ -69,8 +64,6 @@ def api_put_acte_type(api_version):
         if "data" in data:
             data = data["data"]
 
-            if not isinstance(data, list):
-                data = [data]
             try:
                 modifed_data = []
                 for acte_type in data:
@@ -81,45 +74,34 @@ def api_put_acte_type(api_version):
                     db.session.add(a)
                     modifed_data.append(a)
                 db.session.commit()
-            except NoResultFound as e:
-                db.session.rollback()
-                return APIResponseFactory.make_response(status=404, errors={
-                    "status": 404, "title": "Cannot update data", "details": str(e)
-                })
             except Exception as e:
                 db.session.rollback()
-                return APIResponseFactory.make_response(status=409, errors={
-                    "status": 409, "title": "Cannot update data", "details": str(e)
-                })
+                return make_409(str(e))
 
             data = []
             for a in modifed_data:
                 r = api_acte_type(api_version=api_version, acte_type_id=a.id)
                 data.append(json_loads(r.data)["data"])
 
-            return APIResponseFactory.make_response(status=200, data=data)
+            return make_200(data)
 
     except NoResultFound:
-        return APIResponseFactory.make_response(status=404, errors={
-            "status": 404, "title": "ActeType not found"
-        })
+        return make_404("ActeType not found")
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['POST'])
 @auth.login_required
 def api_post_acte_type(api_version):
-    user_role_is_correct, access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if not user_role_is_correct:
-        return access_forbidden
+
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if access_is_forbidden:
+        return access_is_forbidden
 
     try:
         data = request.get_json()
 
         if "data" in data:
             data = data["data"]
-
-            if not isinstance(data, list):
-                data = [data]
 
             created_data = []
             try:
@@ -131,19 +113,14 @@ def api_post_acte_type(api_version):
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
-                return APIResponseFactory.make_response(status=409, errors={
-                    "status": 409, "title": "Cannot insert data", "details": str(e)
-                })
+                return make_409(str(e))
 
             data = []
             for a in created_data:
                 r = api_acte_type(api_version=api_version, acte_type_id=a.id)
                 data.append(json_loads(r.data)["data"])
 
-            return APIResponseFactory.make_response(status=200, data=data)
+            return make_200(data)
 
     except NoResultFound:
-        return APIResponseFactory.make_response(status=404, errors={
-            "status": 404, "title": "ActeType not found"
-        })
-
+        return make_404("ActeType not found")

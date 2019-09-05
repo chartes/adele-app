@@ -29,6 +29,7 @@ ADMIN_USER = {"username": "AdminJulien", "password": "AdeleAdmin2018"}
 PROF1_USER = {"username": "Professeur1", "password": "AdeleAdmin2018"}
 PROF2_USER = {"username": "Professeur2", "password": "AdeleAdmin2018"}
 STU1_USER = {"username": "Eleve1", "password": "AdeleAdmin2018"}
+STU2_USER = {"username": "Eleve2", "password": "AdeleAdmin2018"}
 
 
 class TestBaseServer(TestCase):
@@ -121,9 +122,6 @@ class TestBaseServer(TestCase):
         else:
             raise NotImplementedError
 
-        #try:
-        #    self.assertEqual(status_code, json_loads(r.data)["errors"]["status"])
-        #except Exception as e:
         self.assertStatus(r, status_code)
         return r
 

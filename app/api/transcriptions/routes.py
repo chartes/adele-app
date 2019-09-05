@@ -30,7 +30,9 @@ def get_reference_transcription(doc_id):
     :param doc_id:
     :return:
     """
-    doc = Document.query.filter(Document.id == doc_id).one()
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return None
 
     if doc.validation_stage >= VALIDATION_TRANSCRIPTION:
         transcription = Transcription.query.filter(
