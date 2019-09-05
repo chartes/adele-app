@@ -75,6 +75,7 @@ def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
         user = current_app.get_current_user()
+        print(user, user.is_teacher, user.is_admin, doc.user_id, user.id)
         if user.is_anonymous or not (user.is_teacher or user.is_admin) or (
                 user.is_teacher and not user.is_admin and doc.user_id != user.id):
             response = APIResponseFactory.make_response(errors={
@@ -98,12 +99,14 @@ def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
 @auth.login_required
 def api_documents_validate_transcription(api_version, doc_id):
+    print("verify user role before")
     return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_TRANSCRIPTION)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
 @auth.login_required
 def api_documents_unvalidate_transcription(api_version, doc_id):
+    print("verify user role before")
     return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_NONE)
 
 

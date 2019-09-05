@@ -45,12 +45,14 @@ association_whitelist_has_user = db.Table('whitelist_has_user',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
 )
 
+
 VALIDATION_NONE = 0
 VALIDATION_TRANSCRIPTION = 1
 VALIDATION_TRANSLATION = 2
 VALIDATION_FACSIMILE = 3
 VALIDATION_COMMENTARIES = 4
 VALIDATION_SPEECHPARTS = 5
+
 
 def get_stage(stage_id):
     return {

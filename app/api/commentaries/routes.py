@@ -36,7 +36,8 @@ def get_reference_commentaries(doc_id):
     :param doc_id:
     :return:
     """
-    tr_ref = get_reference_commentary(doc_id)
+    from app.api.transcriptions.routes import get_reference_transcription
+    tr_ref = get_reference_transcription(doc_id)
     if tr_ref is None:
         commentaries = []
     else:
