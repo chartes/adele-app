@@ -31,23 +31,19 @@ def api_delete_acte_type(api_version, acte_type_id=None):
     if access_is_forbidden:
         return access_is_forbidden
 
+    if acte_type_id is None:
+        acte_types = ActeType.query.all()
+    else:
+        acte_types = ActeType.query.filter(ActeType.id == acte_type_id).all()
+
+    for a in acte_types:
+        db.session.delete(a)
     try:
-        if acte_type_id is None:
-            acte_types = ActeType.query.all()
-        else:
-            acte_types = [ActeType.query.filter(ActeType.id == acte_type_id).one()]
-
-        for a in acte_types:
-            db.session.delete(a)
-        try:
-            db.session.commit()
-            return make_200([])
-        except Exception as e:
-            db.session.rollback()
-            return make_409(str(e))
-
-    except NoResultFound:
-        return make_404("ActeType {0} not found".format(acte_type_id))
+        db.session.commit()
+        return make_200([])
+    except Exception as e:
+        db.session.rollback()
+        return make_409(str(e))
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])

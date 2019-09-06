@@ -138,11 +138,14 @@ class Country(db.Model):
     ref = db.Column(db.String)
     label = db.Column(db.String)
 
+    districts = db.relationship("District",  cascade="all, delete-orphan", passive_deletes=True)
+
     def serialize(self):
         return {
-            'id' : self.id,
+            'id': self.id,
             'ref': self.ref,
-            'label': self.label
+            'label': self.label,
+            "districts": [d.serialize() for d in self.districts]
         }
 
 
@@ -201,13 +204,13 @@ class CommentaryHasNote(db.Model):
 class District(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
-    country_id = db.Column(db.Integer, db.ForeignKey('country.id'))
+    country_id = db.Column(db.Integer, db.ForeignKey('country.id', ondelete='CASCADE'))
 
     def serialize(self):
         return {
             'id': self.id,
             'label': self.label,
-            'country_id': self.country_id
+            'country_id': self.country_id,
         }
 
 

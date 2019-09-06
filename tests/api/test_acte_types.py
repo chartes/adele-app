@@ -9,7 +9,7 @@ class TestActeTypesAPI(TestBaseServer):
 
         r = self.assert200('/adele/api/1.0/acte-types')
         r = json_loads(r.data)["data"]
-        self.assertEqual(len(r), 21)
+        self.assertEqual(21, len(r))
 
         r = self.assert200('/adele/api/1.0/acte-types/19')
         r = json_loads(r.data)["data"]
@@ -18,18 +18,17 @@ class TestActeTypesAPI(TestBaseServer):
     def test_delete_acte_types(self):
         self.assert403("/adele/api/1.0/acte-types", method="DELETE")
         self.assert403("/adele/api/1.0/acte-types", method="DELETE", **STU1_USER)
-        self.assert404("/adele/api/1.0/acte-types/126436", method="DELETE", **ADMIN_USER)
 
         self.delete_with_auth("/adele/api/1.0/acte-types/19", **ADMIN_USER)
         self.assert404("/adele/api/1.0/acte-types/19")
 
         r = self.assert200('/adele/api/1.0/acte-types')
         r = json_loads(r.data)["data"]
-        self.assertEqual(len(r), 20)
+        self.assertEqual(20, len(r))
 
     def test_put_acte_types(self):
-        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="PUT")
-        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="PUT", **STU1_USER)
+        self.assert403("/adele/api/1.0/acte-types", data={"data": [{}]},  method="PUT")
+        self.assert403("/adele/api/1.0/acte-types", data={"data": [{}]},  method="PUT", **STU1_USER)
         self.assert409("/adele/api/1.0/acte-types", data={"data": [{"id": 100}]},  method="PUT", **ADMIN_USER)
 
         self.assert200("/adele/api/1.0/acte-types", data={"data": [{"id": 19, "label": "PapeTest"}]}, method="PUT", **ADMIN_USER)
@@ -62,8 +61,8 @@ class TestActeTypesAPI(TestBaseServer):
                        **PROF1_USER)
 
     def test_api_post_acte_type(self):
-        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="POST")
-        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="POST", **STU1_USER)
+        self.assert403("/adele/api/1.0/acte-types", data={"data": [{}]},  method="POST")
+        self.assert403("/adele/api/1.0/acte-types", data={"data": [{}]},  method="POST", **STU1_USER)
         self.assert409("/adele/api/1.0/acte-types", data={"data": [{"champ bidon": 100}]}, method="POST", **ADMIN_USER)
 
         self.assert200("/adele/api/1.0/acte-types",
