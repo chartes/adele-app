@@ -84,7 +84,8 @@ def api_put_acte_type(api_version):
                 data.append(json_loads(r.data)["data"])
 
             return make_200(data)
-
+        else:
+            return make_409("no data")
     except NoResultFound:
         return make_404("ActeType not found")
 
@@ -97,30 +98,28 @@ def api_post_acte_type(api_version):
     if access_is_forbidden:
         return access_is_forbidden
 
-    try:
-        data = request.get_json()
+    data = request.get_json()
 
-        if "data" in data:
-            data = data["data"]
+    if "data" in data:
+        data = data["data"]
 
-            created_data = []
-            try:
-                for acte_type in data:
-                    a = ActeType(**acte_type)
-                    db.session.add(a)
-                    created_data.append(a)
+        created_data = []
+        try:
+            for acte_type in data:
+                a = ActeType(**acte_type)
+                db.session.add(a)
+                created_data.append(a)
 
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                return make_409(str(e))
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return make_409(str(e))
 
-            data = []
-            for a in created_data:
-                r = api_acte_type(api_version=api_version, acte_type_id=a.id)
-                data.append(json_loads(r.data)["data"])
+        data = []
+        for a in created_data:
+            r = api_acte_type(api_version=api_version, acte_type_id=a.id)
+            data.append(json_loads(r.data)["data"])
 
-            return make_200(data)
-
-    except NoResultFound:
-        return make_404("ActeType not found")
+        return make_200(data)
+    else:
+        return make_409("no data")

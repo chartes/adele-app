@@ -3,7 +3,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
 from app.api.routes import api_bp,  json_loads
-from app.models import Commentary
+from app.models import Commentary, Document, VALIDATION_TRANSCRIPTION
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409
 
 
@@ -26,9 +26,10 @@ def get_reference_commentary(doc_id, type_id):
     ).first()
 
 
-def get_reference_commentaries(doc_id):
+def get_reference_commentaries(doc_id, type_id=None):
     """
 
+    :param type_id:
     :param doc_id:
     :return:
     """
@@ -37,15 +38,17 @@ def get_reference_commentaries(doc_id):
     if tr_ref is None:
         return []
 
+    if type_id is None:
+        type_id = Commentary.type_id
+
     return Commentary.query.filter(
-            doc_id == Commentary.doc_id,
-            tr_ref.user_id == Commentary.user_id
-        ).all()
+        doc_id == Commentary.doc_id,
+        tr_ref.user_id == Commentary.user_id,
+        type_id == Commentary.type_id
+    ).all()
 
 
-#@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>')
-#@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>')
 def api_commentary(api_version, doc_id, user_id=None, type_id=None):
 
@@ -78,17 +81,7 @@ def api_commentary(api_version, doc_id, user_id=None, type_id=None):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference')
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference/of-type/<type_id>')
 def api_commentary_reference(api_version, doc_id, type_id=None):
-
-    from app.api.transcriptions.routes import get_reference_transcription
-    tr = get_reference_transcription(doc_id)
-
-    if tr is None:
-        return make_404("Reference transcription note found")
-
-    return api_commentary(api_version=api_version,
-                          doc_id=doc_id,
-                          user_id=tr.user_id,
-                          type_id=type_id)
+    return make_200([c.serialize() for c in get_reference_commentaries(doc_id, type_id)])
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['DELETE'])
@@ -151,6 +144,10 @@ def api_post_commentary(api_version, doc_id):
     if user.is_anonymous:
         return make_403()
 
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -170,7 +167,10 @@ def api_post_commentary(api_version, doc_id):
                 db.session.rollback()
                 return make_403()
 
-            c = Commentary(doc_id=co["doc_id"], user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
+            if doc.validation_stage < VALIDATION_TRANSCRIPTION:
+                return make_409("A transcription must be validated first")
+
+            c = Commentary(doc_id=doc_id, user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
             db.session.add(c)
             created_data.append(c)
 
@@ -180,8 +180,14 @@ def api_post_commentary(api_version, doc_id):
             db.session.rollback()
             return make_409(str(e))
 
-        r = api_commentary(api_version=api_version, doc_id=c.doc_id, user_id=c.user_id)
-        return make_200(json_loads(r.data))
+        coms = []
+        for c in created_data:
+            r = api_commentary(api_version=api_version, doc_id=doc_id, user_id=c.user_id, type_id=c.type_id)
+            coms.extend(json_loads(r.data)["data"])
+
+        return make_200(coms)
+    else:
+        return make_409("no data")
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['PUT'])
@@ -222,7 +228,7 @@ def api_put_commentary(api_version, doc_id):
                     return make_403()
 
                 c = Commentary.query.filter(
-                    Commentary.doc_id == co["doc_id"],
+                    Commentary.doc_id == doc_id,
                     Commentary.user_id == co["user_id"],
                     Commentary.type_id == co["type_id"]
                 ).one()
@@ -241,5 +247,7 @@ def api_put_commentary(api_version, doc_id):
         data = []
         for c in updated_data:
             r = api_commentary(api_version=api_version, doc_id=c.doc_id, user_id=c.user_id, type_id=c.type_id)
-            data.extend(json_loads(r.data))
+            data.extend(json_loads(r.data)["data"])
         return make_200(data)
+    else:
+        return make_409("no data")

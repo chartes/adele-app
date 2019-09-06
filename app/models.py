@@ -167,6 +167,10 @@ class Commentary(db.Model):
     notes = db.relationship("CommentaryHasNote", back_populates="commentary", cascade="all, delete-orphan", passive_deletes=True)
     type = db.relationship("CommentaryType", backref="commentary")
 
+    __table_args__ = (
+        db.UniqueConstraint('doc_id', 'user_id', 'type_id', name='UniqueCommentaryType'),
+    )
+
     def serialize(self):
         print(self.notes, [
                 dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end, "note": (n.commentary_id, n.note_id, n.note, n.commentary)})

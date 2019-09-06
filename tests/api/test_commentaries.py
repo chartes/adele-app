@@ -3,14 +3,20 @@ from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, STU1_USER,
 
 
 class TestCommentariesAPI(TestBaseServer):
-
     FIXTURES = [
         join(TestBaseServer.FIXTURES_PATH, "documents", "doc_20.sql"),
-        join(TestBaseServer.FIXTURES_PATH, "commentaries", "commentary_doc_20.sql")
+        join(TestBaseServer.FIXTURES_PATH, "commentaries", "commentary_doc_20.sql"),
+
+        join(TestBaseServer.FIXTURES_PATH, "documents", "doc_21.sql"),
+        join(TestBaseServer.FIXTURES_PATH, "transcriptions", "transcription_doc_21_prof1.sql"),
+        join(TestBaseServer.FIXTURES_PATH, "commentaries", "commentary_doc_21.sql"),
+
+        join(TestBaseServer.FIXTURES_PATH, "documents", "doc_22.sql"),
+        join(TestBaseServer.FIXTURES_PATH, "documents", "doc_23.sql"),
     ]
 
     def test_get_commentaries(self):
-        self.load_fixtures(self.FIXTURES)
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
 
         self.assert404("/adele/api/1.0/documents/20/commentaries/-1")
 
@@ -21,7 +27,7 @@ class TestCommentariesAPI(TestBaseServer):
         # being student
         # -- access to other ppl coms
         self.assert403('/adele/api/1.0/documents/20/commentaries/from-user/4', **STU1_USER)
-        self.assert403('/adele/api/1.0/documents/20/commentaries/from-user/4/and-type/1',**STU1_USER)
+        self.assert403('/adele/api/1.0/documents/20/commentaries/from-user/4/and-type/1', **STU1_USER)
         self.assert403('/adele/api/1.0/documents/20/commentaries/from-user/7', **STU1_USER)
 
         # -- access to my own coms
@@ -56,6 +62,93 @@ class TestCommentariesAPI(TestBaseServer):
         self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **ADMIN_USER)
         self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5/and-type/1', **ADMIN_USER)
         self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/4', **ADMIN_USER)
+
+    def test_get_reference_commentaries(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
+        # doc 20 : without reference transcription (so no ref comms)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/reference')
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 0)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/reference', **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 0)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/reference', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 0)
+
+        # doc 21 : with reference transcription
+        # must get PROF1's comms
+        r = self.assert200('/adele/api/1.0/documents/21/commentaries/reference')
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["id"], 21)
+
+        # must get his own comms
+        r = self.assert200('/adele/api/1.0/documents/21/commentaries/reference', **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["id"], 21)
+
+        # must get PROF1's comms
+        r = self.assert200('/adele/api/1.0/documents/21/commentaries/reference', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["id"], 21)
+
+    def test_post_commentary(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
+        # being anonymous
+        self.assert403("/adele/api/1.0/documents/20/commentaries",
+                       data={"data": [{"type_id": 4, "content": "COMM 1"}]}, method="POST")
+
+        # being a student
+        #   - on a doc without transcription
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **STU1_USER)
+        #   - on my own transcription
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 4, "content": "COMM 21_STU1"}]}, method="POST", **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+
+        self.assertEqual(r[0]["content"], "COMM 21_STU1")
+        #   - on another ppl behalf
+        self.assert403("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 4}]}, method="POST", **STU1_USER)
+        #   - on an unverified transcription
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 5}]}, method="POST", **STU1_USER)
+        #   - multiple coms
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 3, "content": "COMM 21_STU1"},
+                                          {"type_id": 5, "content": "COMM 21_STU1"}]}, method="POST", **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        #   - post a commentary with bad data
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type": 3, "content": "COMM 1"}]}, method="POST", **STU1_USER)
+        #   - post a duplicate com (twice the same com type)
+        self.assert409("/adele/api/1.0/documents/21/commentaries",
+                       data={"data": [{"type_id": 4, "content": "COMM 21_STU1"}]}, method="POST", **STU1_USER)
+        # being a teacher
+        #   - on a doc without transcription
+        #   - on my own transcription
+        #   - on another ppl behalf
+        #   - on an unverified transcription
+        #   - multiple coms
+        #   - post a commentary with bad data
+        #   - post a duplicate com (twice the same com type)
+
+        # being and admin
+        #   - on a doc without transcription
+        #   - on my own transcription
+        #   - on another ppl behalf
+        #   - on an unverified transcription
+        #   - multiple coms
+        #   - post a commentary with bad data
+        #   - post a duplicate com (twice the same com type)
 
 #
 #    def test_delete_acte_types(self):
