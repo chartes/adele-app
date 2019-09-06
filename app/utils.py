@@ -65,15 +65,6 @@ def forbid_if_nor_teacher_nor_admin(app):
     else:
         return True, None
 
-
-def forbid_if_nor_teacher_nor_admin(app):
-    user = app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        return make_403("This resource is only accessible to teachers and admins")
-    else:
-        return None
-
-
 def forbid_if_nor_teacher_nor_admin_and_wants_user_data(app, wanted_user_id):
     user = app.get_current_user()
     # if anonymous or mere student wants to read data of another student

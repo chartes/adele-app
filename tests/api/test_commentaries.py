@@ -15,6 +15,11 @@ class TestCommentariesAPI(TestBaseServer):
         join(TestBaseServer.FIXTURES_PATH, "documents", "doc_23.sql"),
     ]
 
+    def reload_fixtures(self):
+        self.clear_data()
+        self.load_fixtures(TestBaseServer.BASE_FIXTURES)
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
     def test_get_commentaries(self):
         self.load_fixtures(TestCommentariesAPI.FIXTURES)
 
@@ -96,12 +101,23 @@ class TestCommentariesAPI(TestBaseServer):
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0]["id"], 21)
 
-    def test_post_commentary(self):
+        # get comm reference of type
+        r = self.assert200('/adele/api/1.0/documents/21/commentaries/reference/of-type/1', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        r = self.assert200('/adele/api/1.0/documents/21/commentaries/reference/of-type/2', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 0)
+
+    def test_post_commentary_ano(self):
         self.load_fixtures(TestCommentariesAPI.FIXTURES)
 
         # being anonymous
         self.assert403("/adele/api/1.0/documents/20/commentaries",
                        data={"data": [{"type_id": 4, "content": "COMM 1"}]}, method="POST")
+
+    def test_post_commentary_stu(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
 
         # being a student
         #   - on a doc without transcription
@@ -115,7 +131,7 @@ class TestCommentariesAPI(TestBaseServer):
 
         self.assertEqual(r[0]["content"], "COMM 21_STU1")
         #   - on another ppl behalf
-        self.assert403("/adele/api/1.0/documents/23/commentaries",
+        self.assert403("/adele/api/1.0/documents/21/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 4}]}, method="POST", **STU1_USER)
         #   - on an unverified transcription
         self.assert409("/adele/api/1.0/documents/23/commentaries",
@@ -132,95 +148,252 @@ class TestCommentariesAPI(TestBaseServer):
         #   - post a duplicate com (twice the same com type)
         self.assert409("/adele/api/1.0/documents/21/commentaries",
                        data={"data": [{"type_id": 4, "content": "COMM 21_STU1"}]}, method="POST", **STU1_USER)
+
+    def test_post_commentary_teacher(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
         # being a teacher
         #   - on a doc without transcription
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **PROF1_USER)
         #   - on my own transcription
-        #   - on another ppl behalf
-        #   - on an unverified transcription
-        #   - multiple coms
-        #   - post a commentary with bad data
-        #   - post a duplicate com (twice the same com type)
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 4, "content": "COMM 21_PROF1"}]}, method="POST", **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
 
-        # being and admin
+        self.assertEqual(r[0]["content"], "COMM 21_PROF1")
+        #   - on another ppl behalf
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 5}]}, method="POST", **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        #   - on an unverified transcription
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **PROF1_USER)
+        #   - multiple coms
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 3, "content": "COMM 21_STU1"},
+                                          {"type_id": 5, "content": "COMM 21_STU1"}]}, method="POST", **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        #   - post a commentary with bad data
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type": 3, "content": "COMM 1"}]}, method="POST", **PROF1_USER)
+        #   - post a duplicate com (twice the same com type)
+        self.assert409("/adele/api/1.0/documents/21/commentaries",
+                       data={"data": [{"type_id": 4, "content": "COMM 21_PROF1"}]}, method="POST", **PROF1_USER)
+
+    def test_post_commentary_admin(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
+        # being an admin
         #   - on a doc without transcription
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **ADMIN_USER)
         #   - on my own transcription
-        #   - on another ppl behalf
-        #   - on an unverified transcription
-        #   - multiple coms
-        #   - post a commentary with bad data
-        #   - post a duplicate com (twice the same com type)
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 4, "content": "COMM 21_ADMIN"}]}, method="POST", **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
 
-#
-#    def test_delete_acte_types(self):
-#        self.assert403("/adele/api/1.0/acte-types", method="DELETE")
-#        self.assert403("/adele/api/1.0/acte-types", method="DELETE", **STU1_USER)
-#        self.assert404("/adele/api/1.0/acte-types/126436", method="DELETE", **ADMIN_USER)
-#
-#        self.delete_with_auth("/adele/api/1.0/acte-types/19", **ADMIN_USER)
-#        self.assert404("/adele/api/1.0/acte-types/19")
-#
-#        r = self.get('/adele/api/1.0/acte-types')
-#        r = json_loads(r.data)["data"]
-#        self.assertEqual(len(r), 20)
-#
-#    def test_put_acte_types(self):
-#        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="PUT")
-#        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="PUT", **STU1_USER)
-#        self.assert409("/adele/api/1.0/acte-types", data={"data": [{"id": 100}]},  method="PUT", **ADMIN_USER)
-#
-#        self.put_with_auth("/adele/api/1.0/acte-types",
-#                           data={"data": [{"id": 19, "label": "PapeTest"}]}, **ADMIN_USER)
-#        r = self.get('/adele/api/1.0/acte-types/19')
-#        r = json_loads(r.data)["data"]
-#        self.assertEqual("PapeTest", r[0]["label"])
-#
-#        self.put_with_auth("/adele/api/1.0/acte-types",
-#                           data={"data": [{"id": 19, "description": "Desc2"}]}, **ADMIN_USER)
-#        r = self.get('/adele/api/1.0/acte-types/19')
-#        r = json_loads(r.data)["data"]
-#        self.assertEqual("Desc2", r[0]["description"])
-#
-#        # put conflicting data
-#        self.assert409("/adele/api/1.0/acte-types",
-#                       data={"data": [{"id": -1, "label": "ACTE-TYPT-500", "description": "DESC-500"}]}, method="PUT",
-#                       **ADMIN_USER)
-#        self.assert409("/adele/api/1.0/acte-types",
-#                       data={"data": [{"id": 19, "label": "ACTE-TYPT-501", "description": "DESC-501"},
-#                                      {"id": 500, "label": "ACTE-TYPT-502", "description": "DESC-502"}]}, method="PUT",
-#                       **PROF1_USER)
-#
-#        # put multiple data
-#        self.assert200("/adele/api/1.0/acte-types",
-#                       data={"data": [{"id": 500, "label": "ACTE-TYPT-500", "description": "DESC-500"}]}, method="POST",
-#                       **ADMIN_USER)
-#
-#        self.assert200("/adele/api/1.0/acte-types",
-#                       data={"data": [{"id": 19, "label": "ACTE-TYPT-19", "description": "DESC-19"},
-#                                      {"id": 500, "label": "ACTE-TYPT-5XX", "description": "DESC-XXX"}]}, method="PUT",
-#                       **PROF1_USER)
-#
-#    def test_api_post_acte_type(self):
-#        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="POST")
-#        self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="POST", **STU1_USER)
-#        self.assert409("/adele/api/1.0/acte-types", data={"data": [{"champ bidon": 100}]}, method="POST", **ADMIN_USER)
-#
-#        self.assert200("/adele/api/1.0/acte-types",
-#                       data={"data": [{"id": 500, "label": "ACTE-TYPT-500", "description": "DESC-500"}]}, method="POST", **ADMIN_USER)
-#
-#        r = self.assert200('/adele/api/1.0/acte-types/500')
-#        r = json_loads(r.data)["data"]
-#        self.assertEqual(500, r[0]["id"])
-#
-#        # post conflicting data
-#        self.assert409("/adele/api/1.0/acte-types",
-#                       data={"data": [{"id": 500, "label": "ACTE-TYPT-500", "description": "DESC-500"}]}, method="POST",
-#                       **ADMIN_USER)
-#
-#        # post multiple data
-#        self.assert200("/adele/api/1.0/acte-types",
-#                       data={"data": [{"id": 501, "label": "ACTE-TYPT-501", "description": "DESC-501"},
-#                                      {"id": 502, "label": "ACTE-TYPT-502", "description": "DESC-502"}]}, method="POST",
-#                       **PROF1_USER)
-#        self.assert200('/adele/api/1.0/acte-types/501')
-#        self.assert200('/adele/api/1.0/acte-types/502')
-#
+        self.assertEqual(r[0]["content"], "COMM 21_ADMIN")
+        #   - on another ppl behalf
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 5}]}, method="POST",
+                           **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        #   - on an unverified transcription
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **ADMIN_USER)
+        #   - multiple coms
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 3, "content": "COMM 21_ADMIN"},
+                                          {"type_id": 5, "content": "COMM 21_ADMIN"}]}, method="POST", **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        #   - post a commentary with bad data
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type": 3, "content": "COMM 1"}]}, method="POST", **ADMIN_USER)
+        #   - post a duplicate com (twice the same com type)
+        self.assert409("/adele/api/1.0/documents/21/commentaries",
+                       data={"data": [{"type_id": 4, "content": "COMM 21_PROF1"}]}, method="POST", **ADMIN_USER)
+
+    def test_put_commentary_ano(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+        # being anonymous
+        self.assert403("/adele/api/1.0/documents/20/commentaries",
+                       data={"data": [{
+                           "doc_id": 20,
+                           "user_id": 4,
+                           "type_id": 2,
+                           "content": "This is a commentary"
+                       }]}, method="PUT")
+
+    def test_put_commentary_stu(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
+        # being a student
+        #   - on my own transcription
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 4, "content": "COMM 21_STU1"}]}, method="POST", **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["content"], "COMM 21_STU1")
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 4, "content": "MODIFIED"}]}, method="PUT", **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["content"], "MODIFIED")
+
+        #   - on another ppl behalf
+        self.assert403("/adele/api/1.0/documents/21/commentaries",
+                       data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 4}]}, method="PUT", **STU1_USER)
+        #   - multiple coms
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 1, "content": "MODIFIED 1"},
+                                          {"type_id": 2, "content": "MODIFIED 2"}]}, method="PUT", **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        #   - put a commentary with bad data
+        self.assert409("/adele/api/1.0/documents/23/commentaries",
+                       data={"data": [{"type": 3, "content": "COMM 1"}]}, method="PUT", **STU1_USER)
+
+    def test_put_commentary_teacher(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
+        # being a teacher
+        #   - on my own transcription
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 4, "content": "COMM 21_PROF1"}]}, method="POST", **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["content"], "COMM 21_PROF1")
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 4, "content": "MODIFIED"}]}, method="PUT", **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["content"], "MODIFIED")
+
+        #   - on another ppl behalf
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                       data={"data": [{"type_id": 1, "content": "COMM 1 MODIFIED", "user_id": 5}]}, method="PUT", **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["user_id"], 5)
+
+        #   - multiple coms
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 1, "content": "MODIFIED 1", "user_id": 5},
+                                          {"type_id": 2, "content": "MODIFIED 2", "user_id": 5}]}, method="PUT", **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        for rd in r:
+            self.assertEqual(rd["user_id"], 5)
+
+    def test_put_commentary_admin(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+
+        # being an admin
+
+        #   - on another ppl behalf
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 1, "content": "COMM 1 MODIFIED", "user_id": 5}]}, method="PUT",
+                           **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["user_id"], 5)
+
+        #   - multiple coms
+        r = self.assert200("/adele/api/1.0/documents/21/commentaries",
+                           data={"data": [{"type_id": 1, "content": "MODIFIED 1", "user_id": 5},
+                                          {"type_id": 2, "content": "MODIFIED 2", "user_id": 5}]}, method="PUT",
+                           **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        for rd in r:
+            self.assertEqual(rd["user_id"], 5)
+
+    def test_delete_commentary_ano(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+        self.assert403("/adele/api/1.0/documents/20/commentaries", method="DELETE")
+        self.assert403("/adele/api/1.0/documents/20/commentaries/from-user/5", method="DELETE")
+        self.assert403("/adele/api/1.0/documents/20/commentaries/of-type/2", method="DELETE")
+        self.assert403("/adele/api/1.0/documents/20/commentaries/from-user/5/and-type/2", method="DELETE")
+
+    def test_delete_commentary_stu(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+        # - when there is no com
+        self.assert200("/adele/api/1.0/documents/23/commentaries", method="DELETE", **STU1_USER)
+        # - on other ppl behalf
+        self.assert403("/adele/api/1.0/documents/20/commentaries/from-user/4", method="DELETE", **STU1_USER)
+
+        self.reload_fixtures()
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        # delete only type_id = 2
+        self.assert200("/adele/api/1.0/documents/20/commentaries/of-type/2", method="DELETE", **STU1_USER)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+
+        self.reload_fixtures()
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        self.assert200("/adele/api/1.0/documents/20/commentaries/from-user/5/and-type/2", method="DELETE", **STU1_USER)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **STU1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+
+    def test_delete_commentary_teacher(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+        # - when there is no com
+        self.assert200("/adele/api/1.0/documents/23/commentaries", method="DELETE", **PROF1_USER)
+        # - on other ppl behalf
+        self.assert200("/adele/api/1.0/documents/20/commentaries/from-user/4", method="DELETE", **PROF1_USER)
+
+        self.reload_fixtures()
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        self.assert200("/adele/api/1.0/documents/20/commentaries/of-type/2", method="DELETE", **PROF1_USER)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+
+        self.reload_fixtures()
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        self.assert200("/adele/api/1.0/documents/20/commentaries/from-user/5/and-type/2", method="DELETE", **PROF1_USER)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **PROF1_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+
+    def test_delete_commentary_admin(self):
+        self.load_fixtures(TestCommentariesAPI.FIXTURES)
+        # - when there is no com
+        self.assert200("/adele/api/1.0/documents/23/commentaries", method="DELETE", **ADMIN_USER)
+        # - on other ppl behalf
+        self.assert200("/adele/api/1.0/documents/20/commentaries/from-user/4", method="DELETE", **ADMIN_USER)
+
+        self.reload_fixtures()
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        self.assert200("/adele/api/1.0/documents/20/commentaries/of-type/2", method="DELETE", **ADMIN_USER)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)
+
+        self.reload_fixtures()
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 2)
+        self.assert200("/adele/api/1.0/documents/20/commentaries/from-user/5/and-type/2", method="DELETE", **ADMIN_USER)
+        r = self.assert200('/adele/api/1.0/documents/20/commentaries/from-user/5', **ADMIN_USER)
+        r = json_loads(r.data)["data"]
+        self.assertEqual(len(r), 1)

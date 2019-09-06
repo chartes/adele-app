@@ -212,6 +212,10 @@ def api_put_commentary(api_version, doc_id):
     if user.is_anonymous:
         return make_403()
 
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -227,6 +231,9 @@ def api_put_commentary(api_version, doc_id):
                     db.session.rollback()
                     return make_403()
 
+                if doc.validation_stage < VALIDATION_TRANSCRIPTION:
+                    return make_409("A transcription must be validated first")
+
                 c = Commentary.query.filter(
                     Commentary.doc_id == doc_id,
                     Commentary.user_id == co["user_id"],
@@ -240,14 +247,18 @@ def api_put_commentary(api_version, doc_id):
                 updated_data.append(c)
 
             db.session.commit()
+        except NoResultFound as e:
+            db.session.rollback()
+            return make_404(str(e))
         except (Exception, KeyError) as e:
             db.session.rollback()
             return make_409(str(e))
 
-        data = []
+        coms = []
         for c in updated_data:
-            r = api_commentary(api_version=api_version, doc_id=c.doc_id, user_id=c.user_id, type_id=c.type_id)
-            data.extend(json_loads(r.data)["data"])
+            r = api_commentary(api_version=api_version, doc_id=doc_id, user_id=c.user_id, type_id=c.type_id)
+            coms.extend(json_loads(r.data)["data"])
+
         return make_200(data)
     else:
         return make_409("no data")
