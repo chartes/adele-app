@@ -1,167 +1,118 @@
-from flask import request, url_for, current_app
+from flask import request, current_app
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, db, auth
-from app.api.routes import api_bp, query_json_endpoint
+from app import db, auth
+from app.api.routes import api_bp, json_loads
 from app.models import Language
+from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_409
 
 
 @api_bp.route('/api/<api_version>/languages')
 @api_bp.route('/api/<api_version>/languages/<language_code>')
 def api_language(api_version, language_code=None):
-    try:
-        if language_code is not None:
-            languages = [Language.query.filter(Language.code== language_code).one()]
+    if language_code is None:
+        languages = Language.query.all()
+    else:
+        # single
+        at = Language.query.filter(Language.code == language_code).first()
+        if at is None:
+            return make_404("Language {0} not found".format(language_code))
         else:
-            languages = Language.query.all()
-        response = APIResponseFactory.make_response(data=[a.serialize() for a in languages])
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Language {0} not found".format(language_code)
-        })
-    return APIResponseFactory.jsonify(response)
+            languages = [at]
+    return make_200([a.serialize() for a in languages])
 
 
 @api_bp.route('/api/<api_version>/languages', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/languages/<language_code>', methods=['DELETE'])
 @auth.login_required
 def api_delete_language(api_version, language_code=None):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
-        try:
-            if language_code is not None:
-                languages = [Language.query.filter(Language.code == language_code).one()]
-            else:
-                languages = Language.query.all()
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if access_is_forbidden:
+        return access_is_forbidden
 
-            for c in languages:
-                db.session.delete(c)
-            try:
-                db.session.commit()
-                response = APIResponseFactory.make_response(data=[])
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot delete data", "details": str(e)
-                })
+    if language_code is None:
+        languages = Language.query.all()
+    else:
+        languages = Language.query.filter(Language.code == language_code).all()
 
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Language {0} not found".format(language_code)
-            })
-    return APIResponseFactory.jsonify(response)
+    for a in languages:
+        db.session.delete(a)
+    try:
+        db.session.commit()
+        return make_200([])
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return make_409(str(e))
 
 
 @api_bp.route('/api/<api_version>/languages', methods=['PUT'])
 @auth.login_required
 def api_put_language(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
-        try:
-            data = request.get_json()
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if access_is_forbidden:
+        return access_is_forbidden
 
-            if "data" in data:
-                data = data["data"]
+    try:
+        data = request.get_json()
 
-                if not isinstance(data, list):
-                    data = [data]
+        if "data" in data:
+            data = data["data"]
 
+            try:
                 modifed_data = []
-                try:
-                    for language in data:
-                        if "code" not in language:
-                            raise Exception("Language code is missing from the payload")
-                        a = Language.query.filter(Language.code == language["code"]).one()
-                        if "label" in language:
-                            a.label = language["label"]
-                        db.session.add(a)
-                        modifed_data.append(a)
+                for language in data:
+                    a = Language.query.filter(Language.code == language.get('code', None)).one()
+                    a.label = language.get("label")
 
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot update data", "details": str(e)
-                    })
+                    db.session.add(a)
+                    modifed_data.append(a)
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                return make_409(str(e))
 
-                if response is None:
-                    data = []
-                    for a in modifed_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_language", api_version=api_version, language_code=a.code)
-                        )
-                        print(json_obj)
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
+            data = []
+            for a in modifed_data:
+                r = api_language(api_version=api_version, language_code=a.code)
+                data.append(json_loads(r.data)["data"])
 
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Language not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
+            return make_200(data)
+        else:
+            return make_409("no data")
+    except NoResultFound:
+        return make_404("Language not found")
 
 
 @api_bp.route('/api/<api_version>/languages', methods=['POST'])
 @auth.login_required
 def api_post_language(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    if access_is_forbidden:
+        return access_is_forbidden
+
+    data = request.get_json()
+
+    if "data" in data:
+        data = data["data"]
+
+        created_data = []
         try:
-            data = request.get_json()
+            for language in data:
+                a = Language(**language)
+                db.session.add(a)
+                created_data.append(a)
 
-            if "data" in data:
-                data = data["data"]
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return make_409(str(e))
 
-                if not isinstance(data, list):
-                    data = [data]
+        data = []
+        for a in created_data:
+            r = api_language(api_version=api_version, language_code=a.code)
+            data.append(json_loads(r.data)["data"])
 
-                created_data = []
-                for language in data:
-                    if "code" not in language:
-                        raise Exception("Language code is missing from the payload")
-                    a = Language(**language)
-                    db.session.add(a)
-                    created_data.append(a)
-
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot insert data", "details": str(e)
-                    })
-
-                if response is None:
-                    data = []
-                    for a in created_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_language", api_version=api_version, language_code=a.code)
-                        )
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Language not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
-
+        return make_200(data)
+    else:
+        return make_409("no data")

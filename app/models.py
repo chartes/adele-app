@@ -503,7 +503,7 @@ class Role(db.Model):
 
 class SpeechPartType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    lang_code = db.Column(db.String, db.ForeignKey("language.code"))
+    lang_code = db.Column(db.String, db.ForeignKey("language.code", ondelete="CASCADE"))
     label = db.Column(db.String)
     definition = db.Column(db.Text)
 

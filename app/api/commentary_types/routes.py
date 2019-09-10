@@ -61,9 +61,8 @@ def api_put_commentary_type(api_version):
             try:
                 modifed_data = []
                 for commentary_type in data:
-                    a = CommentaryType.query.filter(CommentaryType.id == commentary_type["id"]).one()
+                    a = CommentaryType.query.filter(CommentaryType.id == commentary_type.get('id', None)).one()
                     a.label = commentary_type.get("label")
-                    a.description = commentary_type.get("description")
 
                     db.session.add(a)
                     modifed_data.append(a)

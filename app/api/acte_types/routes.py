@@ -63,7 +63,7 @@ def api_put_acte_type(api_version):
             try:
                 modifed_data = []
                 for acte_type in data:
-                    a = ActeType.query.filter(ActeType.id == acte_type["id"]).one()
+                    a = ActeType.query.filter(ActeType.id == acte_type.get('id')).one()
                     a.label = acte_type.get("label")
                     a.description = acte_type.get("description")
 
