@@ -73,7 +73,8 @@ def api_put_district(api_version, country_id):
             try:
                 modifed_data = []
                 for district in data:
-                    a = District.query.filter(District.country_id == country_id, District.id == district["id"]).one()
+                    a = District.query.filter(District.country_id == country_id,
+                                              District.id == district.get('id', None)).one()
                     a.label = district.get("label")
 
                     db.session.add(a)
@@ -81,11 +82,12 @@ def api_put_district(api_version, country_id):
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
+                print(str(e))
                 return make_409(str(e))
 
             data = []
             for a in modifed_data:
-                r = api_district(api_version=api_version, district_id=a.id)
+                r = api_district(api_version=api_version, district_id=a.id, country_id=country_id)
                 data.append(json_loads(r.data)["data"])
 
             return make_200(data)
@@ -121,7 +123,7 @@ def api_post_district(api_version):
 
         data = []
         for a in created_data:
-            r = api_district(api_version=api_version, district_id=a.id)
+            r = api_district(api_version=api_version, district_id=a.id, country_id=a.country_id)
             data.append(json_loads(r.data)["data"])
 
         return make_200(data)

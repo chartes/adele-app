@@ -63,7 +63,7 @@ def api_put_country(api_version):
             try:
                 modifed_data = []
                 for country in data:
-                    a = Country.query.filter(Country.id == country["id"]).one()
+                    a = Country.query.filter(Country.id == country.get('id', None)).one()
                     a.label = country.get("label")
                     a.ref = country.get("ref")
 
