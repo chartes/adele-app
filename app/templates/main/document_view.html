@@ -191,17 +191,20 @@
                  for(const notePlaceHolder of document.getElementsByClassName("note-placeholder"))  {
                      const noteId = notePlaceHolder.dataset.noteId;
                      const noteContent = document.querySelector(".note-content[data-note-id='"+noteId+"']");
-                     tippy(notePlaceHolder, {
-                         content: noteContent.textContent,
-                         arrow: true,
-                         arrowType: 'round',
-                         size: 'large',
-                         duration: 200,
-                         animation: 'scale',
-                         allowHTML: true,
-                         theme: 'dark',
-                         placement: 'right'
-                     });
+
+                     if (!!noteContent.textContent && noteContent.textContent !== 'None') {
+                     	                     tippy(notePlaceHolder, {
+                                               content: noteContent.textContent,
+                                               arrow: true,
+                                               arrowType: 'round',
+                                               size: 'large',
+                                               duration: 200,
+                                               animation: 'scale',
+                                               allowHTML: true,
+                                               theme: 'dark',
+                                               placement: 'right'
+                                           });
+                     }
 
                  }
 
