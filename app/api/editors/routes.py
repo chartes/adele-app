@@ -4,7 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import db, auth
 from app.api.routes import api_bp, json_loads
 from app.models import Editor
-from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_409
+from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_409, make_400
 
 
 @api_bp.route('/api/<api_version>/editors')
@@ -42,7 +42,7 @@ def api_delete_editor(api_version, editor_id=None):
         return make_200([])
     except Exception as e:
         db.session.rollback()
-        return make_409(str(e))
+        return make_400(str(e))
 
 
 @api_bp.route('/api/<api_version>/editors', methods=['PUT'])
@@ -79,7 +79,7 @@ def api_put_editor(api_version):
 
             return make_200(data)
         else:
-            return make_409("no data")
+            return make_400("no data")
     except NoResultFound:
         return make_404("Editor not found")
 
@@ -115,4 +115,4 @@ def api_post_editor(api_version):
 
         return make_200(data)
     else:
-        return make_409("no data")
+        return make_400("no data")

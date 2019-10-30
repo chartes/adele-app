@@ -50,6 +50,10 @@ def make_404(details=None):
     return make_error(404, "The resource does not exist", details)
 
 
+def make_400(details=None):
+    return make_error(400, "Error", details)
+
+
 def make_409(details=None):
     return make_error(409, "Conflict with the current state of the target resource", details)
 

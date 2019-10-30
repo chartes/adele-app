@@ -4,7 +4,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import db, auth
 from app.api.routes import api_bp,  json_loads
 from app.models import Commentary, Document, VALIDATION_TRANSCRIPTION
-from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409
+from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
+    make_400
 
 
 def get_reference_commentary(doc_id, type_id):
@@ -119,7 +120,7 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
         return make_200()
     except (Exception, KeyError) as e:
         db.session.rollback()
-        return make_409(str(e))
+        return make_400(str(e))
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['POST'])
@@ -155,7 +156,7 @@ def api_post_commentary(api_version, doc_id):
         created_data = []
 
         if len(data) == 0:
-            return make_409("No data")
+            return make_400("No data")
 
         for co in data:
 
@@ -168,7 +169,7 @@ def api_post_commentary(api_version, doc_id):
                 return make_403()
 
             if doc.validation_stage < VALIDATION_TRANSCRIPTION:
-                return make_409("A transcription must be validated first")
+                return make_400("A transcription must be validated first")
 
             c = Commentary(doc_id=doc_id, user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
             db.session.add(c)
@@ -178,7 +179,7 @@ def api_post_commentary(api_version, doc_id):
             db.session.commit()
         except (Exception, KeyError) as e:
             db.session.rollback()
-            return make_409(str(e))
+            return make_400(str(e))
 
         coms = []
         for c in created_data:
@@ -187,7 +188,7 @@ def api_post_commentary(api_version, doc_id):
 
         return make_200(coms)
     else:
-        return make_409("no data")
+        return make_400("no data")
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['PUT'])
@@ -232,7 +233,7 @@ def api_put_commentary(api_version, doc_id):
                     return make_403()
 
                 if doc.validation_stage < VALIDATION_TRANSCRIPTION:
-                    return make_409("A transcription must be validated first")
+                    return make_400("A transcription must be validated first")
 
                 c = Commentary.query.filter(
                     Commentary.doc_id == doc_id,
@@ -252,7 +253,7 @@ def api_put_commentary(api_version, doc_id):
             return make_404(str(e))
         except (Exception, KeyError) as e:
             db.session.rollback()
-            return make_409(str(e))
+            return make_400(str(e))
 
         coms = []
         for c in updated_data:
@@ -261,4 +262,4 @@ def api_put_commentary(api_version, doc_id):
 
         return make_200(data)
     else:
-        return make_409("no data")
+        return make_400("no data")

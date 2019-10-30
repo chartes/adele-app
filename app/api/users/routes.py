@@ -6,7 +6,7 @@ from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp
 from app.models import User, Role, Whitelist, Document
-from app.utils import make_200, make_404, forbid_if_nor_teacher_nor_admin, make_409, make_403
+from app.utils import make_200, make_404, forbid_if_nor_teacher_nor_admin, make_409, make_403, make_400
 
 """
 ===========================
@@ -103,8 +103,7 @@ def api_post_users_roles(api_version, user_id):
             return make_200(data=[r.serialize() for r in target_user.roles])
         except Exception as e:
             db.session.rollback()
-            print(str(e))
-            return make_409()
+            return make_400(str(e))
     else:
         return make_409()
 
@@ -131,7 +130,7 @@ def api_delete_user(api_version, user_id):
         except Exception as e:
             db.session.rollback()
             print(str(e))
-            return make_409()
+            return make_400(str(e))
 
     except NoResultFound:
         return make_404()
@@ -161,7 +160,8 @@ def api_delete_users_roles(api_version, user_id):
         return make_200()
     except Exception as e:
         db.session.rollback()
-        return make_409()
+        print(str(e))
+        return make_400(str(e))
 
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>/add-users', methods=['POST'])
@@ -235,7 +235,7 @@ def api_get_whitelist(api_version, whitelist_id):
 
     w = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
     if w is None:
-        return make_404()
+        return make_404("whitelist unknown")
     else:
         return make_200(data=[w.serialize()])
 
@@ -270,7 +270,7 @@ def api_post_whitelist(api_version):
     except Exception as e:
         db.session.rollback()
         print(str(e))
-        return make_409()
+        return make_400(str(e))
 
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>', methods=['DELETE'])
@@ -300,5 +300,5 @@ def delete_whitelist(api_version, whitelist_id):
     except Exception as e:
         db.session.rollback()
         print(str(e))
-        return make_409()
+        return make_400(str(e))
 
