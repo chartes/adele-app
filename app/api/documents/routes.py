@@ -491,7 +491,7 @@ def api_set_document_manifest(api_version, doc_id):
     if Image.query.filter(Image.manifest_url == manifest_url).first() or \
         ImageUrl.query.filter(ImageUrl.manifest_url == manifest_url).first():
         response = APIResponseFactory.make_response(errors={
-            "status": 403,
+            "status": 409,
             "title": "This manifest is already present",
             "code": "Already present",
             "details": "This manifest is already used by another document."
@@ -500,6 +500,7 @@ def api_set_document_manifest(api_version, doc_id):
         return APIResponseFactory.jsonify(response)
 
     manifest = query_json_endpoint(request, endpoint_url=manifest_url, direct=True)
+
     if "errors" in manifest:
         response = APIResponseFactory.make_response(errors=manifest["errors"])
         return APIResponseFactory.jsonify(response)

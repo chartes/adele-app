@@ -50,6 +50,7 @@ class TestBaseServer(TestCase):
         with _app.app_context():
             db.create_all()
             self.client = _app.test_client(allow_subdomain_redirects=True)
+            _app.test_server = self
         return _app
 
     def tearDown(self):

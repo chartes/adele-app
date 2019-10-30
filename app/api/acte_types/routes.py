@@ -49,7 +49,6 @@ def api_delete_acte_type(api_version, acte_type_id=None):
 @api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])
 @auth.login_required
 def api_put_acte_type(api_version):
-
     access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
     if access_is_forbidden:
         return access_is_forbidden
