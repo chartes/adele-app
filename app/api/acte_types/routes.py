@@ -80,7 +80,7 @@ def api_put_acte_type(api_version):
 
             return make_200(data)
         else:
-            return make_409("no data")
+            return make_400("no data")
     except NoResultFound:
         return make_404("ActeType not found")
 
@@ -108,7 +108,7 @@ def api_post_acte_type(api_version):
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            return make_409(str(e))
+            return make_400(str(e))
 
         data = []
         for a in created_data:
@@ -117,4 +117,4 @@ def api_post_acte_type(api_version):
 
         return make_200(data)
     else:
-        return make_409("no data")
+        return make_400("no data")
