@@ -72,17 +72,17 @@ def api_put_acte_type(api_version):
 
             if "data" in data:
                 data = data["data"]
+                modified_data = []
 
                 if not isinstance(data, list):
                     data = [data]
                 try:
-                    modifed_data = []
                     for acte_type in data:
                         a = ActeType.query.filter(ActeType.id == acte_type["id"]).one()
                         a.label = acte_type.get("label")
                         a.description = acte_type.get("description")
                         db.session.add(a)
-                        modifed_data.append(a)
+                        modified_data.append(a)
 
                     db.session.commit()
                 except Exception as e:
@@ -93,12 +93,8 @@ def api_put_acte_type(api_version):
 
                 if response is None:
                     data = []
-                    for a in modifed_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_acte_type", api_version=api_version, acte_type_id=a.id)
-                        )
-                        data.append(json_obj["data"])
+                    for a in modified_data:
+                        data.append(a.serialize())
                     response = APIResponseFactory.make_response(data=data)
 
         except NoResultFound:

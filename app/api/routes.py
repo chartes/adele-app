@@ -23,7 +23,7 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
     if direct:
         url = endpoint_url
     else:
-        root_url = request.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
+        root_url = request_obj.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
         url = "{root}{endpoint}".format(root=root_url, endpoint=endpoint_url)
 
     headers = {'Content-Type': 'application/json;charset=UTF-8'}
@@ -39,11 +39,16 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
         if method == 'GET':
             op = build_opener()
             op.addheaders = [(k, v) for k, v in headers.items()]
-            data = op.open(url, timeout=15).read()
+
+            if current_app.config["ENV"] == "test" and not direct:
+                resp = current_app.test_server.get(url)
+                data = resp.data
+            else:
+                data = op.open(url, timeout=15).read()
         else:
             raise NotImplementedError
-
         response = json_loads(data)
+
     except Exception as e:
         response = APIResponseFactory.make_response(errors={
             "title": "Error : cannot {0} {1} | {2}".format(method, endpoint_url, headers),

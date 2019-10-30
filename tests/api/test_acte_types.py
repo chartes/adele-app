@@ -31,7 +31,6 @@ class TestActeTypesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(len(r), 20)
 
-    @unittest.skip("Test client not unable to simulate a whole flask server?")
     def test_put_acte_types(self):
         self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="PUT")
         self.assert403("/adele/api/1.0/acte-types", data={"data": {}},  method="PUT", **STU1_USER)

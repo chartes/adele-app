@@ -8,6 +8,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
+    ENV = "prod"
     SECRET_KEY = os.environ.get('SECRET_KEY')
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), 'db', 'adele.sqlite')
@@ -63,6 +64,7 @@ class Config(object):
 
 
 class DevelopmentConfig(Config):
+    ENV = 'development'
 
     COPY = False
 
@@ -92,6 +94,7 @@ class DevelopmentConfig(Config):
 
 
 class TestConfig(Config):
+    ENV = 'test'
 
     DB_PATH = os.path.join(basedir, "tests", "data")
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), DB_PATH, 'adele.sqlite')
