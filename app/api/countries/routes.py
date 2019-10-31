@@ -25,11 +25,8 @@ def api_country(api_version, country_id=None):
 @api_bp.route('/api/<api_version>/countries', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/countries/<country_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_country(api_version, country_id=None):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     if country_id is None:
         countries = Country.query.all()
     else:
@@ -49,11 +46,8 @@ def api_delete_country(api_version, country_id=None):
 
 @api_bp.route('/api/<api_version>/countries', methods=['PUT'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_put_country(api_version):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     try:
         data = request.get_json()
 
@@ -88,11 +82,8 @@ def api_put_country(api_version):
 
 @api_bp.route('/api/<api_version>/countries', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_country(api_version):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     data = request.get_json()
 
     if "data" in data:

@@ -62,6 +62,7 @@ def api_users_roles(api_version, user_id):
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_users_roles(api_version, user_id):
     """
     {
@@ -78,11 +79,6 @@ def api_post_users_roles(api_version, user_id):
     :param user_id:
     :return:
     """
-
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -113,12 +109,8 @@ def api_post_users_roles(api_version, user_id):
 
 @api_bp.route('/api/<api_version>/users/<user_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_user(api_version, user_id):
-
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     try:
         target_user = User.query.filter(User.id == user_id).one()
         user = current_app.get_current_user()
@@ -141,11 +133,8 @@ def api_delete_user(api_version, user_id):
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_users_roles(api_version, user_id):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     try:
         target_user = User.query.filter(User.id == user_id).one()
     except NoResultFound:
@@ -169,6 +158,7 @@ def api_delete_users_roles(api_version, user_id):
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>/add-users', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def add_user_to_whitelist(api_version, whitelist_id):
     """
     {
@@ -178,10 +168,6 @@ def add_user_to_whitelist(api_version, whitelist_id):
     }
     :return:
     """
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     data = request.get_json()
     data = data["data"]
     user_ids = data.get("user_id") or []
@@ -205,14 +191,11 @@ def add_user_to_whitelist(api_version, whitelist_id):
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>/remove-user/<user_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def remove_user_from_whitelist(api_version, whitelist_id, user_id):
     """
     :return:
     """
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     whitelist = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
     user = User.query.filter(User.id == user_id).first()
 
@@ -230,12 +213,8 @@ def remove_user_from_whitelist(api_version, whitelist_id, user_id):
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>')
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_get_whitelist(api_version, whitelist_id):
-
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     w = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
     if w is None:
         return make_404("whitelist unknown")
@@ -245,6 +224,7 @@ def api_get_whitelist(api_version, whitelist_id):
 
 @api_bp.route('/api/<api_version>/whitelists', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_whitelist(api_version):
     """
     {
@@ -254,10 +234,6 @@ def api_post_whitelist(api_version):
     }
     :return:
     """
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     data = request.get_json()
 
     try:
@@ -278,14 +254,11 @@ def api_post_whitelist(api_version):
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def delete_whitelist(api_version, whitelist_id):
     """
     :return:
     """
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     try:
         whitelist = Whitelist.query.filter(Whitelist.id == whitelist_id).one()
         # unbind the associated documents

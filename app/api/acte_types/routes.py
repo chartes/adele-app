@@ -25,11 +25,8 @@ def api_acte_type(api_version, acte_type_id=None):
 @api_bp.route('/api/<api_version>/acte-types', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/acte-types/<acte_type_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_acte_type(api_version, acte_type_id=None):
-
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
 
     if acte_type_id is None:
         acte_types = ActeType.query.all()
@@ -48,14 +45,10 @@ def api_delete_acte_type(api_version, acte_type_id=None):
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_put_acte_type(api_version):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     try:
         data = request.get_json()
-
         if "data" in data:
             data = data["data"]
 
@@ -87,12 +80,8 @@ def api_put_acte_type(api_version):
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_acte_type(api_version):
-
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     data = request.get_json()
 
     if "data" in data:

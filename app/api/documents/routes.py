@@ -7,11 +7,11 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app import auth, db
 from app.api.response import APIResponseFactory
-from app.api.routes import api_bp, query_json_endpoint
+from app.api.routes import api_bp, query_json_endpoint, json_loads
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
     ImageUrl, Image, VALIDATION_TRANSCRIPTION, VALIDATION_NONE, get_stage, VALIDATIONS_STEPS_LABELS
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_400, \
-    forbid_if_nor_teacher_nor_admin, make_204, make_409
+    forbid_if_nor_teacher_nor_admin, make_204, make_409, forbid_if_another_teacher
 
 """
 ===========================
@@ -31,14 +31,15 @@ def api_documents(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/publish')
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_publish(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
 
-    access_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, doc.user_id)
-    if access_forbidden:
-        return access_forbidden
+    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
+    if is_another_teacher:
+        return is_another_teacher
 
     try:
         doc.is_published = True
@@ -50,15 +51,15 @@ def api_documents_publish(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unpublish')
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_unpublish(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
 
-    access_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, doc.user_id)
-    if access_forbidden:
-        return access_forbidden
-
+    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
+    if is_another_teacher:
+        return is_another_teacher
     try:
         doc.is_published = False
         db.session.commit()
@@ -72,8 +73,11 @@ def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
     if doc is None:
         return make_404()
 
+    user = current_app.get_current_user()
+    is_another_teacher = user.is_teacher and doc.user_id != user.id
+
     access_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, doc.user_id)
-    if access_forbidden:
+    if access_forbidden or is_another_teacher:
         return access_forbidden
 
     try:
@@ -94,28 +98,12 @@ def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
 @auth.login_required
 def api_documents_validate_transcription(api_version, doc_id):
-    doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is None:
-        return make_404()
-
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
-
     return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_TRANSCRIPTION)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
 @auth.login_required
 def api_documents_unvalidate_transcription(api_version, doc_id):
-    doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is None:
-        return make_404()
-
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
-
     return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_NONE)
 
 
@@ -127,11 +115,8 @@ def api_documents_id_list(api_version):
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_documents(api_version):
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
-
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -203,11 +188,8 @@ def api_post_documents(api_version):
 
 @api_bp.route('/api/<api_version>/documents', methods=['PUT'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_put_documents(api_version):
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
-
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -215,6 +197,10 @@ def api_put_documents(api_version):
     tmp_doc = Document.query.filter(Document.id == data.get('id', None)).first()
     if tmp_doc is None:
         return make_404("Document not found")
+
+    is_another_teacher = forbid_if_another_teacher(current_app, tmp_doc.user_id)
+    if is_another_teacher:
+        return is_another_teacher
 
     if "title" in data: tmp_doc.title = data["title"]
     if "subtitle" in data: tmp_doc.subtitle = data["subtitle"]
@@ -279,16 +265,18 @@ def api_put_documents(api_version):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_documents(api_version, doc_id):
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
-
-    tmp_doc = Document.query.filter(Document.id == doc_id).first()
-    if tmp_doc is None:
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
         return make_404("Document not found")
 
+    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
+    if is_another_teacher:
+        return is_another_teacher
+
     try:
+        db.session.delete(doc)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -299,6 +287,7 @@ def api_delete_documents(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_change_documents_whitelist(api_version, doc_id):
     """
     {
@@ -315,9 +304,9 @@ def api_change_documents_whitelist(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
+    forbid_to_other_teachers = forbid_if_another_teacher(current_app, doc.user_id)
+    if forbid_to_other_teachers:
+        return forbid_to_other_teachers
 
     data = request.get_json()
     data = data.get('data')
@@ -338,6 +327,7 @@ def api_change_documents_whitelist(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_change_documents_closing_date(api_version, doc_id):
     """
     {
@@ -355,9 +345,9 @@ def api_change_documents_closing_date(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
+    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
+    if is_another_teacher:
+        return is_another_teacher
 
     data = request.get_json()
     data = data.get('data')
@@ -379,10 +369,8 @@ def api_change_documents_closing_date(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/add', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_add_document(api_version):
-    access_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_forbidden:
-        return access_forbidden
 
     data = request.get_json()
     data = data["data"]
@@ -403,14 +391,15 @@ def api_add_document(api_version):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/set-manifest', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_set_document_manifest(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
 
-    access_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, doc.user_id)
-    if access_forbidden:
-        return access_forbidden
+    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
+    if is_another_teacher:
+        return is_another_teacher
 
     data = request.get_json()
     data = data["data"]
@@ -427,6 +416,7 @@ def api_set_document_manifest(api_version, doc_id):
     try:
         op = build_opener()
         manifest = op.open(manifest_url, timeout=20).read()
+        manifest = json_loads(manifest)
     except Exception as e:
         return make_400(details="Cannot fetch manifest: %s" % str(e))
 

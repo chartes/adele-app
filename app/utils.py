@@ -1,3 +1,6 @@
+from functools import wraps
+
+from flask import current_app
 from flask_login import current_user
 
 """
@@ -63,17 +66,20 @@ def make_200(data=None):
         data = []
     return make_success(data)
 
+
 def make_204():
     return make_success(204)
 
 
-
-def forbid_if_nor_teacher_nor_admin(app):
+def forbid_if_another_teacher(app, wanted_teacher_id):
     user = app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        return make_403("This resource is only accessible to teachers and admins")
+    if user.is_admin:
+        return None
+    if user.is_anonymous or not user.is_teacher or (wanted_teacher_id != user.id):
+        return make_403("This resource is not available to other teachers")
     else:
         return None
+
 
 def forbid_if_nor_teacher_nor_admin_and_wants_user_data(app, wanted_user_id):
     user = app.get_current_user()
@@ -84,3 +90,11 @@ def forbid_if_nor_teacher_nor_admin_and_wants_user_data(app, wanted_user_id):
         return None
 
 
+def forbid_if_nor_teacher_nor_admin(view_function):
+    @wraps(view_function)
+    def wrapped_f(*args, **kwargs):
+        user = current_app.get_current_user()
+        if user.is_anonymous or not (user.is_teacher or user.is_admin):
+            return make_403("This resource is only available to teachers and admins")
+        return view_function(*args, **kwargs)
+    return wrapped_f

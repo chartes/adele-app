@@ -25,11 +25,8 @@ def api_commentary_type(api_version, commentary_type_id=None):
 @api_bp.route('/api/<api_version>/commentary-types', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/commentary-types/<commentary_type_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_commentary_type(api_version, commentary_type_id=None):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     if commentary_type_id is None:
         commentary_types = CommentaryType.query.all()
     else:
@@ -47,11 +44,8 @@ def api_delete_commentary_type(api_version, commentary_type_id=None):
 
 @api_bp.route('/api/<api_version>/commentary-types', methods=['PUT'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_put_commentary_type(api_version):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     try:
         data = request.get_json()
 
@@ -85,11 +79,8 @@ def api_put_commentary_type(api_version):
 
 @api_bp.route('/api/<api_version>/commentary-types', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_commentary_type(api_version):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     data = request.get_json()
 
     if "data" in data:

@@ -30,10 +30,8 @@ def api_district(api_version, country_id, district_id=None):
 @api_bp.route('/api/<api_version>/districts/from-country/<country_id>', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/districts/<district_id>/from-country/<country_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_district(api_version, country_id, district_id=None):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
     c = Country.query.filter(Country.id == country_id).first()
     if c is None:
         return make_404("Country does not exist")
@@ -55,11 +53,8 @@ def api_delete_district(api_version, country_id, district_id=None):
 
 @api_bp.route('/api/<api_version>/districts/from-country/<country_id>', methods=['PUT'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_put_district(api_version, country_id):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     c = Country.query.filter(Country.id == country_id).first()
     if c is None:
         return make_404("Country does not exist")
@@ -99,11 +94,8 @@ def api_put_district(api_version, country_id):
 
 @api_bp.route('/api/<api_version>/districts', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_district(api_version):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
-    if access_is_forbidden:
-        return access_is_forbidden
-
     data = request.get_json()
 
     if "data" in data:
