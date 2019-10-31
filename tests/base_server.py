@@ -137,3 +137,6 @@ class TestBaseServer(TestCase):
 
     def assert404(self, url, method='GET', **kwargs):
         return self.assertStatusCode(404, url, method, **kwargs)
+
+    def assert400(self, url, method='GET', **kwargs):
+        return self.assertStatusCode(400, url, method, **kwargs)

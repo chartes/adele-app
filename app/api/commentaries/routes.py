@@ -253,7 +253,7 @@ def api_put_commentary(api_version, doc_id):
             return make_404(str(e))
         except (Exception, KeyError) as e:
             db.session.rollback()
-            return make_400(str(e))
+            return make_409(str(e))
 
         coms = []
         for c in updated_data:

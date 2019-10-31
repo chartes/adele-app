@@ -8,8 +8,8 @@ from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, PROF1_USER
 class TestUsersAPI(TestBaseServer):
 
     FIXTURES = [
+        join(TestBaseServer.FIXTURES_PATH, "documents", "doc_20.sql")
     ]
-
 
     def test_get_current_user(self):
         self.assert403("/adele/api/1.0/user")
@@ -34,17 +34,18 @@ class TestUsersAPI(TestBaseServer):
         self.assert404("/adele/api/1.0/users/100/roles", **ADMIN_USER)
 
         r = self.get_with_auth("/adele/api/1.0/users/5/roles", **STU1_USER)
-        role_names = [role["name"] for role in json_loads(r.data)["data"][0]]
+
+        role_names = [role["name"] for role in json_loads(r.data)["data"]]
         self.assertEqual(1, len(role_names))
         self.assertIn("student", role_names)
 
         r = self.get_with_auth("/adele/api/1.0/users/4/roles", **PROF1_USER)
-        role_names = [role["name"] for role in json_loads(r.data)["data"][0]]
+        role_names = [role["name"] for role in json_loads(r.data)["data"]]
         self.assertEqual(1, len(role_names))
         self.assertIn("teacher", role_names)
 
         r = self.get_with_auth("/adele/api/1.0/users/1/roles", **ADMIN_USER)
-        role_names = [role["name"] for role in json_loads(r.data)["data"][0]]
+        role_names = [role["name"] for role in json_loads(r.data)["data"]]
         self.assertEqual(3, len(role_names))
         self.assertIn("admin", role_names)
         self.assertIn("teacher", role_names)
@@ -119,6 +120,8 @@ class TestUsersAPI(TestBaseServer):
         self.assertEqual(14, json_loads(r.data)["data"][0]["id"])
 
     def test_delete_whitelist(self):
+        self.load_fixtures(self.FIXTURES)
+
         self.assert403("/adele/api/1.0/whitelists/1", method="DELETE")
         self.assert403("/adele/api/1.0/whitelists/1", method="DELETE", **STU1_USER)
         self.assert404("/adele/api/1.0/whitelists/100", method="DELETE", **ADMIN_USER)
@@ -127,12 +130,12 @@ class TestUsersAPI(TestBaseServer):
         self.post_with_auth("/adele/api/1.0/documents/20/whitelist",
                         data={"data": [{"whitelist_id": "1"}]}, **PROF1_USER)
         r = self.get("/adele/api/1.0/documents/20")
-        self.assertEqual(1, json_loads(r.data)["data"][0]["whitelist"]["id"])
+        self.assertEqual(1, json_loads(r.data)["data"]["whitelist"]["id"])
 
         # delete the whitelist then check the document again
         self.assert200("/adele/api/1.0/whitelists/1", method="DELETE", **ADMIN_USER)
         r = self.get("/adele/api/1.0/documents/20")
-        self.assertIsNone(json_loads(r.data)["data"][0]["whitelist"])
+        self.assertIsNone(json_loads(r.data)["data"]["whitelist"])
 
         # try to get the whitelist
         self.assert404("/adele/api/1.0/whitelists/1", method="DELETE", **ADMIN_USER)
@@ -150,14 +153,14 @@ class TestUsersAPI(TestBaseServer):
         self.assertNotIn(2, ids)
         # add users 1 and 2
         r = self.post_with_auth("/adele/api/1.0/whitelists/1/add-users",
-                            data={"data": [{"user_id": [1, 2]}]}, **PROF1_USER)
+                            data={"data": {"user_id": [1, 2]}}, **PROF1_USER)
         ids = get_ids(r)
         self.assertIn(1, ids)
         self.assertIn(2, ids)
 
         # be sure you can't add duplicates
         r = self.post_with_auth("/adele/api/1.0/whitelists/1/add-users",
-                            data={"data": [{"user_id": [1, 2]}]}, **PROF1_USER)
+                            data={"data": {"user_id": [1, 2]}}, **PROF1_USER)
         ids_wo_ducplicates = get_ids(r)
         self.assertEqual(len(ids), len(ids_wo_ducplicates))
 
@@ -170,7 +173,7 @@ class TestUsersAPI(TestBaseServer):
 
         # add users 1 and 2
         r = self.post_with_auth("/adele/api/1.0/whitelists/1/add-users",
-                            data={"data": [{"user_id": [1, 2]}]}, **PROF1_USER)
+                            data={"data": {"user_id": [1, 2]}}, **PROF1_USER)
         ids = get_ids(r)
 
         # be sure you can't add duplicates

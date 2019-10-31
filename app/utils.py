@@ -37,9 +37,9 @@ def make_error(status, title, details=None):
     return APIResponseFactory.make_response(status=status, errors=e)
 
 
-def make_success(data):
+def make_success(data, status=200):
     from app import APIResponseFactory
-    return APIResponseFactory.make_response(status=200, data=data)
+    return APIResponseFactory.make_response(status=status, data=data)
 
 
 def make_403(details=None):
@@ -58,8 +58,14 @@ def make_409(details=None):
     return make_error(409, "Conflict with the current state of the target resource", details)
 
 
-def make_200(data=[]):
+def make_200(data=None):
+    if data is None:
+        data = []
     return make_success(data)
+
+def make_204():
+    return make_success(204)
+
 
 
 def forbid_if_nor_teacher_nor_admin(app):

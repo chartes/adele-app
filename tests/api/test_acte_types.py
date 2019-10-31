@@ -63,7 +63,7 @@ class TestActeTypesAPI(TestBaseServer):
     def test_api_post_acte_type(self):
         self.assert403("/adele/api/1.0/acte-types", data={"data": [{}]},  method="POST")
         self.assert403("/adele/api/1.0/acte-types", data={"data": [{}]},  method="POST", **STU1_USER)
-        self.assert409("/adele/api/1.0/acte-types", data={"data": [{"champ bidon": 100}]}, method="POST", **ADMIN_USER)
+        self.assert400("/adele/api/1.0/acte-types", data={"data": [{"champ bidon": 100}]}, method="POST", **ADMIN_USER)
 
         self.assert200("/adele/api/1.0/acte-types",
                        data={"data": [{"id": 500, "label": "ACTE-TYPT-500", "description": "DESC-500"}]}, method="POST", **ADMIN_USER)
@@ -72,8 +72,7 @@ class TestActeTypesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(500, r[0]["id"])
 
-        # post conflicting data
-        self.assert409("/adele/api/1.0/acte-types",
+        self.assert400("/adele/api/1.0/acte-types",
                        data={"data": [{"id": 500, "label": "ACTE-TYPT-500", "description": "DESC-500"}]}, method="POST",
                        **ADMIN_USER)
 

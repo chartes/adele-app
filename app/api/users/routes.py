@@ -6,7 +6,8 @@ from app import auth, db
 from app.api.response import APIResponseFactory
 from app.api.routes import api_bp
 from app.models import User, Role, Whitelist, Document
-from app.utils import make_200, make_404, forbid_if_nor_teacher_nor_admin, make_409, make_403, make_400
+from app.utils import make_200, make_404, forbid_if_nor_teacher_nor_admin, make_409, make_403, make_400, \
+    forbid_if_nor_teacher_nor_admin_and_wants_user_data
 
 """
 ===========================
@@ -33,29 +34,31 @@ def api_current_user(api_version):
 @api_bp.route('/api/<api_version>/users/<user_id>')
 @auth.login_required
 def api_users(api_version, user_id):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if access_is_forbidden:
         return access_is_forbidden
 
-    try:
-        target_user = User.query.filter(User.id == user_id).one()
+    target_user = User.query.filter(User.id == user_id).first()
+
+    if target_user is not None:
         return make_200(data=[target_user.serialize()])
-    except NoResultFound:
+    else:
         return make_404()
 
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles')
 @auth.login_required
 def api_users_roles(api_version, user_id):
-    access_is_forbidden = forbid_if_nor_teacher_nor_admin(current_app)
+    access_is_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if access_is_forbidden:
         return access_is_forbidden
 
-    try:
-        target_user = User.query.filter(User.id == user_id).one()
+    target_user = User.query.filter(User.id == user_id).first()
+    if target_user is not None:
         return make_200(data=[r.serialize() for r in target_user.roles])
-    except NoResultFound:
+    else:
         return make_404()
+
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles', methods=['POST'])
 @auth.login_required

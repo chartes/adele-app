@@ -53,17 +53,17 @@ VALIDATION_FACSIMILE = 3
 VALIDATION_COMMENTARIES = 4
 VALIDATION_SPEECHPARTS = 5
 
+VALIDATIONS_STEPS_LABELS = {
+    VALIDATION_NONE: 'none',
+    VALIDATION_TRANSCRIPTION: 'transcription',
+    VALIDATION_TRANSLATION: 'translation',
+    VALIDATION_FACSIMILE: 'facsimile',
+    VALIDATION_COMMENTARIES: 'commentaries',
+    VALIDATION_SPEECHPARTS: 'speechparts'
+}
 
 def get_stage(stage_id):
-    return {
-        VALIDATION_NONE: 'none',
-        VALIDATION_TRANSCRIPTION: 'transcription',
-        VALIDATION_TRANSLATION: 'translation',
-        VALIDATION_FACSIMILE: 'facsimile',
-        VALIDATION_COMMENTARIES: 'commentaries',
-        VALIDATION_SPEECHPARTS: 'speechparts'
-    }[stage_id]
-
+    return VALIDATIONS_STEPS_LABELS[stage_id]
 
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

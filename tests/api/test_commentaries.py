@@ -121,7 +121,7 @@ class TestCommentariesAPI(TestBaseServer):
 
         # being a student
         #   - on a doc without transcription
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **STU1_USER)
         #   - on my own transcription
         r = self.assert200("/adele/api/1.0/documents/21/commentaries",
@@ -134,7 +134,7 @@ class TestCommentariesAPI(TestBaseServer):
         self.assert403("/adele/api/1.0/documents/21/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 4}]}, method="POST", **STU1_USER)
         #   - on an unverified transcription
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1", "user_id": 5}]}, method="POST", **STU1_USER)
         #   - multiple coms
         r = self.assert200("/adele/api/1.0/documents/21/commentaries",
@@ -143,10 +143,10 @@ class TestCommentariesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(2, len(r))
         #   - post a commentary with bad data
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type": 3, "content": "COMM 1"}]}, method="POST", **STU1_USER)
         #   - post a duplicate com (twice the same com type)
-        self.assert409("/adele/api/1.0/documents/21/commentaries",
+        self.assert400("/adele/api/1.0/documents/21/commentaries",
                        data={"data": [{"type_id": 4, "content": "COMM 21_STU1"}]}, method="POST", **STU1_USER)
 
     def test_post_commentary_teacher(self):
@@ -154,7 +154,7 @@ class TestCommentariesAPI(TestBaseServer):
 
         # being a teacher
         #   - on a doc without transcription
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **PROF1_USER)
         #   - on my own transcription
         r = self.assert200("/adele/api/1.0/documents/21/commentaries",
@@ -169,7 +169,7 @@ class TestCommentariesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(1, len(r))
         #   - on an unverified transcription
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **PROF1_USER)
         #   - multiple coms
         r = self.assert200("/adele/api/1.0/documents/21/commentaries",
@@ -178,10 +178,10 @@ class TestCommentariesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(2, len(r))
         #   - post a commentary with bad data
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type": 3, "content": "COMM 1"}]}, method="POST", **PROF1_USER)
         #   - post a duplicate com (twice the same com type)
-        self.assert409("/adele/api/1.0/documents/21/commentaries",
+        self.assert400("/adele/api/1.0/documents/21/commentaries",
                        data={"data": [{"type_id": 4, "content": "COMM 21_PROF1"}]}, method="POST", **PROF1_USER)
 
     def test_post_commentary_admin(self):
@@ -189,7 +189,7 @@ class TestCommentariesAPI(TestBaseServer):
 
         # being an admin
         #   - on a doc without transcription
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **ADMIN_USER)
         #   - on my own transcription
         r = self.assert200("/adele/api/1.0/documents/21/commentaries",
@@ -205,7 +205,7 @@ class TestCommentariesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(1, len(r))
         #   - on an unverified transcription
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type_id": 3, "content": "COMM 1"}]}, method="POST", **ADMIN_USER)
         #   - multiple coms
         r = self.assert200("/adele/api/1.0/documents/21/commentaries",
@@ -214,10 +214,10 @@ class TestCommentariesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(2, len(r))
         #   - post a commentary with bad data
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type": 3, "content": "COMM 1"}]}, method="POST", **ADMIN_USER)
         #   - post a duplicate com (twice the same com type)
-        self.assert409("/adele/api/1.0/documents/21/commentaries",
+        self.assert400("/adele/api/1.0/documents/21/commentaries",
                        data={"data": [{"type_id": 4, "content": "COMM 21_PROF1"}]}, method="POST", **ADMIN_USER)
 
     def test_put_commentary_ano(self):
@@ -257,7 +257,7 @@ class TestCommentariesAPI(TestBaseServer):
         r = json_loads(r.data)["data"]
         self.assertEqual(2, len(r))
         #   - put a commentary with bad data
-        self.assert409("/adele/api/1.0/documents/23/commentaries",
+        self.assert400("/adele/api/1.0/documents/23/commentaries",
                        data={"data": [{"type": 3, "content": "COMM 1"}]}, method="PUT", **STU1_USER)
 
     def test_put_commentary_teacher(self):

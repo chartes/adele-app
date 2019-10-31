@@ -62,7 +62,7 @@ class TestCountrysAPI(TestBaseServer):
     def test_api_post_country(self):
         self.assert403("/adele/api/1.0/countries", data={"data": [{}]},  method="POST")
         self.assert403("/adele/api/1.0/countries", data={"data": [{}]},  method="POST", **STU1_USER)
-        self.assert409("/adele/api/1.0/countries", data={"data": [{"champ bidon": 100}]}, method="POST", **ADMIN_USER)
+        self.assert400("/adele/api/1.0/countries", data={"data": [{"champ bidon": 100}]}, method="POST", **ADMIN_USER)
 
         self.assert200("/adele/api/1.0/countries",
                        data={"data": [{"id": 500, "label": "ACTE-TYPT-500", "ref": "DESC-500"}]}, method="POST", **ADMIN_USER)
@@ -72,7 +72,7 @@ class TestCountrysAPI(TestBaseServer):
         self.assertEqual(500, r[0]["id"])
 
         # post conflicting data
-        self.assert409("/adele/api/1.0/countries",
+        self.assert400("/adele/api/1.0/countries",
                        data={"data": [{"id": 500, "label": "ACTE-TYPT-500", "ref": "DESC-500"}]}, method="POST",
                        **ADMIN_USER)
 
