@@ -461,7 +461,7 @@ class Note(db.Model):
 
     note_type = db.relationship("NoteType", backref=db.backref('note', passive_deletes=True))
 
-    transcription = db.relationship("TranscriptionHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
+    #transcription = db.relationship("TranscriptionHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
     translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
     commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
 
@@ -470,7 +470,7 @@ class Note(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'content': self.content,
-            "note_type": self.note_type.serialize()
+            'note_type': self.note_type.serialize()
         }
 
 
@@ -534,20 +534,28 @@ class TranscriptionHasNote(db.Model):
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="transcription", single_parent=True)
-    transcription = db.relationship("Transcription", back_populates="notes", single_parent=True)
+
+    transcription = db.relationship("Transcription", backref="notes", single_parent=True)
+    note = db.relationship("Note", backref="transcription", single_parent=True)
 
 
 class Transcription(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('doc_id', 'user_id', name='_document_has_transcription_uc'),
+    )
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
+    #notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
+
+    def notes_of_user(self, user_id):
+        return [n for n in self.notes if n.user_id == user_id]
 
     def serialize(self):
-
+        # TODO: deduplicate
         return {
             'id': self.id,
             'doc_id': self.doc_id,
@@ -559,6 +567,17 @@ class Transcription(db.Model):
             ]
         }
 
+    def serialize_for_user(self, user_id):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'user_id': self.user_id,
+            'content': self.content,
+            'notes': [
+                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
+                for n in self.notes_of_user(user_id) if n.note is not None
+            ]
+        }
 
 class TranslationHasNote(db.Model):
     translation_id = db.Column(db.Integer, db.ForeignKey('translation.id', ondelete='CASCADE'), primary_key=True)
