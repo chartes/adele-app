@@ -48,8 +48,8 @@ association_whitelist_has_user = db.Table('whitelist_has_user',
 VALIDATION_NONE = 0
 VALIDATION_TRANSCRIPTION = 1
 VALIDATION_TRANSLATION = 2
-VALIDATION_FACSIMILE = 3
-VALIDATION_COMMENTARIES = 4
+VALIDATION_COMMENTARIES = 3
+VALIDATION_FACSIMILE = 4
 VALIDATION_SPEECHPARTS = 5
 
 def get_stage(stage_id):
@@ -57,8 +57,8 @@ def get_stage(stage_id):
         VALIDATION_NONE: 'none',
         VALIDATION_TRANSCRIPTION: 'transcription',
         VALIDATION_TRANSLATION: 'translation',
-        VALIDATION_FACSIMILE: 'facsimile',
         VALIDATION_COMMENTARIES: 'commentaries',
+        VALIDATION_FACSIMILE: 'facsimile',
         VALIDATION_SPEECHPARTS: 'speechparts'
     }[stage_id]
 
