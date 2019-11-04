@@ -1,13 +1,10 @@
 import datetime
-import pprint
 from urllib.request import build_opener
 
-from flask import request, url_for, current_app
-from sqlalchemy.orm.exc import NoResultFound
+from flask import request,  current_app
 
 from app import auth, db
-from app.api.response import APIResponseFactory
-from app.api.routes import api_bp, query_json_endpoint, json_loads
+from app.api.routes import api_bp, json_loads
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
     ImageUrl, Image, VALIDATION_TRANSCRIPTION, VALIDATION_NONE, get_stage, VALIDATIONS_STEPS_LABELS
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_400, \

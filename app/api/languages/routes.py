@@ -51,26 +51,21 @@ def api_put_language(api_version):
 
         if "data" in data:
             data = data["data"]
+            modified_data = []
 
             try:
-                modifed_data = []
                 for language in data:
                     a = Language.query.filter(Language.code == language.get('code', None)).one()
                     a.label = language.get("label")
 
                     db.session.add(a)
-                    modifed_data.append(a)
+                    modified_data.append(a)
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
                 return make_409(str(e))
 
-            data = []
-            for a in modifed_data:
-                r = api_language(api_version=api_version, language_code=a.code)
-                data.append(json_loads(r.data)["data"])
-
-            return make_200(data)
+            return make_200([d.serialize() for d in modified_data])
         else:
             return make_400("no data")
     except NoResultFound:
@@ -98,11 +93,6 @@ def api_post_language(api_version):
             db.session.rollback()
             return make_409(str(e))
 
-        data = []
-        for a in created_data:
-            r = api_language(api_version=api_version, language_code=a.code)
-            data.append(json_loads(r.data)["data"])
-
-        return make_200(data)
+        return make_200([d.serialize() for d in created_data])
     else:
         return make_400("no data")

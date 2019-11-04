@@ -181,12 +181,7 @@ def api_post_commentary(api_version, doc_id):
             db.session.rollback()
             return make_400(str(e))
 
-        coms = []
-        for c in created_data:
-            r = api_commentary(api_version=api_version, doc_id=doc_id, user_id=c.user_id, type_id=c.type_id)
-            coms.extend(json_loads(r.data)["data"])
-
-        return make_200(coms)
+        return make_200([d.serialize() for d in created_data])
     else:
         return make_400("no data")
 
@@ -255,11 +250,6 @@ def api_put_commentary(api_version, doc_id):
             db.session.rollback()
             return make_409(str(e))
 
-        coms = []
-        for c in updated_data:
-            r = api_commentary(api_version=api_version, doc_id=doc_id, user_id=c.user_id, type_id=c.type_id)
-            coms.extend(json_loads(r.data)["data"])
-
-        return make_200(data)
+        return make_200([d.serialize() for d in updated_data])
     else:
         return make_400("no data")

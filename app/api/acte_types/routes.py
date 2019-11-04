@@ -1,4 +1,4 @@
-from flask import request, current_app
+from flask import request
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -53,25 +53,20 @@ def api_put_acte_type(api_version):
             data = data["data"]
 
             try:
-                modifed_data = []
+                modified_data = []
                 for acte_type in data:
                     a = ActeType.query.filter(ActeType.id == acte_type.get('id')).one()
                     a.label = acte_type.get("label")
                     a.description = acte_type.get("description")
 
                     db.session.add(a)
-                    modifed_data.append(a)
+                    modified_data.append(a)
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
                 return make_409(str(e))
 
-            data = []
-            for a in modifed_data:
-                r = api_acte_type(api_version=api_version, acte_type_id=a.id)
-                data.append(json_loads(r.data)["data"])
-
-            return make_200(data)
+            return make_200([d.serialize() for d in modified_data])
         else:
             return make_400("no data")
     except NoResultFound:
@@ -99,11 +94,6 @@ def api_post_acte_type(api_version):
             db.session.rollback()
             return make_400(str(e))
 
-        data = []
-        for a in created_data:
-            r = api_acte_type(api_version=api_version, acte_type_id=a.id)
-            data.append(json_loads(r.data)["data"])
-
-        return make_200(data)
+        return make_200([d.serialize() for d in created_data])
     else:
         return make_400("no data")

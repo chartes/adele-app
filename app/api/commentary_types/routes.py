@@ -1,4 +1,4 @@
-from flask import request, current_app
+from flask import request
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -53,24 +53,19 @@ def api_put_commentary_type(api_version):
             data = data["data"]
 
             try:
-                modifed_data = []
+                modified_data = []
                 for commentary_type in data:
                     a = CommentaryType.query.filter(CommentaryType.id == commentary_type.get('id', None)).one()
                     a.label = commentary_type.get("label")
 
                     db.session.add(a)
-                    modifed_data.append(a)
+                    modified_data.append(a)
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
                 return make_409(str(e))
 
-            data = []
-            for a in modifed_data:
-                r = api_commentary_type(api_version=api_version, commentary_type_id=a.id)
-                data.append(json_loads(r.data)["data"])
-
-            return make_200(data)
+            return make_200([d.serialize() for d in modified_data])
         else:
             return make_409("no data")
     except NoResultFound:
@@ -98,11 +93,6 @@ def api_post_commentary_type(api_version):
             db.session.rollback()
             return make_409(str(e))
 
-        data = []
-        for a in created_data:
-            r = api_commentary_type(api_version=api_version, commentary_type_id=a.id)
-            data.append(json_loads(r.data)["data"])
-
-        return make_200(data)
+        return make_200([d.serialize() for d in created_data])
     else:
         return make_409("no data")
