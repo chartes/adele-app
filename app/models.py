@@ -45,20 +45,75 @@ association_whitelist_has_user = db.Table('whitelist_has_user',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
 )
 
+"""
+TODO JP – Documentation du Document workflow 
+Définition des états d’édition d’un document: valeurs du flag Document.validation_step
+Les éléments éditoriaux attachés à un document sont :
+* la transcription ;
+* la traduction ;
+* le fac-similé (alignement transcription / zones des images) ;
+* parties du discours (segmentation de la transcription en parties du discours) ;
+* des commentaires libres (commentaire diplomatique, historique, paléographique, etc.).
+
+VALIDATION_NONE
+    Aucun élément éditorial n’est attaché au document, à l’exception de sa notice.
+    student:
+        * transcription éditable
+    teacher:
+        * transcription éditable
+        * transcriptions des élèves éditables
+        * transcriptions des élèves clonables
+    Les autres éléments éditoriaux ne sont pas éditables
+
+VALIDATION_TRANSCRIPTION
+    La transcription du teacher est validée (par lui) : c’est la transcription de référence
+    student:
+        * transcription de référence consultable (non éditable)
+        * transcription oersonnelle consultable ?
+        * traduction éditable
+    teacher:
+        * transcription (de référence) éditable
+        * transcriptions des élèves éditables
+        * traduction éditable
+        * traductions des élèves éditables
+        * traductions des élèves clonables        
+    Les autres éléments éditoriaux ne sont pas éditables
+
+VALIDATION_TRANSLATION
+    La traduction (possiblement vide) du teacher est validée (par lui) : c’est la traduction de référence
+    student:
+        * transcription de référence consultable (non éditable)
+        * traduction de référence consultable (non éditable)
+        * transcription oersonnelle consultable ?
+        * traduction oersonnelle consultable ?
+        * commentaires éditables 
+    teacher:
+        * transcription (de référence) éditable
+        * traduction (de référence) éditable
+        * transcriptions des élèves éditables
+        * traductions des élèves éditables
+        * commentaires éditables
+        * commentaires des élèves consultables
+        * commentaures des élèves clonables ?
+
+
+
+
+"""
 
 VALIDATION_NONE = 0
 VALIDATION_TRANSCRIPTION = 1
 VALIDATION_TRANSLATION = 2
-VALIDATION_FACSIMILE = 3
-VALIDATION_COMMENTARIES = 4
+VALIDATION_COMMENTARIES = 3
+VALIDATION_FACSIMILE = 4
 VALIDATION_SPEECHPARTS = 5
 
 VALIDATIONS_STEPS_LABELS = {
     VALIDATION_NONE: 'none',
     VALIDATION_TRANSCRIPTION: 'transcription',
     VALIDATION_TRANSLATION: 'translation',
-    VALIDATION_FACSIMILE: 'facsimile',
     VALIDATION_COMMENTARIES: 'commentaries',
+    VALIDATION_FACSIMILE: 'facsimile',
     VALIDATION_SPEECHPARTS: 'speechparts'
 }
 
