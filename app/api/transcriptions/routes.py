@@ -32,7 +32,6 @@ def get_reference_transcription(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
-
     if doc is not None and doc.validation_stage >= VALIDATION_TRANSCRIPTION:
         return Transcription.query.filter(
             doc_id == Transcription.doc_id,
@@ -76,10 +75,12 @@ def api_documents_transcriptions(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>')
 @auth.login_required
 def api_documents_transcriptions_from_user(api_version, doc_id, user_id=None):
-    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(user_id)
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
         return forbid
     tr = get_transcription(doc_id, user_id)
+    if tr is None:
+        return make_404()
     return make_200(data=tr.serialize_for_user(user_id))
 
 

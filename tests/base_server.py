@@ -140,3 +140,6 @@ class TestBaseServer(TestCase):
 
     def assert400(self, url, method='GET', **kwargs):
         return self.assertStatusCode(400, url, method, **kwargs)
+
+    def assertPtr(self, text, ptr_start, ptr_end, expected_fragment):
+        self.assertEqual(expected_fragment, text[ptr_start:ptr_end])

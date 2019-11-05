@@ -5,6 +5,7 @@ from flask_user import UserMixin
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy import ForeignKeyConstraint
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from app import db
 
@@ -590,8 +591,8 @@ class TranscriptionHasNote(db.Model):
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
 
-    transcription = db.relationship("Transcription", backref="notes", single_parent=True)
-    note = db.relationship("Note", backref="transcription", single_parent=True)
+    transcription = db.relationship("Transcription", backref=db.backref("transcription_has_note"), single_parent=True)
+    note = db.relationship("Note", backref=db.backref("transcription_has_note"), single_parent=True)
 
 
 class Transcription(db.Model):
@@ -604,23 +605,13 @@ class Transcription(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
+    notes = association_proxy('transcription_has_note', 'note')
     #notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
 
     def notes_of_user(self, user_id):
-        return [n for n in self.notes if n.user_id == user_id]
-
-    def serialize(self):
-        # TODO: deduplicate
-        return {
-            'id': self.id,
-            'doc_id': self.doc_id,
-            'user_id': self.user_id,
-            'content': self.content,
-            'notes': [
-                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
-                for n in self.notes if n.note is not None
-            ]
-        }
+        return [
+            dict({"ptr_start": thn.ptr_start, "ptr_end": thn.ptr_end}, **(thn.note.serialize()))
+            for thn in self.transcription_has_note if thn.note.user_id == user_id]
 
     def serialize_for_user(self, user_id):
         return {
@@ -628,10 +619,7 @@ class Transcription(db.Model):
             'doc_id': self.doc_id,
             'user_id': self.user_id,
             'content': self.content,
-            'notes': [
-                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
-                for n in self.notes_of_user(user_id) if n.note is not None
-            ]
+            'notes': self.notes_of_user(user_id)
         }
 
 class TranslationHasNote(db.Model):

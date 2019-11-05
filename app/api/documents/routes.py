@@ -65,45 +65,6 @@ def api_documents_unpublish(api_version, doc_id):
         return make_400(str(e))
 
 
-def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
-    doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is None:
-        return make_404()
-
-    user = current_app.get_current_user()
-    is_another_teacher = user.is_teacher and doc.user_id != user.id
-
-    access_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, doc.user_id)
-    if access_forbidden or is_another_teacher:
-        return access_forbidden
-
-    try:
-        if stage_id not in VALIDATIONS_STEPS_LABELS.keys():
-            return make_400("Invalid step id")
-
-        doc.validation_stage = stage_id
-        db.session.commit()
-        return make_200(data={
-            "id": doc.id,
-            "validation_stage": doc.validation_stage,
-            "validation_stage_label": get_stage(doc.validation_stage)
-        })
-    except Exception as e:
-        return make_400(str(e))
-
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
-@auth.login_required
-def api_documents_validate_transcription(api_version, doc_id):
-    return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_TRANSCRIPTION)
-
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
-@auth.login_required
-def api_documents_unvalidate_transcription(api_version, doc_id):
-    return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_NONE)
-
-
 @api_bp.route('/api/<api_version>/documents')
 def api_documents_id_list(api_version):
     docs = Document.query.all()
@@ -439,3 +400,7 @@ def api_set_document_manifest(api_version, doc_id):
         return make_400(details=str(e))
 
     return make_200(data=[i.serialize() for i in doc.images])
+
+
+# IMPORT DOCUMENT VALIDATION STEP ROUTES
+from .document_validation import *
