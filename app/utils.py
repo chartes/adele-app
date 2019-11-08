@@ -3,6 +3,7 @@ from functools import wraps
 from flask import current_app
 from flask_login import current_user
 
+
 """
 ========================================================
     A bunch of useful functions
@@ -34,7 +35,7 @@ def get_current_user():
 
 def make_error(status, title, details=None):
     from app import APIResponseFactory
-    e = {"status": status, "title": title,}
+    e = {"status": status, "title": title}
     if details:
         e["details"] = details
     return APIResponseFactory.make_response(status=status, errors=e)
@@ -98,3 +99,12 @@ def forbid_if_nor_teacher_nor_admin(view_function):
             return make_403("This resource is only available to teachers and admins")
         return view_function(*args, **kwargs)
     return wrapped_f
+
+
+def is_closed(doc_id):
+    from app.models import Document
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+    if doc.is_closed:
+        return make_403()

@@ -22,13 +22,13 @@
       <div class="column" v-show="visibility.translation" :class="columnSize">
 
         <h2 class="subtitle">Traduction
-          <button v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
+          <button v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_step_label === 'none'"
              :disabled="!translationSaved"
              style="margin-right: 8px;"
              class="button is-small is-light" @click="validateTranslation">
             non validée
           </button>
-          <button v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label !== 'none'"
+          <button v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_step_label !== 'none'"
              style="margin-right: 8px; color: green"
              class="button is-small is-light"
              @click="unvalidateTranslation">validée

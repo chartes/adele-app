@@ -21,13 +21,13 @@
         <h2 class="subtitle">Transcription
 
           <!-- Statut de la transcription (validée/non validée) -->
-          <button v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
+          <button v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_step_label === 'none'"
              :disabled="!transcriptionSaved"
              style="margin-right: 8px;"
              class="button is-small is-light" @click="validateTranscription">
             non validée
           </button>
-          <button v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label !== 'none'"
+          <button v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_step_label !== 'none'"
              style="margin-right: 8px; color: green"
              class="button is-small is-light"
              @click="unvalidateTranscription">validée</button>
@@ -175,7 +175,7 @@
         return size;
       },
       isReadOnly() {
-      	return !this.currentUserIsAuthor || (this.currentUserIsTeacher && this.document.validation_stage_label !== 'none') || (!this.currentUserIsTeacher && this.document.validation_stage_label !== 'none')
+      	return !this.currentUserIsAuthor || (this.currentUserIsTeacher && this.document.validation_step_label !== 'none') || (!this.currentUserIsTeacher && this.document.validation_step_label !== 'none')
       },
       displayTranscriptionEditor () {
         return !!this.transcriptionWithNotes && !this.transcriptionLoading

@@ -168,7 +168,7 @@ def api_post_commentary(api_version, doc_id):
                 db.session.rollback()
                 return make_403()
 
-            if doc.validation_stage < VALIDATION_TRANSCRIPTION:
+            if doc.validation_step < VALIDATION_TRANSCRIPTION:
                 return make_400("A transcription must be validated first")
 
             c = Commentary(doc_id=doc_id, user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
@@ -227,7 +227,7 @@ def api_put_commentary(api_version, doc_id):
                     db.session.rollback()
                     return make_403()
 
-                if doc.validation_stage < VALIDATION_TRANSCRIPTION:
+                if doc.validation_step < VALIDATION_TRANSCRIPTION:
                     return make_400("A transcription must be validated first")
 
                 c = Commentary.query.filter(

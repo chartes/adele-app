@@ -53,19 +53,26 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert200("/adele/api/1.0/documents/21/transcriptions")
         self.assert200("/adele/api/1.0/documents/21/transcriptions", **STU1_USER)
 
-        # test validation steps
+        # -------- test validation steps ---------
         self.assert200("/adele/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
         self.assert404("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
+        # needs a translation
         self.assert200("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        # needs a translation
+        self.assert404("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
+        # needs a transcription
         self.assert200("/adele/api/1.0/documents/21/validate-facsimile", **PROF1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        self.assert200("/adele/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+        # needs a commentary
+        self.assert404("/adele/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
+        # needs a transcription
         self.assert200("/adele/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
+
+        # TODO: tester la closing_date
 
     def test_get_transcriptions_from_user(self):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
@@ -91,10 +98,27 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5", **PROF1_USER)
 
     def test_delete_transcriptions_from_user(self):
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/100", method="DELETE")
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/100", method="DELETE", **STU1_USER)
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/100", method="DELETE", **PROF1_USER)
+
+        self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
+        self.load_fixtures(TestTranscriptionsAPI.FIXTURES_PROF)
+        self.load_fixtures(TestTranscriptionsAPI.FIXTURES_STU1)
+        self.assert200("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **STU1_USER)
+        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
+
+        self.assert404("/adele/api/1.0/documents/21/transcriptions")
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/4")
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/4", **PROF1_USER)
+
+        # TODO: tester si on supprime la transcription de reference, faire reculer le flag ?
+        #self.assert400("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+
+    def test_post_transcriptions_from_user(self):
         raise NotImplementedError
 
     def test_put_transcriptions_from_user(self):
-        raise NotImplementedError
-
-    def test_post_transcriptions_from_user(self):
         raise NotImplementedError

@@ -3,20 +3,20 @@ from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
+from app.api.documents.document_validation import set_document_validation_step
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, api_bp
 from app.api.translations.routes import get_reference_translation
 from app.models import Transcription, User, Document, AlignmentTranslation, Translation, AlignmentDiscours, \
-    SpeechPartType, Note, AlignmentImage, ImageZone, TranscriptionHasNote, VALIDATION_TRANSCRIPTION
+    SpeechPartType, Note, AlignmentImage, ImageZone, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
-    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher
+    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, make_403, is_closed
 
 """
 ===========================
     Transcriptions
 ===========================
 """
-
 
 def get_transcription(doc_id, user_id):
     return Transcription.query.filter(
@@ -32,7 +32,7 @@ def get_reference_transcription(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is not None and doc.validation_stage >= VALIDATION_TRANSCRIPTION:
+    if doc is not None and doc.validation_step >= VALIDATION_TRANSCRIPTION:
         return Transcription.query.filter(
             doc_id == Transcription.doc_id,
             doc.user_id == Transcription.user_id
@@ -103,6 +103,10 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
+    closed = is_closed(doc_id)
+    if closed:
+        return closed
+
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -139,6 +143,10 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
+    closed = is_closed(doc_id)
+    if closed:
+        return closed
+
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -164,6 +172,10 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
+    closed = is_closed(doc_id)
+    if closed:
+        return closed
+
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
@@ -181,7 +193,10 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
+        print(str(e))
         return make_400(str(e))
+
+    set_document_validation_step(doc=doc, stage_id=VALIDATION_NONE)
 
     return make_200()
 

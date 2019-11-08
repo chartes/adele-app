@@ -118,8 +118,10 @@ VALIDATIONS_STEPS_LABELS = {
     VALIDATION_SPEECHPARTS: 'speechparts'
 }
 
-def get_stage(stage_id):
+
+def get_validation_step_label(stage_id):
     return VALIDATIONS_STEPS_LABELS[stage_id]
+
 
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -288,7 +290,7 @@ class Document(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey("user.id", ondelete='CASCADE'))
     whitelist_id = db.Column(db.Integer(), db.ForeignKey("whitelist.id"))
 
-    validation_stage = db.Column(db.Integer(), default=VALIDATION_NONE)
+    validation_step = db.Column(db.Integer(), default=VALIDATION_NONE)
 
     # Relationships #
     whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id", backref=db.backref('documents'))
@@ -325,7 +327,8 @@ class Document(db.Model):
 
     @property
     def is_closed(self):
-        if not self.date_closing:
+        user = current_app.get_current_user()
+        if not self.date_closing or user.is_teacher or user.is_admin:
             return False
         else:
             doc_closing_time = datetime.datetime.strptime(self.date_closing, '%Y-%m-%d %H:%M:%S')
@@ -356,8 +359,8 @@ class Document(db.Model):
             'languages': [lg.serialize() for lg in self.languages],
             'traditions': [tr.serialize() for tr in self.traditions],
             'whitelist': self.whitelist.serialize() if self.whitelist is not None else None,
-            'validation_stage': self.validation_stage,
-            'validation_stage_label': get_stage(self.validation_stage)
+            'validation_step': self.validation_step,
+            'validation_step_label': get_validation_step_label(self.validation_step)
         }
 
 
@@ -591,8 +594,9 @@ class TranscriptionHasNote(db.Model):
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
 
-    transcription = db.relationship("Transcription", backref=db.backref("transcription_has_note"), single_parent=True)
-    note = db.relationship("Note", backref=db.backref("transcription_has_note"), single_parent=True)
+    transcription = db.relationship("Transcription", backref=db.backref("transcription_has_note",
+                                                                        cascade="all, delete-orphan"), single_parent=True)
+    note = db.relationship("Note", backref=db.backref("transcription_has_note", cascade="all, delete-orphan"), single_parent=True)
 
 
 class Transcription(db.Model):
@@ -656,6 +660,19 @@ class AnonymousUser(AnonymousUserMixin):
     @property
     def documents_i_can_edit(self):
         return []
+
+    @property
+    def is_teacher(self):
+        return False
+
+    @property
+    def is_admin(self):
+        return False
+
+    @property
+    def is_student(self):
+        return False
+
 
 # Define the User data model
 class User(db.Model, UserMixin):

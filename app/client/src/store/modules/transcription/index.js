@@ -253,8 +253,8 @@ const actions = {
     return axios.get(`/adele/api/1.0/documents/${docId}/validate-transcription`, auth).then(response => {
       console.log("validate response", response.data, auth);
       this.dispatch('document/setValidationStage', {
-        validationStage: response.data.data.validation_stage,
-        validationStageLabel: response.data.data.validation_stage_label
+        validationStage: response.data.data.validation_step,
+        validationStageLabel: response.data.data.validation_step_label
       });
     });
   },
@@ -262,10 +262,10 @@ const actions = {
     const auth = rootGetters['user/authHeader'];
     const docId = rootState.document.document.id;
     return axios.get(`/adele/api/1.0/documents/${docId}/unvalidate-transcription`, auth).then(response => {
-      console.log("unvalidate response", response.data.data.validation_stage_label);
+      console.log("unvalidate response", response.data.data.validation_step_label);
       this.dispatch('document/setValidationStage', {
-        validationStage: response.data.data.validation_stage,
-        validationStageLabel: response.data.data.validation_stage_label
+        validationStage: response.data.data.validation_step,
+        validationStageLabel: response.data.data.validation_step_label
       });
     });
   },
