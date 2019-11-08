@@ -151,7 +151,6 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **STU1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **PROF1_USER)
 
-
     def test_post_transcriptions_from_user(self):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
         small_tr = {"data": {"content": "tr"}}
@@ -213,15 +212,16 @@ class TestTranscriptionsAPI(TestBaseServer):
 
         # posting notes will TRUNCATE AND REPLACE notes
         r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/7",
-                       data={"data": {"notes": [{
-                           "content": "note1 from user2",
-                           "ptr_start": 7,
-                           "ptr_end": 11
-                       }
-                       ]}}, method="POST",
-                       **STU2_USER)
+                           data={"data": {"notes": [{
+                               "content": "note1 from user2",
+                               "ptr_start": 7,
+                               "ptr_end": 11
+                           }
+                           ]}}, method="POST",
+                           **STU2_USER)
         r = json_loads(r.data)['data']
         self.assertEqual(1, len(r['notes']))
+        self.assertEqual(len(r['notes']), Note.query.filter(Note.user_id == 7).count())
         note = r['notes'][0]
         self.assertEqual("note1 from user2", note["content"])
         self.assertPtr(r['content'], note['ptr_start'], note['ptr_end'], 'from')
@@ -247,7 +247,8 @@ class TestTranscriptionsAPI(TestBaseServer):
                                ]
                            }}, method="POST",
                            **PROF1_USER)
-
+        r = json_loads(r.data)['data']
+        self.assertEqual(2, len(r['notes']))
         # ===============================================
         # test when the document is closed for other users
         self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/6",
@@ -261,14 +262,63 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
 
         small_tr = {"data": {"content": "tr"}}
-        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="PUT")
-        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="PUT",
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/5", data=small_tr, method="PUT")
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/5", data=small_tr, method="PUT",
                        **STU1_USER)
-        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="PUT",
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/5", data=small_tr, method="PUT",
                        **PROF1_USER)
 
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_STU1)
+
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/4",
+                       data={"data": {"content": "modification from user1"}},
+                       method="PUT",
+                       **STU1_USER)
+
+        r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5",
+                           data={"data": {"content": "modification from user1"}},
+                           method="PUT",
+                           **STU1_USER)
+        r = json_loads(r.data)['data']
+        self.assertEqual("modification from user1", r['content'])
+
+        r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5",
+                           data={"data": {"content": "modification from prof1"}},
+                           method="PUT",
+                           **PROF1_USER)
+        r = json_loads(r.data)['data']
+        self.assertEqual("modification from prof1", r['content'])
+
+        # let's validate the doc 21
+        self.assert200("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        # teacher can modify both
+        r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4",
+                           data={"data": {"content": "modification from prof1 after validation"}},
+                           method="PUT",
+                           **PROF1_USER)
+        r = json_loads(r.data)['data']
+        self.assertEqual("modification from prof1 after validation", r['content'])
+
+        r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5",
+                           data={"data": {"content": "modification from prof1 after validation"}},
+                           method="PUT",
+                           **PROF1_USER)
+        r = json_loads(r.data)['data']
+        self.assertEqual("modification from prof1 after validation", r['content'])
+
+        # user cannot modify when it's validated
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/5",
+                       data={"data": {"content": "modification from user& after validation"}},
+                       method="PUT",
+                       **STU1_USER)
+
+        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
+        # can modify again since the teacher deleted its transcription
+        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5",
+                       data={"data": {"content": "modification from user& after validation"}},
+                       method="PUT",
+                       **STU1_USER)
 
         # test when the document is closed
         doc = Document.query.filter(Document.id == 21).first()

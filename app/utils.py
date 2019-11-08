@@ -77,14 +77,16 @@ def forbid_if_another_teacher(app, wanted_teacher_id):
     if user.is_admin or not user.is_teacher:
         return None
     if wanted_teacher_id != user.id:
-        return make_403("This resource is not available to other teachers")
+        msg = "This resource is not available to other teachers"
+        return make_403(details=msg)
 
 
 def forbid_if_nor_teacher_nor_admin_and_wants_user_data(app, wanted_user_id):
     user = app.get_current_user()
     # if anonymous or mere student wants to read data of another student
     if user.is_anonymous or not (user.is_teacher or user.is_admin) and wanted_user_id is not None and int(wanted_user_id) != int(user.id):
-        return make_403("You must be a teacher or an admin")
+        msg = "You must be a teacher or an admin"
+        return make_403(details=msg)
     else:
         return None
 
@@ -94,7 +96,9 @@ def forbid_if_nor_teacher_nor_admin(view_function):
     def wrapped_f(*args, **kwargs):
         user = current_app.get_current_user()
         if user.is_anonymous or not (user.is_teacher or user.is_admin):
-            return make_403("This resource is only available to teachers and admins")
+            msg = "This resource is only available to teachers and admins"
+            print(msg)
+            return make_403(details=msg)
         return view_function(*args, **kwargs)
     return wrapped_f
 
@@ -105,6 +109,7 @@ def is_closed(doc_id):
     if doc is None:
         return make_404()
     if doc.is_closed:
+        print("doc", doc.id, "is closed")
         return make_403()
 
 
@@ -112,5 +117,6 @@ def forbid_if_validation_step(doc_id, gte):
     from app.models import Document
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc and doc.validation_step >= gte:
+        print("Validation step error:", doc.validation_step, ">=", gte)
         return make_403(details="Validation step")
 

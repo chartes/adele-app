@@ -150,6 +150,9 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
                     db.session.flush()
                     # bind new notes to the transcription
                     # NB: Posting notes has therefore a 'TRUNCATE AND REPLACE' effect
+                    for thn in tr.transcription_has_note:
+                        if thn.note.user_id == int(user_id):
+                            db.session.delete(thn.note)
                     tr.transcription_has_note = [TranscriptionHasNote(transcription_id=tr.id,
                                                                       note_id=n.id,
                                                                       ptr_start=data["notes"][num_note]["ptr_start"],
@@ -171,7 +174,6 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>', methods=["PUT"])
 @auth.login_required
-@forbid_if_nor_teacher_nor_admin
 def api_put_documents_transcriptions(api_version, doc_id, user_id):
     """
      {
