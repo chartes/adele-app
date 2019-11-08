@@ -71,7 +71,7 @@ def api_documents_unpublish(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
+def set_document_validation_step(doc_id, stage_id=VALIDATION_NONE):
     try:
         doc = Document.query.filter(Document.id == doc_id).one()
         user = current_app.get_current_user()
@@ -81,12 +81,12 @@ def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
                 "status": 403, "title": "Access forbidden"
             })
         else:
-            doc.validation_stage = stage_id
+            doc.validation_step = stage_id
             db.session.commit()
             response = APIResponseFactory.make_response(data={
-                "id": doc.validation_stage,
-                "validation_stage": doc.validation_stage,
-                "validation_stage_label": get_stage(doc.validation_stage)
+                "id": doc.validation_step,
+                "validation_step": doc.validation_step,
+                "validation_step_label": get_stage(doc.validation_step)
             })
     except NoResultFound:
         response = APIResponseFactory.make_response(errors={
@@ -98,13 +98,13 @@ def set_document_validation_stage(doc_id, stage_id=VALIDATION_NONE):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
 @auth.login_required
 def api_documents_validate_transcription(api_version, doc_id):
-    return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_TRANSCRIPTION)
+    return set_document_validation_step(doc_id=doc_id, stage_id=VALIDATION_TRANSCRIPTION)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
 @auth.login_required
 def api_documents_unvalidate_transcription(api_version, doc_id):
-    return set_document_validation_stage(doc_id=doc_id, stage_id=VALIDATION_NONE)
+    return set_document_validation_step(doc_id=doc_id, stage_id=VALIDATION_NONE)
 
 
 @api_bp.route('/api/<api_version>/documents')

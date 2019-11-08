@@ -223,7 +223,7 @@ class Document(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey("user.id", ondelete='CASCADE'))
     whitelist_id = db.Column(db.Integer(), db.ForeignKey("whitelist.id"))
 
-    validation_stage = db.Column(db.Integer(), default=VALIDATION_NONE)
+    validation_step = db.Column(db.Integer(), default=VALIDATION_NONE)
 
     # Relationships #
     whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id", backref=db.backref('documents'))
@@ -291,8 +291,8 @@ class Document(db.Model):
             'languages': [lg.serialize() for lg in self.languages],
             'traditions': [tr.serialize() for tr in self.traditions],
             'whitelist': self.whitelist.serialize() if self.whitelist is not None else None,
-            'validation_stage': self.validation_stage,
-            'validation_stage_label': get_stage(self.validation_stage)
+            'validation_step': self.validation_step,
+            'validation_step_label': get_stage(self.validation_step)
         }
 
 

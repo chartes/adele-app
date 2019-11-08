@@ -23,12 +23,12 @@
 
       <div class="column" v-show="visibility.transcription" :class="columnSize">
         <h2 class="subtitle">Transcription <small v-if="displayReferenceTranscription" class="tag is-dark is-round">Référence</small>
-          <a v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label === 'none'"
+          <a v-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_step_label === 'none'"
              style="margin-right: 8px;"
              class="button is-small is-light" @click="validateTranscription">
             non validée
           </a>
-          <a v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_stage_label !== 'none'"
+          <a v-else-if="currentUserIsTeacher && currentUserIsAuthor && document.validation_step_label !== 'none'"
              style="margin-right: 8px; color: green"
              class="button is-small is-light"
              @click="unvalidateTranscription">validée</a>

@@ -24,7 +24,7 @@ def get_reference_transcription(doc_id):
     """
     doc = Document.query.filter(Document.id == doc_id).one()
 
-    if doc.validation_stage >= VALIDATION_TRANSCRIPTION:
+    if doc.validation_step >= VALIDATION_TRANSCRIPTION:
         transcription = Transcription.query.filter(
             doc_id == Transcription.doc_id,
             doc.user_id == Transcription.user_id

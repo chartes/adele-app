@@ -52,7 +52,7 @@ const actions = {
     })
   },
   setValidationStage ({ commit }, {validationStage, validationStageLabel}) {
-    commit('PARTIAL_UPDATE_DOCUMENT', {validation_stage: validationStage, validation_stage_label: validationStageLabel})
+    commit('PARTIAL_UPDATE_DOCUMENT', {validation_step: validationStage, validation_step_label: validationStageLabel})
   },
 };
 
