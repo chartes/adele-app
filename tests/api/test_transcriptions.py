@@ -4,7 +4,7 @@ from os.path import join
 from sqlalchemy.testing import in_
 
 from app import db
-from app.models import Document, Note, TranscriptionHasNote
+from app.models import Document, Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE
 from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, STU1_USER, PROF1_USER, PROF2_USER, STU2_USER, \
     PROF3_USER
 
@@ -124,9 +124,16 @@ class TestTranscriptionsAPI(TestBaseServer):
         other_notes_cnt = len(Note.query.filter(Note.user_id != 4).all())
         self.assertNotEqual(0, len(prof_notes))
 
+        self.assert200("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        doc = Document.query.filter(Document.id == 21).first()
+        self.assertEqual(VALIDATION_TRANSCRIPTION, doc.validation_step)
         self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
         self.assertEqual(0, len(Note.query.filter(Note.user_id == 4).all()))
         self.assertEqual(other_notes_cnt, len(Note.query.filter(Note.user_id != 4).all()))
+
+        # check that the validation step rolled back to None
+        doc = Document.query.filter(Document.id == 21).first()
+        self.assertEqual(VALIDATION_NONE, doc.validation_step)
 
         # test that the resource is not available anymore
         self.assert404("/adele/api/1.0/documents/21/transcriptions")
@@ -144,7 +151,6 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **STU1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **PROF1_USER)
 
-        # TODO: tester si on supprime la transcription de reference, faire reculer le flag ?
 
     def test_post_transcriptions_from_user(self):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
@@ -205,6 +211,21 @@ class TestTranscriptionsAPI(TestBaseServer):
         for i, note in enumerate(r['notes']):
             self.assertPtr(r['content'], note['ptr_start'], note['ptr_end'], expected_fragments[i])
 
+        # posting notes will TRUNCATE AND REPLACE notes
+        r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/7",
+                       data={"data": {"notes": [{
+                           "content": "note1 from user2",
+                           "ptr_start": 7,
+                           "ptr_end": 11
+                       }
+                       ]}}, method="POST",
+                       **STU2_USER)
+        r = json_loads(r.data)['data']
+        self.assertEqual(1, len(r['notes']))
+        note = r['notes'][0]
+        self.assertEqual("note1 from user2", note["content"])
+        self.assertPtr(r['content'], note['ptr_start'], note['ptr_end'], 'from')
+
         # =================== TEACHER ===================
         doc = Document.query.filter(Document.id == 21).first()
         doc.date_closing = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
@@ -238,6 +259,14 @@ class TestTranscriptionsAPI(TestBaseServer):
 
     def test_put_transcriptions_from_user(self):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
+
+        small_tr = {"data": {"content": "tr"}}
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="PUT")
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="PUT",
+                       **STU1_USER)
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="PUT",
+                       **PROF1_USER)
+
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_STU1)
 

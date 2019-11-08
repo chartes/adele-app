@@ -93,6 +93,8 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     "notes" when there is no tr in base is forbidden so
     you can in a first time post "content" and later "notes", or both at the same time
 
+    NB: Posting notes has a 'TRUNCATE AND REPLACE' effect
+
     {
         "data":
             {
@@ -147,6 +149,7 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
                 if len(new_notes) > 0:
                     db.session.flush()
                     # bind new notes to the transcription
+                    # NB: Posting notes has therefore a 'TRUNCATE AND REPLACE' effect
                     tr.transcription_has_note = [TranscriptionHasNote(transcription_id=tr.id,
                                                                       note_id=n.id,
                                                                       ptr_start=data["notes"][num_note]["ptr_start"],
