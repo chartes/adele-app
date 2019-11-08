@@ -234,6 +234,13 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
     if is_another_teacher:
         return is_another_teacher
 
+    # forbid students to delete a transcription when there is a valid transcription
+    user = current_app.get_current_user()
+    if not user.is_teacher:
+        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
+        if forbid:
+            return forbid
+
     tr = get_transcription(doc_id=doc_id, user_id=user_id)
     if tr is None:
         return make_404()

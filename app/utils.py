@@ -74,12 +74,10 @@ def make_204():
 
 def forbid_if_another_teacher(app, wanted_teacher_id):
     user = app.get_current_user()
-    if user.is_admin:
+    if user.is_admin or not user.is_teacher:
         return None
-    if user.is_anonymous or not user.is_teacher or (wanted_teacher_id != user.id):
+    if wanted_teacher_id != user.id:
         return make_403("This resource is not available to other teachers")
-    else:
-        return None
 
 
 def forbid_if_nor_teacher_nor_admin_and_wants_user_data(app, wanted_user_id):

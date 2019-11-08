@@ -108,11 +108,18 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_STU1)
+
         self.assert200("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        # should not be able to delete the student transcription when the transcription has already been validated
+        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **STU1_USER)
+        self.assert200("/adele/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
 
-        self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **STU1_USER)
+        # test that bound notes are deleted when student deletes its own transcription
+        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **STU1_USER)
+        notes = Note.query.filter(Note.user_id == 5).all()
+        self.assertEqual(0, len(notes))
 
-        # test that bound notes are deleted too
+        # test that bound notes are deleted too for teacher deletes its  transcription
         prof_notes = Note.query.filter(Note.user_id == 4).all()
         other_notes_cnt = len(Note.query.filter(Note.user_id != 4).all())
         self.assertNotEqual(0, len(prof_notes))
@@ -131,6 +138,9 @@ class TestTranscriptionsAPI(TestBaseServer):
         doc.date_closing = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
         db.session.add(doc)
         db.session.commit()
+
+        self.load_fixtures(TestTranscriptionsAPI.FIXTURES_STU1)
+
         self.assert403("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **STU1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **PROF1_USER)
 

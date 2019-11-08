@@ -520,6 +520,8 @@ class Note(db.Model):
 
     note_type = db.relationship("NoteType", backref=db.backref('note', passive_deletes=True))
 
+    transcription = association_proxy('transcription_has_note', 'transcription')
+
     #transcription_has_note = db.relationship("TranscriptionHasNote")#, back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
 
     translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
