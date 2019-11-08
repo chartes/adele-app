@@ -108,3 +108,11 @@ def is_closed(doc_id):
         return make_404()
     if doc.is_closed:
         return make_403()
+
+
+def forbid_if_validation_step(doc_id, gte):
+    from app.models import Document
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc and doc.validation_step >= gte:
+        return make_403(details="Validation step")
+

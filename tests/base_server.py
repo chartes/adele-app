@@ -28,6 +28,7 @@ _app = create_app("test")
 ADMIN_USER = {"username": "AdminJulien", "password": "AdeleAdmin2018"}
 PROF1_USER = {"username": "Professeur1", "password": "AdeleAdmin2018"}
 PROF2_USER = {"username": "Professeur2", "password": "AdeleAdmin2018"}
+PROF3_USER = {"username": "Professeur3", "password": "AdeleAdmin2018"}
 STU1_USER = {"username": "Eleve1", "password": "AdeleAdmin2018"}
 STU2_USER = {"username": "Eleve2", "password": "AdeleAdmin2018"}
 

@@ -520,7 +520,8 @@ class Note(db.Model):
 
     note_type = db.relationship("NoteType", backref=db.backref('note', passive_deletes=True))
 
-    #transcription = db.relationship("TranscriptionHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
+    #transcription_has_note = db.relationship("TranscriptionHasNote")#, back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
+
     translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
     commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
 
@@ -595,8 +596,8 @@ class TranscriptionHasNote(db.Model):
     ptr_end = db.Column(db.Integer)
 
     transcription = db.relationship("Transcription", backref=db.backref("transcription_has_note",
-                                                                        cascade="all, delete-orphan"), single_parent=True)
-    note = db.relationship("Note", backref=db.backref("transcription_has_note", cascade="all, delete-orphan"), single_parent=True)
+                                                                        cascade="all, delete-orphan"))
+    note = db.relationship("Note")
 
 
 class Transcription(db.Model):
@@ -615,7 +616,7 @@ class Transcription(db.Model):
     def notes_of_user(self, user_id):
         return [
             dict({"ptr_start": thn.ptr_start, "ptr_end": thn.ptr_end}, **(thn.note.serialize()))
-            for thn in self.transcription_has_note if thn.note.user_id == user_id]
+            for thn in self.transcription_has_note if thn.note.user_id == int(user_id)]
 
     def serialize_for_user(self, user_id):
         return {
