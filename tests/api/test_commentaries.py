@@ -1,4 +1,6 @@
 from os.path import join
+
+from app.models import Commentary
 from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, STU1_USER, PROF1_USER, PROF2_USER, STU2_USER
 
 
@@ -70,6 +72,7 @@ class TestCommentariesAPI(TestBaseServer):
 
     def test_get_reference_commentaries(self):
         self.load_fixtures(TestCommentariesAPI.FIXTURES)
+        self.assert200("/adele/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
 
         # doc 20 : without reference transcription (so no ref comms)
         r = self.assert200('/adele/api/1.0/documents/20/commentaries/reference')
