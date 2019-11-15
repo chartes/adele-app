@@ -1,9 +1,11 @@
+import unittest
 from os.path import join
 
 from app.models import Commentary
 from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, STU1_USER, PROF1_USER, PROF2_USER, STU2_USER
 
 
+@unittest.skip
 class TestCommentariesAPI(TestBaseServer):
     FIXTURES = [
         join(TestBaseServer.FIXTURES_PATH, "documents", "doc_20.sql"),
