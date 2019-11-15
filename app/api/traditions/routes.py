@@ -1,165 +1,98 @@
-from flask import request, url_for, current_app
+from flask import request
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, db, auth
-from app.api.routes import api_bp, query_json_endpoint
+from app import db, auth
+from app.api.routes import api_bp, json_loads
 from app.models import Tradition
+from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_409, make_400
 
 
 @api_bp.route('/api/<api_version>/traditions')
 @api_bp.route('/api/<api_version>/traditions/<tradition_id>')
 def api_tradition(api_version, tradition_id=None):
-    try:
-        if tradition_id is not None:
-            traditions = [Tradition.query.filter(Tradition.id == tradition_id).one()]
+    if tradition_id is None:
+        traditions = Tradition.query.all()
+    else:
+        # single
+        at = Tradition.query.filter(Tradition.id == tradition_id).first()
+        if at is None:
+            return make_404("Tradition {0} not found".format(tradition_id))
         else:
-            traditions = Tradition.query.all()
-        response = APIResponseFactory.make_response(data=[a.serialize() for a in traditions])
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Tradition {0} not found".format(tradition_id)
-        })
-    return APIResponseFactory.jsonify(response)
+            traditions = [at]
+    return make_200([a.serialize() for a in traditions])
 
 
 @api_bp.route('/api/<api_version>/traditions', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/traditions/<tradition_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_tradition(api_version, tradition_id=None):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
-        try:
-            if tradition_id is not None:
-                traditions = [Tradition.query.filter(Tradition.id == tradition_id).one()]
-            else:
-                traditions = Tradition.query.all()
+    if tradition_id is None:
+        traditions = Tradition.query.all()
+    else:
+        traditions = Tradition.query.filter(Tradition.id == tradition_id).all()
 
-            for c in traditions:
-                db.session.delete(c)
-            try:
-                db.session.commit()
-                response = APIResponseFactory.make_response(data=[])
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot delete data", "details": str(e)
-                })
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Tradition {0} not found".format(tradition_id)
-            })
-    return APIResponseFactory.jsonify(response)
+    for a in traditions:
+        db.session.delete(a)
+    try:
+        db.session.commit()
+        return make_200([])
+    except Exception as e:
+        db.session.rollback()
+        return make_400(str(e))
 
 
 @api_bp.route('/api/<api_version>/traditions', methods=['PUT'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_put_tradition(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
-        try:
-            data = request.get_json()
+    try:
+        data = request.get_json()
 
-            if "data" in data:
-                data = data["data"]
+        if "data" in data:
+            data = data["data"]
+            modified_data = []
+            try:
+                for tradition in data:
+                    a = Tradition.query.filter(Tradition.id == tradition.get('id', None)).one()
+                    a.label = tradition.get("label")
 
-                if not isinstance(data, list):
-                    data = [data]
+                    db.session.add(a)
+                    modified_data.append(a)
+                db.session.commit()
+            except Exception as e:
+                print(str(e), tradition)
+                db.session.rollback()
+                return make_409(str(e))
 
-                modifed_data = []
-                try:
-                    for tradition in data:
-                        if "id" not in tradition:
-                            raise Exception("Tradition id is missing from the payload")
-                        a = Tradition.query.filter(Tradition.id == tradition["id"]).one()
-                        if "label" in tradition:
-                            a.label = tradition["label"]
-                        db.session.add(a)
-                        modifed_data.append(a)
-
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot update data", "details": str(e)
-                    })
-
-                if response is None:
-                    data = []
-                    for a in modifed_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_tradition", api_version=api_version, tradition_id=a.id)
-                        )
-                        print(json_obj)
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Tradition not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
+            return make_200([d.serialize() for d in modified_data])
+        else:
+            return make_400("no data")
+    except NoResultFound:
+        return make_404("Tradition not found")
 
 
 @api_bp.route('/api/<api_version>/traditions', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_tradition(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
+    data = request.get_json()
+
+    if "data" in data:
+        data = data["data"]
+
+        created_data = []
         try:
-            data = request.get_json()
+            for tradition in data:
+                a = Tradition(**tradition)
+                db.session.add(a)
+                created_data.append(a)
 
-            if "data" in data:
-                data = data["data"]
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return make_409(str(e))
 
-                if not isinstance(data, list):
-                    data = [data]
-
-                created_data = []
-                for tradition in data:
-                    a = Tradition(**tradition)
-                    db.session.add(a)
-                    created_data.append(a)
-
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot insert data", "details": str(e)
-                    })
-
-                if response is None:
-                    data = []
-                    for a in created_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_tradition", api_version=api_version, tradition_id=a.id)
-                        )
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Tradition not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
-
+        return make_200([d.serialize() for d in created_data])
+    else:
+        return make_400("no data")
