@@ -1,168 +1,100 @@
-from flask import request, url_for, current_app
+from flask import request
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import APIResponseFactory, db, auth
-from app.api.routes import api_bp, query_json_endpoint
+from app import db, auth
+from app.api.routes import api_bp, json_loads
 from app.models import SpeechPartType
+from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_409, make_400
 
 
 @api_bp.route('/api/<api_version>/speech-part-types')
 @api_bp.route('/api/<api_version>/speech-part-types/<speech_part_type_id>')
 def api_speech_part_type(api_version, speech_part_type_id=None):
-    try:
-        if speech_part_type_id is not None:
-            countries = [SpeechPartType.query.filter(SpeechPartType.id == speech_part_type_id).one()]
+    if speech_part_type_id is None:
+        speech_part_types = SpeechPartType.query.all()
+    else:
+        # single
+        at = SpeechPartType.query.filter(SpeechPartType.id == speech_part_type_id).first()
+        if at is None:
+            return make_404("SpeechPartType {0} not found".format(speech_part_type_id))
         else:
-            countries = SpeechPartType.query.all()
-        response = APIResponseFactory.make_response(data=[a.serialize() for a in countries])
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "SpeechPartType {0} not found".format(speech_part_type_id)
-        })
-    return APIResponseFactory.jsonify(response)
+            speech_part_types = [at]
+    return make_200([a.serialize() for a in speech_part_types])
 
 
 @api_bp.route('/api/<api_version>/speech-part-types', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/speech-part-types/<speech_part_type_id>', methods=['DELETE'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_speech_part_type(api_version, speech_part_type_id=None):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
-        try:
-            if speech_part_type_id is not None:
-                countries = [SpeechPartType.query.filter(SpeechPartType.id == speech_part_type_id).one()]
-            else:
-                countries = SpeechPartType.query.all()
+    if speech_part_type_id is None:
+        speech_part_types = SpeechPartType.query.all()
+    else:
+        speech_part_types = SpeechPartType.query.filter(SpeechPartType.id == speech_part_type_id).all()
 
-            for c in countries:
-                db.session.delete(c)
-            try:
-                db.session.commit()
-                response = APIResponseFactory.make_response(data=[])
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot delete data", "details": str(e)
-                })
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "SpeechPartType {0} not found".format(speech_part_type_id)
-            })
-    return APIResponseFactory.jsonify(response)
+    for a in speech_part_types:
+        db.session.delete(a)
+    try:
+        db.session.commit()
+        return make_200([])
+    except Exception as e:
+        db.session.rollback()
+        return make_400(str(e))
 
 
 @api_bp.route('/api/<api_version>/speech-part-types', methods=['PUT'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_put_speech_part_type(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
-        try:
-            data = request.get_json()
+    try:
+        data = request.get_json()
+        if "data" in data:
+            data = data["data"]
 
-            if "data" in data:
-                data = data["data"]
+            try:
+                modified_data = []
+                for speech_part_type in data:
+                    a = SpeechPartType.query.filter(SpeechPartType.id == speech_part_type.get('id')).one()
+                    a.label = speech_part_type.get("label")
+                    a.lang_code = speech_part_type.get("lang_code")
+                    a.description = speech_part_type.get("description")
+                    db.session.add(a)
+                    modified_data.append(a)
+                db.session.commit()
+            except Exception as e:
+                print(str(e), speech_part_type)
+                db.session.rollback()
+                return make_409(str(e))
 
-                if not isinstance(data, list):
-                    data = [data]
-
-                modifed_data = []
-                try:
-                    for speech_part_type in data:
-                        if "id" not in speech_part_type:
-                            raise Exception("SpeechPartType id is missing from the payload")
-                        a = SpeechPartType.query.filter(SpeechPartType.id == speech_part_type["id"]).one()
-                        if "lang_code" in speech_part_type:
-                            a.lang_code = speech_part_type["lang_code"]
-                        if "label" in speech_part_type:
-                            a.label = speech_part_type["label"]
-                        db.session.add(a)
-                        modifed_data.append(a)
-
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot update data", "details": str(e)
-                    })
-
-                if response is None:
-                    data = []
-                    for a in modifed_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_speech_part_type", api_version=api_version, speech_part_type_id=a.id)
-                        )
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "SpeechPartType not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
+            return make_200([d.serialize() for d in modified_data])
+        else:
+            return make_400("no data")
+    except NoResultFound:
+        return make_404("SpeechPartType not found")
 
 
 @api_bp.route('/api/<api_version>/speech-part-types', methods=['POST'])
 @auth.login_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_speech_part_type(api_version):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous or not (user.is_teacher or user.is_admin):
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    if response is None:
+    data = request.get_json()
+
+    if "data" in data:
+        data = data["data"]
+
+        created_data = []
         try:
-            data = request.get_json()
+            for speech_part_type in data:
+                a = SpeechPartType(**speech_part_type)
+                db.session.add(a)
+                created_data.append(a)
 
-            if "data" in data:
-                data = data["data"]
+            db.session.commit()
+        except Exception as e:
+            print(str(e))
+            db.session.rollback()
+            return make_400(str(e))
 
-                if not isinstance(data, list):
-                    data = [data]
-
-                created_data = []
-                for speech_part_type in data:
-                    if "id" in speech_part_type:
-                        speech_part_type.pop("id")
-                    a = SpeechPartType(**speech_part_type)
-                    db.session.add(a)
-                    created_data.append(a)
-
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot insert data", "details": str(e)
-                    })
-
-                if response is None:
-                    data = []
-                    for a in created_data:
-                        json_obj = query_json_endpoint(
-                            request,
-                            url_for("api_bp.api_speech_part_type", api_version=api_version, speech_part_type_id=a.id)
-                        )
-                        data.append(json_obj["data"])
-                    response = APIResponseFactory.make_response(data=data)
-
-        except NoResultFound:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "SpeechPartType not found"
-            })
-
-    return APIResponseFactory.jsonify(response)
-
+        return make_200([d.serialize() for d in created_data])
+    else:
+        return make_400("no data")
