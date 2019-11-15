@@ -629,33 +629,44 @@ class Transcription(db.Model):
             'notes': self.notes_of_user(user_id)
         }
 
+
 class TranslationHasNote(db.Model):
     translation_id = db.Column(db.Integer, db.ForeignKey('translation.id', ondelete='CASCADE'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="translation",  single_parent=True)
-    translation = db.relationship("Translation", back_populates="notes",  single_parent=True)
+
+    translation = db.relationship("Translation", backref=db.backref("translation_has_note",
+                                                                        cascade="all, delete-orphan"))
+    note = db.relationship("Note")
 
 
 class Translation(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('doc_id', 'user_id', name='_document_has_translation_uc'),
+    )
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan")
+    notes = association_proxy('translation_has_note', 'note')
 
-    def serialize(self):
+    # notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan")
+
+    def notes_of_user(self, user_id):
+        return [
+            dict({"ptr_start": thn.ptr_start, "ptr_end": thn.ptr_end}, **(thn.note.serialize()))
+            for thn in self.translation_has_note if thn.note.user_id == int(user_id)]
+
+    def serialize_for_user(self, user_id):
         return {
             'id': self.id,
             'doc_id': self.doc_id,
             'user_id': self.user_id,
             'content': self.content,
-            'notes': [
-                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
-                for n in self.notes if n.note is not None
-            ]
+            'notes': self.notes_of_user(user_id)
         }
 
 

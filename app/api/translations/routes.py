@@ -1,11 +1,14 @@
-from flask import url_for, request, redirect, current_app
+from flask import url_for, request, current_app
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import  db, auth
-from app.api.response import APIResponseFactory
-from app.api.routes import query_json_endpoint, api_bp
-from app.models import Translation, User, Document
+from app import db, auth
+from app.api.documents.document_validation import set_document_validation_step
+from app.api.routes import api_bp
+from app.models import Translation, User, Document, Translation, AlignmentDiscours, \
+    Note, TranslationHasNote, VALIDATION_NONE, VALIDATION_TRANSLATION, VALIDATION_TRANSCRIPTION
+from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
+    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, make_403, is_closed, forbid_if_validation_step
 
 """
 ===========================
@@ -15,11 +18,10 @@ from app.models import Translation, User, Document
 
 
 def get_translation(doc_id, user_id):
-    translation = Translation.query.filter(
+    return Translation.query.filter(
         doc_id == Translation.doc_id,
         user_id == Translation.user_id
     ).first()
-    return translation
 
 
 def get_reference_translation(doc_id):
@@ -29,372 +31,272 @@ def get_reference_translation(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is None:
-        return None
+    if doc is not None and doc.validation_step >= VALIDATION_TRANSLATION:
+        return Translation.query.filter(
+            doc_id == Translation.doc_id,
+            doc.user_id == Translation.user_id
+        ).first()
 
-    return Translation.query.filter(
-        doc_id == Translation.doc_id,
-        doc.user_id == Translation.user_id
-    ).first()
-
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/reference')
-def api_documents_translations_reference(api_version, doc_id):
-    tr = get_reference_translation(doc_id)
-    if tr is None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Translation not found"
-        })
-    else:
-        # filter notes
-        notes = []
-        for thn in tr.notes:
-            if thn.note.user_id == tr.user_id:
-                notes.append(thn)
-        tr.notes = notes
-        response = APIResponseFactory.make_response(data=tr.serialize())
-    return APIResponseFactory.jsonify(response)
-
+    return None
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/users')
 def api_documents_translations_users(api_version, doc_id):
+    users = []
     try:
         translations = Translation.query.filter(Translation.doc_id == doc_id).all()
         users = User.query.filter(User.id.in_(set([tr.user_id for tr in translations]))).all()
         users = [{"id": user.id, "username": user.username} for user in users]
     except NoResultFound:
-        users = []
-    response = APIResponseFactory.make_response(data=users)
-    return APIResponseFactory.jsonify(response)
+        pass
+    return make_200(data=users)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations')
+def api_documents_translations(api_version, doc_id):
+    tr = get_reference_translation(doc_id)
+    if tr is None:
+        return make_404()
+    return make_200(data=tr.serialize_for_user(tr.user_id))
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>')
-def api_documents_translations(api_version, doc_id, user_id=None):
-    response = None
-    user = current_app.get_current_user()
-    if user.is_anonymous and user_id is not None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-    elif user.is_anonymous:
-        tr = get_reference_translation(doc_id)
-        if tr is None:
-            response = APIResponseFactory.make_response(errors={
-                "status": 404, "title": "Translation not found"
-            })
-        else:
-            user_id = tr.user_id
-    else:
-        # user_id is None and user is not None
-        if not user.is_teacher and not user.is_admin:
-            user_id = user.id
-
-    if response is None:
-
-        if not user.is_anonymous:
-            # only teacher and admin can see everything
-            if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != int(user.id):
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Access forbidden"
-                })
-
-        if response is None:
-            if user_id is None:
-                user_id = Translation.user_id
-            try:
-                translations = Translation.query.filter(
-                    Translation.doc_id == doc_id,
-                    Translation.user_id == user_id
-                ).all()
-                if len(translations) == 0:
-                    raise NoResultFound
-
-                data = []
-                for tr in translations:
-                    t = tr.serialize()
-                    #t["notes"] = [n for n in t["notes"] if n["user_id"] == int(user_id)]
-                    data.append(t)
-                response = APIResponseFactory.make_response(data=data)
-            except NoResultFound:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404, "title": "Translation not found"
-                })
-
-    return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/translations', methods=["POST"])
 @auth.login_required
-def api_post_documents_translations(api_version, doc_id):
+def api_documents_translations_from_user(api_version, doc_id, user_id=None):
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
+    tr = get_translation(doc_id, user_id)
+    if tr is None:
+        return make_404()
+    return make_200(data=tr.serialize_for_user(user_id))
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["POST"])
+@auth.login_required
+def api_post_documents_translations(api_version, doc_id, user_id):
     """
+    at least one of "content" or "notes" is required
+    "notes" when there is no tr in base is forbidden so
+    you can in a first time post "content" and later "notes", or both at the same time
+
+    NB: Posting notes has a 'TRUNCATE AND REPLACE' effect
+
     {
         "data":
             {
-                "content" :  "My first translation",   (mandatory)
-                "username":  "Eleve1"                    (optionnal)
+                "content" :  "My first translation"
+                "notes": [
+                        {
+                           "content": "note1 content",
+                           "ptr_start": 5,
+                           "ptr_end": 7
+                       }
+                ]
             }
     }
+    :param user_id:
     :param api_version:
     :param doc_id:
     :return:
     """
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
+
+    forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSLATION)
+    if forbid:
+        return forbid
+
+    forbid = is_closed(doc_id)
+    if forbid:
+        return forbid
+
     data = request.get_json()
-    response = None
-    created_users = set()
-
-    try:
-        doc = Document.query.filter(Document.id == doc_id).one()
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Document {0} not found".format(doc_id)
-        })
-
-    if current_app.get_current_user().is_anonymous:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Cannot insert data"
-        })
-
-    if "data" in data and response is None:
+    if "data" in data:
         data = data["data"]
+        try:
+            # case 1) "content" in data
+            if "content" in data:
+                tr = Translation(doc_id=doc_id, content=data["content"], user_id=user_id)
+            # case 2) there's only "notes" in data
+            elif "notes" in data:
+                tr = Translation.query.filter(Translation.doc_id == doc_id,
+                                                Translation.user_id == user_id).first()
+                if tr is None:
+                    return make_404()
+            else:
+                return make_400(details="Wrong data")
+            # register new notes if any
+            if "notes" in data:
+                new_notes = [Note(type_id=n.get("type_id", 0), user_id=user_id, content=n["content"])
+                             for n in data["notes"]]
+                for n in new_notes:
+                    db.session.add(n)
+                if len(new_notes) > 0:
+                    db.session.flush()
+                    # bind new notes to the translation
+                    # NB: Posting notes has therefore a 'TRUNCATE AND REPLACE' effect
+                    for thn in tr.translation_has_note:
+                        if thn.note.user_id == int(user_id):
+                            db.session.delete(thn.note)
+                    tr.translation_has_note = [TranslationHasNote(translation_id=tr.id,
+                                                                      note_id=n.id,
+                                                                      ptr_start=data["notes"][num_note]["ptr_start"],
+                                                                      ptr_end=data["notes"][num_note]["ptr_end"])
+                                                 for num_note, n in enumerate(new_notes)]
 
-        if not isinstance(data, list):
-            data = [data]
+            # save the tr and commit all
+            db.session.add(tr)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(str(e))
+            return make_400(str(e))
 
-        if response is None:
-
-            for tr in data:
-                user = current_app.get_current_user()
-                user_id = user.id
-                # teachers and admins can put/post/delete on others behalf
-                if (user.is_teacher or user.is_admin) and "username" in tr:
-                    user = current_app.get_user_from_username(tr["username"])
-                    if user is not None:
-                        user_id = user.id
-
-                # check that there's no translation yet for this document/user
-                existing_tr = Translation.query.filter(
-                    Translation.user_id == user_id,
-                    Translation.doc_id == doc_id
-                ).first()
-
-                if existing_tr is not None:
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403,
-                        "title": "Insert forbidden",
-                    })
-                    db.session.rollback()
-
-                if response is None:
-                    # get the translation id max
-                    try:
-                        translation_max_id = db.session.query(func.max(Translation.id)).one()
-                        translation_max_id = translation_max_id[0] + 1
-                    except NoResultFound:
-                        # it is the translation for this user and this document
-                        translation_max_id = 1
-
-                    new_translation = Translation(
-                        id=translation_max_id,
-                        content=tr["content"],
-                        doc_id=doc_id,
-                        user_id=user_id
-                    )
-
-                    db.session.add(new_translation)
-                    created_users.add(user)
-            try:
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot insert data", "details": str(e)
-                })
-
-            if response is None:
-                created_data = []
-                for usr in created_users:
-                    json_obj = query_json_endpoint(
-                        request,
-                        url_for(
-                            "api_bp.api_documents_translations",
-                            api_version=api_version,
-                            doc_id=doc_id,
-                            user_id=usr.id
-                        ),
-                        user=usr
-                    )
-                    if "data" in json_obj:
-                        created_data.append(json_obj["data"])
-                    elif "errors":
-                        created_data.append(json_obj["errors"])
-
-                response = APIResponseFactory.make_response(data=created_data)
-
-    return APIResponseFactory.jsonify(response)
+        return make_200(data=tr.serialize_for_user(user_id))
+    else:
+        return make_400("no data")
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/translations', methods=["PUT"])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["PUT"])
 @auth.login_required
-def api_put_documents_translations(api_version, doc_id):
+def api_put_documents_translations(api_version, doc_id, user_id):
     """
-    {
-        "data": [
-            {
-                "content" :  "My first translation",   (mandatory)
-                "username":  "Eleve1"                    (optionnal)
-            },
-            {
-                "content" :  "My first translation",   (mandatory)
-                "username":  "Eleve2"                    (optionnal)
-            }
-        ]
-    }
-    :param api_version:
-    :param doc_id:
-    :return:
-    """
+     {
+         "data":
+             {
+                 "content" :  "My first translation"  (mandatory)
+             }
+     }
+     :param user_id:
+     :param api_version:
+     :param doc_id:
+     :return:
+     """
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
+
+    # teachers can still update validated translation
+    current_user = current_app.get_current_user()
+    if not current_user.is_teacher:
+        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSLATION)
+        if forbid:
+            return forbid
+
+    forbid = is_closed(doc_id)
+    if forbid:
+        return forbid
+
     data = request.get_json()
-    response = None
-
-    try:
-        doc = Document.query.filter(Document.id == doc_id).one()
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Document {0} not found".format(doc_id)
-        })
-
-    if "data" in data and response is None:
+    if "data" in data:
         data = data["data"]
-
-        if not isinstance(data, list):
-            data = [data]
-
-        user = current_app.get_current_user()
-        if user.is_anonymous:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden", "details": "Cannot update data"
-            })
-
-        if response is None:
-
-            updated_users = set()
-            user_id = user.id
-
-            for tr in data:
-
-                user = current_app.get_current_user()
-                user_id = user.id
-
-                # teachers and admins can put/post/delete on others behalf
-                if (user.is_teacher or user.is_admin) and "username" in tr:
-                    user = current_app.get_user_from_username(tr["username"])
-                    if user is not None:
-                        user_id = user.id
-                elif "username" in tr:
-                    usr = current_app.get_user_from_username(tr["username"])
-                    if usr is not None and usr.id != user.id:
-                        db.session.rollback()
-                        response = APIResponseFactory.make_response(errors={
-                            "status": 403, "title": "Access forbidden", "details": "Cannot update data"
-                        })
-                        break
-
-                try:
-                    # get the translation to update
-                    translation = Translation.query.filter(
-                        Translation.user_id == user_id,
-                        Translation.doc_id == doc_id
-                    ).one()
-
-                    translation.content = tr["content"]
-                    db.session.add(translation)
-                    # save which users to retriever later
-                    updated_users.add(user)
-                except NoResultFound:
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 404,
-                        "title": "Update forbidden",
-                        "details": "Translation not found"
-                    })
-                    break
-
-            if response is None:
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    response = APIResponseFactory.make_response(errors={
-                        "status": 403, "title": "Cannot update data", "details": str(e)
-                    })
-
-            if response is None:
-                updated_data = []
-                for usr in updated_users:
-                    json_obj = query_json_endpoint(
-                        request,
-                        url_for(
-                            "api_bp.api_documents_translations",
-                            api_version=api_version,
-                            doc_id=doc_id,
-                            user_id=user_id
-                        ),
-                        user=usr
-                    )
-                    updated_data.append(json_obj["data"])
-
-                response = APIResponseFactory.make_response(data=updated_data)
-
-    return APIResponseFactory.jsonify(response)
+        tr = get_translation(doc_id=doc_id, user_id=user_id)
+        if tr is None:
+            return make_404()
+        try:
+            tr.content = data["content"]
+            db.session.add(tr)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return make_400(str(e))
+        return make_200(data=tr.serialize_for_user(user_id))
+    else:
+        return make_400("no data")
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["DELETE"])
 @auth.login_required
 def api_delete_documents_translations(api_version, doc_id, user_id):
-    """
-     :param api_version:
-     :param doc_id:
-     :return:
-     """
-    response = None
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
+
+    closed = is_closed(doc_id)
+    if closed:
+        return closed
+
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+
+    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
+    if is_another_teacher:
+        return is_another_teacher
+
+    # forbid students to delete a translation when there is a valid translation
+    user = current_app.get_current_user()
+    if not user.is_teacher:
+        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSLATION)
+        if forbid:
+            return forbid
+
+    tr = get_translation(doc_id=doc_id, user_id=user_id)
+    if tr is None:
+        return make_404()
 
     try:
-        doc = Document.query.filter(Document.id == doc_id).one()
-    except NoResultFound:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Document {0} not found".format(doc_id)
-        })
+        for thn in tr.translation_has_note:
+            if thn.note.user_id == int(user_id):
+                db.session.delete(thn.note)
+        db.session.delete(tr)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return make_400(str(e))
 
-    user = current_app.get_current_user()
-    if not user.is_anonymous:
-        if (not user.is_teacher and not user.is_admin) and int(user_id) != user.id:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
+    set_document_validation_step(doc=doc, stage_id=VALIDATION_TRANSCRIPTION)
 
-    # delete translations for the given user id
-    if response is None:
-        try:
-            # bring the translation to delete
-            translation = Translation.query.filter(
-                Translation.user_id == user_id,
-                Translation.doc_id == doc_id
-            ).one()
-            db.session.delete(translation)
-        except NoResultFound:
-            pass
+    return make_200()
 
-        if response is None:
-            try:
 
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Cannot delete data", "details": str(e)
-                })
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/clone/from-user/<user_id>', methods=['GET'])
+@auth.login_required
+@forbid_if_nor_teacher_nor_admin
+def api_documents_clone_translation(api_version, doc_id, user_id):
+    print("cloning translation (doc %s) from user %s" % (doc_id, user_id))
 
-        if response is None:
-            response = APIResponseFactory.make_response(data=[])
+    tr_to_be_cloned = Translation.query.filter(Translation.user_id == user_id,
+                                                 Translation.doc_id == doc_id).first()
 
-    return APIResponseFactory.jsonify(response)
+    if not tr_to_be_cloned:
+        return make_404()
+
+    teacher = current_app.get_current_user()
+    teacher_tr = Translation.query.filter(Translation.user_id == teacher.id,
+                                            Translation.doc_id == doc_id).first()
+    if teacher_tr is None:
+        teacher_tr = Translation(doc_id=doc_id, user_id=teacher.id, content=tr_to_be_cloned.content)
+    else:
+        # replace the teacher's tr content
+        teacher_tr.content = tr_to_be_cloned.content
+        # remove the old teacher's notes
+        for note in teacher_tr.notes:
+            db.session.delete(note)
+        # teacher_tr.notes = []
+
+    # clone notes
+    for thn_to_be_cloned in tr_to_be_cloned.translation_has_note:
+        note = Note(type_id=thn_to_be_cloned.note.type_id, user_id=teacher.id,
+                    content=thn_to_be_cloned.note.content)
+        db.session.add(note)
+        db.session.flush()
+        teacher_tr.translation_has_note.append(
+            TranslationHasNote(ptr_start=thn_to_be_cloned.ptr_start,
+                                 ptr_end=thn_to_be_cloned.ptr_end,
+                                 note_id=note.id,
+                                 translation_id=teacher_tr.id),
+        )
+
+    db.session.add(teacher_tr)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return make_400(str(e))
+
+    return make_200()
