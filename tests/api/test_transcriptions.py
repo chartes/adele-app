@@ -26,6 +26,13 @@ class TestTranscriptionsAPI(TestBaseServer):
         join(TestBaseServer.FIXTURES_PATH, "notes", "notes_transcription_doc_21_stu1.sql"),
     ]
 
+    # eleve: id = 7
+    FIXTURES_STU2 = [
+        join(TestBaseServer.FIXTURES_PATH, "transcriptions", "transcription_doc_21_stu2.sql"),
+        join(TestBaseServer.FIXTURES_PATH, "notes", "notes_transcription_doc_21_stu2.sql"),
+    ]
+
+
     def test_get_transcriptions_reference(self):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
 
@@ -61,7 +68,7 @@ class TestTranscriptionsAPI(TestBaseServer):
         # -------- test validation steps ---------
         self.assert200("/adele/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
         self.assert404("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        # needs a translation
+        # needs a transcription
         self.assert200("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
         # needs a translation
@@ -331,3 +338,25 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/5",
                        data={"data": {"content": "tr modified by prof1"}},
                        method="PUT", **PROF1_USER)
+
+    def test_clone_transcription(self):
+        self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
+        # access a validated transcription
+        self.load_fixtures(TestTranscriptionsAPI.FIXTURES_PROF)
+        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4", **PROF1_USER)
+
+        self.assert404("/adele/api/1.0/documents/21/transcriptions/clone/from-user/100", **PROF1_USER)
+        self.assert404("/adele/api/1.0/documents/2132/transcriptions/clone/from-user/100", **PROF1_USER)
+
+        # clone student 2 tr
+        self.load_fixtures(TestTranscriptionsAPI.FIXTURES_STU2)
+        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/7", **PROF1_USER)
+        self.assert200("/adele/api/1.0/documents/21/transcriptions/clone/from-user/7", **PROF1_USER)
+
+        # check the prof content is cloned from stu 2
+        r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4", **PROF1_USER)
+        r = json_loads(r.data)['data']
+
+        self.assertEqual("transcription stu2", r["content"])
+        self.assertEqual('<p>NOTE 1 STU2</p>', r['notes'][0]['content'])
+        self.assertEqual('<p>NOTE 2 STU2</p>', r['notes'][1]['content'])
