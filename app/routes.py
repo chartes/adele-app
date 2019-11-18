@@ -9,7 +9,7 @@ from app import app_bp
 from app.api.transcriptions.routes import get_transcription
 from app.api.translations.routes import get_translation
 from app.models import Document, Language, ActeType, Tradition, Country, District, Institution, CommentaryType, \
-    Whitelist, AlignmentTranslation
+    Whitelist, AlignmentTranslation, Commentary
 
 # tags to represent notes in view mode
 btag = "<span class='note-placeholder' data-note-id='{:010d}'>"
@@ -560,15 +560,18 @@ def view_document_transcription_alignment(doc_id):
     if not transcription or not translation:
         # no alignment
         if transcription:
-            _tr = transcription.serialize()
+            _tr = transcription.serialize_for_user(transcription.user_id)
             tr_w_notes = add_notes_refs_to_text(_tr["content"], _tr["notes"])
             notes = _tr["notes"]
         elif translation:
-            _tl = translation.serialize()
+            _tl = translation.serialize_for_user(translation.user_id)
             tl_w_notes = add_notes_refs_to_text(_tl["content"], _tl["notes"])
             notes = _tl["notes"]
     else:
-        tr_w_notes, tl_w_notes, notes = add_notes_refs(transcription.serialize(), translation.serialize())
+        tr_w_notes, tl_w_notes, notes = add_notes_refs(
+            transcription.serialize_for_user(transcription.user_id),
+            translation.serialize_for_user(translation.user_id)
+        )
 
     return render_template('main/fragments/document_view/_transcription_alignment.html',
                            doc_id=doc_id,

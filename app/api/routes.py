@@ -4,12 +4,10 @@ import sys
 
 from flask_user import roles_required
 from urllib.request import build_opener
-
+from app import api_bp
 from flask import request, current_app
 
-from app import auth, db, api_bp
 from app.api.response import APIResponseFactory
-from app.models import Commentary, User
 
 
 
@@ -136,5 +134,7 @@ from app.api.transcriptions import routes
 from app.api.translations import routes
 from app.api.users import routes
 
-
+from app.api.alignments import alignments_translation
+#from app.api.alignments import alignment_images
+#from app.api.alignments import alignments_discours
 

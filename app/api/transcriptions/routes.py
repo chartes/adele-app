@@ -1,14 +1,13 @@
-from flask import url_for, request, current_app
-from sqlalchemy import func
+from flask import request, current_app
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
 from app.api.documents.document_validation import set_document_validation_step
 from app.api.routes import api_bp
-from app.models import Transcription, User, Document, Translation, AlignmentDiscours, \
-    SpeechPartType, Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE
+from app.models import Transcription, User, Document, AlignmentDiscours, \
+    Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
-    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, make_403, is_closed, forbid_if_validation_step
+    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher,  is_closed, forbid_if_validation_step
 
 """
 ===========================

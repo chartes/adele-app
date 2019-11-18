@@ -1,10 +1,8 @@
 import datetime
 from os.path import join
 
-from sqlalchemy.testing import in_
-
 from app import db
-from app.models import Document, Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE
+from app.models import Document, Note,  VALIDATION_TRANSCRIPTION, VALIDATION_NONE
 from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, STU1_USER, PROF1_USER, PROF2_USER, STU2_USER, \
     PROF3_USER
 
