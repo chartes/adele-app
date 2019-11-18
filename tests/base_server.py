@@ -1,8 +1,13 @@
 import os
 import sys
 import json
+from io import StringIO
+
 from flask_testing import TestCase
 from os.path import join
+
+from lxml import etree
+
 from app import create_app, db
 
 import base64
@@ -144,3 +149,13 @@ class TestBaseServer(TestCase):
 
     def assertPtr(self, text, ptr_start, ptr_end, expected_fragment):
         self.assertEqual(expected_fragment, text[ptr_start:ptr_end])
+
+    """
+    def check_integrity(self, text, a, b, root="div"):
+        print("testing integrity from", a, "to", b, "of:", text, "({0})".format(text[a:b]))
+        data = StringIO(r"<root>{0}</root>".format(text[a:b], root, root))
+        tree = etree.parse(data, etree.XMLParser(recover=False))
+        result = etree.tostring(tree.getroot(), pretty_print=True, method="html")
+        print(result)
+        return result
+    """
