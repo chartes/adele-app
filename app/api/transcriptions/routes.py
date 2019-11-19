@@ -1,4 +1,5 @@
 from flask import request, current_app
+from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -30,6 +31,7 @@ def get_reference_transcription(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
+    print(doc, doc.validation_step, doc.user_id)
     if doc is not None and doc.validation_step >= VALIDATION_TRANSCRIPTION:
         return Transcription.query.filter(
             doc_id == Transcription.doc_id,
@@ -311,3 +313,58 @@ def api_documents_clone_transcription(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200()
+
+
+# tags to represent notes in view mode
+btag = "<span class='note-placeholder' data-note-id='{:010d}'>"
+etag = "</span>"
+
+
+def _ptr_start(k):
+    return k["ptr_start"]
+
+
+def add_notes_refs_to_text(text, notes):
+    len_of_tag = len(btag) + len(etag)
+    text_with_notes = text
+
+    notes.sort(key=_ptr_start)
+    for num_note, note in enumerate(notes):
+        offset = len_of_tag * num_note
+        offset += 3 * num_note  # decalage?
+        start_offset = int(note["ptr_start"]) + offset
+        end_offset = int(note["ptr_end"]) + offset
+        kwargs = {
+            "btag": btag.format(note["id"]),
+            "etag": etag,
+            "text_before": text_with_notes[0:start_offset],
+            "text_between": text_with_notes[start_offset:end_offset],
+            "text_after": text_with_notes[end_offset:]
+        }
+        text_with_notes = "{text_before}{btag}{text_between}{etag}{text_after}".format(**kwargs)
+    return text_with_notes
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription/from-user/<user_id>')
+def view_document_transcription(api_version, doc_id, user_id=None):
+    if user_id is not None:
+        forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+        if forbid:
+            return forbid
+        tr = get_transcription(doc_id, user_id)
+    else:
+        tr = get_reference_transcription(doc_id)
+        user_id = tr.user_id
+
+    if tr is None:
+        return make_404()
+
+    _tr = tr.serialize_for_user(user_id)
+    _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])
+    print(_tr, user_id)
+    return make_200({
+        "doc_id": tr.doc_id,
+        "user_id": tr.user_id,
+        "content": Markup(_content) if tr.content is not None else ""
+    })

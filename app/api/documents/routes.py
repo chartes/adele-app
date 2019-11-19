@@ -68,7 +68,7 @@ def api_documents_unpublish(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents')
 def api_documents_id_list(api_version):
     docs = Document.query.all()
-    return make_200(data=[doc.id for doc in docs])
+    return make_200(data=[doc.serialize() for doc in docs])
 
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])

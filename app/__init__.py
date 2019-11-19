@@ -79,7 +79,7 @@ def create_app(config_name="dev"):
     app.scss = Scss(app)
     babel.init_app(app)
 
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"*": {"origins": "*"}})
 
 
     # Use the browser's language preferences to select an available translation

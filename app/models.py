@@ -484,7 +484,8 @@ class Image(db.Model):
 
                 } for z in self.zones
             ],
-            'url': self.url
+            'url': self.url,
+            'thumbnail_url': self.url.replace("full/full", "full/800,")
         }
 
 

@@ -36,7 +36,10 @@ class APIResponseFactory:
             json.dumps(r, indent=2, ensure_ascii=False),
             status=status,
             content_type="application/json; charset=utf-8",
-            headers={"Access-Control-Allow-Origin": "*"}
+            headers={
+                #"Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": "true"
+            }
         )
 
     @classmethod
