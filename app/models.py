@@ -716,13 +716,14 @@ class User(db.Model, UserMixin):
     #    db.session.commit()
 
     @property
-    def is_teacher(self): return self.has_roles("teacher")
+    def is_teacher(self):
+        return "teacher" in [r.label for r in self.roles]
 
     @property
-    def is_admin(self): return self.has_roles("admin")
+    def is_admin(self): return "admin" in [r.label for r in self.roles]
 
     @property
-    def is_student(self): return self.has_roles("student")
+    def is_student(self): return "student" in [r.label for r in self.roles]
 
     def serialize(self):
         return {
@@ -736,21 +737,6 @@ class User(db.Model, UserMixin):
             'roles': [ro.name for ro in self.roles]
         }
 
-    def generate_auth_token(self, expiration=3600*24):
-        s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
-        return s.dumps({'id': self.id})
-
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(current_app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token)
-        except SignatureExpired:
-            return None # valid token, but expired
-        except BadSignature:
-            return None # invalid token
-        user = User.query.get(data['id'])
-        return user
 
     @property
     def documents_i_can_edit(self):
