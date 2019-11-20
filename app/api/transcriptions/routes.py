@@ -1,4 +1,5 @@
 from flask import request, current_app
+from flask_jwt_extended import current_user, jwt_required
 from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -73,7 +74,7 @@ def api_documents_transcriptions(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>')
-@auth.login_required
+@jwt_required
 def api_documents_transcriptions_from_user(api_version, doc_id, user_id=None):
     forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
@@ -85,7 +86,7 @@ def api_documents_transcriptions_from_user(api_version, doc_id, user_id=None):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>', methods=["POST"])
-@auth.login_required
+@jwt_required
 def api_post_documents_transcriptions(api_version, doc_id, user_id):
     """
     at least one of "content" or "notes" is required
@@ -172,7 +173,7 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>', methods=["PUT"])
-@auth.login_required
+@jwt_required
 def api_put_documents_transcriptions(api_version, doc_id, user_id):
     """
      {
@@ -220,7 +221,7 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>', methods=["DELETE"])
-@auth.login_required
+@jwt_required
 def api_delete_documents_transcriptions(api_version, doc_id, user_id):
     forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
@@ -266,7 +267,7 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/clone/from-user/<user_id>', methods=['GET'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_documents_clone_transcription(api_version, doc_id, user_id):
     print("cloning transcription (doc %s) from user %s" % (doc_id, user_id))
@@ -355,16 +356,19 @@ def view_document_transcription(api_version, doc_id, user_id=None):
         tr = get_transcription(doc_id, user_id)
     else:
         tr = get_reference_transcription(doc_id)
-        user_id = tr.user_id
 
     if tr is None:
         return make_404()
 
+    if user_id is None:
+        user_id = tr.user_id
+
     _tr = tr.serialize_for_user(user_id)
     _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])
-    print(_tr, user_id)
+
     return make_200({
         "doc_id": tr.doc_id,
         "user_id": tr.user_id,
-        "content": Markup(_content) if tr.content is not None else ""
+        "content": Markup(_content) if tr.content is not None else "",
+        "notes": {"{:010d}".format(n["id"]): n["content"] for n in _tr["notes"]}
     })

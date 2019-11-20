@@ -2,6 +2,7 @@ import math
 
 import pprint
 from flask import url_for, request, current_app
+from flask_jwt_extended import jwt_required
 from requests import HTTPError
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
@@ -79,7 +80,7 @@ def api_documents_manifest(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/from-user/<user_id>')
-@auth.login_required
+@jwt_required
 def api_documents_manifest_from_user(api_version, doc_id, user_id):
     user = current_app.get_current_user()
     if user.is_teacher or user.is_admin or int(user_id) == user.id:
@@ -556,7 +557,7 @@ def api_documents_annotations_zone(api_version, doc_id, canvas_name, zone_id, us
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>", methods=["POST"])
-@auth.login_required
+@jwt_required
 def api_post_documents_annotations(api_version, doc_id, canvas_name):
     """
         {
@@ -689,7 +690,7 @@ def api_post_documents_annotations(api_version, doc_id, canvas_name):
 
 
 #@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations", methods=["PUT"])
-#@auth.login_required
+#@jwt_required
 #def api_put_documents_annotations(api_version, doc_id):
 #    """
 #        {
@@ -822,7 +823,7 @@ def api_post_documents_annotations(api_version, doc_id, canvas_name):
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/<zone_id>/from-user/<user_id>", methods=["DELETE"])
-@auth.login_required
+@jwt_required
 def api_delete_documents_annotations(api_version, doc_id, user_id, canvas_name=None, zone_id=None):
     """
     :param user_id:
@@ -891,7 +892,7 @@ def api_documents_images(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=["POST"])
-@auth.login_required
+@jwt_required
 def api_post_documents_images(api_version, doc_id):
     """
     {
@@ -973,7 +974,7 @@ def api_post_documents_images(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=['DELETE'])
-@auth.login_required
+@jwt_required
 def api_delete_documents_images(api_version, doc_id):
     response = None
 

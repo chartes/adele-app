@@ -1,4 +1,5 @@
 from flask import request
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -24,7 +25,7 @@ def api_country(api_version, country_id=None):
 
 @api_bp.route('/api/<api_version>/countries', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/countries/<country_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_country(api_version, country_id=None):
     if country_id is None:
@@ -45,7 +46,7 @@ def api_delete_country(api_version, country_id=None):
 
 
 @api_bp.route('/api/<api_version>/countries', methods=['PUT'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_put_country(api_version):
     try:
@@ -76,7 +77,7 @@ def api_put_country(api_version):
 
 
 @api_bp.route('/api/<api_version>/countries', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_country(api_version):
     data = request.get_json()

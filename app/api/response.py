@@ -38,7 +38,7 @@ class APIResponseFactory:
             content_type="application/json; charset=utf-8",
             headers={
                 #"Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Credentials": "true"
+                #"Access-Control-Allow-Credentials": "true"
             }
         )
 

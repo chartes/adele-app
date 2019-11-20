@@ -1,4 +1,5 @@
 from flask import current_app, request
+from flask_jwt_extended import jwt_required
 
 from app import auth, db, api_bp
 from app.models import AlignmentTranslation
@@ -6,7 +7,7 @@ from app.utils import forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>')
-@auth.login_required
+@jwt_required
 def api_get_alignment_translation_from_user(api_version, doc_id, user_id):
     from app.api.transcriptions.routes import get_reference_transcription
     from app.api.translations.routes import get_translation
@@ -61,7 +62,7 @@ def api_get_alignment_translation(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>', methods=['POST'])
-@auth.login_required
+@jwt_required
 def api_post_translation_alignments(api_version, doc_id, user_id):
     """
         NB: Posting alignment has a 'TRUNCATE AND REPLACE' effect
@@ -117,7 +118,7 @@ def api_post_translation_alignments(api_version, doc_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 def api_delete_translation_alignments(api_version, doc_id, user_id):
     from app.api.transcriptions.routes import get_reference_transcription
     from app.api.translations.routes import get_translation

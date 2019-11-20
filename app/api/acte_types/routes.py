@@ -1,4 +1,5 @@
 from flask import request
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -24,7 +25,7 @@ def api_acte_type(api_version, acte_type_id=None):
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/acte-types/<acte_type_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_acte_type(api_version, acte_type_id=None):
 
@@ -44,7 +45,7 @@ def api_delete_acte_type(api_version, acte_type_id=None):
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['PUT'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_put_acte_type(api_version):
     try:
@@ -74,7 +75,7 @@ def api_put_acte_type(api_version):
 
 
 @api_bp.route('/api/<api_version>/acte-types', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_acte_type(api_version):
     data = request.get_json()

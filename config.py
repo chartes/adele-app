@@ -1,3 +1,4 @@
+import datetime
 from time import time
 
 import os
@@ -57,6 +58,11 @@ class Config(object):
     MAIL_SERVER = os.getenv('MAIL_SERVER')
     MAIL_PORT = int(os.getenv('MAIL_PORT') or 465)
     MAIL_USE_SSL = int(os.getenv('MAIL_USE_SSL') or True)
+
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+    JWT_TOKEN_LOCATION = ['cookies', 'headers']
+    JWT_COOKIE_CSRF_PROTECT = True
+    #JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(seconds=int(os.getenv(('JWT_ACCESS_TOKEN_EXPIRES'))))
 
     @staticmethod
     def init_app(app):

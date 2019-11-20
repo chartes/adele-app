@@ -1,4 +1,5 @@
 from flask import request
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -24,7 +25,7 @@ def api_institution(api_version, institution_id=None):
 
 @api_bp.route('/api/<api_version>/institutions', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/institutions/<institution_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_institution(api_version, institution_id=None):
     if institution_id is None:
@@ -43,7 +44,7 @@ def api_delete_institution(api_version, institution_id=None):
 
 
 @api_bp.route('/api/<api_version>/institutions', methods=['PUT'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_put_institution(api_version):
     try:
@@ -72,7 +73,7 @@ def api_put_institution(api_version):
 
 
 @api_bp.route('/api/<api_version>/institutions', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_institution(api_version):
     data = request.get_json()

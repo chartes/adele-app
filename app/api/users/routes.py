@@ -1,4 +1,5 @@
 from flask import request, current_app
+from flask_jwt_extended import jwt_required
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -17,7 +18,7 @@ from app.utils import make_200, make_404, forbid_if_nor_teacher_nor_admin, make_
 
 
 @api_bp.route('/api/<api_version>/token')
-@auth.login_required
+@jwt_required
 def get_auth_token(api_version):
     user = current_app.get_current_user()
     token = user.generate_auth_token()
@@ -25,14 +26,14 @@ def get_auth_token(api_version):
 
 
 @api_bp.route('/api/<api_version>/user')
-@auth.login_required
+@jwt_required
 def api_current_user(api_version):
     user = current_app.get_current_user()
     return make_200(data=[user.serialize()])
 
 
 @api_bp.route('/api/<api_version>/users/<user_id>')
-@auth.login_required
+@jwt_required
 def api_users(api_version, user_id):
     access_is_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if access_is_forbidden:
@@ -47,7 +48,7 @@ def api_users(api_version, user_id):
 
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles')
-@auth.login_required
+@jwt_required
 def api_users_roles(api_version, user_id):
     access_is_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if access_is_forbidden:
@@ -61,7 +62,7 @@ def api_users_roles(api_version, user_id):
 
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_users_roles(api_version, user_id):
     """
@@ -108,7 +109,7 @@ def api_post_users_roles(api_version, user_id):
 
 
 @api_bp.route('/api/<api_version>/users/<user_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_user(api_version, user_id):
     try:
@@ -132,7 +133,7 @@ def api_delete_user(api_version, user_id):
 
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_users_roles(api_version, user_id):
     try:
@@ -157,7 +158,7 @@ def api_delete_users_roles(api_version, user_id):
 
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>/add-users', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def add_user_to_whitelist(api_version, whitelist_id):
     """
@@ -190,7 +191,7 @@ def add_user_to_whitelist(api_version, whitelist_id):
 
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>/remove-user/<user_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def remove_user_from_whitelist(api_version, whitelist_id, user_id):
     """
@@ -212,7 +213,7 @@ def remove_user_from_whitelist(api_version, whitelist_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>')
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_get_whitelist(api_version, whitelist_id):
     w = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
@@ -223,7 +224,7 @@ def api_get_whitelist(api_version, whitelist_id):
 
 
 @api_bp.route('/api/<api_version>/whitelists', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_whitelist(api_version):
     """
@@ -253,7 +254,7 @@ def api_post_whitelist(api_version):
 
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def delete_whitelist(api_version, whitelist_id):
     """

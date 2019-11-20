@@ -1,4 +1,5 @@
 from flask import request, current_app
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -89,7 +90,7 @@ def api_commentary_reference(api_version, doc_id, type_id=None):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
     user = current_app.get_current_user()
 
@@ -124,7 +125,7 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['POST'])
-@auth.login_required
+@jwt_required
 def api_post_commentary(api_version, doc_id):
     """
     {
@@ -187,7 +188,7 @@ def api_post_commentary(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['PUT'])
-@auth.login_required
+@jwt_required
 def api_put_commentary(api_version, doc_id):
     """
     {

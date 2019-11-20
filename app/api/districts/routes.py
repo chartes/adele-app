@@ -1,4 +1,5 @@
 from flask import request
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -29,7 +30,7 @@ def api_district(api_version, country_id, district_id=None):
 
 @api_bp.route('/api/<api_version>/districts/from-country/<country_id>', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/districts/<district_id>/from-country/<country_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_district(api_version, country_id, district_id=None):
     c = Country.query.filter(Country.id == country_id).first()
@@ -52,7 +53,7 @@ def api_delete_district(api_version, country_id, district_id=None):
 
 
 @api_bp.route('/api/<api_version>/districts/from-country/<country_id>', methods=['PUT'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_put_district(api_version, country_id):
     c = Country.query.filter(Country.id == country_id).first()
@@ -88,7 +89,7 @@ def api_put_district(api_version, country_id):
 
 
 @api_bp.route('/api/<api_version>/districts', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_district(api_version):
     data = request.get_json()

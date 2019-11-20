@@ -1,5 +1,6 @@
 import pprint
 from flask import request, url_for, current_app
+from flask_jwt_extended import jwt_required
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -18,7 +19,7 @@ from app.models import Commentary, Note, NoteType, Document, User, Translation, 
 
 
 @api_bp.route('/api/<api_version>/notes', methods=['POST', 'PUT'])
-@auth.login_required
+@jwt_required
 def api_add_note(api_version):
     """
     {
@@ -614,21 +615,21 @@ def api_delete_documents_binder_notes(request, user, api_version, doc_id, user_i
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["POST"])
-@auth.login_required
+@jwt_required
 def api_post_documents_transcriptions_notes(api_version, doc_id):
     user = current_app.get_current_user()
     return api_post_documents_binder_notes(request, user, api_version, doc_id, TranscriptionNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["POST"])
-@auth.login_required
+@jwt_required
 def api_post_documents_translations_notes(api_version, doc_id):
     user = current_app.get_current_user()
     return api_post_documents_binder_notes(request, user, api_version, doc_id, TranslationNoteBinder)
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["POST"])
-@auth.login_required
+@jwt_required
 def api_post_documents_commentaries_notes(api_version, doc_id):
     user = current_app.get_current_user()
     return api_post_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
@@ -642,7 +643,7 @@ def api_post_documents_commentaries_notes(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes", methods=["PUT"])
-@auth.login_required
+@jwt_required
 def api_put_documents_transcriptions_notes(api_version, doc_id):
     user = current_app.get_current_user()
 
@@ -667,7 +668,7 @@ def api_put_documents_transcriptions_notes(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes", methods=["PUT"])
-@auth.login_required
+@jwt_required
 def api_put_documents_translations_notes(api_version, doc_id):
     user = current_app.get_current_user()
 
@@ -692,7 +693,7 @@ def api_put_documents_translations_notes(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes", methods=["PUT"])
-@auth.login_required
+@jwt_required
 def api_put_documents_commentaries_notes(api_version, doc_id):
     user = current_app.get_current_user()
     return api_put_documents_binder_notes(request, user, api_version, doc_id, CommentaryNoteBinder)
@@ -708,7 +709,7 @@ def api_put_documents_commentaries_notes(api_version, doc_id):
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>",
               methods=["DELETE"])
-@auth.login_required
+@jwt_required
 def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id, note_id=None):
     user = current_app.get_current_user()
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id,
@@ -718,7 +719,7 @@ def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id, note
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>",
               methods=["DELETE"])
-@auth.login_required
+@jwt_required
 def api_delete_documents_translations_notes(api_version, doc_id, user_id, note_id=None):
     user = current_app.get_current_user()
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id,
@@ -728,7 +729,7 @@ def api_delete_documents_translations_notes(api_version, doc_id, user_id, note_i
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>",
               methods=["DELETE"])
-@auth.login_required
+@jwt_required
 def api_delete_documents_commentaries_notes(api_version, doc_id, user_id, note_id=None):
     user = current_app.get_current_user()
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id, CommentaryNoteBinder)

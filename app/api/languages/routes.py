@@ -1,4 +1,5 @@
 from flask import request, current_app
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -24,7 +25,7 @@ def api_language(api_version, language_code=None):
 
 @api_bp.route('/api/<api_version>/languages', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/languages/<language_code>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_language(api_version, language_code=None):
     if language_code is None:
@@ -43,7 +44,7 @@ def api_delete_language(api_version, language_code=None):
 
 
 @api_bp.route('/api/<api_version>/languages', methods=['PUT'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_put_language(api_version):
     try:
@@ -73,7 +74,7 @@ def api_put_language(api_version):
 
 
 @api_bp.route('/api/<api_version>/languages', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_language(api_version):
     data = request.get_json()

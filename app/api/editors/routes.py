@@ -1,4 +1,5 @@
 from flask import request
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -24,7 +25,7 @@ def api_editor(api_version, editor_id=None):
 
 @api_bp.route('/api/<api_version>/editors', methods=['DELETE'])
 @api_bp.route('/api/<api_version>/editors/<editor_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_editor(api_version, editor_id=None):
     if editor_id is None:
@@ -43,7 +44,7 @@ def api_delete_editor(api_version, editor_id=None):
 
 
 @api_bp.route('/api/<api_version>/editors', methods=['PUT'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_put_editor(api_version):
     try:
@@ -73,7 +74,7 @@ def api_put_editor(api_version):
 
 
 @api_bp.route('/api/<api_version>/editors', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_editor(api_version):
     data = request.get_json()

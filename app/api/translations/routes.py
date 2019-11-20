@@ -1,4 +1,5 @@
 from flask import url_for, request, current_app
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -59,7 +60,7 @@ def api_documents_translations(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>')
-@auth.login_required
+@jwt_required
 def api_documents_translations_from_user(api_version, doc_id, user_id=None):
     forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
@@ -71,7 +72,7 @@ def api_documents_translations_from_user(api_version, doc_id, user_id=None):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["POST"])
-@auth.login_required
+@jwt_required
 def api_post_documents_translations(api_version, doc_id, user_id):
     """
     at least one of "content" or "notes" is required
@@ -158,7 +159,7 @@ def api_post_documents_translations(api_version, doc_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["PUT"])
-@auth.login_required
+@jwt_required
 def api_put_documents_translations(api_version, doc_id, user_id):
     """
      {
@@ -206,7 +207,7 @@ def api_put_documents_translations(api_version, doc_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["DELETE"])
-@auth.login_required
+@jwt_required
 def api_delete_documents_translations(api_version, doc_id, user_id):
     forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
@@ -252,7 +253,7 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/clone/from-user/<user_id>', methods=['GET'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_documents_clone_translation(api_version, doc_id, user_id):
     print("cloning translation (doc %s) from user %s" % (doc_id, user_id))

@@ -1,4 +1,5 @@
 from flask import current_app
+from flask_jwt_extended import jwt_required
 
 from app import auth, api_bp, db
 from app.models import VALIDATION_NONE, VALIDATION_TRANSCRIPTION, get_validation_step_label, VALIDATIONS_STEPS_LABELS, \
@@ -33,7 +34,7 @@ def set_document_validation_step(doc, stage_id=VALIDATION_NONE):
 
 # TRANSCRIPTION STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
-@auth.login_required
+@jwt_required
 def api_documents_validate_transcription(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == doc.user_id).first() is None:
@@ -42,7 +43,7 @@ def api_documents_validate_transcription(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
-@auth.login_required
+@jwt_required
 def api_documents_unvalidate_transcription(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
@@ -53,7 +54,7 @@ def api_documents_unvalidate_transcription(api_version, doc_id):
 
 # TRANSLATION STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-translation')
-@auth.login_required
+@jwt_required
 def api_documents_validate_translation(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
@@ -63,7 +64,7 @@ def api_documents_validate_translation(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-translation')
-@auth.login_required
+@jwt_required
 def api_documents_unvalidate_translation(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
@@ -74,7 +75,7 @@ def api_documents_unvalidate_translation(api_version, doc_id):
 
 # COMMENTARIES STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-commentaries')
-@auth.login_required
+@jwt_required
 def api_documents_validate_commentaries(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
@@ -84,7 +85,7 @@ def api_documents_validate_commentaries(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-commentaries')
-@auth.login_required
+@jwt_required
 def api_documents_unvalidate_commentaries(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
@@ -95,7 +96,7 @@ def api_documents_unvalidate_commentaries(api_version, doc_id):
 
 # FACSIMILE STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-facsimile')
-@auth.login_required
+@jwt_required
 def api_documents_validate_facsimile(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
@@ -105,7 +106,7 @@ def api_documents_validate_facsimile(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-facsimile')
-@auth.login_required
+@jwt_required
 def api_documents_unvalidate_facsimile(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
@@ -116,7 +117,7 @@ def api_documents_unvalidate_facsimile(api_version, doc_id):
 
 # SPEECH PARTS STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-speech-parts')
-@auth.login_required
+@jwt_required
 def api_documents_validate_speech_parts(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
@@ -126,7 +127,7 @@ def api_documents_validate_speech_parts(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-speech-parts')
-@auth.login_required
+@jwt_required
 def api_documents_unvalidate_speech_parts(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,

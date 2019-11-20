@@ -65,7 +65,7 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
 
 #
 #@api_bp.route("/api/user-role")
-#@auth.login_required
+#@jwt_required
 #@roles_required("teacher", "admin")
 #def api_test_user_role():
 #    """
@@ -77,7 +77,7 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
 #
 #
 #@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["DELETE"])
-#@auth.login_required
+#@jwt_required
 #def api_test_auth_delete(api_version, doc_id):
 #    user = User.query.filter(User.username == auth.username()).one()
 #
@@ -93,7 +93,7 @@ def query_json_endpoint(request_obj, endpoint_url, user=None, method='GET', head
 #
 #
 #@api_bp.route("/api/<api_version>/test/auth/<doc_id>", methods=["POST"])
-#@auth.login_required
+#@jwt_required
 #def api_test_auth_post(api_version, doc_id):
 #    user = User.query.filter(User.username == auth.username()).one()
 #
@@ -138,3 +138,4 @@ from app.api.alignments import alignments_translation
 #from app.api.alignments import alignment_images
 #from app.api.alignments import alignments_discours
 
+from app.api.auth import login

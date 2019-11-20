@@ -1,8 +1,7 @@
 from functools import wraps
 
 from flask import current_app
-from flask_login import current_user
-
+#from flask_login import current_user
 
 """
 ========================================================
@@ -17,17 +16,17 @@ def get_user_from_username(username):
 
 
 def get_current_user():
-    from app import auth, models
-    from app.models import AnonymousUser
-    if auth.username() == "":
-        user = current_user
-        if user.is_anonymous:
-            user = AnonymousUser()
+    from app.models import AnonymousUser, User
+    from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
+
+    verify_jwt_in_request_optional()
+    identity = get_jwt_identity()
+
+    if identity is None:
+        user = AnonymousUser()
     else:
-        user = models.User.verify_auth_token(auth.username())
-        if not user:
-            user = models.User.query.filter(models.User.username == auth.username()).first()
-        if not user:
+        user = User.query.filter(User.username == identity).first()
+        if user is None:
             user = AnonymousUser()
 
     return user
@@ -56,6 +55,10 @@ def make_404(details=None):
 
 def make_400(details=None):
     return make_error(400, "Error", details)
+
+
+def make_401(details=None):
+    return make_error(401, "Error", details)
 
 
 def make_409(details=None):

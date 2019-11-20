@@ -1,9 +1,10 @@
 import datetime
 from flask import Flask, request, Blueprint, url_for
+from flask_jwt_extended import JWTManager
 from flask_mail import Mail
 from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
-from flask_user import UserManager, user_sent_invitation, user_registered
+#from flask_user import UserManager, user_sent_invitation, user_registered
 from flask_babelex import Babel
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -79,7 +80,7 @@ def create_app(config_name="dev"):
     app.scss = Scss(app)
     babel.init_app(app)
 
-    CORS(app, resources={r"*": {"origins": "*"}})
+    CORS(app, supports_credentials=True, resources={r"*": {"origins": "*"}})
 
 
     # Use the browser's language preferences to select an available translation
@@ -87,6 +88,7 @@ def create_app(config_name="dev"):
     def get_locale():
         translations = [str(translation) for translation in babel.list_translations()]
         return request.accept_languages.best_match(translations)
+
     """
     ========================================================
         Import models
@@ -96,58 +98,27 @@ def create_app(config_name="dev"):
     from app import models
 
     """
-    ========================================================
-        Setup Flask-User
-    ========================================================
-    """
-    class CustomUserManager(UserManager):
-        def customize(self, app):
-            self.RegisterFormClass = CustomRegisterForm
-            self.UserInvitationClass = models.UserInvitation
-            self.email_manager._render_and_send_email_with_exceptions = self.email_manager._render_and_send_email
+       ========================================================
+           Setup Flask-JWT-Extended
+       ========================================================
+       """
+    app.jwt = JWTManager(app)
 
-            def with_protection(*args, **kargs):
-                try:
-                    self.email_manager._render_and_send_email_with_exceptions(*args, **kargs)
-                except Exception as e:
-                    print(e)
-            self.email_manager._render_and_send_email = with_protection
+    # Create a function that will be called whenever create_access_token
+    # is used. It will take whatever object is passed into the
+    # create_access_token method, and lets us define what custom claims
+    # should be added to the access token.
+    @app.jwt.user_claims_loader
+    def add_claims_to_access_token(user):
+        return user["roles"]
 
-        def hash_password(self, password):
-            return generate_password_hash(password.encode('utf-8'))
-
-        def verify_password(self, password, password_hash):
-            return check_password_hash(password_hash, password)
-
-        def _endpoint_url(self, endpoint):
-            return url_for(endpoint) if endpoint else url_for('app_bp.index')
-
-    # Initialize Flask-User
-    user_manager = CustomUserManager(app, db,
-                                     UserClass=models.User,
-                                     UserInvitationClass=models.UserInvitation)
-
-    @auth.verify_password
-    def verify_password(username_or_token, password):
-        user = models.User.verify_auth_token(username_or_token)
-        if not user:
-            user = models.User.query.filter(models.User.username == username_or_token).first()
-            if not user or not user_manager.verify_password(password, user.password):
-                return False
-        return True
-
-    @user_registered.connect_via(app)
-    def after_registered_hook(sender, user, user_invitation):
-        print("USER %s REGISTERED" % user.serialize())
-        default_role = models.Role.query.filter(models.Role.name == 'student').first()
-        user.roles.append(default_role)
-        db.session.commit()
-        print("USER %s gains '%s' role " % (user.serialize(), default_role.serialize()))
-
-
-    @user_sent_invitation.connect_via(app)
-    def after_invitation_hook(sender, **extra):
-        print("USER SENT INVITATION: ", extra)
+    # Create a function that will be called whenever create_access_token
+    # is used. It will take whatever object is passed into the
+    # create_access_token method, and lets us define what the identity
+    # of the access token should be.
+    @app.jwt.user_identity_loader
+    def user_identity_lookup(user):
+        return user["username"]
 
     """
     ========================================================

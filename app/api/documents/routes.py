@@ -2,6 +2,7 @@ import datetime
 from urllib.request import build_opener
 
 from flask import request,  current_app
+from flask_jwt_extended import jwt_required
 
 from app import auth, db
 from app.api.routes import api_bp, json_loads
@@ -27,7 +28,7 @@ def api_documents(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/publish')
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_documents_publish(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
@@ -47,7 +48,7 @@ def api_documents_publish(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unpublish')
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_documents_unpublish(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
@@ -72,7 +73,7 @@ def api_documents_id_list(api_version):
 
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_documents(api_version):
     data = request.get_json()
@@ -145,7 +146,7 @@ def api_post_documents(api_version):
 
 
 @api_bp.route('/api/<api_version>/documents', methods=['PUT'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_put_documents(api_version):
     data = request.get_json()
@@ -222,7 +223,7 @@ def api_put_documents(api_version):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['DELETE'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_delete_documents(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
@@ -244,7 +245,7 @@ def api_delete_documents(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_change_documents_whitelist(api_version, doc_id):
     """
@@ -284,7 +285,7 @@ def api_change_documents_whitelist(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_change_documents_closing_date(api_version, doc_id):
     """
@@ -326,7 +327,7 @@ def api_change_documents_closing_date(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/add', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_add_document(api_version):
 
@@ -348,7 +349,7 @@ def api_add_document(api_version):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/set-manifest', methods=['POST'])
-@auth.login_required
+@jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_set_document_manifest(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()

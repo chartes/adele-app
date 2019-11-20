@@ -1,4 +1,5 @@
 from flask import request, current_app, url_for
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import api_bp, auth, APIResponseFactory, db
@@ -61,7 +62,7 @@ def api_documents_transcriptions_alignments_discours(api_version, doc_id, user_i
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours', methods=['POST'])
-@auth.login_required
+@jwt_required
 def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
     """
         {
@@ -175,7 +176,7 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id):
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours', methods=['PUT'])
-@auth.login_required
+@jwt_required
 def api_put_documents_transcriptions_alignments_discours(api_version, doc_id):
     """
         {
@@ -302,7 +303,7 @@ def api_documents_transcriptions_alignments_discours_reference(api_version, doc_
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours/from-user/<user_id>',
               methods=['DELETE'])
-@auth.login_required
+@jwt_required
 def api_delete_documents_transcriptions_alignments_discours(api_version, doc_id, user_id=None):
     """
     :param api_version:
