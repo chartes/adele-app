@@ -350,6 +350,7 @@ class Document(db.Model):
             'date_update': self.date_update,
             'date_closing': self.date_closing,
             'is_published': self.is_published,
+            'is_closed': self.is_closed,
             'institution': self.institution.serialize() if self.institution is not None else None,
             'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
@@ -717,13 +718,13 @@ class User(db.Model, UserMixin):
 
     @property
     def is_teacher(self):
-        return "teacher" in [r.label for r in self.roles]
+        return "teacher" in [r.name for r in self.roles]
 
     @property
-    def is_admin(self): return "admin" in [r.label for r in self.roles]
+    def is_admin(self): return "admin" in [r.name for r in self.roles]
 
     @property
-    def is_student(self): return "student" in [r.label for r in self.roles]
+    def is_student(self): return "student" in [r.name for r in self.roles]
 
     def serialize(self):
         return {
