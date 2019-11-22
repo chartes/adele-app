@@ -19,9 +19,13 @@ def get_current_user():
     from app.models import AnonymousUser, User
     from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
 
-    verify_jwt_in_request_optional()
-    identity = get_jwt_identity()
+    try:
+        verify_jwt_in_request_optional()
+    except Exception as e:
+        print(e)
+        return AnonymousUser()
 
+    identity = get_jwt_identity()
     if identity is None:
         user = AnonymousUser()
     else:

@@ -1,7 +1,10 @@
 from flask import current_app, request
 from flask_jwt_extended import jwt_required
+from markupsafe import Markup
 
 from app import auth, db, api_bp
+from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text, etag, btag
+from app.api.translations.routes import get_reference_translation
 from app.models import AlignmentTranslation
 from app.utils import forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, make_200, make_400
 
@@ -149,3 +152,94 @@ def api_delete_translation_alignments(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200(data=[])
+
+
+def add_notes_refs(tr, tl):
+    all_al = AlignmentTranslation.query.filter(AlignmentTranslation.transcription_id == tr["id"],
+                                               AlignmentTranslation.translation_id == tl["id"]).all()
+
+    # recompute alignment ptr in two steps (transcription then translation)
+    # by counting the number of notes tags in each segment
+    # and eventually the presence of notes overlapping multiple segments
+    def insert_notes_into_al(content, notes, get_al_start_ptr, get_al_end_ptr):
+        offset = 0
+        content_w_notes = []
+
+        for num_al, al in enumerate(all_al):
+
+            after_notes = []
+            before_notes = []
+            between_notes = []
+            overlapping_note = None
+            al_ptr_start = get_al_start_ptr(al)
+            al_ptr_end = get_al_end_ptr(al)
+
+            for note in notes:
+                if int(note["ptr_start"]) < al_ptr_start and \
+                        int(note["ptr_end"]) > al_ptr_end:
+                    overlapping_note = note  # note englobant au moins une ligne en totalité
+                elif (al_ptr_start <= int(note["ptr_start"]) <= al_ptr_end) and \
+                        (al_ptr_start <= int(note["ptr_end"]) <= al_ptr_end):
+                    between_notes.append(note)
+                elif int(note["ptr_start"]) <= al_ptr_end <= int(note["ptr_end"]):
+                    after_notes.append(note)  # note finissant sur la ligne suivante
+                elif int(note["ptr_start"]) <= al_ptr_start <= int(note["ptr_end"]):
+                    before_notes.append(note)  # note commencant sur la ligne précédente
+
+            # transcription al
+            ptr_start = al_ptr_start + offset
+            offset += len(etag) * len(before_notes)
+            offset += (len(btag.format(1)) + len(etag)) * len(between_notes)
+            offset += len(btag.format(1)) * len(after_notes)
+            ptr_end = al_ptr_end + offset
+
+            text = content[ptr_start:ptr_end]
+
+            if overlapping_note:
+                text = "{btag}{al}{etag}".format(btag=btag.format(overlapping_note["id"]), etag=etag, al=text)
+            elif len(before_notes) > 0:
+                current_note_id = before_notes[0]["id"]
+                text = "{btag}{al}".format(btag=btag.format(current_note_id), al=text)
+            elif len(after_notes) > 0:
+                text = "{al}{etag}".format(etag=etag, al=text)
+
+            content_w_notes.append(Markup(text))
+        return content_w_notes
+
+    tr_notes = tr["notes"]
+    tl_notes = tl["notes"]
+    tr_c = add_notes_refs_to_text(tr["content"], tr_notes)
+    tl_c = add_notes_refs_to_text(tl["content"], tl_notes)
+
+    tr_w_notes = insert_notes_into_al(tr_c, tr_notes, lambda al: al.ptr_transcription_start,
+                                      lambda al: al.ptr_transcription_end)
+    tl_w_notes = insert_notes_into_al(tl_c, tl_notes, lambda al: al.ptr_translation_start,
+                                      lambda al: al.ptr_translation_end)
+
+    notes = {n["id"]: n for n in tr_notes + tl_notes}
+    notes = list(notes.values())
+
+    return tr_w_notes, tl_w_notes, notes
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription-alignment')
+def view_document_translation_alignment(api_version, doc_id):
+    translation = get_reference_translation(doc_id)
+    transcription = get_reference_transcription(doc_id)
+
+    if not transcription or not translation:
+        return make_404()
+
+    tr_w_notes, tl_w_notes, notes = add_notes_refs(
+        transcription.serialize_for_user(transcription.user_id),
+        translation.serialize_for_user(translation.user_id)
+    )
+
+    return make_200({
+        "doc_id": doc_id,
+        #"transcription": Markup("".join(tr_w_notes)),
+        #"translation": Markup("".join(tl_w_notes)),
+        "alignments": [z for z in zip(tr_w_notes, tl_w_notes)],
+        "notes": notes
+    })
+

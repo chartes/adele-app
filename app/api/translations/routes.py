@@ -1,5 +1,6 @@
 from flask import url_for, request, current_app
 from flask_jwt_extended import jwt_required
+from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
@@ -300,3 +301,32 @@ def api_documents_clone_translation(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200()
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/translation')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/translation/from-user/<user_id>')
+def view_document_translation(api_version, doc_id, user_id=None):
+    if user_id is not None:
+        forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+        if forbid:
+            return forbid
+        tr = get_translation(doc_id, user_id)
+    else:
+        tr = get_reference_translation(doc_id)
+
+    if tr is None:
+        return make_404()
+
+    if user_id is None:
+        user_id = tr.user_id
+
+    _tr = tr.serialize_for_user(user_id)
+    from app.api.transcriptions.routes import add_notes_refs_to_text
+    _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])
+
+    return make_200({
+        "doc_id": tr.doc_id,
+        "user_id": tr.user_id,
+        "content": Markup(_content) if tr.content is not None else "",
+        "notes": {"{:010d}".format(n["id"]): n["content"] for n in _tr["notes"]}
+    })

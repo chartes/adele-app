@@ -49,7 +49,6 @@ def align_translation(transcription_id, translation_id):
 ---------------------------------
 User related routes
 ---------------------------------
-"""
 
 
 @app_bp.route('/login')
@@ -71,7 +70,7 @@ def logout_delete_token():
 @roles_required(['admin', 'teacher'])
 def after_invite():
     return "OK"
-
+"""
 
 """
 ---------------------------------

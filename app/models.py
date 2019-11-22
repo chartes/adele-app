@@ -327,10 +327,12 @@ class Document(db.Model):
 
     @property
     def is_closed(self):
-        user = current_app.get_current_user()
-        if not self.date_closing or user.is_teacher or user.is_admin:
+        if not self.date_closing:
             return False
         else:
+            user = current_app.get_current_user()
+            if user.is_teacher or user.is_admin:
+                return False
             doc_closing_time = datetime.datetime.strptime(self.date_closing, '%Y-%m-%d %H:%M:%S')
             return datetime.datetime.now() > doc_closing_time
 

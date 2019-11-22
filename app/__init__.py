@@ -151,13 +151,13 @@ def create_app(config_name="dev"):
     ========================================================
     """
 
-    from app import routes
+    #from app import routes
     from app.api import routes as api_routes
 
     #app_bp.url_prefix = app.config["APP_URL_PREFIX"]
     #api_bp.url_prefix = app.config["APP_URL_PREFIX"]
 
-    app.register_blueprint(app_bp)
+    #app.register_blueprint(app_bp)
     app.register_blueprint(api_bp)
 
     return app
