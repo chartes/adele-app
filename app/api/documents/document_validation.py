@@ -32,6 +32,16 @@ def set_document_validation_step(doc, stage_id=VALIDATION_NONE):
         return make_400(str(e))
 
 
+# NONE STEP (helper route)
+@api_bp.route('/api/<api_version>/documents/<doc_id>/validate-none')
+@jwt_required
+def api_documents_validate_none(api_version, doc_id):
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+    return set_document_validation_step(doc=doc, stage_id=VALIDATION_NONE)
+
+
 # TRANSCRIPTION STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
 @jwt_required
