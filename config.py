@@ -15,40 +15,10 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), 'db', 'adele.sqlite')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    SCSS_STATIC_DIR = os.path.join(basedir, "app", "static", "css")
-    SCSS_ASSET_DIR = os.path.join(basedir, "app", "assets", "scss")
-
     DOC_PER_PAGE = 20
     USERS_PER_PAGE = 10
 
     CSRF_ENABLED = True
-
-    APP_URL_PREFIX = '/adele'
-
-    # Flask-User settings
-    USER_APP_NAME = 'Adele'
-    USER_AFTER_LOGOUT_ENDPOINT = 'app_bp.logout_delete_token'
-    USER_AFTER_INVITE_ENDPOINT = 'app_bp.after_invite'
-    USER_AFTER_REGISTER_ENDPOINT = 'app_bp.index'
-
-    USER_ENABLE_REGISTER = True
-    USER_ENABLE_REMEMBER_ME = False
-    USER_ENABLE_INVITE_USER = True
-    USER_REQUIRE_INVITATION = True
-    USER_AUTO_LOGIN_AFTER_CONFIRM = True
-
-    #USER_CHANGE_PASSWORD_URL = '%s/user/change-password' % APP_URL_PREFIX
-    #USER_CHANGE_USERNAME_URL = '%s/user/change-username' % APP_URL_PREFIX
-    #USER_CONFIRM_EMAIL_URL = '%s/user/confirm-email/<token>' % APP_URL_PREFIX
-    #USER_EDIT_USER_PROFILE_URL = '%s/user/edit_user_profile' % APP_URL_PREFIX
-    #USER_EMAIL_ACTION_URL = '%s/user/email/<id>/<action>' % APP_URL_PREFIX
-    #USER_FORGOT_PASSWORD_URL = '%s/user/forgot-password' % APP_URL_PREFIX
-    #USER_INVITE_USER_URL = '%s/user/invite' % APP_URL_PREFIX
-    #USER_LOGIN_URL = '%s/user/sign-in' % APP_URL_PREFIX
-    #USER_LOGOUT_URL = '%s/user/sign-out' % APP_URL_PREFIX
-    #USER_MANAGE_EMAILS_URL = '%s/user/manage-emails' % APP_URL_PREFIX
-    #USER_REGISTER_URL = '%s/user/register' % APP_URL_PREFIX
-    #USER_RESEND_EMAIL_CONFIRMATION_URL = '%s/user/resend-email-confirmation' % APP_URL_PREFIX
 
     # Flask-Mail settings
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')

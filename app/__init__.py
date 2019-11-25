@@ -1,17 +1,12 @@
 import datetime
-from flask import Flask, request, Blueprint, url_for
+from flask import Flask, Blueprint
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
-from flask_scss import Scss
 from flask_sqlalchemy import SQLAlchemy
-#from flask_user import UserManager, user_sent_invitation, user_registered
-from flask_babelex import Babel
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.utils import make_403
 from config import config
 from app.api.response import APIResponseFactory
-from app.forms.register import CustomRegisterForm
 from flask_httpauth import HTTPBasicAuth
 
 
@@ -19,12 +14,8 @@ from flask_httpauth import HTTPBasicAuth
 db = SQLAlchemy()
 mail = Mail()
 auth = HTTPBasicAuth()
-# Initialize Flask-Babel
-babel = Babel()
 
-api_bp = Blueprint('api_bp', __name__, template_folder='templates')
-app_bp = Blueprint('app_bp', __name__, template_folder='templates', static_folder='static')
-
+api_bp = Blueprint('api_bp', __name__)
 
 class PrefixMiddleware(object):
 
@@ -71,23 +62,14 @@ def create_app(config_name="dev"):
         app.config.from_object(config[config_name])
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix=app.config["APP_URL_PREFIX"])
+    #app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix=app.config["APP_URL_PREFIX"])
 
     config[config_name].init_app(app)
 
     db.init_app(app)
     mail.init_app(app)
-    app.scss = Scss(app)
-    babel.init_app(app)
 
     CORS(app, supports_credentials=True, resources={r"*": {"origins": "*"}})
-
-
-    # Use the browser's language preferences to select an available translation
-    @babel.localeselector
-    def get_locale():
-        translations = [str(translation) for translation in babel.list_translations()]
-        return request.accept_languages.best_match(translations)
 
     """
     ========================================================
@@ -151,13 +133,7 @@ def create_app(config_name="dev"):
     ========================================================
     """
 
-    #from app import routes
     from app.api import routes as api_routes
-
-    #app_bp.url_prefix = app.config["APP_URL_PREFIX"]
-    #api_bp.url_prefix = app.config["APP_URL_PREFIX"]
-
-    #app.register_blueprint(app_bp)
     app.register_blueprint(api_bp)
 
     return app
