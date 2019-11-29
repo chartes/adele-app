@@ -45,7 +45,7 @@ def create_tokens(user):
         'email': user.email,
         'roles': [r.name for r in user.roles]
     }
-    print("create tokens", u, access_token, refresh_token, data)
+    #print("create tokens", u, access_token, refresh_token, data)
     return data, access_token, refresh_token,
 
 

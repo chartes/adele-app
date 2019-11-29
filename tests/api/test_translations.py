@@ -41,16 +41,16 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES)
 
         # doc without translation
-        self.assert404("/adele/api/1.0/documents/21/translations")
-        self.assert404("/adele/api/1.0/documents/21/translations", **STU1_USER)
-        self.assert404("/adele/api/1.0/documents/21/translations", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/translations")
+        self.assert404("/api/1.0/documents/21/translations", **STU1_USER)
+        self.assert404("/api/1.0/documents/21/translations", **PROF1_USER)
 
         # access a validated translation
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
-        r = self.assert200("/adele/api/1.0/documents/21/translations", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        r = self.assert200("/api/1.0/documents/21/translations", **PROF1_USER)
         r = json_loads(r.data)['data']
         self.assertEqual(
             '<p>PROF1 A tous ceux qui verront les présentes lettres, . . l’official de Beauvais, salut dans le Seigneur. Sachent tous que constitués en notre présence Richard dit de Grez, de Saint-Félix, Aye son épouse et Euphémie leur fille ont reconnu qu’ils ont vendu à perpétuité pour leur commune utilité et leur commun besoin à l’abbé et au convent de Saint-Germer de Fly une pièce de terre arable qu’ils avaient de l’héritage d’Asceline d’Amuchy, tante maternelle dudit Richard, d’environ six éminées, sise devant le metz d’Amuchy qui appartient auxdits abbé et convent, et qu’ils tenaient à champart des mêmes abbé et convent, pour cent dix sous de parisis à eux par lesdits abbé et convent pleinement et entièrement versés, ainsi que lesdits Richard, Aye son épouse et Euphémie leur fille ont devant nous reconnu</p>',
@@ -66,18 +66,18 @@ class TestTranslationsAPI(TestBaseServer):
             self.assertPtr(r['content'], note['ptr_start'], note['ptr_end'], expected_fragments[i])
 
         # available to everybody
-        self.assert200("/adele/api/1.0/documents/21/translations")
-        self.assert200("/adele/api/1.0/documents/21/translations", **STU1_USER)
+        self.assert200("/api/1.0/documents/21/translations")
+        self.assert200("/api/1.0/documents/21/translations", **STU1_USER)
 
         # -------- test validation steps ---------
-        self.assert200("/adele/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
-        self.assert404("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/transcriptions", **PROF1_USER)
         # needs a transcription
-        self.assert200("/adele/api/1.0/documents/21/validate-transcription", **PROF1_USER)
-        self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/transcriptions", **PROF1_USER)
         # needs a translation
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
-        self.assert200("/adele/api/1.0/documents/21/transcriptions", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/transcriptions", **PROF1_USER)
 
 
     def test_get_translations_from_user(self):
@@ -85,40 +85,40 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
         # doc without translation
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/100")
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/4")
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/4", **STU1_USER)
-        self.assert404("/adele/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/translations/from-user/100")
+        self.assert403("/api/1.0/documents/21/translations/from-user/4")
+        self.assert403("/api/1.0/documents/21/translations/from-user/4", **STU1_USER)
+        self.assert404("/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
 
         # access a validated translation
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
 
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/4")
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/4", **STU1_USER)
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/translations/from-user/4")
+        self.assert403("/api/1.0/documents/21/translations/from-user/4", **STU1_USER)
+        self.assert200("/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
 
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5")
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/5", **STU1_USER)
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5", **STU2_USER)
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/5", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/translations/from-user/5")
+        self.assert200("/api/1.0/documents/21/translations/from-user/5", **STU1_USER)
+        self.assert403("/api/1.0/documents/21/translations/from-user/5", **STU2_USER)
+        self.assert200("/api/1.0/documents/21/translations/from-user/5", **PROF1_USER)
 
     def test_delete_translations_from_user(self):
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/100", method="DELETE")
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/100", method="DELETE", **STU1_USER)
-        self.assert404("/adele/api/1.0/documents/21/translations/from-user/100", method="DELETE", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/translations/from-user/100", method="DELETE")
+        self.assert403("/api/1.0/documents/21/translations/from-user/100", method="DELETE", **STU1_USER)
+        self.assert404("/api/1.0/documents/21/translations/from-user/100", method="DELETE", **PROF1_USER)
 
         self.load_fixtures(TestTranslationsAPI.FIXTURES)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         # should not be able to delete the student translation when the translation has already been validated
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
-        self.assert200("/adele/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
+        self.assert200("/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
 
         # test that bound notes are deleted when student deletes its own translation
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
+        self.assert200("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
         notes = Note.query.filter(Note.user_id == 5).all()
         self.assertEqual(0, len(notes))
 
@@ -127,10 +127,10 @@ class TestTranslationsAPI(TestBaseServer):
         other_notes_cnt = len(Note.query.filter(Note.user_id != 4).all())
         self.assertNotEqual(0, len(prof_notes))
 
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         doc = Document.query.filter(Document.id == 21).first()
         self.assertEqual(VALIDATION_TRANSLATION, doc.validation_step)
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
         self.assertEqual(0, len(Note.query.filter(Note.user_id == 4).all()))
         self.assertEqual(other_notes_cnt, len(Note.query.filter(Note.user_id != 4).all()))
 
@@ -139,9 +139,9 @@ class TestTranslationsAPI(TestBaseServer):
         self.assertEqual(VALIDATION_TRANSCRIPTION, doc.validation_step)
 
         # test that the resource is not available anymore
-        self.assert404("/adele/api/1.0/documents/21/translations")
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/4")
-        self.assert404("/adele/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/translations")
+        self.assert403("/api/1.0/documents/21/translations/from-user/4")
+        self.assert404("/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
 
         # test when the document is closed
         doc = Document.query.filter(Document.id == 21).first()
@@ -156,35 +156,35 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/5", method="DELETE", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
+        self.assert200("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **PROF1_USER)
 
     def test_post_translations_from_user(self):
         self.load_fixtures(TestTranslationsAPI.FIXTURES)
         small_tr = {"data": {"content": "tr"}}
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST")
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST",
+        self.assert403("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST")
+        self.assert403("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST",
                        **STU1_USER)
-        self.assert400("/adele/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST",
+        self.assert400("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST",
                        **PROF1_USER)
 
         # =================== STUDENT ===================
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         # post when the translation is already validated
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"notes": [], "content": "test"}}, method="POST",
                        **STU1_USER)
         # clean up teacher translation
-        self.assert200("/adele/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
 
         # post notes without content
-        self.assert404("/adele/api/1.0/documents/21/translations/from-user/5",
+        self.assert404("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"notes": []}}, method="POST",
                        **STU1_USER)
         # post content without notes
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/5",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/5",
                            data={"data": {"content": "new tr from user1"}}, method="POST",
                            **STU1_USER)
         r = json_loads(r.data)['data']
@@ -193,7 +193,7 @@ class TestTranslationsAPI(TestBaseServer):
         self.assertEqual(5, r['user_id'])
 
         # post content with notes
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/7",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/7",
                            data={"data": {
                                "content": "new tr from user2",
                                "notes": [{
@@ -219,7 +219,7 @@ class TestTranslationsAPI(TestBaseServer):
             self.assertPtr(r['content'], note['ptr_start'], note['ptr_end'], expected_fragments[i])
 
         # posting notes will TRUNCATE AND REPLACE notes
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/7",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/7",
                            data={"data": {"notes": [{
                                "content": "note1 from user2",
                                "ptr_start": 7,
@@ -239,7 +239,7 @@ class TestTranslationsAPI(TestBaseServer):
         doc.date_closing = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
         db.session.add(doc)
         db.session.commit()
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/4",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/4",
                            data={"data": {
                                "content": "new tr from user2",
                                "notes": [{
@@ -259,10 +259,10 @@ class TestTranslationsAPI(TestBaseServer):
         self.assertEqual(2, len(r['notes']))
         # ===============================================
         # test when the document is closed for other users
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/6",
+        self.assert403("/api/1.0/documents/21/translations/from-user/6",
                        data={"data": {"content": "tr created by stu2"}},
                        method="POST", **STU2_USER)
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/8",
+        self.assert403("/api/1.0/documents/21/translations/from-user/8",
                        data={"data": {"content": "tr created by prof3"}},
                        method="POST", **PROF3_USER)
 
@@ -270,28 +270,28 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES)
 
         small_tr = {"data": {"content": "tr"}}
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT")
-        self.assert404("/adele/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT")
+        self.assert404("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT",
                        **STU1_USER)
-        self.assert404("/adele/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT",
+        self.assert404("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT",
                        **PROF1_USER)
 
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/4",
+        self.assert403("/api/1.0/documents/21/translations/from-user/4",
                        data={"data": {"content": "modification from user1"}},
                        method="PUT",
                        **STU1_USER)
 
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/5",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/5",
                            data={"data": {"content": "modification from user1"}},
                            method="PUT",
                            **STU1_USER)
         r = json_loads(r.data)['data']
         self.assertEqual("modification from user1", r['content'])
 
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/5",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/5",
                            data={"data": {"content": "modification from prof1"}},
                            method="PUT",
                            **PROF1_USER)
@@ -299,16 +299,16 @@ class TestTranslationsAPI(TestBaseServer):
         self.assertEqual("modification from prof1", r['content'])
 
         # let's validate the doc 21
-        self.assert200("/adele/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         # teacher can modify both
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/4",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/4",
                            data={"data": {"content": "modification from prof1 after validation"}},
                            method="PUT",
                            **PROF1_USER)
         r = json_loads(r.data)['data']
         self.assertEqual("modification from prof1 after validation", r['content'])
 
-        r = self.assert200("/adele/api/1.0/documents/21/translations/from-user/5",
+        r = self.assert200("/api/1.0/documents/21/translations/from-user/5",
                            data={"data": {"content": "modification from prof1 after validation"}},
                            method="PUT",
                            **PROF1_USER)
@@ -316,14 +316,14 @@ class TestTranslationsAPI(TestBaseServer):
         self.assertEqual("modification from prof1 after validation", r['content'])
 
         # user cannot modify when it's validated
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"content": "modification from user& after validation"}},
                        method="PUT",
                        **STU1_USER)
 
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
         # can modify again since the teacher deleted its translation
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/5",
+        self.assert200("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"content": "modification from user& after validation"}},
                        method="PUT",
                        **STU1_USER)
@@ -333,10 +333,10 @@ class TestTranslationsAPI(TestBaseServer):
         doc.date_closing = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
         db.session.add(doc)
         db.session.commit()
-        self.assert403("/adele/api/1.0/documents/21/translations/from-user/5",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"content": "tr modified by stu1"}},
                        method="PUT", **STU1_USER)
-        self.assert200("/adele/api/1.0/documents/21/translations/from-user/5",
+        self.assert200("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"content": "tr modified by prof1"}},
                        method="PUT", **PROF1_USER)
 
@@ -344,18 +344,18 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES)
         # access a validated transcription
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
-        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", **PROF1_USER)
 
-        self.assert404("/adele/api/1.0/documents/21/transcriptions/clone/from-user/100", **PROF1_USER)
-        self.assert404("/adele/api/1.0/documents/2132/transcriptions/clone/from-user/100", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/transcriptions/clone/from-user/100", **PROF1_USER)
+        self.assert404("/api/1.0/documents/2132/transcriptions/clone/from-user/100", **PROF1_USER)
 
         # clone student 2 tr
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU2)
-        self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/7", **PROF1_USER)
-        self.assert200("/adele/api/1.0/documents/21/transcriptions/clone/from-user/7", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/transcriptions/from-user/7", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/transcriptions/clone/from-user/7", **PROF1_USER)
 
         # check the prof content is cloned from stu 2
-        r = self.assert200("/adele/api/1.0/documents/21/transcriptions/from-user/4", **PROF1_USER)
+        r = self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", **PROF1_USER)
         r = json_loads(r.data)['data']
 
         self.assertEqual("transcription stu2", r["content"])

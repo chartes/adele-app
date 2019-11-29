@@ -89,7 +89,7 @@ def api_post_users_roles(api_version, user_id):
 
         for role_name in [r.get("name", None) for r in data]:
 
-            if not target_user.has_roles([role_name]):
+            if not role_name in target_user.roles:
                 if role_name == "admin" and not user.is_admin:
                     return make_403()
                 else:

@@ -1,17 +1,11 @@
 import os
 import sys
 import json
-from io import StringIO
 
 from flask_testing import TestCase
 from os.path import join
 
-from lxml import etree
-
 from app import create_app, db
-
-import base64
-
 
 if sys.version_info < (3, 6):
     json_loads = lambda s: json_loads(s.decode("utf-8")) if isinstance(s, bytes) else json.loads(s)
@@ -19,24 +13,25 @@ else:
     json_loads = json.loads
 
 
-def make_auth_headers(username, password):
-    s = bytes("{}:{}".format(username, password), 'utf-8')
+def make_auth_headers(username):
+    from app.api.auth import create_tokens
+    from app.models import User
+    data, access_token, refresh_token = create_tokens(User.query.filter(User.username == username).first())
     return {
         'content-type': 'application/json',
-        'Authorization': "Basic {}".format(base64.b64encode(s).decode('ascii'))
+        'Authorization': "Bearer {}".format(access_token)
     }
 
 
 _app = create_app("test")
 
 # for convenience
-ADMIN_USER = {"username": "AdminJulien", "password": "AdeleAdmin2018"}
-PROF1_USER = {"username": "Professeur1", "password": "AdeleAdmin2018"}
-PROF2_USER = {"username": "Professeur2", "password": "AdeleAdmin2018"}
-PROF3_USER = {"username": "Professeur3", "password": "AdeleAdmin2018"}
-STU1_USER = {"username": "Eleve1", "password": "AdeleAdmin2018"}
-STU2_USER = {"username": "Eleve2", "password": "AdeleAdmin2018"}
-
+ADMIN_USER = {"username": "AdminJulien"}
+PROF1_USER = {"username": "Professeur1"}
+PROF2_USER = {"username": "Professeur2"}
+PROF3_USER = {"username": "Professeur3"}
+STU1_USER = {"username": "Eleve1"}
+STU2_USER = {"username": "Eleve2"}
 
 class TestBaseServer(TestCase):
 
@@ -82,48 +77,47 @@ class TestBaseServer(TestCase):
     def get(self, url, **kwargs):
         return self.client.get(url, follow_redirects=True, **kwargs)
 
-    def get_with_auth(self, url, username, password):
-        return self.get(url, headers=make_auth_headers(username, password))
+    def get_with_auth(self, url, username):
+        return self.get(url, headers=make_auth_headers(username))
 
     def post(self, url, data, **kwargs):
         return self.client.post(url, data=json.dumps(data), follow_redirects=True, **kwargs)
 
-    def post_with_auth(self, url, data, username, password):
-        return self.post(url, data, headers=make_auth_headers(username, password))
+    def post_with_auth(self, url, data, username):
+        return self.post(url, data, headers=make_auth_headers(username))
 
     def put(self, url, data, **kwargs):
         return self.client.put(url, data=json.dumps(data), follow_redirects=True, **kwargs)
 
-    def put_with_auth(self, url, data, username, password):
-        return self.put(url, data, headers=make_auth_headers(username, password))
+    def put_with_auth(self, url, data, username):
+        return self.put(url, data, headers=make_auth_headers(username))
 
     def delete(self, url, **kwargs):
         return self.client.delete(url, follow_redirects=True, **kwargs)
 
-    def delete_with_auth(self, url, username, password):
-        return self.delete(url, headers=make_auth_headers(username, password))
+    def delete_with_auth(self, url, username):
+        return self.delete(url, headers=make_auth_headers(username))
 
     def assertStatusCode(self, status_code, url, method="GET", **kwargs):
-        with_auth = 'username' in kwargs and 'password' in kwargs
-
+        with_auth = 'username' in kwargs
         if method == "GET":
             if with_auth:
-                r = self.get_with_auth(url, username=kwargs["username"], password=kwargs["password"])
+                r = self.get_with_auth(url, username=kwargs["username"])
             else:
                 r = self.get(url)
         elif method == "POST":
             if with_auth:
-                r = self.post_with_auth(url, data=kwargs["data"], username=kwargs["username"], password=kwargs["password"])
+                r = self.post_with_auth(url, data=kwargs["data"], username=kwargs["username"])
             else:
                 r = self.post(url, data=kwargs["data"])
         elif method == "DELETE":
             if with_auth:
-                r = self.delete_with_auth(url, username=kwargs["username"], password=kwargs["password"])
+                r = self.delete_with_auth(url, username=kwargs["username"])
             else:
                 r = self.delete(url)
         elif method == "PUT":
             if with_auth:
-                r = self.put_with_auth(url, data=kwargs["data"], username=kwargs["username"], password=kwargs["password"])
+                r = self.put_with_auth(url, data=kwargs["data"], username=kwargs["username"])
             else:
                 r = self.put(url, data=kwargs["data"])
         else:
@@ -137,6 +131,9 @@ class TestBaseServer(TestCase):
 
     def assert403(self, url, method='GET', **kwargs):
         return self.assertStatusCode(403, url, method, **kwargs)
+
+    def assert401(self, url, method='GET', **kwargs):
+        return self.assertStatusCode(401, url, method, **kwargs)
 
     def assert409(self, url, method='GET', **kwargs):
         return self.assertStatusCode(409, url, method, **kwargs)

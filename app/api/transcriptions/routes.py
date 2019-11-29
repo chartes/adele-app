@@ -32,7 +32,6 @@ def get_reference_transcription(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
-    print(doc, doc.validation_step, doc.user_id)
     if doc is not None and doc.validation_step >= VALIDATION_TRANSCRIPTION:
         return Transcription.query.filter(
             doc_id == Transcription.doc_id,

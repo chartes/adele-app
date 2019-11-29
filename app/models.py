@@ -1,9 +1,5 @@
 import datetime
 from flask import current_app
-from flask_login import AnonymousUserMixin
-from flask_user import UserMixin
-from itsdangerous import (TimedJSONWebSignatureSerializer
-                          as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy.ext.associationproxy import association_proxy
 
@@ -608,7 +604,7 @@ class TranscriptionHasNote(db.Model):
 
 class Transcription(db.Model):
     __table_args__ = (
-        db.UniqueConstraint('doc_id', 'user_id', name='_document_has_transcription_uc'),
+        db.UniqueConstraint('doc_id', 'user_id', name='uix_user', ),
     )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -647,7 +643,7 @@ class TranslationHasNote(db.Model):
 
 class Translation(db.Model):
     __table_args__ = (
-        db.UniqueConstraint('doc_id', 'user_id', name='_document_has_translation_uc'),
+        db.UniqueConstraint('doc_id', 'user_id', name='uix_user'),
     )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -674,7 +670,22 @@ class Translation(db.Model):
         }
 
 
-class AnonymousUser(AnonymousUserMixin):
+class AnonymousUser(object):
+    @property
+    def is_authenticated(self):
+        return False
+
+    @property
+    def is_active(self):
+        return False
+
+    @property
+    def is_anonymous(self):
+        return True
+
+    def get_id(self):
+        return
+
     @property
     def documents_i_can_edit(self):
         return []
@@ -693,7 +704,7 @@ class AnonymousUser(AnonymousUserMixin):
 
 
 # Define the User data model
-class User(db.Model, UserMixin):
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # User authentication information
@@ -717,6 +728,10 @@ class User(db.Model, UserMixin):
     #    super(User, self).__init__(*args, **kwargs)
     #    self.roles.append(Role.query.filter(Role.name == 'student').first())
     #    db.session.commit()
+
+    @property
+    def is_anonymous(self):
+        return False
 
     @property
     def is_teacher(self):
