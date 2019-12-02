@@ -90,11 +90,6 @@ def api_documents_transcriptions_from_user(api_version, doc_id, user_id=None):
 def api_post_documents_transcriptions(api_version, doc_id, user_id):
     """
     at least one of "content" or "notes" is required
-    "notes" when there is no tr in base is forbidden so
-    you can in a first time post "content" and later "notes", or both at the same time
-
-    NB: Posting notes has a 'TRUNCATE AND REPLACE' effect
-
     {
         "data":
             {
@@ -199,7 +194,14 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
      {
          "data":
              {
-                 "content" :  "My first transcription"  (mandatory)
+                 "content" :  "My first transcription"
+                 "notes": [{
+                    "id": 1,
+                    "type_id": 0 (by default),
+                    "content": "aaa",
+                    "ptr_start": 3,
+                    "ptr_end": 12
+                 }]
              }
      }
      :param user_id:
@@ -302,6 +304,12 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
     set_document_validation_step(doc=doc, stage_id=VALIDATION_NONE)
 
     return make_200()
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>', methods=["DELETE"])
+@jwt_required
+def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id):
+    raise NotImplementedError
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/clone/from-user/<user_id>', methods=['GET'])

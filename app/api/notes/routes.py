@@ -705,6 +705,7 @@ def api_put_documents_commentaries_notes(api_version, doc_id):
 ===========================
 """
 
+"""
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/transcriptions/notes/<note_id>/from-user/<user_id>",
@@ -716,6 +717,8 @@ def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id, note
                                              TranscriptionNoteBinder)
 
 
+
+
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/translations/notes/<note_id>/from-user/<user_id>",
               methods=["DELETE"])
@@ -725,7 +728,7 @@ def api_delete_documents_translations_notes(api_version, doc_id, user_id, note_i
     return api_delete_documents_binder_notes(request, user, api_version, doc_id, user_id, note_id,
                                              TranslationNoteBinder)
 
-
+"""
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/commentaries/notes/<note_id>/from-user/<user_id>",
               methods=["DELETE"])
