@@ -98,6 +98,15 @@ def forbid_if_nor_teacher_nor_admin_and_wants_user_data(app, wanted_user_id):
         return None
 
 
+def forbid_if_other_user(app, wanted_user_id):
+    user = app.get_current_user()
+    # if anonymous or mere student wants to read data of another student
+    if user.is_anonymous or wanted_user_id is not None and int(wanted_user_id) != int(user.id):
+        return make_403(details="Wrong user")
+    else:
+        return None
+
+
 def forbid_if_nor_teacher_nor_admin(view_function):
     @wraps(view_function)
     def wrapped_f(*args, **kwargs):

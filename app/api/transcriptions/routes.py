@@ -9,7 +9,8 @@ from app.api.routes import api_bp
 from app.models import Transcription, User, Document, AlignmentDiscours, \
     Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
-    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher,  is_closed, forbid_if_validation_step
+    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, is_closed, forbid_if_validation_step, \
+    forbid_if_other_user
 
 """
 ===========================
@@ -112,7 +113,7 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     :param doc_id:
     :return:
     """
-    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    forbid = forbid_if_other_user(current_app, user_id)
     if forbid:
         return forbid
 
@@ -128,42 +129,62 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     if "data" in data:
         data = data["data"]
         try:
+            tr = None
             # case 1) "content" in data
             if "content" in data:
                 tr = Transcription(doc_id=doc_id, content=data["content"], user_id=user_id)
+                db.session.add(tr)
+                db.session.flush()
             # case 2) there's only "notes" in data
-            elif "notes" in data:
+            if "notes" in data:
                 tr = Transcription.query.filter(Transcription.doc_id == doc_id,
                                                 Transcription.user_id == user_id).first()
-                if tr is None:
-                    return make_404()
-            else:
-                return make_400(details="Wrong data")
-            # register new notes if any
-            if "notes" in data:
-                new_notes = [Note(type_id=n.get("type_id", 0), user_id=user_id, content=n["content"])
-                             for n in data["notes"]]
-                for n in new_notes:
-                    db.session.add(n)
-                if len(new_notes) > 0:
-                    db.session.flush()
-                    # bind new notes to the transcription
-                    # NB: Posting notes has therefore a 'TRUNCATE AND REPLACE' effect
-                    for thn in tr.transcription_has_note:
-                        if thn.note.user_id == int(user_id):
-                            db.session.delete(thn.note)
-                    tr.transcription_has_note = [TranscriptionHasNote(transcription_id=tr.id,
-                                                                      note_id=n.id,
-                                                                      ptr_start=data["notes"][num_note]["ptr_start"],
-                                                                      ptr_end=data["notes"][num_note]["ptr_end"])
-                                                 for num_note, n in enumerate(new_notes)]
+            if tr is None:
+                return make_404()
 
-            # save the tr and commit all
+            if "notes" in data:
+                print("======= notes =======")
+                for note in data["notes"]:
+                        # 1) simply reuse notes which come with an id
+                    note_id = note.get('id', None)
+                    if note_id is not None:
+                        reused_note = Note.query.filter(Note.id == note_id).first()
+                        if reused_note is None:
+                            return make_400(details="Wrong note id %s" % note_id)
+                        db.session.add(reused_note)
+                        db.session.flush()
+                        thn = TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == reused_note.id,
+                                                                TranscriptionHasNote.transcription_id == tr.id).first()
+                        # 1.a) the note is already present in the transcription, so update its ptrs
+                        if thn is not None:
+                            raise Exception("Transcription note already exists. Consider using PUT method")
+                        else:
+                            # 1.b) the note is not present on the transcription side, so create it
+                            thn = TranscriptionHasNote(transcription_id=tr.id,
+                                                       note_id=reused_note.id,
+                                                       ptr_start=note["ptr_start"],
+                                                       ptr_end=note["ptr_end"])
+                        db.session.add(thn)
+                        print("reuse:", thn.transcription_id, thn.note_id)
+                    else:
+                        # 2) make new note
+                        new_note = Note(type_id=note.get("type_id", 0), user_id=user_id, content=note["content"])
+                        db.session.add(new_note)
+                        db.session.flush()
+                        thn = TranscriptionHasNote(transcription_id=tr.id,
+                                                   note_id=new_note.id,
+                                                   ptr_start=note["ptr_start"],
+                                                   ptr_end=note["ptr_end"])
+                        db.session.add(thn)
+                        print("make:", thn.transcription_id, thn.note_id)
+                db.session.flush()
+                print("thn:", [thn.note.id for thn in tr.transcription_has_note])
+                print("====================")
             db.session.add(tr)
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            print(str(e))
+            print("Error", str(e))
             return make_400(str(e))
 
         return make_200(data=tr.serialize_for_user(user_id))
@@ -186,7 +207,7 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
      :param doc_id:
      :return:
      """
-    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    forbid = forbid_if_other_user(current_app, user_id)
     if forbid:
         return forbid
 
@@ -208,11 +229,29 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
         if tr is None:
             return make_404()
         try:
-            tr.content = data["content"]
-            db.session.add(tr)
-            db.session.commit()
+            if "content" in data:
+                tr.content = data["content"]
+                db.session.add(tr)
+                db.session.commit()
+            if "notes" in data:
+                for note in data["notes"]:
+                    thn = TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == note.get('id', None),
+                                                            TranscriptionHasNote.transcription_id == tr.id).first()
+                    if thn is None:
+                        raise Exception('Note unknown')
+
+                    thn.ptr_start = note['ptr_start']
+                    thn.ptr_end = note['ptr_end']
+                    thn.note.content = note['content']
+                    thn.note.type_id = note['type_id']
+
+                    db.session.add(thn)
+                    db.session.add(thn.note)
+
+                db.session.commit()
         except Exception as e:
             db.session.rollback()
+            print('Error', str(e))
             return make_400(str(e))
         return make_200(data=tr.serialize_for_user(user_id))
     else:

@@ -167,7 +167,7 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert401("/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="POST")
         self.assert403("/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="POST",
                        **STU1_USER)
-        self.assert400("/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="POST",
+        self.assert403("/api/1.0/documents/21/transcriptions/from-user/100", data=small_tr, method="POST",
                        **PROF1_USER)
 
         # =================== STUDENT ===================
@@ -225,6 +225,13 @@ class TestTranscriptionsAPI(TestBaseServer):
         doc.date_closing = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
         db.session.add(doc)
         db.session.commit()
+
+        # ===============================================
+        # test when the document is closed for other users
+        self.assert403("/api/1.0/documents/21/transcriptions/from-user/6",
+                       data={"data": {"content": "tr created by stu2"}},
+                       method="POST", **STU2_USER)
+
         r = self.assert200("/api/1.0/documents/21/transcriptions/from-user/4",
                            data={
                                "data": {
@@ -248,24 +255,48 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assertEqual(2, len(r['notes']))
         # ===============================================
 
-        # post only notes with reusing of translation notes
-        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        # post only reuse of translation notes
+
+        # first, unclose
+        doc.date_closing = None
+        db.session.add(doc)
+        db.session.commit()
+
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_TL_STU2)
         r = self.assert200("/api/1.0/documents/21/translations/from-user/7", **STU2_USER)
-        # TODO: test reusing the freshly inserted notes
-        # TODO: POST (id + ptrs)
-        r = self.assert200("/api/1.0/documents/21/transcriptions/from-user/7", **STU2_USER)
+        r = json_loads(r.data)['data']
+        translation_note = r['notes'][0]
+        # link a translation note to the transcription
+        r = self.assert200("/api/1.0/documents/21/transcriptions/from-user/7",
+                       data={
+                           "data": {
+                               "notes": [{
+                                   "id": translation_note["id"],
+                                   "ptr_start": translation_note["ptr_start"],
+                                   "ptr_end": translation_note["ptr_end"],
+                               }]
+                           }
+                       },
+                       method="POST", **STU2_USER)
         r = json_loads(r.data)['data']
         # the two old notes + the new one from the translation side
         self.assertEqual(3, len(r['notes']))
+        notes_content = [n['content'] for n in r['notes']]
+        for c in ("note1 from user2", "note2 from user2", "note3_tl from user2"):
+            self.assertIn(c, notes_content)
 
-        # test when the document is closed for other users
-        self.assert403("/api/1.0/documents/21/transcriptions/from-user/6",
-                       data={"data": {"content": "tr created by stu2"}},
-                       method="POST", **STU2_USER)
-        self.assert403("/api/1.0/documents/21/transcriptions/from-user/8",
-                       data={"data": {"content": "tr created by prof3"}},
-                       method="POST", **PROF3_USER)
+        # update transcription note ptrs
+        self.assert400("/api/1.0/documents/21/transcriptions/from-user/7",
+                           data={
+                               "data": {
+                                   "notes": [{
+                                       "id": translation_note["id"],
+                                       "ptr_start": 10,
+                                       "ptr_end": 16,
+                                   }]
+                               }
+                           },
+                           method="POST", **STU2_USER)
 
     def test_put_transcriptions_from_user(self):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
@@ -274,7 +305,7 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert401("/api/1.0/documents/21/transcriptions/from-user/5", data=small_tr, method="PUT")
         self.assert404("/api/1.0/documents/21/transcriptions/from-user/5", data=small_tr, method="PUT",
                        **STU1_USER)
-        self.assert404("/api/1.0/documents/21/transcriptions/from-user/5", data=small_tr, method="PUT",
+        self.assert403("/api/1.0/documents/21/transcriptions/from-user/5", data=small_tr, method="PUT",
                        **PROF1_USER)
 
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_PROF)
@@ -292,12 +323,12 @@ class TestTranscriptionsAPI(TestBaseServer):
         r = json_loads(r.data)['data']
         self.assertEqual("modification from user1", r['content'])
 
-        r = self.assert200("/api/1.0/documents/21/transcriptions/from-user/5",
+        self.assert403("/api/1.0/documents/21/transcriptions/from-user/5",
                            data={"data": {"content": "modification from prof1"}},
                            method="PUT",
                            **PROF1_USER)
-        r = json_loads(r.data)['data']
-        self.assertEqual("modification from prof1", r['content'])
+        #r = json_loads(r.data)['data']
+        #self.assertEqual("modification from prof1", r['content'])
 
         # let's validate the doc 21
         self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
@@ -309,12 +340,12 @@ class TestTranscriptionsAPI(TestBaseServer):
         r = json_loads(r.data)['data']
         self.assertEqual("modification from prof1 after validation", r['content'])
 
-        r = self.assert200("/api/1.0/documents/21/transcriptions/from-user/5",
+        r = self.assert403("/api/1.0/documents/21/transcriptions/from-user/5",
                            data={"data": {"content": "modification from prof1 after validation"}},
                            method="PUT",
                            **PROF1_USER)
-        r = json_loads(r.data)['data']
-        self.assertEqual("modification from prof1 after validation", r['content'])
+        #r = json_loads(r.data)['data']
+        #self.assertEqual("modification from prof1 after validation", r['content'])
 
         # user cannot modify when it's validated
         self.assert403("/api/1.0/documents/21/transcriptions/from-user/5",
@@ -322,12 +353,46 @@ class TestTranscriptionsAPI(TestBaseServer):
                        method="PUT",
                        **STU1_USER)
 
+        # cannot update transcription note ptrs
+        self.assert403("/api/1.0/documents/21/transcriptions/from-user/5",
+                       data={
+                           "data": {
+                               "notes": [{
+                                   "id": 500001,
+                                   "ptr_start": 10,
+                                   "ptr_end": 16,
+                               }]
+                           }
+                       },
+                       method="PUT", **STU1_USER)
+
         self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
         # can modify again since the teacher deleted its transcription
         self.assert200("/api/1.0/documents/21/transcriptions/from-user/5",
                        data={"data": {"content": "modification from user& after validation"}},
                        method="PUT",
                        **STU1_USER)
+
+        # can update transcription note ptrs
+        r = self.assert200("/api/1.0/documents/21/transcriptions/from-user/5",
+                       data={
+                           "data": {
+                               "notes": [{
+                                   "id": 500001,
+                                   "content": "content updated",
+                                   "type_id": 0,
+                                   "ptr_start": 10,
+                                   "ptr_end": 16,
+                               }]
+                           }
+                       },
+                       method="PUT", **STU1_USER)
+        r = json_loads(r.data)['data']
+        # assert the ptr update
+        for n in r['notes']:
+            if n['id'] == 500001:
+                self.assertEqual(10, n['ptr_start'])
+                self.assertEqual(16, n['ptr_end'])
 
         # test when the document is closed
         doc = Document.query.filter(Document.id == 21).first()
@@ -337,7 +402,7 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert403("/api/1.0/documents/21/transcriptions/from-user/5",
                        data={"data": {"content": "tr modified by stu1"}},
                        method="PUT", **STU1_USER)
-        self.assert200("/api/1.0/documents/21/transcriptions/from-user/5",
+        self.assert403("/api/1.0/documents/21/transcriptions/from-user/5",
                        data={"data": {"content": "tr modified by prof1"}},
                        method="PUT", **PROF1_USER)
 
