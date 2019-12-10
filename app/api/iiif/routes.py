@@ -8,11 +8,12 @@ from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from urllib.request import build_opener, urlopen
 
-from app import auth, db
+from app import db
 from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
 from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl
+from app.utils import make_404, make_200, make_400
 
 TR_ZONE_TYPE = 1    # transcriptions
 ANNO_ZONE_TYPE = 2  # annotations
@@ -24,177 +25,50 @@ ANNO_ZONE_TYPE = 2  # annotations
 """
 
 
-def make_manifest(api_version, doc_id, user_id, reference=False):
+def make_manifest(api_version, doc_id):
     img = Image.query.filter(Image.doc_id == doc_id).first()
-    if img is None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404,
-            "details": "Cannot fetch manifest for the document {0}".format(doc_id)
-        })
-    else:
-        manifest_data = urlopen(img.manifest_url).read()
-        data = json_loads(manifest_data)
+    manifest_data = urlopen(img.manifest_url).read()
+    data = json_loads(manifest_data)
 
-        # enrich the manifest with annotation lists
-        for canvas in data["sequences"][0]["canvases"]:
-            if "otherContent" not in canvas:
-                canvas["otherContent"] = []
-            kwargs = {
-                "api_version": 1.0,
-                "doc_id": doc_id,
-                "canvas_name": canvas["@id"][canvas["@id"].rfind("/")+1:],
-                "user_id": user_id
+    # enrich the manifest with annotation lists
+    for canvas in data["sequences"][0]["canvases"]:
+        if "otherContent" not in canvas:
+            canvas["otherContent"] = []
+        kwargs = {
+            "api_version": 1.0,
+            "doc_id": doc_id,
+            "canvas_name": canvas["@id"][canvas["@id"].rfind("/")+1:],
+        }
+
+        canvas["otherContent"].extend([
+            {
+                "@type": "sc:AnnotationList",
+                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list", **kwargs)
+            },
+            {
+                "@type": "sc:AnnotationList",
+                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_transcriptions_list", **kwargs)
             }
-            if reference:
-                kwargs.pop("user_id")
+        ])
 
-            #root_url = request.url_root[0:request.url_root.rfind(current_app.config["APP_URL_PREFIX"])]
-            print(request.host_url[:-1], request.is_secure)
-            canvas["otherContent"].extend([
-                {
-                    "@type": "sc:AnnotationList",
-                    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list", **kwargs)
-                },
-                {
-                    "@type": "sc:AnnotationList",
-                    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_transcriptions_list", **kwargs)
-                }
-            ])
-
-        response = APIResponseFactory.make_response(data=data)
-
-    return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/reference')
-def api_documents_manifest_reference(api_version, doc_id):
-    doc = Document.query.filter(Document.id == doc_id).first()
-    return make_manifest(api_version, doc_id, doc.user_id, reference=True)
+    return data
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/manifest')
 def api_documents_manifest(api_version, doc_id):
-    user = current_app.get_current_user()
-    user_id = None if user is None or user.is_anonymous else user.id
-    return make_manifest(api_version, doc_id, user_id)
+    try:
+        manifest = make_manifest(api_version, doc_id)
+        return make_200(manifest)
+    except Exception as e:
+        return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/from-user/<user_id>')
-@jwt_required
-def api_documents_manifest_from_user(api_version, doc_id, user_id):
-    user = current_app.get_current_user()
-    if user.is_teacher or user.is_admin or int(user_id) == user.id:
-        return  make_manifest(api_version, doc_id, user_id)
-    else:
-        response = APIResponseFactory.make_response(errors={
-            "status": 403, "title": "Access forbidden"
-        })
-        return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest-url-origin')
-def api_documents_manifest_url_origin(api_version, doc_id):
-
+@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/origin')
+def api_documents_manifest_origin(api_version, doc_id):
     img = Image.query.filter(Image.doc_id == doc_id).first()
     if img is None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404,
-            "details": "Cannot fetch manifest for the document {0}".format(doc_id)
-        })
-    else:
-        url = img.manifest_url
-        #url = request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=api_version, doc_id=doc_id)
-        response = APIResponseFactory.make_response(data={"manifest_url": url})
-    return APIResponseFactory.jsonify(response)
-
-
-"""
-@api_bp.route("/api/<api_version>/documents/<doc_id>/first-canvas")
-def api_documents_first_canvas(api_version, doc_id):
-    json_obj = query_json_endpoint(
-        request,
-        url_for('api_bp.api_documents_manifest', api_version=api_version, doc_id=doc_id)
-    )
-
-    if "errors" in json_obj:
-        response = APIResponseFactory.make_response(errors=[
-            json_obj["errors"],
-            {"title": "Cannot fetch manifest for the document {0}".format(doc_id)}
-        ])
-    else:
-        try:
-            canvas = json_obj["data"]["sequences"][0]["canvases"][0]
-            response = APIResponseFactory.make_response(data=canvas)
-        except (IndexError, KeyError):
-            response = APIResponseFactory.make_response(errors={
-                "title": "Canvas not found in manifest for document {0}".format(doc_id)
-            })
-
-    return APIResponseFactory.jsonify(response)
-"""
-
-def get_canvas_idx_from_name(api_version, doc_id, canvas_name):
-    json_obj = query_json_endpoint(
-        request,
-        url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id,
-                canvas_name=canvas_name)
-    )
-    sequence = json_obj["data"]
-    for c_idx, c in enumerate(sequence["canvases"]):
-        if c["@id"].endswith("/" + canvas_name):
-            canvas_idx, canvas = c_idx, c
-            return canvas_idx
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/canvas/<canvas_name>")
-def api_documents_canvas(api_version, doc_id, canvas_name):
-    json_obj = query_json_endpoint(
-        request,
-        url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id)
-    )
-
-    if "errors" in json_obj:
-        response = APIResponseFactory.make_response(errors=[
-            json_obj["errors"],
-            {"title": "Cannot fetch manifest for the document {0}".format(doc_id)}
-        ])
-    else:
-        response = None
-        sequence = json_obj["data"]
-        for c in sequence["canvases"]:
-            if c["@id"].endswith("/" + canvas_name):
-                response = APIResponseFactory.make_response(data=c)
-                break
-    if response is None:
-        response = APIResponseFactory.make_response(errors={
-            "title": "Canvas '{1}' not found in manifest for document {0}".format(doc_id, canvas_name)
-        })
-
-    return APIResponseFactory.jsonify(response)
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/first-sequence")
-def api_documents_first_sequence(api_version, doc_id):
-    json_obj = query_json_endpoint(
-        request,
-        url_for('api_bp.api_documents_manifest', api_version=api_version, doc_id=doc_id)
-    )
-
-    if "errors" in json_obj:
-        response = APIResponseFactory.make_response(errors=[
-            json_obj["errors"],
-            {"title": "Cannot fetch manifest for the document {0}".format(doc_id)}
-        ])
-    else:
-        try:
-            canvas = json_obj["data"]["sequences"][0]
-            response = APIResponseFactory.make_response(data=canvas)
-        except (IndexError, KeyError):
-            response = APIResponseFactory.make_response(errors={
-                "title": "Sequence not found in manifest for document {0}".format(doc_id)
-            })
-
-    return APIResponseFactory.jsonify(response)
+        return make_404("Cannot fetch manifest for the document {0}".format(doc_id))
+    return make_200(data={"origin": img.manifest_url})
 
 
 """
@@ -204,7 +78,7 @@ def api_documents_first_sequence(api_version, doc_id):
 """
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/manifest/annotations")
 def api_documents_annotations(api_version, doc_id):
     """
 
@@ -212,16 +86,10 @@ def api_documents_annotations(api_version, doc_id):
     :param doc_id:
     :return:
     """
-    json_obj = query_json_endpoint(
-        request,
-        url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id)
-    )
-
-    if "errors" in json_obj:
-        response = APIResponseFactory.make_response(errors=json_obj["errors"])
-    else:
-        sequence = json_obj["data"]
-        new_annotation_list = []
+    new_annotation_list = []
+    try:
+        manifest = make_manifest(api_version, doc_id)
+        sequence = manifest["sequences"][0]
         for canvas in sequence["canvases"]:
             if "otherContent" in canvas:
                 op = build_opener()
@@ -230,29 +98,21 @@ def api_documents_annotations(api_version, doc_id):
                 for oc in [oc for oc in canvas["otherContent"] if oc["@type"] == "sc:AnnotationList"]:
                     # make a call to api_documents_manifest_annotations_list
                     try:
+                        print("fetching", oc["@id"])
                         resp = op.open(oc["@id"], timeout=20).read()
                     except HTTPError as e:
-                        response = APIResponseFactory.make_response(
-                            errors={"details": str(e),
-                                    "title": "The annotation list {0} cannot be reached".format(oc["@id"]),
-                                    "status": 404}
-                        )
-                        return APIResponseFactory.jsonify(response)
-
+                        return make_404("The annotation list {0} cannot be reached".format(oc["@id"]))
                     resp = json_loads(resp)
-                    if "errors" in resp:
-                        return resp
-                    else:
-                        new_annotation_list.append(resp)
+                    new_annotation_list.append(resp)
+    except Exception as e:
+        print(str(e))
+        return make_400(str(e))
 
-        response = APIResponseFactory.make_response(data=new_annotation_list)
-
-    return APIResponseFactory.jsonify(response)
+    return make_200(new_annotation_list)
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/list/<canvas_name>")
-@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>/list/<canvas_name>")
-def api_documents_annotations_list(api_version, doc_id, canvas_name, user_id=None):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/manifest/canvas/<canvas_name>/annotations")
+def api_documents_annotations_list(api_version, doc_id, canvas_name):
     """
 
     :param canvas_name:
@@ -261,179 +121,134 @@ def api_documents_annotations_list(api_version, doc_id, canvas_name, user_id=Non
     :param doc_id:
     :return:
     """
-    zone_type = ImageZoneType.query.filter(ImageZoneType.id == ANNO_ZONE_TYPE).one()
-
-    response = None
-
+    zone_type = ImageZoneType.query.filter(ImageZoneType.id == ANNO_ZONE_TYPE).first()
     user = current_app.get_current_user()
-    if not user.is_anonymous:
-        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
-            response = make_annotation_list(canvas_name, doc_id, [], zone_type.serialize())
-    elif user_id is not None:
-        response = make_annotation_list(canvas_name, doc_id, [], zone_type.serialize())
+    doc = Document.query.filter(Document.id == doc_id).first()
 
-    if response is None:
-        json_obj = query_json_endpoint(
-            request,
-            url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id)
-        )
+    if user.is_anonymous and doc.is_published is False:
+        annotation_list = make_annotation_list(canvas_name, doc_id, [], zone_type.serialize())
+        return make_200(annotation_list)
 
-        if "errors" in json_obj:
-            response = APIResponseFactory.make_response(errors=json_obj["errors"])
-        else:
-            sequence = json_obj["data"]
-            canvas = None
-            for c_idx, c in enumerate(sequence["canvases"]):
-                if c["@id"].endswith("/" + canvas_name):
-                    canvas_idx, canvas = c_idx, c
-                    break
+    try:
+        manifest = make_manifest(api_version, doc_id)
+        sequence = manifest["sequences"][0]
 
-            if canvas is None:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404, "details": "Canvas %s not found" % canvas_name
-                })
-                return APIResponseFactory.jsonify(response)
+        #find the corresponding canvas
+        canvas_idx, canvas = None, None
+        for c_idx, c in enumerate(sequence["canvases"]):
+            if c["@id"].endswith("/" + canvas_name):
+                canvas_idx, canvas = c_idx, c
+                break
 
-            json_obj = query_json_endpoint(
-                request,
-                url_for('api_bp.api_documents_manifest_url_origin', api_version=api_version, doc_id=doc_id)
+        if canvas is None:
+            return make_404("Canvas %s not found" % canvas_name)
+
+        img = Image.query.filter(Image.doc_id == doc_id).first()
+
+        # TODO s'il y a plusieurs images dans un canvas
+        img = Image.query.filter(Image.manifest_url == img.manifest_url, Image.doc_id == doc_id,
+                                 Image.canvas_idx == canvas_idx).first()
+        img_json = canvas["images"][0]
+        annotations = []
+
+        kwargs = {"doc_id": doc_id, "api_version": api_version}
+
+        zones = [z for z in img.zones if z.zone_type.id == zone_type.id]
+        for img_zone in zones:
+            kwargs["zone_id"] = img_zone.zone_id
+            kwargs["canvas_name"] = canvas_name
+            res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kwargs)
+            fragment_coords = img_zone.coords
+            new_annotation = make_annotation(
+                request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
+                canvas["@id"], img_json, fragment_coords, res_uri, img_zone.note,
+                format="text/plain"
             )
-            manifest_url = json_obj["data"].get("manifest_url")
+            annotations.append(new_annotation)
 
-            # TODO s'il y a plusieurs images dans un canvas
-            img = Image.query.filter(Image.manifest_url == manifest_url, Image.doc_id == doc_id,
-                                     Image.canvas_idx == canvas_idx).first()
-            img_json = canvas["images"][0]
-            annotations = []
+        annotation_list = make_annotation_list(canvas_name, doc_id, annotations, zone_type.serialize())
+        return make_200(annotation_list)
 
-            kargs = {"doc_id": doc_id, "api_version": api_version, "user_id": user_id}
-
-            if user_id is None:
-                zones = [z for z in img.zones if z.zone_type.id == zone_type.id]
-            else:
-                zones = [z for z in img.zones if z.zone_type.id == zone_type.id and z.user_id == int(user_id)]
-
-            for img_zone in zones:
-                kargs["zone_id"] = img_zone.zone_id
-                kargs["canvas_name"] = canvas_name
-                if user_id is not None:
-                    kargs["user_id"] = user_id
-                res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
-                fragment_coords = img_zone.coords
-                new_annotation = make_annotation(
-                    request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
-                    canvas["@id"], img_json, fragment_coords, res_uri, img_zone.note,
-                    format="text/plain"
-                )
-                annotations.append(new_annotation)
-
-            annotation_list = make_annotation_list(canvas_name, doc_id, annotations, zone_type.serialize())
-            response = annotation_list
-
-    return APIResponseFactory.jsonify(response)
+    except Exception as e:
+        print(str(e))
+        return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/list/<canvas_name>')
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>/list/<canvas_name>')
-def api_documents_transcriptions_list(api_version, doc_id, canvas_name, user_id=None):
+@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/canvas/<canvas_name>§/transcriptions')
+def api_documents_transcriptions_list(api_version, doc_id, canvas_name):
     """
     Fetch transcription segments formated as a sc:AnnotationList
+    :param canvas_name:
     :param user_id:
     :param api_version: API version
     :param doc_id: Document id
     :return: a json object Obj with a sc:AnnotationList inside Obj["data"]. Return errors in Obj["errors"]
     """
+    #doc = Document.query.filter(Document.id == doc_id).first()
     transcription_zone_type = ImageZoneType.query.filter(ImageZoneType.id == TR_ZONE_TYPE).one()
-
-    response = None
 
     from app.api.transcriptions.routes import get_reference_transcription
     tr = get_reference_transcription(doc_id)
     if tr is None:
-        response = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
+        annotation_list = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
+        return make_200(annotation_list)
 
-    user = current_app.get_current_user()
-    if not user.is_anonymous:
-        if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
-            response = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
-    elif user_id is not None:
-        response = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
+    try:
+        manifest = make_manifest(api_version, doc_id)
+        sequence = manifest["sequences"][0]
 
-    if response is None:
-        json_obj = query_json_endpoint(
-            request,
-            url_for('api_bp.api_documents_first_sequence', api_version=api_version, doc_id=doc_id,
-                    canvas_name=canvas_name)
-        )
+        canvas_idx, canvas = None, None
+        for c_idx, c in enumerate(sequence["canvases"]):
+            if c["@id"].endswith("/" + canvas_name):
+                canvas_idx, canvas = c_idx, c
+                break
 
-        if "errors" in json_obj:
-            response = APIResponseFactory.make_response(errors=json_obj["errors"])
-        else:
-            sequence = json_obj["data"]
-            canvas = None
-            for c_idx, c in enumerate(sequence["canvases"]):
-                if c["@id"].endswith("/" + canvas_name):
-                    canvas_idx, canvas = c_idx, c
-                    break
+        if canvas is None:
+            return make_404("Canvas %s not found" % canvas_name)
 
-            if canvas is None:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 404, "details": "Canvas %s not found" % canvas_name
-                })
-                return APIResponseFactory.jsonify(response)
+        img = Image.query.filter(Image.doc_id == doc_id).first()
+        first_img = canvas["images"][0]
+        annotations = []
 
-            manifest_url = query_json_endpoint(
-                request,
-                url_for('api_bp.api_documents_manifest_url_origin', api_version=api_version, doc_id=doc_id)
-            )
-            manifest_url = manifest_url["data"]
+        # transcription zone type
+        # TODO s'il y a plusieurs images dans un canvas
+        img = Image.query.filter(Image.manifest_url == img.manifest_url, Image.doc_id == doc_id,
+                                 Image.canvas_idx == canvas_idx).first()
 
-            first_img = canvas["images"][0]
-            manifest_url = manifest_url["manifest_url"]
-            annotations = []
+        zones = [z for z in img.zones if z.zone_type.id == transcription_zone_type.id]
 
-            # transcription zone type
-            # TODO s'il y a plusieurs images dans un canvas
-            img = Image.query.filter(Image.manifest_url == manifest_url, Image.doc_id == doc_id,
-                                     Image.canvas_idx == canvas_idx).first()
+        for zone in zones:
+            kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": zone.zone_id}
 
-            if user_id is None:
-                zones = [z for z in img.zones if z.zone_type.id == transcription_zone_type.id]
+            kargs["canvas_name"] = canvas_name
+            res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
+
+            img_al = AlignmentImage.query.filter(
+                AlignmentImage.transcription_id == tr.id,
+                AlignmentImage.manifest_url == zone.manifest_url,
+                AlignmentImage.canvas_idx == zone.canvas_idx,
+                AlignmentImage.img_idx == zone.img_idx,
+                AlignmentImage.zone_id == zone.zone_id
+            ).first()
+
+            # is there a text segment bound to this image zone?
+            if img_al is not None:
+                tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
             else:
-                zones = [z for z in img.zones if z.zone_type.id == transcription_zone_type.id and z.user_id == int(user_id)]
+                tr_seg = ""
 
-            for zone in zones:
-                kargs = {"api_version": api_version, "doc_id": doc_id, "zone_id": zone.zone_id}
-                if user_id is not None:
-                    kargs["user_id"] = user_id
-                kargs["canvas_name"] = canvas_name
-                res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kargs)
+            annotations.append(
+                make_annotation(
+                    request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
+                    canvas["@id"], first_img, zone.coords, res_uri, tr_seg, format="text/plain")
+            )
 
-                img_al = AlignmentImage.query.filter(
-                    AlignmentImage.transcription_id == tr.id,
-                    AlignmentImage.user_id == user_id if user_id is not None else AlignmentImage.user_id,
-                    AlignmentImage.manifest_url == zone.manifest_url,
-                    AlignmentImage.canvas_idx == zone.canvas_idx,
-                    AlignmentImage.img_idx == zone.img_idx,
-                    AlignmentImage.zone_id == zone.zone_id
-                ).first()
+        annotation_list = make_annotation_list(canvas_name, doc_id, annotations, transcription_zone_type.serialize())
+        return make_200(annotation_list)
 
-                # is there a text segment bound to this image zone?
-                if img_al is not None:
-                    tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
-                else:
-                    tr_seg = ""
-
-                annotations.append(
-                    make_annotation(
-                        request.host_url[:-1] + url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id),
-                        canvas["@id"], first_img, zone.coords, res_uri, tr_seg, format="text/plain")
-                )
-
-            annotation_list = make_annotation_list(canvas_name, doc_id, annotations, transcription_zone_type.serialize())
-            response = annotation_list
-
-    return APIResponseFactory.jsonify(response)
+    except Exception as e:
+        print(str(e))
+        return make_400(str(e))
 
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/<zone_id>")

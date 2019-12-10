@@ -12,6 +12,8 @@ class Config(object):
     ENV = "prod"
     SECRET_KEY = os.environ.get('SECRET_KEY')
 
+    APP_URL_PREFIX = "/adele"  # used to build correct iiif urls
+
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(os.path.abspath(os.getcwd()), 'db', 'adele.sqlite')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -32,7 +34,8 @@ class Config(object):
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     JWT_TOKEN_LOCATION = ['cookies', 'headers']
     JWT_COOKIE_CSRF_PROTECT = True
-    #JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(seconds=int(os.getenv(('JWT_ACCESS_TOKEN_EXPIRES'))))
+
+    # JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(seconds=int(os.getenv(('JWT_ACCESS_TOKEN_EXPIRES'))))
 
     @staticmethod
     def init_app(app):

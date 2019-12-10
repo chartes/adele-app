@@ -4,7 +4,7 @@ from flask import jsonify, current_app, request
 from config import Config
 
 
-def make_annotation_list(list_id, doc_id, annotations, annotation_type):
+def make_annotation_list(canvas_name, doc_id, annotations, annotation_type):
     """
 
     :param annotation_type:
@@ -17,7 +17,7 @@ def make_annotation_list(list_id, doc_id, annotations, annotation_type):
     print("url", url)
     return {
         "@context": "http://iiif.io/api/presentation/2/context.json",
-        "@id": "{0}/api/1.0/documents/{1}/{2}s/list/{3}".format(url, doc_id, annotation_type.get('label'), list_id),
+        "@id": "{0}/api/1.0/documents/{1}/manifest/canvas/{2}/{3}s".format(url, doc_id, canvas_name, annotation_type.get('label')),
         "@type": "sc:AnnotationList",
         "resources": annotations,
         "metadata": [
