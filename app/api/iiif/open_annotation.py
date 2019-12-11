@@ -13,11 +13,11 @@ def make_annotation_list(canvas_name, doc_id, annotations, annotation_type):
     :param annotations:
     :return:
     """
-    url = "%s%s" % (request.host_url[:-1], current_app.config["APP_URL_PREFIX"])
-    print("url", url)
+    url = current_app.with_url_prefix(
+        "/api/1.0/documents/{0}/manifest/canvas/{1}/{2}s".format(doc_id, canvas_name, annotation_type.get('label')))
     return {
         "@context": "http://iiif.io/api/presentation/2/context.json",
-        "@id": "{0}/api/1.0/documents/{1}/manifest/canvas/{2}/{3}s".format(url, doc_id, canvas_name, annotation_type.get('label')),
+        "@id": url,
         "@type": "sc:AnnotationList",
         "resources": annotations,
         "metadata": [

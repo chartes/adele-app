@@ -66,6 +66,13 @@ def create_app(config_name="dev"):
 
     config[config_name].init_app(app)
 
+    def with_url_prefix(url):
+        from flask import request
+        from flask import current_app
+        return "".join((request.host_url[:-1], current_app.config["APP_URL_PREFIX"], url))
+
+    app.with_url_prefix = with_url_prefix
+
     db.init_app(app)
     mail.init_app(app)
 
