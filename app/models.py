@@ -93,10 +93,10 @@ VALIDATION_TRANSLATION
         * commentaires des élèves consultables
         * commentaures des élèves clonables ?
 
-
-
-
 """
+
+TR_ZONE_TYPE = 1  # transcriptions
+ANNO_ZONE_TYPE = 2  # annotations
 
 VALIDATION_NONE = 0
 VALIDATION_TRANSCRIPTION = 1

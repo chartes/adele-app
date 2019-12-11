@@ -12,11 +12,10 @@ from app import db
 from app.api.iiif.open_annotation import make_annotation, make_annotation_list
 from app.api.response import APIResponseFactory
 from app.api.routes import query_json_endpoint, json_loads, api_bp
-from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl
-from app.utils import make_404, make_200, make_400
+from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl, ANNO_ZONE_TYPE, TR_ZONE_TYPE
+from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin
 
-TR_ZONE_TYPE = 1    # transcriptions
-ANNO_ZONE_TYPE = 2  # annotations
+
 
 """
 ===========================
@@ -316,6 +315,7 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>", methods=["POST"])
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_documents_annotations(api_version, doc_id, canvas_name):
     """
         {
@@ -364,7 +364,7 @@ def api_post_documents_annotations(api_version, doc_id, canvas_name):
 
             """ 
                 Delete annotations for the implicated canvases
-            """
+            
             print(data)
             print("delete image zones:")
             print("deleting zones for canvas ", canvas_idx)
@@ -377,6 +377,7 @@ def api_post_documents_annotations(api_version, doc_id, canvas_name):
                 print("deleting zone ", old_zone.zone_id)
                 db.session.delete(old_zone)
             db.session.commit()
+            """
 
             """
                 Insert the new annotations
@@ -582,6 +583,7 @@ def api_post_documents_annotations(api_version, doc_id, canvas_name):
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>", methods=["DELETE"])
 @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/<zone_id>/from-user/<user_id>", methods=["DELETE"])
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_documents_annotations(api_version, doc_id, user_id, canvas_name=None, zone_id=None):
     """
     :param user_id:
@@ -651,6 +653,7 @@ def api_documents_images(api_version, doc_id):
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=["POST"])
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_post_documents_images(api_version, doc_id):
     """
     {
@@ -733,6 +736,7 @@ def api_post_documents_images(api_version, doc_id):
 
 @api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=['DELETE'])
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_delete_documents_images(api_version, doc_id):
     response = None
 
@@ -871,5 +875,4 @@ def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, z
 
 @api_bp.route("/api/<api_version>/annotation-types")
 def api_annotations_types(api_version):
-    response = APIResponseFactory.make_response(data=[t.serialize() for t in ImageZoneType.query.all()])
-    return APIResponseFactory.jsonify(response)
+    return make_200([t.serialize() for t in ImageZoneType.query.all()])

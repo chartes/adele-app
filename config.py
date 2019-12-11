@@ -23,12 +23,12 @@ class Config(object):
     CSRF_ENABLED = True
 
     # Flask-Mail settings
-    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
-    USER_EMAIL_SENDER_NAME = os.getenv('USER_EMAIL_SENDER_NAME')
-    USER_EMAIL_SENDER_EMAIL = os.getenv('USER_EMAIL_SENDER_EMAIL')
-    MAIL_SERVER = os.getenv('MAIL_SERVER')
-    MAIL_PORT = int(os.getenv('MAIL_PORT') or 465)
+    MAIL_USERNAME = 'adele@chartes.psl.eu'
+    USER_EMAIL_SENDER_NAME = 'Adele'
+    USER_EMAIL_SENDER_EMAIL = 'adele@chartes.psl.eu'
+    MAIL_SERVER = 'smtp.chartes.psl.eu'
+    MAIL_PORT = 465
     MAIL_USE_SSL = int(os.getenv('MAIL_USE_SSL') or True)
 
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
@@ -45,31 +45,13 @@ class Config(object):
 class DevelopmentConfig(Config):
     ENV = 'development'
 
-    COPY = False
-
     SECRET_KEY = 'you-will-never-guess-but-please-change-me!'
 
-    MAIL_USERNAME = 'adele@chartes.psl.eu'
-    USER_EMAIL_SENDER_NAME = 'Adele'
-    USER_EMAIL_SENDER_EMAIL = 'adele@chartes.psl.eu'
-    MAIL_SERVER = 'smtp.chartes.psl.eu'
-    MAIL_PORT = 465
-    MAIL_USE_SSL = 1
+    APP_URL_PREFIX = ""  # used to build correct iiif urls
 
     @staticmethod
     def init_app(app):
-        if DevelopmentConfig.COPY:
-            path = os.path.join('db', 'adele.sqlite')
-            if time() - os.path.getmtime(path) > 3:
-                # get fresh new db
-                with urllib.request.urlopen('https://github.com/chartes/adele/raw/master/adele.sqlite') as response, \
-                        open(path, 'wb') as out_file:
-                    shutil.copyfileobj(response, out_file)
-                    print("** DB ready **")
-
         app.debug = True
-
-    # SQLALCHEMY_ECHO=True
 
 
 class TestConfig(Config):
