@@ -4,7 +4,6 @@ from urllib.request import build_opener
 from flask import request,  current_app
 from flask_jwt_extended import jwt_required
 
-from app import auth, db
 from app.api.routes import api_bp, json_loads
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
     ImageUrl, Image, VALIDATION_TRANSCRIPTION, VALIDATION_NONE, get_validation_step_label, VALIDATIONS_STEPS_LABELS

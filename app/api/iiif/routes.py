@@ -320,11 +320,9 @@ def api_post_documents_annotations(api_version, doc_id, canvas_name):
     """
         {
             "data" : [{
-                "zone_id" : 1,
                 "coords" : "10,40,500,50",
                 "content": "Je suis une première annotation avec <b>du markup</b>"
                 "zone_type_id" : 1,
-                "username" : "Eleve1"    (optionnal)
             },
         ...
             },
@@ -332,7 +330,6 @@ def api_post_documents_annotations(api_version, doc_id, canvas_name):
                 "coords" : "30,40,500,50",
                 "content": "Je suis une n-ième annotation avec <b>du markup</b>"
                 "zone_type_id" : 1,
-                "username" : "Professeur1"  (optionnal)
             }]
         }
     :param canvas_name:

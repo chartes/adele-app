@@ -1,5 +1,5 @@
 import datetime
-from flask import current_app
+from flask import current_app, url_for
 from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy.ext.associationproxy import association_proxy
 
@@ -332,6 +332,10 @@ class Document(db.Model):
             doc_closing_time = datetime.datetime.strptime(self.date_closing, '%Y-%m-%d %H:%M:%S')
             return datetime.datetime.now() > doc_closing_time
 
+    @property
+    def manifest_url(self):
+        return current_app.with_url_prefix(url_for('api_bp.api_documents_manifest', api_version='1.0', doc_id=self.id))
+
     def serialize(self):
         return {
             'id': self.id,
@@ -350,6 +354,7 @@ class Document(db.Model):
             'is_published': self.is_published,
             'is_closed': self.is_closed,
             'institution': self.institution.serialize() if self.institution is not None else None,
+            'manifest_url': self.manifest_url,
             'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
             'countries': [co.serialize() for co in self.countries],
@@ -484,9 +489,9 @@ class Image(db.Model):
                 } for z in self.zones
             ],
             'url': self.url,
-            'thumbnail_url': self.url.replace("full/full", "full/800,")
+            'thumbnail_url': self.url.replace("full/full", "full/800,"),
+            'info': self._image_url.img_url[:self._image_url.img_url.rfind('/full/full/')] + '/info.json'
         }
-
 
 class Institution(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
