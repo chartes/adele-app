@@ -110,7 +110,8 @@ def view_document_commentaries(api_version, doc_id, user_id=None):
     commentaries = zip(_coms, _coms_content)
 
     return make_200(data=[{
-        "id": com["id"],
+        "doc_id": com["doc_id"],
+        "user_id": com["user_id"],
         "type": com["type"],
         "content": Markup(com["content"]) if com["content"] is not None else "",
         "notes": {"{:010d}".format(n["id"]): n["content"] for n in com["notes"]}

@@ -112,9 +112,12 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
-    forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
-    if forbid:
-        return forbid
+    # teachers can still post notes in validated transcription
+    current_user = current_app.get_current_user()
+    if not current_user.is_teacher:
+        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
+        if forbid:
+            return forbid
 
     forbid = is_closed(doc_id)
     if forbid:
