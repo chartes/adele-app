@@ -351,8 +351,8 @@ def api_documents_clone_translation(api_version, doc_id, user_id):
     return make_200()
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/view/translation')
-@api_bp.route('/api/<api_version>/documents/<doc_id>/view/translation/from-user/<user_id>')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/translations')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/translations/from-user/<user_id>')
 def view_document_translation(api_version, doc_id, user_id=None):
     if user_id is not None:
         forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)

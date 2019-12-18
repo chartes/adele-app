@@ -229,19 +229,14 @@ class Commentary(db.Model):
     )
 
     def serialize(self):
-        print(self.notes, [
-                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end, "note": (n.commentary_id, n.note_id, n.note, n.commentary)})
-                for n in self.notes
-            ])
         return {
-            'id': self.id,
             'doc_id': self.doc_id,
             'user_id': self.user_id,
             'type': self.type.serialize(),
             'content': self.content,
             'notes': [
-                dict({"ptr_start": n.ptr_start, "ptr_end": n.ptr_end}, **(n.note.serialize()))
-                for n in self.notes if n.note is not None
+                dict({"ptr_start": chn.ptr_start, "ptr_end": chn.ptr_end}, **(chn.note.serialize()))
+                for chn in self.notes if self.notes and chn.note
             ]
         }
 
@@ -492,6 +487,7 @@ class Image(db.Model):
             'thumbnail_url': self.url.replace("full/full", "full/800,"),
             'info': self._image_url.img_url[:self._image_url.img_url.rfind('/full/full/')] + '/info.json'
         }
+
 
 class Institution(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

@@ -392,8 +392,8 @@ def add_notes_refs_to_text(text, notes):
     return text_with_notes
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription')
-@api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription/from-user/<user_id>')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcriptions')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcriptions/from-user/<user_id>')
 def view_document_transcription(api_version, doc_id, user_id=None):
     if user_id is not None:
         forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)

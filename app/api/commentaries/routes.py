@@ -1,31 +1,33 @@
 from flask import request, current_app
 from flask_jwt_extended import jwt_required
+from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import db, auth
-from app.api.routes import api_bp,  json_loads
+from app import db
+from app.api.routes import api_bp
+from app.api.transcriptions.routes import get_reference_transcription, get_transcription, add_notes_refs_to_text
 from app.models import Commentary, Document, VALIDATION_TRANSCRIPTION
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
-    make_400
+    make_400, forbid_if_other_user, forbid_if_validation_step
 
 
-def get_reference_commentary(doc_id, type_id):
+def get_commentaries(doc_id, user_id, type_id=None):
     """
 
     :param type_id:
     :param doc_id:
     :return:
     """
-    from app.api.transcriptions.routes import get_reference_transcription
-    tr_ref = get_reference_transcription(doc_id)
-    if tr_ref is None:
-        return None
+    tr = get_transcription(doc_id, user_id=user_id)
+
+    if type_id is None:
+        type_id = Commentary.type_id
 
     return Commentary.query.filter(
         doc_id == Commentary.doc_id,
-        type_id == Commentary.type_id,
-        tr_ref.user_id == Commentary.user_id
-    ).first()
+        tr.user_id == Commentary.user_id,
+        type_id == Commentary.type_id
+    ).all()
 
 
 def get_reference_commentaries(doc_id, type_id=None):
@@ -50,40 +52,69 @@ def get_reference_commentaries(doc_id, type_id=None):
     ).all()
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries')
+def api_all_commentary(api_version, doc_id):
+    forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
+    if forbid:
+        return forbid
+
+    tr = get_reference_transcription(doc_id)
+    if tr is None:
+        return make_404()
+
+    commentaries = Commentary.query.filter(
+        Commentary.doc_id == doc_id,
+        Commentary.user_id == tr.user_id,
+    ).all()
+
+    return make_200(data=[c.serialize() for c in commentaries])
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>')
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>')
-def api_commentary(api_version, doc_id, user_id=None, type_id=None):
+@jwt_required
+def api_commentary_from_user(api_version, doc_id, user_id):
 
-    user = current_app.get_current_user()
-    if user.is_anonymous:
-        return make_403()
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
 
-    # if anonymous or mere student wants to read data of another student
-    if not (user.is_teacher or user.is_admin) and user_id is not None and int(user_id) != int(user.id):
-        return make_403()
-
-    # if mere student then get its own data
-    if not (user.is_teacher or user.is_admin) and type_id is not None and user_id is None:
-        user_id = user.id
-
-    if type_id is None:
-        type_id = Commentary.type_id
-    if user_id is None:
-        user_id = Commentary.user_id
+    forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
+    if forbid:
+        return forbid
 
     commentaries = Commentary.query.filter(
         Commentary.doc_id == doc_id,
         Commentary.user_id == user_id,
-        Commentary.type_id == type_id
     ).all()
 
-    return make_200([c.serialize() for c in commentaries])
+    return make_200(data=[c.serialize() for c in commentaries])
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference')
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/reference/of-type/<type_id>')
-def api_commentary_reference(api_version, doc_id, type_id=None):
-    return make_200([c.serialize() for c in get_reference_commentaries(doc_id, type_id)])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/commentaries')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/commentaries/from-user/<user_id>')
+def view_document_commentaries(api_version, doc_id, user_id=None):
+    if user_id is not None:
+        forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+        if forbid:
+            return forbid
+        coms = get_commentaries(doc_id, user_id)
+    else:
+        coms = get_reference_commentaries(doc_id)
+
+    if coms is None:
+        return make_404()
+
+    _coms = [c.serialize() for c in coms]
+    _coms_content = [add_notes_refs_to_text(c["content"], c["notes"]) for c in _coms]
+
+    commentaries = zip(_coms, _coms_content)
+
+    return make_200(data=[{
+        "id": com["id"],
+        "type": com["type"],
+        "content": Markup(com["content"]) if com["content"] is not None else "",
+        "notes": {"{:010d}".format(n["id"]): n["content"] for n in com["notes"]}
+    } for com, notes in commentaries])
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['DELETE'])
