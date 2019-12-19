@@ -78,14 +78,20 @@ def api_commentary_from_user(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
-    forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
-    if forbid:
-        return forbid
+    # teachers can still post notes in validated transcription
+    current_user = current_app.get_current_user()
+    if not current_user.is_teacher:
+        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
+        if forbid:
+            return forbid
 
     commentaries = Commentary.query.filter(
         Commentary.doc_id == doc_id,
         Commentary.user_id == user_id,
     ).all()
+
+    if len(commentaries) == 0:
+        return make_404()
 
     return make_200(data=[c.serialize() for c in commentaries])
 
