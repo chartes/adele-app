@@ -11,22 +11,17 @@ from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_ad
     make_400, forbid_if_other_user, forbid_if_validation_step
 
 
-def get_commentaries(doc_id, user_id, type_id=None):
+def get_commentaries(doc_id, user_id):
     """
 
+    :param user_id:
     :param type_id:
     :param doc_id:
     :return:
     """
-    tr = get_transcription(doc_id, user_id=user_id)
-
-    if type_id is None:
-        type_id = Commentary.type_id
-
     return Commentary.query.filter(
         doc_id == Commentary.doc_id,
-        tr.user_id == Commentary.user_id,
-        type_id == Commentary.type_id
+        user_id == Commentary.user_id,
     ).all()
 
 
@@ -107,7 +102,7 @@ def view_document_commentaries(api_version, doc_id, user_id=None):
     else:
         coms = get_reference_commentaries(doc_id)
 
-    if coms is None:
+    if coms is None or len(coms) == 0:
         return make_404()
 
     _coms = [c.serialize() for c in coms]
