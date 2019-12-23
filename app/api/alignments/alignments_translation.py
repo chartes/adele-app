@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required
 from markupsafe import Markup
 
 from app import auth, db, api_bp
-from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text, etag, btag
+from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text, ETAG, BTAG
 from app.api.translations.routes import get_reference_translation
 from app.models import AlignmentTranslation
 from app.utils import forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, make_200, make_400
@@ -188,20 +188,20 @@ def add_notes_refs(tr, tl):
 
             # transcription al
             ptr_start = al_ptr_start + offset
-            offset += len(etag) * len(before_notes)
-            offset += (len(btag.format(1)) + len(etag)) * len(between_notes)
-            offset += len(btag.format(1)) * len(after_notes)
+            offset += len(ETAG) * len(before_notes)
+            offset += (len(BTAG.format(1)) + len(ETAG)) * len(between_notes)
+            offset += len(BTAG.format(1)) * len(after_notes)
             ptr_end = al_ptr_end + offset
 
             text = content[ptr_start:ptr_end]
 
             if overlapping_note:
-                text = "{btag}{al}{etag}".format(btag=btag.format(overlapping_note["id"]), etag=etag, al=text)
+                text = "{BTAG}{al}{ETAG}".format(BTAG=BTAG.format(overlapping_note["id"]), ETAG=ETAG, al=text)
             elif len(before_notes) > 0:
                 current_note_id = before_notes[0]["id"]
-                text = "{btag}{al}".format(btag=btag.format(current_note_id), al=text)
+                text = "{BTAG}{al}".format(BTAG=BTAG.format(current_note_id), al=text)
             elif len(after_notes) > 0:
-                text = "{al}{etag}".format(etag=etag, al=text)
+                text = "{al}{ETAG}".format(ETAG=ETAG, al=text)
 
             content_w_notes.append(Markup(text))
         return content_w_notes

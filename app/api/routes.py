@@ -81,6 +81,6 @@ from app.api.users import routes
 
 from app.api.alignments import alignments_translation
 #from app.api.alignments import alignment_images
-#from app.api.alignments import alignments_discours
+from app.api.alignments import alignments_discours
 
 from app.api.auth import login

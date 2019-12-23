@@ -1,16 +1,18 @@
 from flask import request, current_app, url_for
 from flask_jwt_extended import jwt_required
+from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import api_bp, auth, APIResponseFactory, db
+from app.api.alignments.alignments_translation import add_notes_refs
 from app.api.routes import query_json_endpoint
-from app.api.transcriptions.routes import get_reference_transcription
-from app.models import SpeechPartType
-from models import AlignmentDiscours
+from app.api.transcriptions.routes import get_reference_transcription, get_transcription, add_notes_refs_to_text
+from app.models import SpeechPartType, AlignmentDiscours
+from app.utils import make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_200
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours')
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours/from-user/<user_id>')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/speech-parts')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/speech-parts/from-user/<user_id>')
 def api_documents_transcriptions_alignments_discours(api_version, doc_id, user_id=None):
     """
     If user_id is None: get the reference translation (if any) to find the alignment
@@ -19,46 +21,89 @@ def api_documents_transcriptions_alignments_discours(api_version, doc_id, user_i
     :param user_id:
     :return:
     """
-    user = current_app.get_current_user()
-    response = None
-
     transcription = get_reference_transcription(doc_id)
 
     if transcription is None:
-        response = APIResponseFactory.make_response(errors={
-            "status": 404, "title": "Reference transcription not found"
-        })
+        return make_404()
 
+    if user_id is None:
+        user_id = transcription.user_id
     else:
-        if not user.is_anonymous:
-            if (not user.is_teacher and not user.is_admin) and user_id is not None and int(user_id) != user.id:
-                response = APIResponseFactory.make_response(errors={
-                    "status": 403, "title": "Access forbidden"
-                })
-        elif user_id is not None:
-            response = APIResponseFactory.make_response(errors={
-                "status": 403, "title": "Access forbidden"
-            })
+        forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+        if forbid:
+            return forbid
 
-        if response is None:
+    alignments = AlignmentDiscours.query.filter(
+        AlignmentDiscours.transcription_id == transcription.id,
+        AlignmentDiscours.user_id == user_id
+    ).all()
 
-            if user.is_anonymous:
-                user_id = transcription.user_id
+    if len(alignments) == 0:
+        return make_404()
 
-            if user_id is None:
-                if not (user.is_teacher or user.is_admin):
-                    user_id = user.id
-                else:
-                    user_id = AlignmentDiscours.user_id
+    return make_200(data=[al.serialize() for al in alignments])
 
-            alignments = AlignmentDiscours.query.filter(
-                AlignmentDiscours.transcription_id == transcription.id,
-                AlignmentDiscours.user_id == user_id
-            ).all()
 
-            response = APIResponseFactory.make_response(data=[al.serialize() for al in alignments])
+def add_speechparts_refs_to_text(text, alignments):
+    text_with_notes = text
+    # tags to represent notes in view mode
+    BTAG = "<span class='note-placeholder speech-part-type {sp_type_label}' data-note-id='{note_id:010d}'>"
+    ETAG = "</span>"
+    len_of_tag = len(BTAG) + len(ETAG)
 
-    return APIResponseFactory.jsonify(response)
+    notes = [
+        {
+            "id": al.id,
+            "speech_part_type_label": al.speech_part_type.label,
+            "ptr_start": al.ptr_start,
+            "ptr_end": al.ptr_end,
+            "content": al.note
+        }
+        for al in alignments
+    ]
+
+    def _ptr_start(k):
+        return k["ptr_start"]
+
+    notes.sort(key=_ptr_start)
+    for num_note, note in enumerate(notes):
+        offset = len_of_tag * num_note
+        offset += 3 * num_note  # decalage?
+        start_offset = int(note["ptr_start"]) + offset
+        end_offset = int(note["ptr_end"]) + offset
+        kwargs = {
+            "btag": BTAG.format(sp_type_label=note['speech_part_type_label'], note_id=note["id"]),
+            "etag": ETAG,
+            "text_before": text_with_notes[0:start_offset],
+            "text_between": text_with_notes[start_offset:end_offset],
+            "text_after": text_with_notes[end_offset:]
+        }
+        text_with_notes = "{text_before}{btag}{text_between}{etag}{text_after}".format(**kwargs)
+    return text_with_notes
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/speech-parts')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/view/speech-parts/from-user/<user_id>')
+def view_document_speech_parts_alignment(api_version, doc_id, user_id=None):
+    tr = get_reference_transcription(doc_id)
+
+    if tr is None:
+        return make_404()
+
+    if user_id is None:
+        user_id = tr.user_id
+
+    alignments = AlignmentDiscours.query.filter(
+        AlignmentDiscours.transcription_id == tr.id,
+        AlignmentDiscours.user_id == user_id
+    ).all()
+
+    _content = add_speechparts_refs_to_text(tr.content, alignments)
+
+    return make_200({
+        "content": Markup(_content) if tr.content is not None else "",
+        "notes": {"{:010d}".format(al.id): al.note for al in alignments}
+    })
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/discours', methods=['POST'])

@@ -366,15 +366,15 @@ def api_documents_clone_transcription(api_version, doc_id, user_id):
 
 
 # tags to represent notes in view mode
-btag = "<span class='note-placeholder' data-note-id='{:010d}'>"
-etag = "</span>"
+BTAG = "<span class='note-placeholder' data-note-id='{:010d}'>"
+ETAG = "</span>"
 
 
 def _ptr_start(k):
     return k["ptr_start"]
 
 
-def add_notes_refs_to_text(text, notes):
+def add_notes_refs_to_text(text, notes, btag=BTAG, etag=ETAG):
     len_of_tag = len(btag) + len(etag)
     text_with_notes = text
 
