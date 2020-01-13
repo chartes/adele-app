@@ -47,14 +47,14 @@ def api_documents_transcriptions_alignments_discours(api_version, doc_id, user_i
 def add_speechparts_refs_to_text(text, alignments):
     text_with_notes = text
     # tags to represent notes in view mode
-    BTAG = "<span class='note-placeholder speech-part-type {sp_type_label}' data-note-id='{note_id:010d}'>"
+    BTAG = "<span class='speech-part type-{speech_part_type_id:02d}' data-note-id='{note_id:010d}'>"
     ETAG = "</span>"
     len_of_tag = len(BTAG) + len(ETAG)
 
     notes = [
         {
             "id": al.id,
-            "speech_part_type_label": al.speech_part_type.label,
+            "speech_part_type_id": al.speech_part_type.id,
             "ptr_start": al.ptr_start,
             "ptr_end": al.ptr_end,
             "content": al.note
@@ -68,11 +68,11 @@ def add_speechparts_refs_to_text(text, alignments):
     notes.sort(key=_ptr_start)
     for num_note, note in enumerate(notes):
         offset = len_of_tag * num_note
-        offset += 3 * num_note  # decalage?
+        #offset += 3 * num_note  # decalage?
         start_offset = int(note["ptr_start"]) + offset
         end_offset = int(note["ptr_end"]) + offset
         kwargs = {
-            "btag": BTAG.format(sp_type_label=note['speech_part_type_label'], note_id=note["id"]),
+            "btag": BTAG.format(speech_part_type_id=note['speech_part_type_id'], note_id=note["id"]),
             "etag": ETAG,
             "text_before": text_with_notes[0:start_offset],
             "text_between": text_with_notes[start_offset:end_offset],
