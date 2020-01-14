@@ -5,10 +5,10 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app import db
 from app.api.routes import api_bp
-from app.api.transcriptions.routes import get_reference_transcription, get_transcription, add_notes_refs_to_text
+from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text
 from app.models import Commentary, Document, VALIDATION_TRANSCRIPTION
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
-    make_400, forbid_if_other_user, forbid_if_validation_step
+    make_400,  forbid_if_validation_step
 
 
 def get_commentaries(doc_id, user_id):

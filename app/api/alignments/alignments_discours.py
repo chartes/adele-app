@@ -49,7 +49,6 @@ def add_speechparts_refs_to_text(text, alignments):
     # tags to represent notes in view mode
     BTAG = "<span class='speech-part type-{speech_part_type_id:02d}' data-note-id='{note_id:010d}'>"
     ETAG = "</span>"
-    len_of_tag = len(BTAG) + len(ETAG)
 
     notes = [
         {
@@ -67,12 +66,16 @@ def add_speechparts_refs_to_text(text, alignments):
 
     notes.sort(key=_ptr_start)
     for num_note, note in enumerate(notes):
+
+        btag = BTAG.format(speech_part_type_id=note['speech_part_type_id'], note_id=note["id"])
+        len_of_tag = len(btag) + len(ETAG)
+
         offset = len_of_tag * num_note
         #offset += 3 * num_note  # decalage?
         start_offset = int(note["ptr_start"]) + offset
         end_offset = int(note["ptr_end"]) + offset
         kwargs = {
-            "btag": BTAG.format(speech_part_type_id=note['speech_part_type_id'], note_id=note["id"]),
+            "btag": btag,
             "etag": ETAG,
             "text_before": text_with_notes[0:start_offset],
             "text_between": text_with_notes[start_offset:end_offset],
