@@ -41,7 +41,7 @@ def get_reference_transcription(doc_id):
 
     return None
 
-
+#TODO: deprecated ?
 def get_reference_alignment_discours(doc_id):
     transcription = get_reference_transcription(doc_id)
     if transcription is None:

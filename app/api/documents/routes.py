@@ -67,7 +67,14 @@ def api_documents_unpublish(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents')
 def api_get_documents(api_version):
-    docs = Document.query.all()
+
+    pageSize = request.args.get('page[size]', None)
+    pageNumber = request.args.get('page[number]', 1)
+
+    if pageSize:
+        docs = Document.query.paginate(int(pageNumber), int(pageSize), error_out=False).items
+    else:
+        docs = Document.query.all()
     return make_200(data=[doc.serialize() for doc in docs])
 
 
