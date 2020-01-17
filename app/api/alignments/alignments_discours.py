@@ -101,6 +101,9 @@ def view_document_speech_parts_alignment(api_version, doc_id, user_id=None):
         AlignmentDiscours.user_id == user_id
     ).all()
 
+    if len(alignments) <= 0:
+        return make_404(details="Aucun alignement")
+
     _content = add_speechparts_refs_to_text(tr.content, alignments)
 
     return make_200({

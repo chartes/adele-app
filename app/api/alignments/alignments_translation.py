@@ -219,7 +219,7 @@ def add_notes_refs(tr, tl):
     notes = {n["id"]: n for n in tr_notes + tl_notes}
     notes = list(notes.values())
 
-    return tr_w_notes, tl_w_notes, notes
+    return tr_w_notes, tl_w_notes, notes, len(all_al)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription-alignment')
@@ -230,10 +230,13 @@ def view_document_translation_alignment(api_version, doc_id):
     if not transcription or not translation:
         return make_404()
 
-    tr_w_notes, tl_w_notes, notes = add_notes_refs(
+    tr_w_notes, tl_w_notes, notes, num_al = add_notes_refs(
         transcription.serialize_for_user(transcription.user_id),
         translation.serialize_for_user(translation.user_id)
     )
+
+    if num_al <= 0:
+        return make_404(details="Aucun alignement")
 
     return make_200({
         "doc_id": doc_id,
