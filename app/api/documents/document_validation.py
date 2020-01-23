@@ -32,6 +32,19 @@ def set_document_validation_step(doc, stage_id=VALIDATION_NONE):
         return make_400(str(e))
 
 
+# GET STEP
+@api_bp.route('/api/<api_version>/documents/<doc_id>/validation-step')
+@jwt_required
+def api_documents_get_validation_step(api_version, doc_id):
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+    return make_200(data={
+        "validation_step": doc.validation_step,
+        "validation_step_label": doc.validation_step_label
+    })
+
+
 # NONE STEP (helper route)
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-none')
 @jwt_required

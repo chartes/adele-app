@@ -7,7 +7,8 @@ from app import db, auth
 from app.api.documents.document_validation import set_document_validation_step
 from app.api.routes import api_bp
 from app.models import Translation, User, Document, Translation, AlignmentDiscours, \
-    Note, TranslationHasNote, VALIDATION_NONE, VALIDATION_TRANSLATION, VALIDATION_TRANSCRIPTION
+    Note, TranslationHasNote, VALIDATION_NONE, VALIDATION_TRANSLATION, VALIDATION_TRANSCRIPTION, \
+    get_validation_step_label
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, make_403, is_closed, \
     forbid_if_validation_step, forbid_if_other_user
@@ -294,7 +295,10 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
 
     set_document_validation_step(doc=doc, stage_id=VALIDATION_TRANSCRIPTION)
 
-    return make_200()
+    return make_200(data={
+        "validation_step": doc.validation_step,
+        "validation_step_label": get_validation_step_label(doc.validation_step)
+    })
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>', methods=["DELETE"])

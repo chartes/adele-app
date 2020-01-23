@@ -7,7 +7,7 @@ from app import db, auth
 from app.api.documents.document_validation import set_document_validation_step
 from app.api.routes import api_bp
 from app.models import Transcription, User, Document, AlignmentDiscours, \
-    Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE
+    Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE, get_validation_step_label
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, is_closed, forbid_if_validation_step, \
     forbid_if_other_user
@@ -306,8 +306,10 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
 
     set_document_validation_step(doc=doc, stage_id=VALIDATION_NONE)
 
-    return make_200()
-
+    return make_200(data={
+        "validation_step": doc.validation_step,
+        "validation_step_label": get_validation_step_label(doc.validation_step)
+    })
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>', methods=["DELETE"])
 @jwt_required

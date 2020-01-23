@@ -484,7 +484,7 @@ class Image(db.Model):
                 } for z in self.zones
             ],
             'url': self.url,
-            'thumbnail_url': self.url.replace("full/full", "full/800,"),
+            'thumbnail_url': self.url.replace("full/full", "full/800,"), # first approx; should rather open the manifest and seek the real thumbnail url
             'info': self._image_url.img_url[:self._image_url.img_url.rfind('/full/full/')] + '/info.json'
         }
 
