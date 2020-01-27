@@ -102,18 +102,6 @@ class APIResponseFactory:
         response["data"] = d
         return response
 
-    @classmethod
-    def add_meta(cls, response, meta):
-        raise NotImplementedError
-
-    @classmethod
-    def add_links(cls, response, links):
-        raise NotImplementedError
-
-    @classmethod
-    def is_response_format_valid(cls, response):
-        raise NotImplementedError
-
 
 if __name__ == "__main__":
 

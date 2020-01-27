@@ -1,48 +1,46 @@
 from flask import current_app
 from flask_jwt_extended import jwt_required
 
-from app import auth, api_bp, db
-from app.models import VALIDATION_NONE, VALIDATION_TRANSCRIPTION, get_validation_step_label, VALIDATIONS_STEPS_LABELS, \
-    Document, \
-    VALIDATION_TRANSLATION, VALIDATION_COMMENTARIES, VALIDATION_FACSIMILE, VALIDATION_SPEECHPARTS, Transcription, \
-    Translation, Commentary, AlignmentImage
+from app import api_bp, db
+from app.models import Document, Translation, Commentary, Transcription
 from app.utils import make_200, make_400, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404
 
 
-def set_document_validation_step(doc, stage_id=VALIDATION_NONE):
+def unvalidate_all(doc):
+    doc.is_transcription_validated = False
+    doc.is_translation_validated = False
+    doc.is_facsimile_validated = False
+    doc.is_speechparts_validated = False
+    doc.is_commentaries_validated = False
+    return doc
+
+def commit_document_validation(doc):
     user = current_app.get_current_user()
     is_another_teacher = user.is_teacher and doc.user_id != user.id
 
     access_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, doc.user_id)
     if access_forbidden or is_another_teacher:
+        db.session.rollback()
         return access_forbidden
 
     try:
-        if stage_id not in VALIDATIONS_STEPS_LABELS.keys():
-            return make_400("Invalid step id")
-
-        doc.validation_step = stage_id
+        db.session.add(doc)
         db.session.commit()
-        return make_200(data={
-            "id": doc.id,
-            "validation_step": doc.validation_step,
-            "validation_step_label": get_validation_step_label(doc.validation_step)
-        })
+        return make_200(data=doc.validation_flags)
     except Exception as e:
+        db.session.rollback()
+        print(e)
         return make_400(str(e))
 
 
-# GET STEP
-@api_bp.route('/api/<api_version>/documents/<doc_id>/validation-step')
+# GET FLAGS
+@api_bp.route('/api/<api_version>/documents/<doc_id>/validation-flags')
 @jwt_required
 def api_documents_get_validation_step(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
-    return make_200(data={
-        "validation_step": doc.validation_step,
-        "validation_step_label": doc.validation_step_label
-    })
+    return make_200(data=doc.validation_flags)
 
 
 # NONE STEP (helper route)
@@ -52,7 +50,8 @@ def api_documents_validate_none(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_NONE)
+    doc = unvalidate_all(doc)
+    return commit_document_validation(doc)
 
 
 # TRANSCRIPTION STEP
@@ -62,7 +61,8 @@ def api_documents_validate_transcription(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_TRANSCRIPTION)
+    doc.is_transcription_validated = True
+    return commit_document_validation(doc)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
@@ -72,7 +72,12 @@ def api_documents_unvalidate_transcription(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_NONE)  # previous step
+    doc.is_transcription_validated = False
+    doc.is_translation_validated = False
+    doc.is_facsimile_validated = False
+    doc.is_speechparts_validated = False
+    doc.is_commentaries_validated = False
+    return commit_document_validation(doc)
 
 
 # TRANSLATION STEP
@@ -83,7 +88,8 @@ def api_documents_validate_translation(api_version, doc_id):
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
                                                Translation.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_TRANSLATION)
+    doc.is_translation_validated = True
+    return commit_document_validation(doc)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-translation')
@@ -93,7 +99,8 @@ def api_documents_unvalidate_translation(api_version, doc_id):
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
                                                Translation.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_TRANSCRIPTION)  # previous step
+    doc.is_translation_validated = False
+    return commit_document_validation(doc)
 
 
 # COMMENTARIES STEP
@@ -104,7 +111,8 @@ def api_documents_validate_commentaries(api_version, doc_id):
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
                                               Commentary.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_COMMENTARIES)
+    doc.is_commentaries_validated = True
+    return commit_document_validation(doc)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-commentaries')
@@ -114,7 +122,8 @@ def api_documents_unvalidate_commentaries(api_version, doc_id):
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
                                               Commentary.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_TRANSLATION)  # previous step
+    doc.is_commentaries_validated = False
+    return commit_document_validation(doc)
 
 
 # FACSIMILE STEP
@@ -125,7 +134,8 @@ def api_documents_validate_facsimile(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_FACSIMILE)
+    doc.is_facsimile_validated = True
+    return commit_document_validation(doc)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-facsimile')
@@ -135,7 +145,8 @@ def api_documents_unvalidate_facsimile(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_COMMENTARIES)  # previous step
+    doc.is_facsimile_validated = False
+    return commit_document_validation(doc)
 
 
 # SPEECH PARTS STEP
@@ -146,7 +157,8 @@ def api_documents_validate_speech_parts(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_SPEECHPARTS)
+    doc.is_speechparts_validated = True
+    return commit_document_validation(doc)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-speech-parts')
@@ -156,4 +168,5 @@ def api_documents_unvalidate_speech_parts(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
-    return set_document_validation_step(doc=doc, stage_id=VALIDATION_FACSIMILE)  # previous step
+    doc.is_speechparts_validated = False
+    return commit_document_validation(doc)

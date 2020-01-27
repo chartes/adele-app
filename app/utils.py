@@ -1,7 +1,7 @@
 from functools import wraps
 
 from flask import current_app
-#from flask_login import current_user
+
 
 """
 ========================================================
@@ -118,6 +118,10 @@ def forbid_if_nor_teacher_nor_admin(view_function):
         return view_function(*args, **kwargs)
     return wrapped_f
 
+
+def get_doc(doc_id):
+    from app.models import Document
+    return Document.query.filter(Document.id == doc_id).first()
 
 def is_closed(doc_id):
     from app.models import Document

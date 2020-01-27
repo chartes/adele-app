@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required
 
 from app.api.routes import api_bp, json_loads
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
-    ImageUrl, Image, VALIDATION_TRANSCRIPTION, VALIDATION_NONE, get_validation_step_label, VALIDATIONS_STEPS_LABELS
+    ImageUrl, Image
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_400, \
     forbid_if_nor_teacher_nor_admin, make_204, make_409, forbid_if_another_teacher
 

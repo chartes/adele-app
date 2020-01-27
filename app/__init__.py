@@ -1,4 +1,6 @@
 import datetime
+import uuid
+
 from flask import Flask, Blueprint
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
@@ -11,7 +13,6 @@ from config import config
 from app.api.response import APIResponseFactory
 from flask_httpauth import HTTPBasicAuth
 
-
 # Initialize Flask extensions
 migrate = Migrate()
 mail = Mail()
@@ -19,34 +20,25 @@ auth = HTTPBasicAuth()
 
 api_bp = Blueprint('api_bp', __name__)
 
+
+def auto_constraint_name(constraint, table):
+    if constraint.name is None or constraint.name == "_unnamed_":
+        return "sa_autoname_%s" % str(uuid.uuid4())[0:5]
+    else:
+        return constraint.name
+
 naming_convention = {
+    "auto_constraint_name": auto_constraint_name,
     'pk': 'pk_%(table_name)s',
     'fk': 'fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s',
     'ix': 'ix_%(table_name)s_%(column_0_name)s',
     'uq': 'uq_%(table_name)s_%(column_0_name)s',
-    'ck': 'ck_%(table_name)s_%(constraint_name)s',
+    "ck": "ck_%(table_name)s_%(auto_constraint_name)s",
 }
 db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention))
 
-
-class PrefixMiddleware(object):
-
-    def __init__(self, app, prefix=''):
-        self.app = app
-        self.prefix = prefix
-
-    def __call__(self, environ, start_response):
-
-        if environ['PATH_INFO'].startswith(self.prefix):
-            environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
-            environ['SCRIPT_NAME'] = self.prefix
-            return self.app(environ, start_response)
-
-
-
-
 from sqlalchemy.engine import Engine
-from sqlalchemy import event, MetaData
+from sqlalchemy import event
 from flask_cors import CORS
 
 @event.listens_for(Engine, "connect")
@@ -74,8 +66,6 @@ def create_app(config_name="dev"):
         app.config.from_object(config[config_name])
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    #app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix=app.config["APP_URL_PREFIX"])
-
     config[config_name].init_app(app)
 
     def with_url_prefix(url):

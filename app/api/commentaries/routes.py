@@ -6,9 +6,9 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import db
 from app.api.routes import api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text
-from app.models import Commentary, Document, VALIDATION_TRANSCRIPTION, get_validation_step_label
+from app.models import Commentary, Document
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
-    make_400,  forbid_if_validation_step
+    make_400, get_doc
 
 
 def get_commentaries(doc_id, user_id):
@@ -49,9 +49,8 @@ def get_reference_commentaries(doc_id, type_id=None):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries')
 def api_all_commentary(api_version, doc_id):
-    forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
-    if forbid:
-        return forbid
+    if not get_doc(doc_id).is_transcription_validated:
+        return make_403()
 
     tr = get_reference_transcription(doc_id)
     if tr is None:
@@ -75,10 +74,8 @@ def api_commentary_from_user(api_version, doc_id, user_id):
 
     # teachers can still post notes in validated transcription
     current_user = current_app.get_current_user()
-    if not current_user.is_teacher:
-        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
-        if forbid:
-            return forbid
+    if not current_user.is_teacher and get_doc(doc_id).is_transcription_validated:
+        return make_403()
 
     commentaries = Commentary.query.filter(
         Commentary.doc_id == doc_id,
@@ -184,6 +181,9 @@ def api_post_commentary(api_version, doc_id):
     if doc is None:
         return make_404()
 
+    if not doc.is_transcription_validated:
+        return make_403()
+
     data = request.get_json()
     if "data" in data:
         co = data["data"]
@@ -198,9 +198,6 @@ def api_post_commentary(api_version, doc_id):
         access_is_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, co["user_id"])
         if access_is_forbidden:
             return access_is_forbidden
-
-        if doc.validation_step < VALIDATION_TRANSCRIPTION:
-            return make_400("A transcription must be validated first")
 
         c = Commentary(doc_id=doc_id, user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
         db.session.add(c)
@@ -242,6 +239,9 @@ def api_put_commentary(api_version, doc_id):
     if doc is None:
         return make_404()
 
+    if not doc.is_transcription_validated:
+        return make_403()
+
     data = request.get_json()
     if "data" in data:
         data = data["data"]
@@ -256,9 +256,6 @@ def api_put_commentary(api_version, doc_id):
                 if (not user.is_teacher and not user.is_admin) and int(co["user_id"]) != int(user.id):
                     db.session.rollback()
                     return make_403()
-
-                if doc.validation_step < VALIDATION_TRANSCRIPTION:
-                    return make_400("A transcription must be validated first")
 
                 c = Commentary.query.filter(
                     Commentary.doc_id == doc_id,

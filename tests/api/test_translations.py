@@ -4,8 +4,7 @@ from os.path import join
 from sqlalchemy.testing import in_
 
 from app import db
-from app.models import Document, Note,  VALIDATION_TRANSCRIPTION, VALIDATION_NONE, \
-    VALIDATION_TRANSLATION
+from app.models import Document, Note
 from tests.base_server import TestBaseServer, json_loads, ADMIN_USER, STU1_USER, PROF1_USER, PROF2_USER, STU2_USER, \
     PROF3_USER
 
@@ -112,11 +111,6 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
-        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
-        # should not be able to delete the student translation when the translation has already been validated
-        self.assert403("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
-        self.assert200("/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
-
         # test that bound notes are deleted when student deletes its own translation
         self.assert200("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
         notes = Note.query.filter(Note.user_id == 5).all()
@@ -129,14 +123,14 @@ class TestTranslationsAPI(TestBaseServer):
 
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         doc = Document.query.filter(Document.id == 21).first()
-        self.assertEqual(VALIDATION_TRANSLATION, doc.validation_step)
+        self.assertTrue(doc.is_translation_validated)
         self.assert200("/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
         self.assertEqual(0, len(Note.query.filter(Note.user_id == 4).all()))
         self.assertEqual(other_notes_cnt, len(Note.query.filter(Note.user_id != 4).all()))
 
-        # check that the validation step rolled back to VALIDATION_TRANSCRIPTION
+        # check that the validation step is False
         doc = Document.query.filter(Document.id == 21).first()
-        self.assertEqual(VALIDATION_TRANSCRIPTION, doc.validation_step)
+        self.assertFalse(doc.is_translation_validated)
 
         # test that the resource is not available anymore
         self.assert404("/api/1.0/documents/21/translations")

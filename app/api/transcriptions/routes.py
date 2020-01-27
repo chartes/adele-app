@@ -1,16 +1,16 @@
 from flask import request, current_app
-from flask_jwt_extended import current_user, jwt_required
+from flask_jwt_extended import jwt_required
 from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
-from app.api.documents.document_validation import set_document_validation_step
+from app.api.documents.document_validation import commit_document_validation, unvalidate_all
 from app.api.routes import api_bp
 from app.models import Transcription, User, Document, AlignmentDiscours, \
-    Note, TranscriptionHasNote, VALIDATION_TRANSCRIPTION, VALIDATION_NONE, get_validation_step_label
+    Note, TranscriptionHasNote
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, is_closed, forbid_if_validation_step, \
-    forbid_if_other_user
+    forbid_if_other_user, make_403, get_doc
 
 """
 ===========================
@@ -33,7 +33,7 @@ def get_reference_transcription(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is not None and doc.validation_step >= VALIDATION_TRANSCRIPTION:
+    if doc is not None and doc.is_transcription_validated:
         return Transcription.query.filter(
             doc_id == Transcription.doc_id,
             doc.user_id == Transcription.user_id
@@ -42,15 +42,15 @@ def get_reference_transcription(doc_id):
     return None
 
 #TODO: deprecated ?
-def get_reference_alignment_discours(doc_id):
-    transcription = get_reference_transcription(doc_id)
-    if transcription is None:
-        return None
-    else:
-        return AlignmentDiscours.query.filter(
-            AlignmentDiscours.transcription_id == transcription.id,
-            AlignmentDiscours.user_id == transcription.user_id
-        ).all()
+#def get_reference_alignment_discours(doc_id):
+#    transcription = get_reference_transcription(doc_id)
+#    if transcription is None:
+#        return None
+#    else:
+#        return AlignmentDiscours.query.filter(
+#            AlignmentDiscours.transcription_id == transcription.id,
+#            AlignmentDiscours.user_id == transcription.user_id
+#        ).all()
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/users')
@@ -114,10 +114,8 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
 
     # teachers can still post notes in validated transcription
     current_user = current_app.get_current_user()
-    if not current_user.is_teacher:
-        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
-        if forbid:
-            return forbid
+    if not current_user.is_teacher and get_doc(doc_id).is_transcription_validated:
+        return make_403()
 
     forbid = is_closed(doc_id)
     if forbid:
@@ -218,10 +216,8 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
 
     # teachers can still update validated transcription
     current_user = current_app.get_current_user()
-    if not current_user.is_teacher:
-        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
-        if forbid:
-            return forbid
+    if not current_user.is_teacher and get_doc(doc_id).is_transcription_validated:
+        return make_403()
 
     forbid = is_closed(doc_id)
     if forbid:
@@ -283,11 +279,9 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
         return is_another_teacher
 
     # forbid students to delete a transcription when there is a valid transcription
-    user = current_app.get_current_user()
-    if not user.is_teacher:
-        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSCRIPTION)
-        if forbid:
-            return forbid
+    #user = current_app.get_current_user()
+    #if not user.is_teacher and get_doc(doc_id).is_transcription_validated:
+    #    return make_403()
 
     tr = get_transcription(doc_id=doc_id, user_id=user_id)
     if tr is None:
@@ -298,18 +292,15 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
             if thn.note.user_id == int(user_id):
                 db.session.delete(thn.note)
         db.session.delete(tr)
+        doc = unvalidate_all(doc)
+        db.session.add(doc)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         print(str(e))
         return make_400(str(e))
 
-    set_document_validation_step(doc=doc, stage_id=VALIDATION_NONE)
-
-    return make_200(data={
-        "validation_step": doc.validation_step,
-        "validation_step_label": get_validation_step_label(doc.validation_step)
-    })
+    return make_200(data=doc.validation_flags)
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>', methods=["DELETE"])
 @jwt_required

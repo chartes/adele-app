@@ -92,6 +92,7 @@ class TestAlignmentTranslationAPI(TestBaseServer):
         self.assert404("/api/1.0/documents/21/transcriptions/alignments", **STU1_USER)
         self.assert404("/api/1.0/documents/21/transcriptions/alignments", **PROF1_USER)
 
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
 
         r = self.assert200("/api/1.0/documents/21/transcriptions/alignments")
@@ -117,7 +118,7 @@ class TestAlignmentTranslationAPI(TestBaseServer):
                        method="POST", data={"data": []}, **STU1_USER)
         self.load_fixtures(TestAlignmentTranslationAPI.FIXTURES_TRANSLATION_STU1)
 
-        # cannot post when the validation step is < VALIDATION_TRANSCRIPTION
+        # cannot post when the transcription validation flag is False
         self.assert404("/api/1.0/documents/21/transcriptions/alignments/from-user/5",
                        method="POST", data={"data": []}, **STU1_USER)
 

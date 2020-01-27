@@ -4,14 +4,13 @@ from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import db, auth
-from app.api.documents.document_validation import set_document_validation_step
+from app.api.documents.document_validation import commit_document_validation
 from app.api.routes import api_bp
 from app.models import Translation, User, Document, Translation, AlignmentDiscours, \
-    Note, TranslationHasNote, VALIDATION_NONE, VALIDATION_TRANSLATION, VALIDATION_TRANSCRIPTION, \
-    get_validation_step_label
+    Note, TranslationHasNote
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, make_403, is_closed, \
-    forbid_if_validation_step, forbid_if_other_user
+    forbid_if_validation_step, forbid_if_other_user, get_doc
 
 """
 ===========================
@@ -34,7 +33,7 @@ def get_reference_translation(doc_id):
     :return:
     """
     doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is not None and doc.validation_step >= VALIDATION_TRANSLATION:
+    if doc is not None and doc.is_translation_validated:
         return Translation.query.filter(
             doc_id == Translation.doc_id,
             doc.user_id == Translation.user_id
@@ -104,10 +103,8 @@ def api_post_documents_translations(api_version, doc_id, user_id):
 
     # teachers can still post notes in validated translation
     current_user = current_app.get_current_user()
-    if not current_user.is_teacher:
-        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSLATION)
-        if forbid:
-            return forbid
+    if not current_user.is_teacher and get_doc(doc_id).is_translation_validated:
+        return make_403()
 
     forbid = is_closed(doc_id)
     if forbid:
@@ -208,10 +205,8 @@ def api_put_documents_translations(api_version, doc_id, user_id):
 
     # teachers can still update validated translation
     current_user = current_app.get_current_user()
-    if not current_user.is_teacher:
-        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSLATION)
-        if forbid:
-            return forbid
+    if not current_user.is_teacher and get_doc(doc_id).is_translation_validated:
+        return make_403()
 
     forbid = is_closed(doc_id)
     if forbid:
@@ -273,11 +268,9 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
         return is_another_teacher
 
     # forbid students to delete a translation when there is a valid translation
-    user = current_app.get_current_user()
-    if not user.is_teacher:
-        forbid = forbid_if_validation_step(doc_id, gte=VALIDATION_TRANSLATION)
-        if forbid:
-            return forbid
+    #user = current_app.get_current_user()
+    #if not user.is_teacher and get_doc(doc_id).is_translation_validated:
+    #    return make_403()
 
     tr = get_translation(doc_id=doc_id, user_id=user_id)
     if tr is None:
@@ -288,18 +281,14 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
             if thn.note.user_id == int(user_id):
                 db.session.delete(thn.note)
         db.session.delete(tr)
+        doc.is_translation_validated = False
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         print(str(e))
         return make_400(str(e))
 
-    set_document_validation_step(doc=doc, stage_id=VALIDATION_TRANSCRIPTION)
-
-    return make_200(data={
-        "validation_step": doc.validation_step,
-        "validation_step_label": get_validation_step_label(doc.validation_step)
-    })
+    return make_200(data=doc.validation_flags)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>', methods=["DELETE"])

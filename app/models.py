@@ -73,27 +73,6 @@ Invalider le flag transcription invalide automatiquement les flags suivants :
 TR_ZONE_TYPE = 1  # transcriptions
 ANNO_ZONE_TYPE = 2  # annotations
 
-VALIDATION_NONE = 0
-VALIDATION_TRANSCRIPTION = 1
-VALIDATION_TRANSLATION = 2
-VALIDATION_COMMENTARIES = 3
-VALIDATION_FACSIMILE = 4
-VALIDATION_SPEECHPARTS = 5
-
-VALIDATIONS_STEPS_LABELS = {
-    VALIDATION_NONE: 'none',
-    VALIDATION_TRANSCRIPTION: 'transcription',
-    VALIDATION_TRANSLATION: 'translation',
-    VALIDATION_COMMENTARIES: 'commentaries',
-    VALIDATION_FACSIMILE: 'facsimile',
-    VALIDATION_SPEECHPARTS: 'speechparts'
-}
-
-
-def get_validation_step_label(stage_id):
-    return VALIDATIONS_STEPS_LABELS[stage_id]
-
-
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
@@ -256,7 +235,13 @@ class Document(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey("user.id", ondelete='CASCADE'))
     whitelist_id = db.Column(db.Integer(), db.ForeignKey("whitelist.id"))
 
-    validation_step = db.Column(db.Integer(), default=VALIDATION_NONE)
+    # validation flags
+    is_notice_validated = db.Column(db.Boolean(), default=True)
+    is_transcription_validated = db.Column(db.Boolean(), default=False)
+    is_translation_validated = db.Column(db.Boolean(), default=False)
+    is_facsimile_validated = db.Column(db.Boolean(), default=False)
+    is_speechparts_validated = db.Column(db.Boolean(), default=False)
+    is_commentaries_validated = db.Column(db.Boolean(), default=False)
 
     # Relationships #
     whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id", backref=db.backref('documents'))
@@ -306,6 +291,17 @@ class Document(db.Model):
     def manifest_url(self):
         return current_app.with_url_prefix(url_for('api_bp.api_documents_manifest', api_version='1.0', doc_id=self.id))
 
+    @property
+    def validation_flags(self):
+        return {
+            'notice': self.is_notice_validated,
+            'transcription': self.is_transcription_validated,
+            'translation': self.is_translation_validated,
+            'facsimile': self.is_facsimile_validated,
+            'speech-parts': self.is_speechparts_validated,
+            'commentaries': self.is_commentaries_validated
+        }
+
     def serialize(self):
         return {
             'id': self.id,
@@ -333,8 +329,7 @@ class Document(db.Model):
             'languages': [lg.serialize() for lg in self.languages],
             'traditions': [tr.serialize() for tr in self.traditions],
             'whitelist': self.whitelist.serialize() if self.whitelist is not None else None,
-            'validation_step': self.validation_step,
-            'validation_step_label': get_validation_step_label(self.validation_step)
+            'validation_flags': self.validation_flags
         }
 
 
