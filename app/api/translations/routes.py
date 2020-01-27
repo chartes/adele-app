@@ -97,6 +97,7 @@ def api_post_documents_translations(api_version, doc_id, user_id):
     :param doc_id:
     :return:
     """
+
     forbid = forbid_if_other_user(current_app, user_id)
     if forbid:
         return forbid

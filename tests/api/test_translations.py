@@ -85,8 +85,8 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
         # doc without translation
-        self.assert403("/api/1.0/documents/21/translations/from-user/100")
-        self.assert403("/api/1.0/documents/21/translations/from-user/4")
+        self.assert401("/api/1.0/documents/21/translations/from-user/100")
+        self.assert401("/api/1.0/documents/21/translations/from-user/4")
         self.assert403("/api/1.0/documents/21/translations/from-user/4", **STU1_USER)
         self.assert404("/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
 
@@ -94,17 +94,17 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
 
-        self.assert403("/api/1.0/documents/21/translations/from-user/4")
+        self.assert401("/api/1.0/documents/21/translations/from-user/4")
         self.assert403("/api/1.0/documents/21/translations/from-user/4", **STU1_USER)
         self.assert200("/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
 
-        self.assert403("/api/1.0/documents/21/translations/from-user/5")
+        self.assert401("/api/1.0/documents/21/translations/from-user/5")
         self.assert200("/api/1.0/documents/21/translations/from-user/5", **STU1_USER)
         self.assert403("/api/1.0/documents/21/translations/from-user/5", **STU2_USER)
         self.assert200("/api/1.0/documents/21/translations/from-user/5", **PROF1_USER)
 
     def test_delete_translations_from_user(self):
-        self.assert403("/api/1.0/documents/21/translations/from-user/100", method="DELETE")
+        self.assert401("/api/1.0/documents/21/translations/from-user/100", method="DELETE")
         self.assert403("/api/1.0/documents/21/translations/from-user/100", method="DELETE", **STU1_USER)
         self.assert404("/api/1.0/documents/21/translations/from-user/100", method="DELETE", **PROF1_USER)
 
@@ -140,7 +140,7 @@ class TestTranslationsAPI(TestBaseServer):
 
         # test that the resource is not available anymore
         self.assert404("/api/1.0/documents/21/translations")
-        self.assert403("/api/1.0/documents/21/translations/from-user/4")
+        self.assert401("/api/1.0/documents/21/translations/from-user/4")
         self.assert404("/api/1.0/documents/21/translations/from-user/4", **PROF1_USER)
 
         # test when the document is closed
@@ -162,10 +162,10 @@ class TestTranslationsAPI(TestBaseServer):
     def test_post_translations_from_user(self):
         self.load_fixtures(TestTranslationsAPI.FIXTURES)
         small_tr = {"data": {"content": "tr"}}
-        self.assert403("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST")
+        self.assert401("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST")
         self.assert403("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST",
                        **STU1_USER)
-        self.assert400("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST",
+        self.assert403("/api/1.0/documents/21/translations/from-user/100", data=small_tr, method="POST",
                        **PROF1_USER)
 
         # =================== STUDENT ===================
@@ -218,7 +218,7 @@ class TestTranslationsAPI(TestBaseServer):
         for i, note in enumerate(r['notes']):
             self.assertPtr(r['content'], note['ptr_start'], note['ptr_end'], expected_fragments[i])
 
-        # posting notes will TRUNCATE AND REPLACE notes
+        # posting new notes
         r = self.assert200("/api/1.0/documents/21/translations/from-user/7",
                            data={"data": {"notes": [{
                                "content": "note1 from user2",
@@ -228,9 +228,9 @@ class TestTranslationsAPI(TestBaseServer):
                            ]}}, method="POST",
                            **STU2_USER)
         r = json_loads(r.data)['data']
-        self.assertEqual(1, len(r['notes']))
+        self.assertEqual(3, len(r['notes']))
         self.assertEqual(len(r['notes']), Note.query.filter(Note.user_id == 7).count())
-        note = r['notes'][0]
+        note = r['notes'][2]
         self.assertEqual("note1 from user2", note["content"])
         self.assertPtr(r['content'], note['ptr_start'], note['ptr_end'], 'from')
 
@@ -270,10 +270,10 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES)
 
         small_tr = {"data": {"content": "tr"}}
-        self.assert403("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT")
+        self.assert401("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT")
         self.assert404("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT",
                        **STU1_USER)
-        self.assert404("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5", data=small_tr, method="PUT",
                        **PROF1_USER)
 
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
@@ -291,16 +291,13 @@ class TestTranslationsAPI(TestBaseServer):
         r = json_loads(r.data)['data']
         self.assertEqual("modification from user1", r['content'])
 
-        r = self.assert200("/api/1.0/documents/21/translations/from-user/5",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5",
                            data={"data": {"content": "modification from prof1"}},
                            method="PUT",
                            **PROF1_USER)
-        r = json_loads(r.data)['data']
-        self.assertEqual("modification from prof1", r['content'])
-
         # let's validate the doc 21
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
-        # teacher can modify both
+        # teacher can modify on its own content
         r = self.assert200("/api/1.0/documents/21/translations/from-user/4",
                            data={"data": {"content": "modification from prof1 after validation"}},
                            method="PUT",
@@ -308,12 +305,10 @@ class TestTranslationsAPI(TestBaseServer):
         r = json_loads(r.data)['data']
         self.assertEqual("modification from prof1 after validation", r['content'])
 
-        r = self.assert200("/api/1.0/documents/21/translations/from-user/5",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5",
                            data={"data": {"content": "modification from prof1 after validation"}},
                            method="PUT",
                            **PROF1_USER)
-        r = json_loads(r.data)['data']
-        self.assertEqual("modification from prof1 after validation", r['content'])
 
         # user cannot modify when it's validated
         self.assert403("/api/1.0/documents/21/translations/from-user/5",
@@ -336,7 +331,7 @@ class TestTranslationsAPI(TestBaseServer):
         self.assert403("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"content": "tr modified by stu1"}},
                        method="PUT", **STU1_USER)
-        self.assert200("/api/1.0/documents/21/translations/from-user/5",
+        self.assert403("/api/1.0/documents/21/translations/from-user/5",
                        data={"data": {"content": "tr modified by prof1"}},
                        method="PUT", **PROF1_USER)
 

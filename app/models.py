@@ -322,7 +322,7 @@ class Document(db.Model):
             return False
         else:
             user = current_app.get_current_user()
-            if user.is_teacher or user.is_admin:
+            if (user.is_teacher and self.user_id == user.id) or user.is_admin:
                 return False
             doc_closing_time = datetime.datetime.strptime(self.date_closing, '%Y-%m-%d %H:%M:%S')
             return datetime.datetime.now() > doc_closing_time

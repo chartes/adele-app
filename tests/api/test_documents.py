@@ -160,18 +160,19 @@ class TestDocumentsAPI(TestBaseServer):
 
     def test_set_document_manifest(self):
         self.load_fixtures(self.FIXTURES)
-        self.assert401("/api/1.0/documents/20/set-manifest", data={}, method="POST")
-        self.assert403("/api/1.0/documents/20/set-manifest", data={}, method="POST", **STU1_USER)
-        self.assert403("/api/1.0/documents/20/set-manifest", data={}, method="POST", **PROF2_USER)
+        self.assert401("/api/1.0/documents/20/manifest", data={}, method="POST")
+        self.assert403("/api/1.0/documents/20/manifest", data={}, method="POST", **STU1_USER)
+        self.assert403("/api/1.0/documents/20/manifest", data={}, method="POST", **PROF2_USER)
 
-        r = self.post_with_auth("/api/1.0/documents/20/set-manifest",
-                            data={"data": {"manifest_url": "https://iiif.chartes.psl.eu/adele/iiif/manifests/man20.json"}},
+        r = self.post_with_auth("/api/1.0/documents/20/manifest",
+                            data={"data": {"manifest_url": "https://iiif.chartes.psl.eu/manifests/adele/man20.json"}},
                             **PROF1_USER)
 
-        self.assertEqual(1, len(json_loads(r.data)["data"]))
+        d = json_loads(r.data)
+        self.assertEqual(1, len(d["data"]))
 
-        r = self.post_with_auth("/api/1.0/documents/20/set-manifest",
-                            data={"data": {"manifest_url": "https://iiif.chartes.psl.eu/adele/iiif/manifests/man109.json"}},
+        r = self.post_with_auth("/api/1.0/documents/20/manifest",
+                            data={"data": {"manifest_url": "https://iiif.chartes.psl.eu/manifests/adele/man109.json"}},
                             **ADMIN_USER)
-
-        self.assertEqual(2, len(json_loads(r.data)["data"]))
+        d = json_loads(r.data)
+        self.assertEqual(2, len(d["data"]))
