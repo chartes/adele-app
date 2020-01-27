@@ -2,7 +2,9 @@ import datetime
 from flask import Flask, Blueprint
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import MetaData
 
 from app.utils import make_403
 from config import config
@@ -11,11 +13,21 @@ from flask_httpauth import HTTPBasicAuth
 
 
 # Initialize Flask extensions
-db = SQLAlchemy()
+migrate = Migrate()
 mail = Mail()
 auth = HTTPBasicAuth()
 
 api_bp = Blueprint('api_bp', __name__)
+
+naming_convention = {
+    'pk': 'pk_%(table_name)s',
+    'fk': 'fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s',
+    'ix': 'ix_%(table_name)s_%(column_0_name)s',
+    'uq': 'uq_%(table_name)s_%(column_0_name)s',
+    'ck': 'ck_%(table_name)s_%(constraint_name)s',
+}
+db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention))
+
 
 class PrefixMiddleware(object):
 
@@ -34,7 +46,7 @@ class PrefixMiddleware(object):
 
 
 from sqlalchemy.engine import Engine
-from sqlalchemy import event
+from sqlalchemy import event, MetaData
 from flask_cors import CORS
 
 @event.listens_for(Engine, "connect")
@@ -74,6 +86,8 @@ def create_app(config_name="dev"):
     app.with_url_prefix = with_url_prefix
 
     db.init_app(app)
+    migrate.init_app(app, db, render_as_batch=True)
+
     mail.init_app(app)
 
     CORS(app, supports_credentials=True, resources={r"*": {"origins": "*"}})

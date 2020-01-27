@@ -43,55 +43,30 @@ association_whitelist_has_user = db.Table('whitelist_has_user',
 )
 
 """
-TODO JP – Documentation du Document workflow 
-Définition des états d’édition d’un document: valeurs du flag Document.validation_step
-Les éléments éditoriaux attachés à un document sont :
-* la transcription ;
-* la traduction ;
-* le fac-similé (alignement transcription / zones des images) ;
-* parties du discours (segmentation de la transcription en parties du discours) ;
-* des commentaires libres (commentaire diplomatique, historique, paléographique, etc.).
+=======================
+    Validation 
+=======================
 
-VALIDATION_NONE
-    Aucun élément éditorial n’est attaché au document, à l’exception de sa notice.
-    student:
-        * transcription éditable
-    teacher:
-        * transcription éditable
-        * transcriptions des élèves éditables
-        * transcriptions des élèves clonables
-    Les autres éléments éditoriaux ne sont pas éditables
+Un flag de validation distinct pour chaque élément du dossier parmi la liste suivante :
+- transcription
+- traduction
+- commentaires
+- alignements transcription / facsimile
+- alignements transcription / parties du discours
 
-VALIDATION_TRANSCRIPTION
-    La transcription du teacher est validée (par lui) : c’est la transcription de référence
-    student:
-        * transcription de référence consultable (non éditable)
-        * transcription oersonnelle consultable ?
-        * traduction éditable
-    teacher:
-        * transcription (de référence) éditable
-        * transcriptions des élèves éditables
-        * traduction éditable
-        * traductions des élèves éditables
-        * traductions des élèves clonables        
-    Les autres éléments éditoriaux ne sont pas éditables
+Les flags sont des booléens (0: non validé, 1: validé)
 
-VALIDATION_TRANSLATION
-    La traduction (possiblement vide) du teacher est validée (par lui) : c’est la traduction de référence
-    student:
-        * transcription de référence consultable (non éditable)
-        * traduction de référence consultable (non éditable)
-        * transcription oersonnelle consultable ?
-        * traduction oersonnelle consultable ?
-        * commentaires éditables 
-    teacher:
-        * transcription (de référence) éditable
-        * traduction (de référence) éditable
-        * transcriptions des élèves éditables
-        * traductions des élèves éditables
-        * commentaires éditables
-        * commentaires des élèves consultables
-        * commentaures des élèves clonables ?
+Les flags suivants ne peuvent être validés que si le flag transcription est validé :
+- traduction
+- commentaires
+- alignements transcription / facsimile
+- alignements transcription / parties du discours
+
+Invalider le flag transcription invalide automatiquement les flags suivants :
+- traduction
+- commentaires
+- alignements transcription / facsimile
+- alignements transcription / parties du discours
 
 """
 
@@ -566,7 +541,7 @@ class Role(db.Model):
 
 class SpeechPartType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    lang_code = db.Column(db.String, db.ForeignKey("language.code", ondelete="CASCADE"))
+    lang_code = db.Column(db.String, db.ForeignKey("language.code",  ondelete="CASCADE"))
     label = db.Column(db.String)
     definition = db.Column(db.Text)
 
