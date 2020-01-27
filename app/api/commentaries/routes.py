@@ -6,7 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import db
 from app.api.routes import api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text
-from app.models import Commentary, Document, VALIDATION_TRANSCRIPTION
+from app.models import Commentary, Document, VALIDATION_TRANSCRIPTION, get_validation_step_label
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
     make_400,  forbid_if_validation_step
 
@@ -151,7 +151,13 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
 
     try:
         db.session.commit()
-        return make_200()
+
+        # change validation step
+
+        return make_200(data={
+            #"validation_step": doc.validation_step,
+            #"validation_step_label": get_validation_step_label(doc.validation_step)
+        })
     except (Exception, KeyError) as e:
         db.session.rollback()
         return make_400(str(e))
@@ -162,52 +168,42 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
 def api_post_commentary(api_version, doc_id):
     """
     {
-        "data": [
+        "data":
             {
                 "doc_id" : 1,
                 "user_id" : 1,
                 "type_id": 2,
                 "content" : "This is a commentary"
             }
-        ]
     }
     :param api_version:
     :param doc_id:
     :return:
     """
-    user = current_app.get_current_user()
-    if user.is_anonymous:
-        return make_403()
-
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
 
     data = request.get_json()
     if "data" in data:
-        data = data["data"]
-
-        created_data = []
-
+        co = data["data"]
         if len(data) == 0:
             return make_400("No data")
 
-        for co in data:
+        if "user_id" not in co:
+            user = current_app.get_current_user()
+            co["user_id"] = user.id
 
-            if "user_id" not in co:
-                co["user_id"] = user.id
+        # only teacher and admin can see everything
+        access_is_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, co["user_id"])
+        if access_is_forbidden:
+            return access_is_forbidden
 
-            # only teacher and admin can see everything
-            if (not user.is_teacher and not user.is_admin) and int(co["user_id"]) != int(user.id):
-                db.session.rollback()
-                return make_403()
+        if doc.validation_step < VALIDATION_TRANSCRIPTION:
+            return make_400("A transcription must be validated first")
 
-            if doc.validation_step < VALIDATION_TRANSCRIPTION:
-                return make_400("A transcription must be validated first")
-
-            c = Commentary(doc_id=doc_id, user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
-            db.session.add(c)
-            created_data.append(c)
+        c = Commentary(doc_id=doc_id, user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
+        db.session.add(c)
 
         try:
             db.session.commit()
@@ -215,7 +211,7 @@ def api_post_commentary(api_version, doc_id):
             db.session.rollback()
             return make_400(str(e))
 
-        return make_200([d.serialize() for d in created_data])
+        return make_200(c.serialize())
     else:
         return make_400("no data")
 

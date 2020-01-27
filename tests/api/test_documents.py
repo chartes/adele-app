@@ -165,13 +165,13 @@ class TestDocumentsAPI(TestBaseServer):
         self.assert403("/api/1.0/documents/20/set-manifest", data={}, method="POST", **PROF2_USER)
 
         r = self.post_with_auth("/api/1.0/documents/20/set-manifest",
-                            data={"data": {"manifest_url": "http://193.48.42.68/adele/iiif/manifests/man20.json"}},
+                            data={"data": {"manifest_url": "https://iiif.chartes.psl.eu/adele/iiif/manifests/man20.json"}},
                             **PROF1_USER)
 
         self.assertEqual(1, len(json_loads(r.data)["data"]))
 
         r = self.post_with_auth("/api/1.0/documents/20/set-manifest",
-                            data={"data": {"manifest_url": "http://193.48.42.68/adele/iiif/manifests/man109.json"}},
+                            data={"data": {"manifest_url": "https://iiif.chartes.psl.eu/adele/iiif/manifests/man109.json"}},
                             **ADMIN_USER)
 
         self.assertEqual(2, len(json_loads(r.data)["data"]))
