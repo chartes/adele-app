@@ -7,7 +7,7 @@ from app import db, auth
 from app.api.documents.document_validation import commit_document_validation
 from app.api.routes import api_bp
 from app.models import Translation, User, Document, Translation, AlignmentDiscours, \
-    Note, TranslationHasNote
+    Note, TranslationHasNote, TranscriptionHasNote
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, make_403, is_closed, \
     forbid_if_validation_step, forbid_if_other_user, get_doc
@@ -279,7 +279,11 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
     try:
         for thn in tr.translation_has_note:
             if thn.note.user_id == int(user_id):
-                db.session.delete(thn.note)
+                exist_in_transcription = TranscriptionHasNote.query.filter(
+                    TranscriptionHasNote.note_id == thn.note.id
+                ).first()
+                if not exist_in_transcription:
+                    db.session.delete(thn.note)
         db.session.delete(tr)
         doc.is_translation_validated = False
         db.session.commit()

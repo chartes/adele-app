@@ -113,7 +113,9 @@ class TestTranslationsAPI(TestBaseServer):
 
         # test that bound notes are deleted when student deletes its own translation
         self.assert200("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
+        self.assert200("/api/1.0/documents/21/transcriptions/from-user/5", method="DELETE", **STU1_USER)
         notes = Note.query.filter(Note.user_id == 5).all()
+        print(notes)
         self.assertEqual(0, len(notes))
 
         # test that bound notes are deleted too for teacher deletes its  translation
@@ -124,12 +126,13 @@ class TestTranslationsAPI(TestBaseServer):
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         doc = Document.query.filter(Document.id == 21).first()
         self.assertTrue(doc.is_translation_validated)
+
+        self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
         self.assert200("/api/1.0/documents/21/translations/from-user/4", method="DELETE", **PROF1_USER)
         self.assertEqual(0, len(Note.query.filter(Note.user_id == 4).all()))
         self.assertEqual(other_notes_cnt, len(Note.query.filter(Note.user_id != 4).all()))
 
-        # check that the validation step is False
-        doc = Document.query.filter(Document.id == 21).first()
+        # check that the validation flag is False
         self.assertFalse(doc.is_translation_validated)
 
         # test that the resource is not available anymore
@@ -143,15 +146,7 @@ class TestTranslationsAPI(TestBaseServer):
         db.session.add(doc)
         db.session.commit()
 
-        self.load_fixtures(
-            [join(TestBaseServer.FIXTURES_PATH, "notes", "notes_transcription_doc_21_stu1.sql"),
-             join(TestBaseServer.FIXTURES_PATH, "notes", "notes_transcription_doc_21_prof1.sql"),]
-        )
-        self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
-        self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
-
         self.assert403("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **STU1_USER)
-        self.assert200("/api/1.0/documents/21/translations/from-user/5", method="DELETE", **PROF1_USER)
 
     def test_post_translations_from_user(self):
         self.load_fixtures(TestTranslationsAPI.FIXTURES)

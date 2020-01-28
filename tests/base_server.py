@@ -107,9 +107,9 @@ class TestBaseServer(TestCase):
                 r = self.get(url)
         elif method == "POST":
             if with_auth:
-                r = self.post_with_auth(url, data=kwargs["data"], username=kwargs["username"])
+                r = self.post_with_auth(url, data=kwargs.get('data', {}), username=kwargs["username"])
             else:
-                r = self.post(url, data=kwargs["data"])
+                r = self.post(url, data=kwargs.get('data', {}))
         elif method == "DELETE":
             if with_auth:
                 r = self.delete_with_auth(url, username=kwargs["username"])
@@ -117,9 +117,9 @@ class TestBaseServer(TestCase):
                 r = self.delete(url)
         elif method == "PUT":
             if with_auth:
-                r = self.put_with_auth(url, data=kwargs["data"], username=kwargs["username"])
+                r = self.put_with_auth(url, data=kwargs.get('data', {}), username=kwargs["username"])
             else:
-                r = self.put(url, data=kwargs["data"])
+                r = self.put(url, data=kwargs.get('data', {}))
         else:
             raise NotImplementedError
 

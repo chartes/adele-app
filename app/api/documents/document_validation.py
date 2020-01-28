@@ -3,7 +3,8 @@ from flask_jwt_extended import jwt_required
 
 from app import api_bp, db
 from app.models import Document, Translation, Commentary, Transcription
-from app.utils import make_200, make_400, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404
+from app.utils import make_200, make_400, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, \
+    forbid_if_nor_teacher_nor_admin
 
 
 def unvalidate_all(doc):
@@ -35,8 +36,7 @@ def commit_document_validation(doc):
 
 # GET FLAGS
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validation-flags')
-@jwt_required
-def api_documents_get_validation_step(api_version, doc_id):
+def api_documents_get_validation_flags(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
         return make_404()
@@ -46,6 +46,7 @@ def api_documents_get_validation_step(api_version, doc_id):
 # NONE STEP (helper route)
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-none')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_validate_none(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None:
@@ -57,16 +58,20 @@ def api_documents_validate_none(api_version, doc_id):
 # TRANSCRIPTION STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-transcription')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_validate_transcription(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
-    if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == doc.user_id).first() is None:
+    if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
+                                                 Transcription.user_id == doc.user_id).first() is None:
         return make_404()
+
     doc.is_transcription_validated = True
     return commit_document_validation(doc)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-transcription')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_unvalidate_transcription(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
@@ -83,6 +88,7 @@ def api_documents_unvalidate_transcription(api_version, doc_id):
 # TRANSLATION STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-translation')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_validate_translation(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
@@ -94,6 +100,7 @@ def api_documents_validate_translation(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-translation')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_unvalidate_translation(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
@@ -106,6 +113,7 @@ def api_documents_unvalidate_translation(api_version, doc_id):
 # COMMENTARIES STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-commentaries')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_validate_commentaries(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
@@ -117,6 +125,7 @@ def api_documents_validate_commentaries(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-commentaries')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_unvalidate_commentaries(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
@@ -129,6 +138,7 @@ def api_documents_unvalidate_commentaries(api_version, doc_id):
 # FACSIMILE STEP
 @api_bp.route('/api/<api_version>/documents/<doc_id>/validate-facsimile')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_validate_facsimile(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
@@ -140,6 +150,7 @@ def api_documents_validate_facsimile(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-facsimile')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_unvalidate_facsimile(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
@@ -163,6 +174,7 @@ def api_documents_validate_speech_parts(api_version, doc_id):
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unvalidate-speech-parts')
 @jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_unvalidate_speech_parts(api_version, doc_id):
     doc = Document.query.filter(Document.id == doc_id).first()
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
