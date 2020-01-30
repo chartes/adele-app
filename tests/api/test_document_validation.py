@@ -56,10 +56,10 @@ class TestDocumentValidationAPI(TestBaseServer):
     def test_validation_translation(self):
         self.load_fixtures(self.FIXTURES)
         # when there's no transcription at all
-        self.assert404("/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         # when there's no translation at all
         self.load_fixtures(self.FIXTURES_TRANSCRIPTION_PROF_1)
-        self.assert404("/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-translation", **PROF1_USER)
 
         self.load_fixtures(self.FIXTURES_TRANSLATION_PROF_1)
         self.load_fixtures(self.FIXTURES_TRANSCRIPTION_STU_1)
@@ -97,11 +97,12 @@ class TestDocumentValidationAPI(TestBaseServer):
     def test_validation_commentaries(self):
         self.load_fixtures(self.FIXTURES)
         # when there's no transcription at all
-        self.assert404("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
 
         # when there's no commentaries at all
         self.load_fixtures(self.FIXTURES_TRANSCRIPTION_PROF_1)
         self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        # 403 cuz student
         self.assert403("/api/1.0/documents/21/validate-commentaries", **STU1_USER)
         self.load_fixtures(self.FIXTURES_COMMENTARIES)
         self.assert200("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
@@ -130,51 +131,50 @@ class TestDocumentValidationAPI(TestBaseServer):
 
         # test when you delete the transcription
         self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
-        self.assert404("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
-        self.assert404("/api/1.0/documents/21/unvalidate-commentaries", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/unvalidate-commentaries", **PROF1_USER)
 
     def test_validation_facsimile(self):
-        self.load_fixtures(self.FIXTURES)
-        # when there's no transcription at all
-
-        # when there's no facsimile alignments at all
-        self.load_fixtures(self.FIXTURES_TRANSCRIPTION_PROF_1)
-
-        self.load_fixtures(self.FIXTURES_FACSIMILE)
-        # cannot validate as student
-
-        # when there's teacher facsimile alignments
-
-        # test unvalidation
-        # cannot validate as student
-
-        # test when you delete the facsimile alignments
-
-        # test when you delete the transcription
-
         raise NotImplementedError
 
     def test_validation_speechparts(self):
         self.load_fixtures(self.FIXTURES)
         # when there's no transcription at all
+        self.assert403("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
 
-        # when there's no speechparts alignments at all
+        # when there's no speechparts at all
         self.load_fixtures(self.FIXTURES_TRANSCRIPTION_PROF_1)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-speech-parts", **STU1_USER)
+        self.load_fixtures(self.FIXTURES_SPEECHPARTS_PROF_1)
+        self.assert200("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
+
+        # test when you delete the speechparts
+        self.assert200("/api/1.0/documents/21/speech-parts", method="DELETE", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/unvalidate-speech-parts", **PROF1_USER)
 
         self.load_fixtures(self.FIXTURES_SPEECHPARTS_PROF_1)
-        # when there's no teacher speechparts alignmentsb( but user ones
-        # cannot validate as student
-
-        # when there's teacher speechparts alignments
-
         # test unvalidation
-        # cannot validate as student
+        # when the transcription is unvalidated
+        self.assert200("/api/1.0/documents/21/unvalidate-speech-parts", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
 
-        # test when you delete the speechparts alignments
+        # cannot validate as student
+        self.assert403("/api/1.0/documents/21/unvalidate-speech-parts", **STU1_USER)
+
+        # test when you delete the speechparts
+        self.assert200("/api/1.0/documents/21/speech-parts", method="DELETE", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/unvalidate-speech-parts", **PROF1_USER)
 
         # test when you delete the transcription
-
-        raise NotImplementedError
+        self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/unvalidate-speech-parts", **PROF1_USER)
 
     def test_parallel_validations(self):
         self.load_fixtures(self.FIXTURES)

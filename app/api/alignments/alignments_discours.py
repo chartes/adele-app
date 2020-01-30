@@ -7,7 +7,7 @@ from app import api_bp, auth, APIResponseFactory, db
 from app.api.alignments.alignments_translation import add_notes_refs
 from app.api.routes import query_json_endpoint
 from app.api.transcriptions.routes import get_reference_transcription, get_transcription, add_notes_refs_to_text
-from app.models import SpeechPartType, AlignmentDiscours
+from app.models import SpeechPartType, AlignmentDiscours, Transcription
 from app.utils import make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_200
 
 
