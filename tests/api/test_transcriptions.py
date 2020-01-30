@@ -68,25 +68,6 @@ class TestTranscriptionsAPI(TestBaseServer):
         self.assert200("/api/1.0/documents/21/transcriptions")
         self.assert200("/api/1.0/documents/21/transcriptions", **STU1_USER)
 
-        # -------- test validation steps ---------
-        self.assert200("/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
-        self.assert404("/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        # needs a transcription
-        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
-        self.assert200("/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        # needs a translation
-        self.assert404("/api/1.0/documents/21/validate-translation", **PROF1_USER)
-        self.assert200("/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        # needs a transcription
-        self.assert200("/api/1.0/documents/21/validate-facsimile", **PROF1_USER)
-        self.assert200("/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        # needs a commentary
-        self.assert404("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
-        self.assert200("/api/1.0/documents/21/transcriptions", **PROF1_USER)
-        # needs a transcription
-        self.assert200("/api/1.0/documents/21/validate-speech-parts", **PROF1_USER)
-        self.assert200("/api/1.0/documents/21/transcriptions", **PROF1_USER)
-
     def test_get_transcriptions_from_user(self):
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES)
         self.load_fixtures(TestTranscriptionsAPI.FIXTURES_STU1)

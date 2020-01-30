@@ -41,18 +41,6 @@ def get_reference_transcription(doc_id):
 
     return None
 
-#TODO: deprecated ?
-#def get_reference_alignment_discours(doc_id):
-#    transcription = get_reference_transcription(doc_id)
-#    if transcription is None:
-#        return None
-#    else:
-#        return AlignmentDiscours.query.filter(
-#            AlignmentDiscours.transcription_id == transcription.id,
-#            AlignmentDiscours.user_id == transcription.user_id
-#        ).all()
-
-
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/users')
 def api_documents_transcriptions_users(api_version, doc_id):
     users = []

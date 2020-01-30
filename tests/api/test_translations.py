@@ -48,6 +48,7 @@ class TestTranslationsAPI(TestBaseServer):
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
 
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         r = self.assert200("/api/1.0/documents/21/translations", **PROF1_USER)
         r = json_loads(r.data)['data']
@@ -91,6 +92,7 @@ class TestTranslationsAPI(TestBaseServer):
 
         # access a validated translation
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
 
         self.assert401("/api/1.0/documents/21/translations/from-user/4")
@@ -123,6 +125,7 @@ class TestTranslationsAPI(TestBaseServer):
         other_notes_cnt = len(Note.query.filter(Note.user_id != 4).all())
         self.assertNotEqual(0, len(prof_notes))
 
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         doc = Document.query.filter(Document.id == 21).first()
         self.assertTrue(doc.is_translation_validated)
@@ -159,6 +162,7 @@ class TestTranslationsAPI(TestBaseServer):
 
         # =================== STUDENT ===================
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
         # post when the translation is already validated
         self.assert403("/api/1.0/documents/21/translations/from-user/5",
@@ -267,6 +271,7 @@ class TestTranslationsAPI(TestBaseServer):
 
         self.load_fixtures(TestTranslationsAPI.FIXTURES_PROF)
         self.load_fixtures(TestTranslationsAPI.FIXTURES_STU1)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
 
         self.assert403("/api/1.0/documents/21/translations/from-user/4",
                        data={"data": {"content": "modification from user1"}},
