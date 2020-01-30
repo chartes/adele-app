@@ -135,7 +135,10 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
     if type_id is None:
         type_id = Commentary.type_id
     if user_id is None:
-        user_id = Commentary.user_id
+        if user.is_teacher:
+            user_id = Commentary.user_id
+        else:
+            user_id = user.id
 
     commentaries = Commentary.query.filter(
         Commentary.doc_id == doc_id,

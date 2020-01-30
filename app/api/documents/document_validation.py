@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 from app import api_bp, db
 from app.models import Document, Translation, Commentary, Transcription
 from app.utils import make_200, make_400, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, \
-    forbid_if_nor_teacher_nor_admin
+    forbid_if_nor_teacher_nor_admin, make_403
 
 
 def unvalidate_all(doc):
@@ -94,6 +94,9 @@ def api_documents_validate_translation(api_version, doc_id):
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
                                                Translation.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
+
     doc.is_translation_validated = True
     return commit_document_validation(doc)
 
@@ -106,6 +109,8 @@ def api_documents_unvalidate_translation(api_version, doc_id):
     if doc is None or Translation.query.filter(Translation.doc_id == doc_id,
                                                Translation.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
     doc.is_translation_validated = False
     return commit_document_validation(doc)
 
@@ -119,6 +124,9 @@ def api_documents_validate_commentaries(api_version, doc_id):
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
                                               Commentary.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
+
     doc.is_commentaries_validated = True
     return commit_document_validation(doc)
 
@@ -131,6 +139,9 @@ def api_documents_unvalidate_commentaries(api_version, doc_id):
     if doc is None or Commentary.query.filter(Commentary.doc_id == doc_id,
                                               Commentary.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
+
     doc.is_commentaries_validated = False
     return commit_document_validation(doc)
 
@@ -144,6 +155,8 @@ def api_documents_validate_facsimile(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
     doc.is_facsimile_validated = True
     return commit_document_validation(doc)
 
@@ -156,6 +169,8 @@ def api_documents_unvalidate_facsimile(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
     doc.is_facsimile_validated = False
     return commit_document_validation(doc)
 
@@ -168,6 +183,8 @@ def api_documents_validate_speech_parts(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
     doc.is_speechparts_validated = True
     return commit_document_validation(doc)
 
@@ -180,5 +197,7 @@ def api_documents_unvalidate_speech_parts(api_version, doc_id):
     if doc is None or Transcription.query.filter(Transcription.doc_id == doc_id,
                                                  Transcription.user_id == doc.user_id).first() is None:
         return make_404()
+    if not doc.is_transcription_validated:
+        return make_403()
     doc.is_speechparts_validated = False
     return commit_document_validation(doc)

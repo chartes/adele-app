@@ -26,6 +26,7 @@ class TestDocumentValidationAPI(TestBaseServer):
     FIXTURES_FACSIMILE = [
     ]
     FIXTURES_COMMENTARIES = [
+        join(TestBaseServer.FIXTURES_PATH, "commentaries", "commentary_doc_21.sql"),
     ]
     FIXTURES_SPEECHPARTS_PROF_1 = [
         join(TestBaseServer.FIXTURES_PATH, "alignments_discours", "alignments_discours_doc_21_prof1.sql"),
@@ -66,6 +67,14 @@ class TestDocumentValidationAPI(TestBaseServer):
         # cannot validate as student
         self.assert403("/api/1.0/documents/21/validate-translation", **STU1_USER)
         # when there's teacher translation
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
+
+        # when the transcription is unvalidated
+        self.assert200("/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
         self.assert200("/api/1.0/documents/21/validate-translation", **PROF1_USER)
 
         # test unvalidation
@@ -82,30 +91,47 @@ class TestDocumentValidationAPI(TestBaseServer):
 
         # test when you delete the transcription
         self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
-        self.assert404("/api/1.0/documents/21/validate-translation", **PROF1_USER)
-        self.assert404("/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-translation", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/unvalidate-translation", **PROF1_USER)
 
     def test_validation_commentaries(self):
         self.load_fixtures(self.FIXTURES)
         # when there's no transcription at all
+        self.assert404("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
 
         # when there's no commentaries at all
         self.load_fixtures(self.FIXTURES_TRANSCRIPTION_PROF_1)
-
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-commentaries", **STU1_USER)
         self.load_fixtures(self.FIXTURES_COMMENTARIES)
-        # when there's no teacher commentaries but user ones
-        # cannot validate as student
-
-        # when there's teacher commentaries
-
-        # test unvalidation
-        # cannot validate as student
+        self.assert200("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
 
         # test when you delete the commentaries
+        self.assert200("/api/1.0/documents/21/commentaries", method="DELETE", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/unvalidate-commentaries", **PROF1_USER)
+
+        self.load_fixtures(self.FIXTURES_COMMENTARIES)
+        # test unvalidation
+        # when the transcription is unvalidated
+        self.assert200("/api/1.0/documents/21/unvalidate-commentaries", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/unvalidate-transcription", **PROF1_USER)
+        self.assert403("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-transcription", **PROF1_USER)
+        self.assert200("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+
+        # cannot validate as student
+        self.assert403("/api/1.0/documents/21/unvalidate-commentaries", **STU1_USER)
+
+        # test when you delete the commentaries
+        self.assert200("/api/1.0/documents/21/commentaries", method="DELETE", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/unvalidate-commentaries", **PROF1_USER)
 
         # test when you delete the transcription
-
-        raise NotImplementedError
+        self.assert200("/api/1.0/documents/21/transcriptions/from-user/4", method="DELETE", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/validate-commentaries", **PROF1_USER)
+        self.assert404("/api/1.0/documents/21/unvalidate-commentaries", **PROF1_USER)
 
     def test_validation_facsimile(self):
         self.load_fixtures(self.FIXTURES)
