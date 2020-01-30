@@ -294,12 +294,12 @@ class Document(db.Model):
     @property
     def validation_flags(self):
         return {
-            'notice': self.is_notice_validated,
-            'transcription': self.is_transcription_validated,
-            'translation': self.is_translation_validated,
-            'facsimile': self.is_facsimile_validated,
-            'speech-parts': self.is_speechparts_validated,
-            'commentaries': self.is_commentaries_validated
+            'notice': self.is_notice_validated is True,
+            'transcription': self.is_transcription_validated is True,
+            'translation': self.is_translation_validated is True,
+            'facsimile': self.is_facsimile_validated is True,
+            'speech-parts': self.is_speechparts_validated is True,
+            'commentaries': self.is_commentaries_validated is True
         }
 
     def serialize(self):

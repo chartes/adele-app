@@ -27,7 +27,7 @@ def commit_document_validation(doc):
     try:
         db.session.add(doc)
         db.session.commit()
-        return make_200(data=doc.validation_flags)
+        return make_200(data={"validation_flags": doc.validation_flags})
     except Exception as e:
         db.session.rollback()
         print(e)
