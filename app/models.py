@@ -175,12 +175,17 @@ class Commentary(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship("CommentaryHasNote", back_populates="commentary", cascade="all, delete-orphan", passive_deletes=True)
     type = db.relationship("CommentaryType", backref="commentary")
+    notes = association_proxy('commentary_has_note', 'note')
 
     __table_args__ = (
         db.UniqueConstraint('doc_id', 'user_id', 'type_id', name='UniqueCommentaryType'),
     )
+
+    def notes_of_user(self, user_id):
+        return [
+            dict({"ptr_start": chn.ptr_start, "ptr_end": chn.ptr_end}, **(chn.note.serialize()))
+            for chn in self.commentary_has_note if chn.note.user_id == int(user_id)]
 
     def serialize(self):
         return {
@@ -188,10 +193,7 @@ class Commentary(db.Model):
             'user_id': self.user_id,
             'type': self.type.serialize(),
             'content': self.content,
-            'notes': [
-                dict({"ptr_start": chn.ptr_start, "ptr_end": chn.ptr_end}, **(chn.note.serialize()))
-                for chn in self.notes if self.notes and chn.note
-            ]
+            'notes': self.notes_of_user(self.user_id)
         }
 
 
@@ -200,9 +202,10 @@ class CommentaryHasNote(db.Model):
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer)
     ptr_end = db.Column(db.Integer)
-    note = db.relationship("Note", back_populates="commentary")
-    commentary = db.relationship("Commentary", back_populates="notes")
 
+    note = db.relationship("Note")
+    commentary = db.relationship("Commentary", backref=db.backref("commentary_has_note",
+                                                                  cascade="all, delete-orphan"))
 
 class District(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

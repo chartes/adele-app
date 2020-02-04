@@ -119,7 +119,7 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
                 tr = Transcription(doc_id=doc_id, content=data["content"], user_id=user_id)
                 db.session.add(tr)
                 db.session.flush()
-            # case 2) there's only "notes" in data
+            # case 2) there's "notes" in data
             if "notes" in data:
                 tr = Transcription.query.filter(Transcription.doc_id == doc_id,
                                                 Transcription.user_id == user_id).first()
@@ -132,7 +132,7 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
                         # 1) simply reuse notes which come with an id
                     note_id = note.get('id', None)
                     if note_id is not None:
-                        reused_note = Note.query.filter(Note.id == note_id).first()
+                        reused_note = Note.query.filter(Note.id == note_id, Note.user_id == current_user.id).first()
                         if reused_note is None:
                             return make_400(details="Wrong note id %s" % note_id)
                         db.session.add(reused_note)
