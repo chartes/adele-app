@@ -196,22 +196,24 @@ def api_post_commentary(api_version, doc_id):
 
     data = request.get_json()
     if "data" in data:
-        co = data["data"]
+        data = data["data"]
 
-        co["user_id"] = user.id
+        data["user_id"] = user.id
 
         try:
             c = None
             # case 1) "content" in data
             if "content" in data:
-                c = Commentary(doc_id=doc_id, user_id=co["user_id"], type_id=co["type_id"], content=co["content"])
+                c = Commentary(doc_id=doc_id, user_id=user.id, type_id=data["type_id"], content=data["content"])
                 db.session.add(c)
                 db.session.flush()
             # case 2) there's "notes" in data
-            if "notes" in data:
+            elif "notes" in data:
                 c = Commentary.query.filter(Commentary.doc_id == doc_id,
                                             Commentary.user_id == user.id,
-                                            Commentary.type_id == co["type_id"]).first()
+                                            Commentary.type_id == data["type_id"]).first()
+
+            print(doc, c, user, data)
             if c is None:
                 return make_404()
 
@@ -250,10 +252,10 @@ def api_post_commentary(api_version, doc_id):
                                                 ptr_end=note["ptr_end"])
                         db.session.add(chn)
                         print("make:", chn.commentary_id, chn.note_id)
-                db.session.flush()
-                print("thn:", [chn.note.id for thn in chn.commentary_has_note])
-                print("====================")
-            db.session.add(chn)
+                        print("thn:", [chn.note.id for chn in chn.commentary_has_note])
+                    db.session.flush()
+                    print("====================")
+                    db.session.add(chn)
             db.session.commit()
 
         except (Exception, KeyError) as e:

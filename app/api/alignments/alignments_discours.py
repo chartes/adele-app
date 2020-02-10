@@ -115,8 +115,7 @@ def view_document_speech_parts_alignment(api_version, doc_id, user_id=None):
 def api_post_documents_transcriptions_alignments_discours(api_version, doc_id, user_id):
     """
         {
-            "data": {
-                "speech-parts" : [
+            "data": [
                     {
                         "speech_part_type_id" : 1,
                         "ptr_start": 1,
@@ -129,8 +128,7 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id, u
                         "ptr_end": 450,
                         "note": "bb"
                     }
-                ]
-            }
+            ]
         }
 
         :param user_id:
