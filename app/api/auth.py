@@ -45,7 +45,6 @@ def create_tokens(user):
         'email': user.email,
         'roles': [r.name for r in user.roles]
     }
-    #print("create tokens", u, access_token, refresh_token, data)
     return data, access_token, refresh_token,
 
 
@@ -88,9 +87,7 @@ def refresh(api_version):
     data, access_token, refresh_token = create_tokens(user)
 
     resp = jsonify(data)
-
     set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
     print("token refreshed")
 
     return resp, 200
