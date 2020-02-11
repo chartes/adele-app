@@ -13,6 +13,9 @@ install:
   - pip install -r requirements.txt
   - pip install coveralls
   - pip install nose
+  - mkdir db && cd db
+  - wget https://github.com/chartes/adele/blob/master/adele.sqlite?raw=true
+  - cd ..
 # command to run tests
 script:
   - cd tests && nosetests --with-coverage --cover-package=app --cover-xml
