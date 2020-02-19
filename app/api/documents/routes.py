@@ -151,15 +151,15 @@ def api_post_documents(api_version):
     return make_200(data=doc.serialize())
 
 
-@api_bp.route('/api/<api_version>/documents', methods=['PUT'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['PUT'])
 @jwt_required
 @forbid_if_nor_teacher_nor_admin
-def api_put_documents(api_version):
+def api_put_documents(api_version, doc_id):
     data = request.get_json()
     if "data" in data:
         data = data["data"]
 
-    tmp_doc = Document.query.filter(Document.id == data.get('id', None)).first()
+    tmp_doc = Document.query.filter(Document.id == doc_id).first()
     if tmp_doc is None:
         return make_404("Document not found")
 
@@ -180,52 +180,37 @@ def api_put_documents(api_version):
         tmp_doc.institution = Institution.query.filter(Institution.id == data["institution_id"]).first()
 
     if "editor_id" in data:
-        if not isinstance(data["editor_id"], list):
-            data["editor_id"] = [data["editor_id"]]
         tmp_doc.editors = Editor.query.filter(Editor.id.in_(data["editor_id"])).all()
 
-    if "country_id" in data:
-        if not isinstance(data["country_id"], list):
-            data["country_id"] = [data["country_id"]]
-        tmp_doc.countries = Country.query.filter(Country.id.in_(data["country_id"])).all()
+    if "country_ref" in data:
+        tmp_doc.countries = Country.query.filter(Country.ref.in_(data["country_ref"])).all()
 
     if "district_id" in data:
-        if not isinstance(data["district_id"], list):
-            data["district_id"] = [data["district_id"]]
         tmp_doc.districts = District.query.filter(District.id.in_(data["district_id"])).all()
 
     if "acte_type_id" in data:
-        if not isinstance(data["acte_type_id"], list):
-            data["acte_type_id"] = [data["acte_type_id"]]
         tmp_doc.acte_types = ActeType.query.filter(ActeType.id.in_(data["acte_type_id"])).all()
 
     if "language_code" in data:
-        if not isinstance(data["language_code"], list):
-            data["language_code"] = [data["language_code"]]
         tmp_doc.languages = Language.query.filter(Language.code.in_(data["language_code"])).all()
 
     if "tradition_id" in data:
-        if not isinstance(data["tradition_id"], list):
-            data["tradition_id"] = [data["tradition_id"]]
         tmp_doc.traditions = Tradition.query.filter(Tradition.id.in_(data["tradition_id"])).all()
 
     if "linked_document_id" in data:
-        if not isinstance(data["linked_document_id"], list):
-            data["linked_document_id"] = [data["linked_document_id"]]
         tmp_doc.linked_documents = Document.query.filter(Document.id.in_(data["linked_document_id"])).all()
 
     now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     tmp_doc.date_update = now
 
     try:
-        doc = Document(**tmp_doc)
-        db.session.add(doc)
+        db.session.add(tmp_doc)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         return make_400(str(e))
 
-    return make_200(data=doc.serialize())
+    return make_200(data=tmp_doc.serialize())
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['DELETE'])
