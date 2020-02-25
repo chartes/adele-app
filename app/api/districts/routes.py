@@ -8,13 +8,17 @@ from app.models import District, Country
 from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_409, make_400
 
 
+@api_bp.route('/api/<api_version>/districts')
 @api_bp.route('/api/<api_version>/districts/from-country/<country_id>')
 @api_bp.route('/api/<api_version>/districts/<district_id>/from-country/<country_id>')
-def api_district(api_version, country_id, district_id=None):
+def api_district(api_version, country_id=None, district_id=None):
 
-    c = Country.query.filter(Country.id == country_id).first()
-    if c is None:
-        return make_404("Country does not exist")
+    if country_id is not None:
+        c = Country.query.filter(Country.id == country_id).first()
+        if c is None:
+            return make_404("Country does not exist")
+    else:
+        country_id = District.country_id
 
     if district_id is None:
         districts = District.query.filter(District.country_id == country_id).all()
@@ -25,7 +29,7 @@ def api_district(api_version, country_id, district_id=None):
             return make_404("District {0} not found".format(district_id))
         else:
             districts = [at]
-    return make_200([a.serialize() for a in districts])
+    return make_200(sorted([a.serialize() for a in districts], key=lambda d: d['label']))
 
 
 @api_bp.route('/api/<api_version>/districts/from-country/<country_id>', methods=['DELETE'])
