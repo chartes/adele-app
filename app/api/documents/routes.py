@@ -179,8 +179,8 @@ def api_put_documents(api_version, doc_id):
     if "institution_id" in data:
         tmp_doc.institution = Institution.query.filter(Institution.id == data["institution_id"]).first()
 
-    if "editor_id" in data:
-        tmp_doc.editors = Editor.query.filter(Editor.id.in_(data["editor_id"])).all()
+    if "editor_ref" in data:
+        tmp_doc.editors = Editor.query.filter(Editor.ref.in_(data["editor_ref"])).all()
 
     if "country_ref" in data:
         tmp_doc.countries = Country.query.filter(Country.ref.in_(data["country_ref"])).all()
