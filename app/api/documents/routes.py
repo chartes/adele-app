@@ -1,8 +1,11 @@
 import datetime
+import pprint
 from urllib.request import build_opener
 
 from flask import request,  current_app
 from flask_jwt_extended import jwt_required
+from sqlalchemy import or_, and_, any_
+from sqlalchemy.testing import in_
 
 from app.api.routes import api_bp, json_loads
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
@@ -65,17 +68,72 @@ def api_documents_unpublish(api_version, doc_id):
         return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/documents')
+@api_bp.route('/api/<api_version>/documents', methods=['POST'])
 def api_get_documents(api_version):
+    data = request.get_json()
+    page_size = max(data.get("pageSize", 20), 1)
+    page_number = max(data.get("pageNum", 1), 1)
 
-    pageSize = request.args.get('page[size]', None)
-    pageNumber = request.args.get('page[number]', 1)
+    query = Document.query
 
-    if pageSize:
-        docs = Document.query.paginate(int(pageNumber), int(pageSize), error_out=False).items
-    else:
-        docs = Document.query.all()
-    return make_200(data=[doc.serialize() for doc in docs])
+    filters = data.get("filters", [])
+    or_stmts = []
+
+    # FILTERS
+    if "centuries" in filters:
+        centuries = []
+        for c in filters["centuries"]:
+            s = int(c["id"])
+            centuries.append(Document.creation.between((s-1) * 100, s * 100))
+        if len(centuries) > 0:
+            or_stmts.append(or_(*centuries))
+
+    if "copyCenturies" in filters:
+        centuries = []
+        for c in filters["copyCenturies"]:
+            centuries.append(Document.copy_cent == int(c["id"]))
+        if len(centuries) > 0:
+            or_stmts.append(or_(*centuries))
+
+    if "languages" in filters:
+        asked_codes = [c["code"] for c in filters["languages"]]
+        if len(asked_codes) > 0:
+            or_stmts.append(Document.languages.any(Language.code.in_(asked_codes)))
+
+    if "traditions" in filters:
+        asked_traditions = [c["id"] for c in filters["traditions"]]
+        if len(asked_traditions) > 0:
+            or_stmts.append(Document.traditions.any(Tradition.id.in_(asked_traditions)))
+
+    if "acteTypes" in filters:
+        asked_acteTypes = [c["id"] for c in filters["acteTypes"]]
+        if len(asked_acteTypes) > 0:
+            or_stmts.append(Document.acte_types.any(ActeType.id.in_(asked_acteTypes)))
+
+    if "countries" in filters:
+        asked_countries = [c["id"] for c in filters["countries"]]
+        if len(asked_countries) > 0:
+            or_stmts.append(Document.countries.any(Country.id.in_(asked_countries)))
+
+    if "districts" in filters:
+        asked_districts = [c["id"] for c in filters["districts"]]
+        if len(asked_districts) > 0:
+            or_stmts.append(Document.districts.any(District.id.in_(asked_districts)))
+
+    if "institutions" in filters:
+        asked_institutions = [c["id"] for c in filters["institutions"]]
+        if len(asked_institutions) > 0:
+            or_stmts.append(Document.institution.has(Institution.id.in_(asked_institutions)))
+
+    # SORTS
+    sorts = data.get("sorts", [])
+
+    pprint.pprint(data)
+    query = query.filter(and_(*or_stmts))
+    count = query.count()
+    docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
+
+    return make_200(data={"meta": {"count": count, "currentPage": page_number, "nbPages": count/page_size}, "data": [doc.serialize() for doc in docs]})
 
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])

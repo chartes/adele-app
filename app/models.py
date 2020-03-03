@@ -322,6 +322,7 @@ class Document(db.Model):
             'date_closing': self.date_closing,
             'is_published': self.is_published,
             'is_closed': self.is_closed,
+            'institution_id': self.institution.id if self.institution is not None else None,
             'institution': self.institution.serialize() if self.institution is not None else None,
             'manifest_url': self.manifest_url,
             'images': [im.serialize() for im in self.images],
