@@ -1,5 +1,6 @@
 import datetime
 import pprint
+from math import ceil
 from urllib.request import build_opener
 
 from flask import request,  current_app
@@ -133,7 +134,7 @@ def api_get_documents(api_version):
     count = query.count()
     docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
 
-    return make_200(data={"meta": {"count": count, "currentPage": page_number, "nbPages": count/page_size}, "data": [doc.serialize() for doc in docs]})
+    return make_200(data={"meta": {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count/page_size)}, "data": [doc.serialize() for doc in docs]})
 
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])
