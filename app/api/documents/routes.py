@@ -89,6 +89,12 @@ def api_get_documents(api_version):
         if len(centuries) > 0:
             or_stmts.append(or_(*centuries))
 
+    # same field on the model but dealing with years and not centuries
+    if "creationRange" in filters:
+        start, end = filters["creationRange"]
+        print(start, end)
+        or_stmts.append(Document.creation.between(int(start), int(end)))
+
     if "copyCenturies" in filters:
         centuries = []
         for c in filters["copyCenturies"]:
