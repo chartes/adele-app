@@ -10,7 +10,7 @@ from flask import current_app
 def check_no_XMLParserError(content):
     if "parsererror" in content:
         print("PARSER_ERROR", content)
-        return make_400('Parser Error', content)
+        return make_400(details='Parser Error: %s' % content)
 
 def get_user_from_username(username):
     from app import models
