@@ -8,7 +8,7 @@ from app.api.routes import api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text
 from app.models import Commentary, Document, Note, TranscriptionHasNote, CommentaryHasNote
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
-    make_400, get_doc, is_closed
+    make_400, get_doc, is_closed, check_no_XMLParserError
 
 
 def get_commentaries(doc_id, user_id):
@@ -204,6 +204,9 @@ def api_post_commentary(api_version, doc_id):
             c = None
             # case 1) "content" in data
             if "content" in data:
+                error = check_no_XMLParserError(data["content"])
+                if error:
+                    raise Exception('Commentary content is malformed: %s', str(error))
                 c = Commentary(doc_id=doc_id, user_id=user.id, type_id=data["type_id"], content=data["content"])
                 db.session.add(c)
                 db.session.flush()
@@ -232,7 +235,7 @@ def api_post_commentary(api_version, doc_id):
                                                              CommentaryHasNote.commentary_id == c.id).first()
                         # 1.a) the note is already present in the commentary, so update its ptrs
                         if chn is not None:
-                            raise Exception("Transcription note already exists. Consider using PUT method")
+                            raise Exception("Commentary note already exists. Consider using PUT method")
                         else:
                             # 1.b) the note is not present on the transcription side, so create it
                             chn = CommentaryHasNote(commentary_id=c.id,
@@ -243,6 +246,9 @@ def api_post_commentary(api_version, doc_id):
                         print("reuse:", chn.transcription_id, chn.note_id)
                     else:
                         # 2) make new note
+                        error = check_no_XMLParserError(note["content"])
+                        if error:
+                            raise Exception('Note content is malformed: %s', str(error))
                         new_note = Note(type_id=note.get("type_id", 0), user_id=user.id, content=note["content"])
                         db.session.add(new_note)
                         db.session.flush()
@@ -314,11 +320,17 @@ def api_put_commentary(api_version, doc_id):
 
         try:
             if "content" in data:
+                error = check_no_XMLParserError(data["content"])
+                if error:
+                    raise Exception('Commentary content is malformed: %s', str(error))
                 c.content = data["content"]
                 db.session.add(c)
                 db.session.commit()
             if "notes" in data:
                 for note in data["notes"]:
+                    error = check_no_XMLParserError(note["content"])
+                    if error:
+                        raise Exception('Note content is malformed: %s', str(error))
                     chn = CommentaryHasNote.query.filter(CommentaryHasNote.note_id == note.get('id', None),
                                                          CommentaryHasNote.transcription_id == c.id).first()
                     if chn is None:

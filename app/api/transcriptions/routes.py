@@ -9,8 +9,8 @@ from app.api.routes import api_bp
 from app.models import Transcription, User, Document, AlignmentDiscours, \
     Note, TranscriptionHasNote, TranslationHasNote
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
-    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, is_closed, forbid_if_validation_step, \
-    forbid_if_other_user, make_403, get_doc
+    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, is_closed, forbid_if_validation_step, \
+    forbid_if_other_user, make_403, get_doc, check_no_XMLParserError
 
 """
 ===========================
@@ -100,6 +100,10 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
+    if is_not_allowed:
+        return is_not_allowed
+
     # teachers can still post notes in validated transcription
     current_user = current_app.get_current_user()
     if not current_user.is_teacher and get_doc(doc_id).is_transcription_validated:
@@ -116,6 +120,9 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
             tr = None
             # case 1) "content" in data
             if "content" in data:
+                error = check_no_XMLParserError(data["content"])
+                if error:
+                    raise Exception('Transcription content is malformed: %s', str(error))
                 tr = Transcription(doc_id=doc_id, content=data["content"], user_id=user_id)
                 db.session.add(tr)
                 db.session.flush()
@@ -152,6 +159,9 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
                         print("reuse:", thn.transcription_id, thn.note_id)
                     else:
                         # 2) make new note
+                        error = check_no_XMLParserError(note["content"])
+                        if error:
+                            raise Exception('Note content is malformed: %s', str(error))
                         new_note = Note(type_id=note.get("type_id", 0), user_id=user_id, content=note["content"])
                         db.session.add(new_note)
                         db.session.flush()
@@ -202,6 +212,10 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
+    if is_not_allowed:
+        return is_not_allowed
+
     # teachers can still update validated transcription
     current_user = current_app.get_current_user()
     if not current_user.is_teacher and get_doc(doc_id).is_transcription_validated:
@@ -219,6 +233,9 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
             return make_404()
         try:
             if "content" in data:
+                error = check_no_XMLParserError(data["content"])
+                if error:
+                    raise Exception('Transcription content is malformed: %s', str(error))
                 tr.content = data["content"]
                 db.session.add(tr)
                 db.session.commit()
@@ -228,6 +245,10 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
                                                             TranscriptionHasNote.transcription_id == tr.id).first()
                     if thn is None:
                         raise Exception('Note unknown')
+
+                    error = check_no_XMLParserError(note["content"])
+                    if error:
+                        raise Exception('Note content is malformed: %s', str(error))
 
                     thn.ptr_start = note['ptr_start']
                     thn.ptr_end = note['ptr_end']
@@ -254,6 +275,10 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
     if forbid:
         return forbid
 
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
+    if is_not_allowed:
+        return is_not_allowed
+
     closed = is_closed(doc_id)
     if closed:
         return closed
@@ -262,9 +287,9 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
     if doc is None:
         return make_404()
 
-    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     # forbid students to delete a transcription when there is a valid transcription
     #user = current_app.get_current_user()
@@ -311,6 +336,10 @@ def api_documents_clone_transcription(api_version, doc_id, user_id):
 
     if not tr_to_be_cloned:
         return make_404()
+
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
+    if is_not_allowed:
+        return is_not_allowed
 
     teacher = current_app.get_current_user()
     teacher_tr = Transcription.query.filter(Transcription.user_id == teacher.id,

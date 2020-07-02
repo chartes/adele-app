@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 from app import api_bp, db
 from app.models import Document, Translation, Commentary, Transcription, AlignmentImage, AlignmentDiscours
 from app.utils import make_200, make_400, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, \
-    forbid_if_nor_teacher_nor_admin, make_403
+    forbid_if_nor_teacher_nor_admin, make_403, forbid_if_not_in_whitelist
 
 
 def unvalidate_all(doc):
@@ -16,11 +16,13 @@ def unvalidate_all(doc):
     return doc
 
 def commit_document_validation(doc):
-    user = current_app.get_current_user()
-    is_another_teacher = user.is_teacher and doc.user_id != user.id
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        db.session.rollback()
+        return is_not_allowed
 
     access_forbidden = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, doc.user_id)
-    if access_forbidden or is_another_teacher:
+    if access_forbidden:
         db.session.rollback()
         return access_forbidden
 

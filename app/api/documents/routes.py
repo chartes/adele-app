@@ -12,7 +12,7 @@ from app.api.routes import api_bp, json_loads
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
     ImageUrl, Image
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_400, \
-    forbid_if_nor_teacher_nor_admin, make_204, make_409, forbid_if_another_teacher
+    forbid_if_nor_teacher_nor_admin, make_204, make_409, forbid_if_not_in_whitelist, check_no_XMLParserError
 
 """
 ===========================
@@ -38,9 +38,9 @@ def api_documents_publish(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     try:
         doc.is_published = True
@@ -58,9 +58,9 @@ def api_documents_unpublish(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
     try:
         doc.is_published = False
         db.session.commit()
@@ -228,13 +228,19 @@ def api_put_documents(api_version, doc_id):
     if tmp_doc is None:
         return make_404("Document not found")
 
-    is_another_teacher = forbid_if_another_teacher(current_app, tmp_doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, tmp_doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     if "title" in data: tmp_doc.title = data["title"]
     if "subtitle" in data: tmp_doc.subtitle = data["subtitle"]
-    if "argument" in data: tmp_doc.argument = data["argument"]
+
+    if "argument" in data:
+        error = check_no_XMLParserError(data["argument"])
+        if error:
+            return error
+        tmp_doc.argument = data["argument"]
+
     if "pressmark" in data: tmp_doc.pressmark = data["pressmark"]
     if "creation" in data: tmp_doc.creation = data["creation"]
     if "creation_lab" in data: tmp_doc.creation_lab = data["creation_lab"]
@@ -286,9 +292,9 @@ def api_delete_documents(api_version, doc_id):
     if doc is None:
         return make_404("Document not found")
 
-    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     try:
         db.session.delete(doc)
@@ -319,9 +325,10 @@ def api_change_documents_whitelist(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    forbid_to_other_teachers = forbid_if_another_teacher(current_app, doc.user_id)
-    if forbid_to_other_teachers:
-        return forbid_to_other_teachers
+    # maybe forbid to other teachers ?
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     data = request.get_json()
     data = data.get('data')
@@ -360,9 +367,9 @@ def api_change_documents_closing_date(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     data = request.get_json()
     data = data.get('data')
@@ -412,9 +419,9 @@ def api_post_document_manifest(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     data = request.get_json()
     data = data["data"]

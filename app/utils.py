@@ -2,13 +2,15 @@ from functools import wraps
 
 from flask import current_app
 
-
 """
 ========================================================
     A bunch of useful functions
 ========================================================
 """
-
+def check_no_XMLParserError(content):
+    if "parsererror" in content:
+        print("PARSER_ERROR", content)
+        return make_400('Parser Error', content)
 
 def get_user_from_username(username):
     from app import models
@@ -79,13 +81,15 @@ def make_204():
     return make_success(204)
 
 
-def forbid_if_another_teacher(app, wanted_teacher_id):
+def forbid_if_not_in_whitelist(app, doc):
     user = app.get_current_user()
-    if user.is_admin or not user.is_teacher:
-        return None
-    if wanted_teacher_id != user.id:
-        msg = "This resource is not available to other teachers"
-        return make_403(details=msg)
+    if doc.whitelist is None:
+        return make_403(details="This document has no user whitelist")
+    else:
+        if doc.user_id == user.id or user in doc.whitelist.users or user.is_admin:
+            return None
+        else:
+            return make_403(details="Your are not allowed to modify this document")
 
 
 def forbid_if_nor_teacher_nor_admin_and_wants_user_data(app, wanted_user_id):

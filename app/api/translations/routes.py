@@ -9,8 +9,8 @@ from app.api.routes import api_bp
 from app.models import Translation, User, Document, Translation, AlignmentDiscours, \
     Note, TranslationHasNote, TranscriptionHasNote
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
-    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_another_teacher, make_403, is_closed, \
-    forbid_if_validation_step, forbid_if_other_user, get_doc
+    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, make_403, is_closed, \
+    forbid_if_validation_step, forbid_if_other_user, get_doc, check_no_XMLParserError
 
 """
 ===========================
@@ -117,6 +117,9 @@ def api_post_documents_translations(api_version, doc_id, user_id):
             tr = None
             # case 1) "content" in data
             if "content" in data:
+                error = check_no_XMLParserError(data["content"])
+                if error:
+                    raise Exception('Translation content is malformed: %s', str(error))
                 tr = Translation(doc_id=doc_id, content=data["content"], user_id=user_id)
                 db.session.add(tr)
                 db.session.flush()
@@ -153,6 +156,9 @@ def api_post_documents_translations(api_version, doc_id, user_id):
                         print("reuse:", thn.translation_id, thn.note_id)
                     else:
                         # 2) make new note
+                        error = check_no_XMLParserError(note["content"])
+                        if error:
+                            raise Exception('Note content is malformed: %s', str(error))
                         new_note = Note(type_id=note.get("type_id", 0), user_id=user_id, content=note["content"])
                         db.session.add(new_note)
                         db.session.flush()
@@ -220,6 +226,9 @@ def api_put_documents_translations(api_version, doc_id, user_id):
             return make_404()
         try:
             if "content" in data:
+                error = check_no_XMLParserError(data["content"])
+                if error:
+                    raise Exception('Translation content is malformed: %s', str(error))
                 tr.content = data["content"]
                 db.session.add(tr)
                 db.session.commit()
@@ -229,6 +238,10 @@ def api_put_documents_translations(api_version, doc_id, user_id):
                                                             TranslationHasNote.translation_id == tr.id).first()
                     if thn is None:
                         raise Exception('Note unknown')
+
+                    error = check_no_XMLParserError(note["content"])
+                    if error:
+                        raise Exception('Note content is malformed: %s', str(error))
 
                     thn.ptr_start = note['ptr_start']
                     thn.ptr_end = note['ptr_end']
@@ -263,9 +276,9 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
     if doc is None:
         return make_404()
 
-    is_another_teacher = forbid_if_another_teacher(current_app, doc.user_id)
-    if is_another_teacher:
-        return is_another_teacher
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
+    if is_not_allowed:
+        return is_not_allowed
 
     # forbid students to delete a translation when there is a valid translation
     #user = current_app.get_current_user()
