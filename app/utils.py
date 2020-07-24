@@ -8,7 +8,7 @@ from flask import current_app
 ========================================================
 """
 def check_no_XMLParserError(content):
-    if "parsererror" in content:
+    if content is not None and "parsererror" in content:
         print("PARSER_ERROR", content)
         return make_400(details='Parser Error: %s' % content)
 

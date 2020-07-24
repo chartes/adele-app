@@ -90,7 +90,7 @@ def api_get_documents(api_version):
             or_stmts.append(or_(*centuries))
 
     # same field on the model but dealing with years and not centuries
-    if "creationRange" in filters:
+    if "creationRange" in filters and filters.get("filterByCreationRange", True):
         start, end = filters["creationRange"]
         print(start, end)
         or_stmts.append(Document.creation.between(int(start), int(end)))
@@ -137,6 +137,7 @@ def api_get_documents(api_version):
 
     pprint.pprint(data)
     query = query.filter(and_(*or_stmts))
+    print("query:", query)
     count = query.count()
     docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
 
@@ -403,6 +404,7 @@ def api_add_document(api_version):
         "subtitle": data.get('subtitle'),
         "user_id": user.id,
         "is_published": 0,
+        "whitelist_id": 34  # TODO
     }
 
     new_doc = Document(**kwargs)
