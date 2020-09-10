@@ -258,7 +258,6 @@ def api_post_commentary(api_version, doc_id):
                                                 ptr_end=note["ptr_end"])
                         db.session.add(chn)
                         print("make:", chn.commentary_id, chn.note_id)
-                        print("thn:", [chn.note.id for chn in chn.commentary_has_note])
                     db.session.flush()
                     print("====================")
                     db.session.add(chn)
