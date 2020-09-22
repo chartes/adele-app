@@ -325,6 +325,7 @@ class Document(db.Model):
             'institution_id': self.institution.id if self.institution is not None else None,
             'institution': self.institution.serialize() if self.institution is not None else None,
             'manifest_url': self.manifest_url,
+            'manifest_origin_url': self.images[0].manifest_url if len(self.images) > 0 else None,
             'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
             'countries': [co.serialize() for co in self.countries],
