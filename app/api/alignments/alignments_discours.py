@@ -170,7 +170,9 @@ def api_post_documents_transcriptions_alignments_discours(api_version, doc_id, u
                 note=d.get('note', None)
             )
             db.session.add(new_al)
-            ptrs.append({'ptr_start': new_al.ptr_start,
+            ptrs.append({
+                         'id': new_al.id,
+                         'ptr_start': new_al.ptr_start,
                          'ptr_end': new_al.ptr_end,
                          'note': new_al.note,
                          'speech_part_type_id': new_al.speech_part_type_id

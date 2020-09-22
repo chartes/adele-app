@@ -403,7 +403,7 @@ def api_add_document(api_version):
         "title": data.get('title'),
         "subtitle": data.get('subtitle'),
         "user_id": user.id,
-        "is_published": 0,
+        "is_published": 1,
         "whitelist_id": 34  # TODO
     }
 
