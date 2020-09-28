@@ -6,41 +6,56 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from app import db
 
 association_document_has_acte_type = db.Table('document_has_acte_type',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('type_id', db.Text, db.ForeignKey('acte_type.id'), primary_key=True)
-)
+                                              db.Column('doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                        primary_key=True),
+                                              db.Column('type_id', db.Text, db.ForeignKey('acte_type.id'),
+                                                        primary_key=True)
+                                              )
 association_document_has_editor = db.Table('document_has_editor',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('editor_id', db.Integer, db.ForeignKey('editor.id'), primary_key=True)
-)
+                                           db.Column('doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                     primary_key=True),
+                                           db.Column('editor_id', db.Integer, db.ForeignKey('editor.id'),
+                                                     primary_key=True)
+                                           )
 association_document_has_language = db.Table('document_has_language',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('lang_code', db.String, db.ForeignKey('language.code'), primary_key=True)
-)
+                                             db.Column('doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                       primary_key=True),
+                                             db.Column('lang_code', db.String, db.ForeignKey('language.code'),
+                                                       primary_key=True)
+                                             )
 association_document_has_tradition = db.Table('document_has_tradition',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('tradition_id', db.String, db.ForeignKey('tradition.id'), primary_key=True)
-)
+                                              db.Column('doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                        primary_key=True),
+                                              db.Column('tradition_id', db.String, db.ForeignKey('tradition.id'),
+                                                        primary_key=True)
+                                              )
 association_document_from_country = db.Table('document_from_country',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('country_id', db.Integer, db.ForeignKey('country.id'), primary_key=True)
-)
+                                             db.Column('doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                       primary_key=True),
+                                             db.Column('country_id', db.Integer, db.ForeignKey('country.id'),
+                                                       primary_key=True)
+                                             )
 association_document_from_district = db.Table('document_from_district',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('district_id', db.Integer, db.ForeignKey('district.id'), primary_key=True)
-)
+                                              db.Column('doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                        primary_key=True),
+                                              db.Column('district_id', db.Integer, db.ForeignKey('district.id'),
+                                                        primary_key=True)
+                                              )
 association_user_has_role = db.Table('user_has_role',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('role_id', db.Integer, db.ForeignKey('role.id'), primary_key=True)
-)
+                                     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+                                     db.Column('role_id', db.Integer, db.ForeignKey('role.id'), primary_key=True)
+                                     )
 association_document_linked_to_document = db.Table('document_linked_to_document',
-    db.Column('doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-    db.Column('linked_doc_id', db.Integer, db.ForeignKey('document.id'), primary_key=True),
-)
+                                                   db.Column('doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                             primary_key=True),
+                                                   db.Column('linked_doc_id', db.Integer, db.ForeignKey('document.id'),
+                                                             primary_key=True),
+                                                   )
 association_whitelist_has_user = db.Table('whitelist_has_user',
-    db.Column('whitelist_id', db.Integer, db.ForeignKey('whitelist.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-)
+                                          db.Column('whitelist_id', db.Integer, db.ForeignKey('whitelist.id'),
+                                                    primary_key=True),
+                                          db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+                                          )
 
 """
 =======================
@@ -73,6 +88,7 @@ Invalider le flag transcription invalide automatiquement les flags suivants :
 TR_ZONE_TYPE = 1  # transcriptions
 ANNO_ZONE_TYPE = 2  # annotations
 
+
 class ActeType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
@@ -88,11 +104,11 @@ class ActeType(db.Model):
 
 class AlignmentImage(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id', ondelete='CASCADE'), primary_key=True)
-    user_id = db.Column(db.Integer,  primary_key=True)
-    zone_id = db.Column(db.Integer,  primary_key=True)
-    manifest_url = db.Column(db.String,  primary_key=True)
-    canvas_idx = db.Column(db.Integer,  primary_key=True)
-    img_idx = db.Column(db.Integer,  primary_key=True)
+    user_id = db.Column(db.Integer, primary_key=True)
+    zone_id = db.Column(db.Integer, primary_key=True)
+    manifest_url = db.Column(db.String, primary_key=True)
+    canvas_idx = db.Column(db.Integer, primary_key=True)
+    img_idx = db.Column(db.Integer, primary_key=True)
 
     ptr_transcription_start = db.Column(db.Integer)
     ptr_transcription_end = db.Column(db.Integer)
@@ -100,7 +116,8 @@ class AlignmentImage(db.Model):
     __table_args__ = (
         ForeignKeyConstraint(
             ("user_id", "zone_id", "manifest_url", "canvas_idx", "img_idx"),
-            ["image_zone.user_id", "image_zone.zone_id", "image_zone.manifest_url", "image_zone.canvas_idx", "image_zone.img_idx"],
+            ["image_zone.user_id", "image_zone.zone_id", "image_zone.manifest_url", "image_zone.canvas_idx",
+             "image_zone.img_idx"],
             name="fk_alignment_image",
             ondelete='CASCADE'
         ),
@@ -146,7 +163,7 @@ class Country(db.Model):
     ref = db.Column(db.String)
     label = db.Column(db.String)
 
-    districts = db.relationship("District",  cascade="all, delete-orphan", passive_deletes=True)
+    districts = db.relationship("District", cascade="all, delete-orphan", passive_deletes=True)
 
     def serialize(self):
         return {
@@ -207,6 +224,7 @@ class CommentaryHasNote(db.Model):
     commentary = db.relationship("Commentary", backref=db.backref("commentary_has_note",
                                                                   cascade="all, delete-orphan"))
 
+
 class District(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String)
@@ -247,37 +265,39 @@ class Document(db.Model):
     is_commentaries_validated = db.Column(db.Boolean(), default=False)
 
     # Relationships #
-    whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id", backref=db.backref('documents'))
+    whitelist = db.relationship("Whitelist", primaryjoin="Document.whitelist_id==Whitelist.id",
+                                backref=db.backref('documents'))
     user = db.relationship("User", primaryjoin="Document.user_id==User.id", backref=db.backref('documents'))
 
     images = db.relationship("Image", primaryjoin="Document.id==Image.doc_id",
-        backref=db.backref('document'),
-        cascade="all, delete-orphan", single_parent=True,  passive_deletes=True
-    )
+                             backref=db.backref('document'),
+                             cascade="all, delete-orphan", single_parent=True, passive_deletes=True
+                             )
 
-    institution = db.relationship("Institution", primaryjoin="Document.institution_id==Institution.id", backref=db.backref('documents'))
+    institution = db.relationship("Institution", primaryjoin="Document.institution_id==Institution.id",
+                                  backref=db.backref('documents'))
     acte_types = db.relationship(ActeType,
-                             secondary=association_document_has_acte_type,
-                             backref=db.backref('documents', ))
+                                 secondary=association_document_has_acte_type,
+                                 backref=db.backref('documents', ))
     countries = db.relationship("Country",
-                            secondary=association_document_from_country,
-                            backref=db.backref('documents', ))
+                                secondary=association_document_from_country,
+                                backref=db.backref('documents', ))
     districts = db.relationship("District",
-                             secondary=association_document_from_district,
-                             backref=db.backref('documents', ))
+                                secondary=association_document_from_district,
+                                backref=db.backref('documents', ))
     editors = db.relationship("Editor",
-                             secondary=association_document_has_editor,
-                             backref=db.backref('documents', ))
+                              secondary=association_document_has_editor,
+                              backref=db.backref('documents', ))
     languages = db.relationship("Language",
-                             secondary=association_document_has_language,
-                             backref=db.backref('documents'))
+                                secondary=association_document_has_language,
+                                backref=db.backref('documents'))
     traditions = db.relationship("Tradition",
-                             secondary=association_document_has_tradition,
-                             backref=db.backref('documents'))
+                                 secondary=association_document_has_tradition,
+                                 backref=db.backref('documents'))
     linked_documents = db.relationship("Document",
                                        secondary=association_document_linked_to_document,
-                                       primaryjoin=(association_document_linked_to_document.c.doc_id==id),
-                                       secondaryjoin=(association_document_linked_to_document.c.linked_doc_id==id))
+                                       primaryjoin=(association_document_linked_to_document.c.doc_id == id),
+                                       secondaryjoin=(association_document_linked_to_document.c.linked_doc_id == id))
 
     @property
     def is_closed(self):
@@ -387,13 +407,13 @@ class ImageZone(db.Model):
     def serialize(self):
         return {
             'manifest_url': self.manifest_url,
-            'canvas_idx' : self.canvas_idx,
-            'img_idx' : self.img_idx,
-            'zone_id' : self.zone_id,
-            'user_id' : self.user_id,
+            'canvas_idx': self.canvas_idx,
+            'img_idx': self.img_idx,
+            'zone_id': self.zone_id,
+            'user_id': self.user_id,
             'zone_type': self.zone_type.serialize(),
-            'coords' : self.coords,
-            'note' : self.note
+            'coords': self.coords,
+            'note': self.note
         }
 
 
@@ -424,8 +444,8 @@ class ImageUrl(db.Model):
 
 class Image(db.Model):
     manifest_url = db.Column(db.String, primary_key=True)
-    canvas_idx = db.Column(db.Integer,  primary_key=True)
-    img_idx = db.Column(db.Integer,  primary_key=True)
+    canvas_idx = db.Column(db.Integer, primary_key=True)
+    img_idx = db.Column(db.Integer, primary_key=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
 
     zones = db.relationship("ImageZone",
@@ -436,7 +456,7 @@ class Image(db.Model):
                                  uselist=False,
                                  cascade="all, delete-orphan", passive_deletes=True)
 
-    #doc = db.relationship("Document", primaryjoin="Document.id==Image.doc_id",
+    # doc = db.relationship("Document", primaryjoin="Document.id==Image.doc_id",
     #                            backref=db.backref('images'), cascade="all, delete-orphan", single_parent=True, passive_deletes=True)
 
     @property
@@ -459,7 +479,8 @@ class Image(db.Model):
                 } for z in self.zones
             ],
             'url': self.url,
-            'thumbnail_url': self.url.replace("full/full", "full/800,"), # first approx; should rather open the manifest and seek the real thumbnail url
+            'thumbnail_url': self.url.replace("full/full", "full/800,"),
+            # first approx; should rather open the manifest and seek the real thumbnail url
             'info': self._image_url.img_url[:self._image_url.img_url.rfind('/full/full/')] + '/info.json'
         }
 
@@ -498,10 +519,12 @@ class Note(db.Model):
 
     transcription = association_proxy('transcription_has_note', 'transcription')
 
-    #transcription_has_note = db.relationship("TranscriptionHasNote")#, back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
+    # transcription_has_note = db.relationship("TranscriptionHasNote")#, back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
 
-    translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
-    commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
+    translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan",
+                                  passive_deletes=True)
+    commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan",
+                                 passive_deletes=True)
 
     def serialize(self):
         return {
@@ -541,7 +564,7 @@ class Role(db.Model):
 
 class SpeechPartType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    lang_code = db.Column(db.String, db.ForeignKey("language.code",  ondelete="CASCADE"))
+    lang_code = db.Column(db.String, db.ForeignKey("language.code", ondelete="CASCADE"))
     label = db.Column(db.String)
     definition = db.Column(db.Text)
 
@@ -589,7 +612,8 @@ class Transcription(db.Model):
     content = db.Column(db.Text)
 
     notes = association_proxy('transcription_has_note', 'note')
-    #notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
+
+    # notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
 
     def notes_of_user(self, user_id):
         return [
@@ -613,7 +637,7 @@ class TranslationHasNote(db.Model):
     ptr_end = db.Column(db.Integer)
 
     translation = db.relationship("Translation", backref=db.backref("translation_has_note",
-                                                                        cascade="all, delete-orphan"))
+                                                                    cascade="all, delete-orphan"))
     note = db.relationship("Note")
 
 
@@ -644,6 +668,34 @@ class Translation(db.Model):
             'content': self.content,
             'notes': self.notes_of_user(user_id)
         }
+
+
+def findNoteInDoc(doc_id, user_id, note_id):
+    transcription = Transcription.query.filter(Transcription.doc_id == doc_id,
+                                               Transcription.user_id == user_id).first()
+    if transcription:
+        thn = TranscriptionHasNote.query.filter(TranscriptionHasNote.transcription_id == transcription.id,
+                                                 TranscriptionHasNote.note_id == note_id).first()
+        if thn:
+            return thn.note
+
+    translation = Translation.query.filter(Translation.doc_id == doc_id,
+                                           Translation.user_id == user_id).first()
+    if translation:
+        thn = TranslationHasNote.query.filter(TranslationHasNote.translation_id == translation.id,
+                                               TranslationHasNote.note_id == note_id).first()
+        if thn:
+            return thn.note
+
+    coms = Commentary.query.filter(Commentary.doc_id == doc_id,
+                                   Commentary.user_id == user_id).all()
+    for com in coms:
+        chn = CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == com.id,
+                                              CommentaryHasNote.note_id == note_id).first()
+        if chn:
+            return chn.note
+
+    return Note.query.filter(Note.id == note_id, Note.user_id == user_id).first()
 
 
 class AnonymousUser(object):
@@ -698,9 +750,9 @@ class User(db.Model):
 
     # Relationships
     roles = db.relationship('Role', secondary=association_user_has_role,
-            backref=db.backref('users', lazy='dynamic'))
+                            backref=db.backref('users', lazy='dynamic'))
 
-    #def __init__(self, *args, **kwargs):
+    # def __init__(self, *args, **kwargs):
     #    super(User, self).__init__(*args, **kwargs)
     #    self.roles.append(Role.query.filter(Role.name == 'student').first())
     #    db.session.commit()
@@ -714,10 +766,12 @@ class User(db.Model):
         return "teacher" in [r.name for r in self.roles]
 
     @property
-    def is_admin(self): return "admin" in [r.name for r in self.roles]
+    def is_admin(self):
+        return "admin" in [r.name for r in self.roles]
 
     @property
-    def is_student(self): return "student" in [r.name for r in self.roles]
+    def is_student(self):
+        return "student" in [r.name for r in self.roles]
 
     def serialize(self):
         return {
@@ -730,7 +784,6 @@ class User(db.Model):
             'last_name': self.last_name,
             'roles': [ro.name for ro in self.roles]
         }
-
 
     @property
     def documents_i_can_edit(self):
@@ -762,6 +815,7 @@ class User(db.Model):
                 if self in doc.whitelist.users:
                     docs.append(doc)
         return docs
+
 
 class UserInvitation(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

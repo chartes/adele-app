@@ -7,7 +7,7 @@ from app import db, auth
 from app.api.documents.document_validation import commit_document_validation
 from app.api.routes import api_bp
 from app.models import Translation, User, Document, Translation, AlignmentDiscours, \
-    Note, TranslationHasNote, TranscriptionHasNote
+    Note, TranslationHasNote, TranscriptionHasNote, Transcription, findNoteInDoc
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, make_403, is_closed, \
     forbid_if_validation_step, forbid_if_other_user, get_doc, check_no_XMLParserError
@@ -233,11 +233,32 @@ def api_put_documents_translations(api_version, doc_id, user_id):
                 db.session.add(tr)
                 db.session.commit()
             if "notes" in data:
+                current_translation_notes = TranslationHasNote.query.filter(TranslationHasNote.translation_id == tr.id).all()
+                # remove all notes not present anymore in the translation
+                print("current thn", current_translation_notes)
+                for current_thn in current_translation_notes:
+                    if current_thn.note.id not in [note.get('id', None) for note in data["notes"]]:
+                        print("removing thn", current_thn)
+                        db.session.delete(current_thn)
+                        db.session.flush()
+
                 for note in data["notes"]:
-                    thn = TranslationHasNote.query.filter(TranslationHasNote.note_id == note.get('id', None),
-                                                            TranslationHasNote.translation_id == tr.id).first()
-                    if thn is None:
-                        raise Exception('Note unknown')
+                    note_id = note.get('id', None)
+                    thn = TranslationHasNote.query.filter(TranslationHasNote.note_id == note_id,
+                                                          TranslationHasNote.translation_id == tr.id).first()
+                    if thn is None or note_id is None:
+                        # try to find a note in other contents
+                        reused_note = findNoteInDoc(doc_id, user_id, note_id)
+                        if reused_note is None:
+                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
+
+                        # bind the note on the translation side
+                        thn = TranslationHasNote(translation_id=tr.id,
+                                                 note_id=reused_note.id,
+                                                 ptr_start=note["ptr_start"],
+                                                 ptr_end=note["ptr_end"])
+                        db.session.add(thn)
+                        db.session.flush()
 
                     error = check_no_XMLParserError(note["content"])
                     if error:

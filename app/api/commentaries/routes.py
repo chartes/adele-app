@@ -6,7 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import db
 from app.api.routes import api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text
-from app.models import Commentary, Document, Note, TranscriptionHasNote, CommentaryHasNote
+from app.models import Commentary, Document, Note, TranscriptionHasNote, CommentaryHasNote, Transcription, findNoteInDoc
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
     make_400, get_doc, is_closed, check_no_XMLParserError
 
@@ -327,13 +327,25 @@ def api_put_commentary(api_version, doc_id):
                 db.session.commit()
             if "notes" in data:
                 for note in data["notes"]:
+
+                    note_id = note.get('id', None)
+                    chn = CommentaryHasNote.query.filter(CommentaryHasNote.note_id == note_id,
+                                                         CommentaryHasNote.commentary_id == c.id).first()
+                    if chn is None:
+                        # try to find a note in other contents
+                        reused_note = findNoteInDoc(doc_id, current_user.id, note_id)
+                        if reused_note is None:
+                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
+                        chn = CommentaryHasNote(commentary_id=c.id,
+                                                note_id=reused_note.id,
+                                                ptr_start=note["ptr_start"],
+                                                ptr_end=note["ptr_end"])
+                        db.session.add(chn)
+                        db.session.flush()
+
                     error = check_no_XMLParserError(note["content"])
                     if error:
                         raise Exception('Note content is malformed: %s', str(error))
-                    chn = CommentaryHasNote.query.filter(CommentaryHasNote.note_id == note.get('id', None),
-                                                         CommentaryHasNote.transcription_id == c.id).first()
-                    if chn is None:
-                        raise Exception('Note unknown')
 
                     chn.ptr_start = note['ptr_start']
                     chn.ptr_end = note['ptr_end']

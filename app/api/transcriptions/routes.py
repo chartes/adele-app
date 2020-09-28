@@ -7,7 +7,7 @@ from app import db, auth
 from app.api.documents.document_validation import commit_document_validation, unvalidate_all
 from app.api.routes import api_bp
 from app.models import Transcription, User, Document, AlignmentDiscours, \
-    Note, TranscriptionHasNote, TranslationHasNote
+    Note, TranscriptionHasNote, TranslationHasNote, Translation, findNoteInDoc
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, is_closed, forbid_if_validation_step, \
     forbid_if_other_user, make_403, get_doc, check_no_XMLParserError
@@ -240,11 +240,34 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
                 db.session.add(tr)
                 db.session.commit()
             if "notes" in data:
+                current_transcription_notes = TranscriptionHasNote.query.filter(
+                    TranscriptionHasNote.transcription_id == tr.id).all()
+                # remove all notes not present anymore in the translation
+                for current_thn in current_transcription_notes:
+                    if current_thn.note.id not in [note.get('id', None) for note in data["notes"]]:
+                        db.session.delete(current_thn)
+                        db.session.flush()
+
                 for note in data["notes"]:
-                    thn = TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == note.get('id', None),
+                    note_id = note.get('id', None)
+                    thn = TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == note_id,
                                                             TranscriptionHasNote.transcription_id == tr.id).first()
                     if thn is None:
-                        raise Exception('Note unknown')
+                        # try to find a note in other contents
+                        reused_note = findNoteInDoc(doc_id, user_id, note_id)
+                        if reused_note is None:
+                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
+
+                        # bind the note on the transcription side
+                        thn = TranscriptionHasNote(transcription_id=tr.id,
+                                                       note_id=reused_note.id,
+                                                       ptr_start=note["ptr_start"],
+                                                       ptr_end=note["ptr_end"])
+                        db.session.add(thn)
+                        db.session.flush()
+
+                        if thn is None or note_id is None:
+                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
 
                     error = check_no_XMLParserError(note["content"])
                     if error:
