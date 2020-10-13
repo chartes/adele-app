@@ -10,7 +10,7 @@ from sqlalchemy.testing import in_
 
 from app.api.routes import api_bp, json_loads
 from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
-    ImageUrl, Image
+    ImageUrl, Image, Note
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_400, \
     forbid_if_nor_teacher_nor_admin, make_204, make_409, forbid_if_not_in_whitelist, check_no_XMLParserError
 
@@ -305,6 +305,20 @@ def api_delete_documents(api_version, doc_id):
         return make_400("Cannot delete data: %s" % str(e))
 
     return make_204()
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/notes/<note_id>', methods=["DELETE"])
+@jwt_required
+def api_delete_documents_transcriptions_notes(api_version, note_id):
+    current_user = current_app.get_current_user()
+    note = Note.query.filter(Note.id == note_id).first()
+    if note is None:
+        return make_400('This note does not exist')
+    if current_user.is_admin or current_user.is_teacher or note.user_id == current_user.id:
+        db.session.delete(note)
+        db.session.commit()
+    else:
+        return make_403('You cannot delete this note')
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])

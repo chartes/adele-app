@@ -242,18 +242,28 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
             if "notes" in data:
                 current_transcription_notes = TranscriptionHasNote.query.filter(
                     TranscriptionHasNote.transcription_id == tr.id).all()
-                # remove all notes not present anymore in the translation
+                # remove all notes not present in the transcription anymore
                 for current_thn in current_transcription_notes:
-                    if current_thn.note.id not in [note.get('id', None) for note in data["notes"]]:
+                    if (current_thn.note.id, current_thn.ptr_start, current_thn.ptr_end) not in \
+                            [(note.get('id', None), note["ptr_start"], note["ptr_end"])
+                             for note in data["notes"]]:
+                        note = current_thn.note
                         db.session.delete(current_thn)
+                        print("delete thn", note)
                         db.session.flush()
+                        note.delete_if_unused()
+
 
                 for note in data["notes"]:
                     note_id = note.get('id', None)
-                    thn = TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == note_id,
-                                                            TranscriptionHasNote.transcription_id == tr.id).first()
+                    thn = TranscriptionHasNote.query.filter(
+                        TranscriptionHasNote.note_id == note_id,
+                        TranscriptionHasNote.transcription_id == tr.id,
+                        TranscriptionHasNote.ptr_start == note["ptr_start"],
+                        TranscriptionHasNote.ptr_end == note["ptr_end"]
+                    ).first()
                     if thn is None:
-                        # try to find a note in other contents
+                        # try to find the note in other contents
                         reused_note = findNoteInDoc(doc_id, user_id, note_id)
                         if reused_note is None:
                             raise Exception('Cannot reuse note: note %s unknown' % note_id)
@@ -265,9 +275,6 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
                                                        ptr_end=note["ptr_end"])
                         db.session.add(thn)
                         db.session.flush()
-
-                        if thn is None or note_id is None:
-                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
 
                     error = check_no_XMLParserError(note["content"])
                     if error:
@@ -341,11 +348,6 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200(data=doc.validation_flags)
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/notes/from-user/<user_id>', methods=["DELETE"])
-@jwt_required
-def api_delete_documents_transcriptions_notes(api_version, doc_id, user_id):
-    raise NotImplementedError
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/clone/from-user/<user_id>', methods=['GET'])

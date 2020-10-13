@@ -326,11 +326,27 @@ def api_put_commentary(api_version, doc_id):
                 db.session.add(c)
                 db.session.commit()
             if "notes" in data:
+
+                current_commentary_notes = CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == c.id).all()
+                # remove all notes not present in the transcription anymore
+                for current_chn in current_commentary_notes:
+                    if (current_chn.note.id, current_chn.ptr_start, current_chn.ptr_end) not in \
+                            [(note.get('id', None), note["ptr_start"], note["ptr_end"])
+                             for note in data["notes"]]:
+                        note = current_chn.note
+                        db.session.delete(current_chn)
+                        print("delete chn", note)
+                        db.session.flush()
+                        note.delete_if_unused()
+
                 for note in data["notes"]:
 
                     note_id = note.get('id', None)
                     chn = CommentaryHasNote.query.filter(CommentaryHasNote.note_id == note_id,
-                                                         CommentaryHasNote.commentary_id == c.id).first()
+                                                         CommentaryHasNote.commentary_id == c.id,
+                                                         CommentaryHasNote.ptr_start == note["ptr_start"],
+                                                         CommentaryHasNote.ptr_end == note["ptr_end"]
+                    ).first()
                     if chn is None:
                         # try to find a note in other contents
                         reused_note = findNoteInDoc(doc_id, current_user.id, note_id)

@@ -237,17 +237,24 @@ def api_put_documents_translations(api_version, doc_id, user_id):
                 # remove all notes not present anymore in the translation
                 print("current thn", current_translation_notes)
                 for current_thn in current_translation_notes:
-                    if current_thn.note.id not in [note.get('id', None) for note in data["notes"]]:
-                        print("removing thn", current_thn)
+                    if (current_thn.note.id, current_thn.ptr_start, current_thn.ptr_end) not in \
+                            [(note.get('id', None), note["ptr_start"], note["ptr_end"])
+                             for note in data["notes"]]:
+                        note = current_thn.note
                         db.session.delete(current_thn)
+                        print("delete thn", note)
                         db.session.flush()
+                        note.delete_if_unused()
 
                 for note in data["notes"]:
                     note_id = note.get('id', None)
                     thn = TranslationHasNote.query.filter(TranslationHasNote.note_id == note_id,
-                                                          TranslationHasNote.translation_id == tr.id).first()
+                                                          TranslationHasNote.translation_id == tr.id,
+                                                          TranslationHasNote.ptr_start == note["ptr_start"],
+                                                          TranslationHasNote.ptr_end == note["ptr_end"]
+                                                          ).first()
                     if thn is None or note_id is None:
-                        # try to find a note in other contents
+                        # try to find the note in other contents
                         reused_note = findNoteInDoc(doc_id, user_id, note_id)
                         if reused_note is None:
                             raise Exception('Cannot reuse note: note %s unknown' % note_id)
@@ -327,13 +334,6 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200(data=doc.validation_flags)
-
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/notes/from-user/<user_id>', methods=["DELETE"])
-@jwt_required
-def api_delete_documents_translations_notes(api_version, doc_id, user_id):
-    raise NotImplementedError
-
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/clone/from-user/<user_id>', methods=['GET'])

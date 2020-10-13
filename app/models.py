@@ -217,8 +217,8 @@ class Commentary(db.Model):
 class CommentaryHasNote(db.Model):
     commentary_id = db.Column(db.Integer, db.ForeignKey('commentary.id', ondelete='CASCADE'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
-    ptr_start = db.Column(db.Integer)
-    ptr_end = db.Column(db.Integer)
+    ptr_start = db.Column(db.Integer, primary_key=True)
+    ptr_end = db.Column(db.Integer, primary_key=True)
 
     note = db.relationship("Note")
     commentary = db.relationship("Commentary", backref=db.backref("commentary_has_note",
@@ -534,6 +534,13 @@ class Note(db.Model):
             'note_type': self.note_type.serialize()
         }
 
+    def delete_if_unused(self):
+        if TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == self.id).first() is None:
+            if TranslationHasNote.query.filter(TranslationHasNote.note_id == self.id).first() is None:
+                if CommentaryHasNote.query.filter(CommentaryHasNote.note_id == self.id).first() is None:
+                    db.session.delete(self)
+                    db.session.flush()
+
 
 class NoteType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -593,8 +600,8 @@ class Tradition(db.Model):
 class TranscriptionHasNote(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id', ondelete='CASCADE'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
-    ptr_start = db.Column(db.Integer)
-    ptr_end = db.Column(db.Integer)
+    ptr_start = db.Column(db.Integer, primary_key=True)
+    ptr_end = db.Column(db.Integer, primary_key=True)
 
     transcription = db.relationship("Transcription", backref=db.backref("transcription_has_note",
                                                                         cascade="all, delete-orphan"))
@@ -633,8 +640,8 @@ class Transcription(db.Model):
 class TranslationHasNote(db.Model):
     translation_id = db.Column(db.Integer, db.ForeignKey('translation.id', ondelete='CASCADE'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
-    ptr_start = db.Column(db.Integer)
-    ptr_end = db.Column(db.Integer)
+    ptr_start = db.Column(db.Integer, primary_key=True)
+    ptr_end = db.Column(db.Integer, primary_key=True)
 
     translation = db.relationship("Translation", backref=db.backref("translation_has_note",
                                                                     cascade="all, delete-orphan"))
@@ -695,6 +702,7 @@ def findNoteInDoc(doc_id, user_id, note_id):
         if chn:
             return chn.note
 
+    print("note find", note_id, user_id, Note.query.filter(Note.id == note_id, Note.user_id == user_id).first())
     return Note.query.filter(Note.id == note_id, Note.user_id == user_id).first()
 
 
