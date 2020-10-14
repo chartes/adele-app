@@ -306,20 +306,23 @@ def api_delete_documents(api_version, doc_id):
 
     return make_204()
 
-
-@api_bp.route('/api/<api_version>/documents/<doc_id>/notes/<note_id>', methods=["DELETE"])
+@api_bp.route('/api/<api_version>/documents/notes/<note_id>', methods=["DELETE"])
 @jwt_required
-def api_delete_documents_transcriptions_notes(api_version, note_id):
+def api_delete_notes(api_version, note_id):
     current_user = current_app.get_current_user()
     note = Note.query.filter(Note.id == note_id).first()
     if note is None:
         return make_400('This note does not exist')
     if current_user.is_admin or current_user.is_teacher or note.user_id == current_user.id:
-        db.session.delete(note)
-        db.session.commit()
+        try:
+            db.session.delete(note)
+            db.session.commit()
+            return make_200()
+        except Exception as e:
+            db.session.rollback()
+            return make_400("Cannot delete data: %s" % str(e))
     else:
         return make_403('You cannot delete this note')
-
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])
 @jwt_required

@@ -536,10 +536,17 @@ class Note(db.Model):
 
     def delete_if_unused(self):
         if TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == self.id).first() is None:
+            print("NOTE IN TranscriptionHasNote", self, self.id)
+
             if TranslationHasNote.query.filter(TranslationHasNote.note_id == self.id).first() is None:
+                print("NOTE IN TranslationHasNote", self, self.id)
+
                 if CommentaryHasNote.query.filter(CommentaryHasNote.note_id == self.id).first() is None:
+                    print("YES DELETE", self, self.id)
                     db.session.delete(self)
                     db.session.flush()
+                    return True
+        return False
 
 
 class NoteType(db.Model):
