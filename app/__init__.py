@@ -4,7 +4,6 @@ import uuid
 from flask import Flask, Blueprint
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
-from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 
@@ -14,7 +13,6 @@ from app.api.response import APIResponseFactory
 from flask_httpauth import HTTPBasicAuth
 
 # Initialize Flask extensions
-migrate = Migrate()
 mail = Mail()
 auth = HTTPBasicAuth()
 
@@ -76,8 +74,6 @@ def create_app(config_name="dev"):
     app.with_url_prefix = with_url_prefix
 
     db.init_app(app)
-    migrate.init_app(app, db, render_as_batch=True)
-
     mail.init_app(app)
 
     CORS(app, supports_credentials=True, resources={r"*": {"origins": "*"}})
@@ -146,5 +142,30 @@ def create_app(config_name="dev"):
 
     from app.api import routes as api_routes
     app.register_blueprint(api_bp)
+
+    # with app.app_context():
+    #     from app.models import Document
+    #     for doc in Document.query.all():
+    #         from app.models import Transcription
+    #         for t in Transcription.query.filter(Transcription.doc_id == doc.id).all():
+    #             from app.models import Translation
+    #             t2 = Translation.query.filter(Translation.doc_id == doc.id, Translation.user_id == t.user_id).first()
+    #             if t2:
+    #                 # make new alignment
+    #                 from app.models import AlignmentTranslation
+    #                 old_al = AlignmentTranslation.query.filter(AlignmentTranslation.transcription_id == t.id,
+    #                                                            AlignmentTranslation.translation_id == t2.id).first()
+    #                 if old_al is None:
+    #                     new_al = AlignmentTranslation(
+    #                         transcription_id=t.id,
+    #                         translation_id=t2.id,
+    #                         ptr_transcription_start=0,
+    #                         ptr_transcription_end=len(t.content) - 1,
+    #                         ptr_translation_start=0,
+    #                         ptr_translation_end=len(t2.content) - 1
+    #                     )
+    #                     db.session.add(new_al)
+    #                     print("NEW AL", new_al)
+    #         db.session.commit()
 
     return app

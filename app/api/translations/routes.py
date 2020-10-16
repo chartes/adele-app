@@ -7,7 +7,7 @@ from app import db, auth
 from app.api.documents.document_validation import commit_document_validation
 from app.api.routes import api_bp
 from app.models import Translation, User, Document, Translation, AlignmentDiscours, \
-    Note, TranslationHasNote, TranscriptionHasNote, Transcription, findNoteInDoc
+    Note, TranslationHasNote, TranscriptionHasNote, Transcription, findNoteInDoc, AlignmentTranslation
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, make_403, is_closed, \
     forbid_if_validation_step, forbid_if_other_user, get_doc, check_no_XMLParserError
