@@ -103,16 +103,15 @@ def view_document_commentaries(api_version, doc_id, user_id=None):
 
     _coms = [c.serialize() for c in coms]
     _coms_content = [add_notes_refs_to_text(c["content"], c["notes"]) for c in _coms]
-
     commentaries = zip(_coms, _coms_content)
 
     return make_200(data=[{
         "doc_id": com["doc_id"],
         "user_id": com["user_id"],
         "type": com["type"],
-        "content": Markup(com["content"]) if com["content"] is not None else "",
+        "content": Markup(annotated) if annotated is not None else "",
         "notes": {"{:010d}".format(n["id"]): n["content"] for n in com["notes"]}
-    } for com, notes in commentaries])
+    } for com, annotated in commentaries])
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['DELETE'])
