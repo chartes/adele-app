@@ -2,9 +2,6 @@ import math
 
 import pprint
 from flask import url_for, request, current_app
-from flask_jwt_extended import jwt_required
-from requests import HTTPError
-from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from urllib.request import build_opener, urlopen
 
@@ -52,7 +49,7 @@ def make_manifest(api_version, doc_id):
     return data
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/iiif/manifest')
+@api_bp.route('/api/<api_version>/iiif/<doc_id>/manifest')
 def api_documents_manifest(api_version, doc_id):
     try:
         manifest = make_manifest(api_version, doc_id)
@@ -61,7 +58,7 @@ def api_documents_manifest(api_version, doc_id):
         return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/iiif/manifest/origin')
+@api_bp.route('/api/<api_version>/iiif/<doc_id>/manifest/origin')
 def api_documents_manifest_origin(api_version, doc_id):
     img = Image.query.filter(Image.doc_id == doc_id).first()
     if img is None:
@@ -76,7 +73,7 @@ def api_documents_manifest_origin(api_version, doc_id):
 """
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/iiif/layer/<motivation>")
+@api_bp.route("/api/<api_version>/iiif/<doc_id>/layer/<motivation>")
 def api_documents_annotations_layer(api_version, doc_id, motivation):
     manifest = make_manifest(api_version, doc_id)
     sequence = manifest["sequences"][0]
@@ -92,7 +89,7 @@ def api_documents_annotations_layer(api_version, doc_id, motivation):
     return make_200(layer)
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/iiif/list/<motivation>-<canvas_idx>")
+@api_bp.route("/api/<api_version>/iiif/<doc_id>/list/<motivation>-<canvas_idx>")
 def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, canvas_idx):
     """
     """
@@ -117,15 +114,13 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
         img_json = canvas["images"][0]
         kwargs = {
             "doc_id": doc_id,
-            "api_version": api_version,
-            "canvas_idx": canvas_idx
+            "api_version": api_version
         }
 
         manifest_url = current_app.with_url_prefix(
             url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id))
         for img_zone in [zone for zone in img.zones if zone.zone_type.label == motivation]:
             kwargs["zone_id"] = img_zone.zone_id
-            kwargs["motivation"] = img_zone.zone_type.label
             res_uri = current_app.with_url_prefix(url_for("api_bp.api_documents_annotations", **kwargs))
             fragment_coords = img_zone.coords
 
@@ -167,8 +162,8 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
         return make_400(str(e))
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/iiif/list/<motivation>-<canvas_idx>/annotation/<zone_id>")
-def api_documents_annotations(api_version, doc_id, motivation, canvas_idx, zone_id):
+@api_bp.route("/api/<api_version>/iiif/<doc_id>/annotation/<zone_id>")
+def api_documents_annotations(api_version, doc_id, zone_id):
     """
 
     :param canvas_name:
@@ -559,7 +554,7 @@ def api_documents_annotations(api_version, doc_id, motivation, canvas_idx, zone_
 #    return APIResponseFactory.jsonify(response)
 #
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/images")
+@api_bp.route("/api/<api_version>/iiif/<doc_id>/images")
 def api_documents_images(api_version, doc_id):
     images = Image.query.filter(Image.doc_id == doc_id).all()
 
