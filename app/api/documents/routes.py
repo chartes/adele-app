@@ -430,7 +430,7 @@ def api_add_document(api_version):
     return make_200(data=new_doc.serialize())
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest', methods=['POST'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/iiif/manifest', methods=['POST'])
 @jwt_required
 @forbid_if_nor_teacher_nor_admin
 def api_post_document_manifest(api_version, doc_id):

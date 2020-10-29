@@ -1,29 +1,30 @@
-import pprint
-from flask import jsonify, current_app, request
-
-from config import Config
 
 
-def make_annotation_list(canvas_name, doc_id, annotations, annotation_type):
+def make_annotation_layer(url, annotation_lists, motivation):
+    return {
+        "@context": "http://iiif.io/api/presentation/2/context.json",
+        "@id": url,
+        "@type": "sc:Layer",
+        "label": motivation,
+        "otherContent": annotation_lists
+    }
+
+
+def make_annotation_list(url, annotations):
     """
 
     :param annotation_type:
-    :param list_id:
     :param doc_id:
     :param annotations:
     :return:
     """
-    url = current_app.with_url_prefix(
-        "/api/1.0/documents/{0}/manifest/canvas/{1}/{2}s".format(doc_id, canvas_name, annotation_type.get('label')))
     return {
         "@context": "http://iiif.io/api/presentation/2/context.json",
         "@id": url,
         "@type": "sc:AnnotationList",
         "resources": annotations,
         "metadata": [
-            {
-                "annotation_type": annotation_type
-            }
+
         ],
     }
 

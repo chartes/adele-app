@@ -9,13 +9,11 @@ from sqlalchemy.orm.exc import NoResultFound
 from urllib.request import build_opener, urlopen
 
 from app import db
-from app.api.iiif.open_annotation import make_annotation, make_annotation_list
+from app.api.iiif.open_annotation import make_annotation, make_annotation_list, make_annotation_layer
 from app.api.response import APIResponseFactory
 from app.api.routes import json_loads, api_bp
 from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl, ANNO_ZONE_TYPE, TR_ZONE_TYPE
 from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin
-
-
 
 """
 ===========================
@@ -30,30 +28,31 @@ def make_manifest(api_version, doc_id):
     data = json_loads(manifest_data)
 
     # enrich the manifest with annotation lists
-    for canvas in data["sequences"][0]["canvases"]:
+    for canvas_idx, canvas in enumerate(data["sequences"][0]["canvases"]):
         if "otherContent" not in canvas:
             canvas["otherContent"] = []
         kwargs = {
             "api_version": 1.0,
-            "doc_id": doc_id,
-            "canvas_name": canvas["@id"][canvas["@id"].rfind("/")+1:],
+            "doc_id": doc_id
         }
 
         canvas["otherContent"].extend([
             {
-                "@type": "sc:AnnotationList",
-                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list", **kwargs)
+                "@type": "sc:Layer",
+                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
+                                                       motivation="commenting", **kwargs)
             },
             {
-                "@type": "sc:AnnotationList",
-                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_transcriptions_list", **kwargs)
+                "@type": "sc:Layer",
+                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
+                                                       motivation="describing", **kwargs)
             }
         ])
 
     return data
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/iiif/manifest')
 def api_documents_manifest(api_version, doc_id):
     try:
         manifest = make_manifest(api_version, doc_id)
@@ -62,7 +61,7 @@ def api_documents_manifest(api_version, doc_id):
         return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/origin')
+@api_bp.route('/api/<api_version>/documents/<doc_id>/iiif/manifest/origin')
 def api_documents_manifest_origin(api_version, doc_id):
     img = Image.query.filter(Image.doc_id == doc_id).first()
     if img is None:
@@ -77,95 +76,90 @@ def api_documents_manifest_origin(api_version, doc_id):
 """
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/manifest/annotations")
-def api_documents_annotations(api_version, doc_id):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/iiif/layer/<motivation>")
+def api_documents_annotations_layer(api_version, doc_id, motivation):
+    manifest = make_manifest(api_version, doc_id)
+    sequence = manifest["sequences"][0]
+    anno_lists = []
+    for canvas_idx, canvas in enumerate(sequence["canvases"]):
+        anno_lists.append(url_for('api_bp.api_documents_annotations_list_by_canvas', **{
+            "api_version": api_version,
+            "doc_id": doc_id,
+            "motivation": motivation,
+            "canvas_idx": canvas_idx
+        }, _external=True))
+    layer = make_annotation_layer(request.base_url, anno_lists, motivation)
+    return make_200(layer)
+
+
+@api_bp.route("/api/<api_version>/documents/<doc_id>/iiif/list/<motivation>-<canvas_idx>")
+def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, canvas_idx):
     """
-
-    :param api_version:
-    :param doc_id:
-    :return:
     """
-    new_annotation_list = []
-    try:
-        manifest = make_manifest(api_version, doc_id)
-        sequence = manifest["sequences"][0]
-        for canvas in sequence["canvases"]:
-            if "otherContent" in canvas:
-                op = build_opener()
-                op.addheaders = [("Content-type", "text/plain")]
-                # for each annotation list reference in the manifest, make a new annotation list
-                for oc in [oc for oc in canvas["otherContent"] if oc["@type"] == "sc:AnnotationList"]:
-                    # make a call to api_documents_manifest_annotations_list
-                    try:
-                        print("fetching", oc["@id"])
-                        resp = op.open(oc["@id"], timeout=20).read()
-                    except HTTPError as e:
-                        return make_404("The annotation list {0} cannot be reached".format(oc["@id"]))
-                    resp = json_loads(resp)
-                    new_annotation_list.append(resp)
-    except Exception as e:
-        print(str(e))
-        return make_400(str(e))
-
-    return make_200(new_annotation_list)
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/manifest/canvas/<canvas_name>/annotations")
-def api_documents_annotations_list(api_version, doc_id, canvas_name):
-    """
-
-    :param canvas_name:
-    :param user_id:
-    :param api_version:
-    :param doc_id:
-    :return:
-    """
-    zone_type = ImageZoneType.query.filter(ImageZoneType.id == ANNO_ZONE_TYPE).first()
     user = current_app.get_current_user()
     doc = Document.query.filter(Document.id == doc_id).first()
 
     if user.is_anonymous and doc.is_published is False:
-        annotation_list = make_annotation_list(canvas_name, doc_id, [], zone_type.serialize())
+        annotation_list = make_annotation_list(request.base_url, [])
         return make_200(annotation_list)
 
     try:
         manifest = make_manifest(api_version, doc_id)
         sequence = manifest["sequences"][0]
+        canvas = sequence["canvases"][int(canvas_idx)]
 
-        #find the corresponding canvas
-        canvas_idx, canvas = None, None
-        for c_idx, c in enumerate(sequence["canvases"]):
-            if c["@id"].endswith("/" + canvas_name):
-                canvas_idx, canvas = c_idx, c
-                break
-
-        if canvas is None:
-            return make_404("Canvas %s not found" % canvas_name)
-
+        annotations = []
         img = Image.query.filter(Image.doc_id == doc_id).first()
-
-        # TODO s'il y a plusieurs images dans un canvas
         img = Image.query.filter(Image.manifest_url == img.manifest_url, Image.doc_id == doc_id,
                                  Image.canvas_idx == canvas_idx).first()
+
+        # TODO s'il y a plusieurs images dans un seul et même canvas ?
         img_json = canvas["images"][0]
-        annotations = []
+        kwargs = {
+            "doc_id": doc_id,
+            "api_version": api_version,
+            "canvas_idx": canvas_idx
+        }
 
-        kwargs = {"doc_id": doc_id, "api_version": api_version}
-
-        zones = [z for z in img.zones if z.zone_type.id == zone_type.id]
-        manifest_url = current_app.with_url_prefix(url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id))
-        for img_zone in zones:
+        manifest_url = current_app.with_url_prefix(
+            url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id))
+        for img_zone in [zone for zone in img.zones if zone.zone_type.label == motivation]:
             kwargs["zone_id"] = img_zone.zone_id
-            res_uri = current_app.with_url_prefix(url_for("api_bp.api_documents_annotations_zone", **kwargs))
+            kwargs["motivation"] = img_zone.zone_type.label
+            res_uri = current_app.with_url_prefix(url_for("api_bp.api_documents_annotations", **kwargs))
             fragment_coords = img_zone.coords
+
+            if img_zone.zone_type.label == "commenting":
+                from app.api.transcriptions.routes import get_reference_transcription
+                tr = get_reference_transcription(doc_id)
+                if tr is None:
+                    annotation_list = make_annotation_list(request.base_url, [])
+                    return make_200(annotation_list)
+
+                img_al = AlignmentImage.query.filter(
+                    AlignmentImage.transcription_id == tr.id,
+                    AlignmentImage.manifest_url == img_zone.manifest_url,
+                    AlignmentImage.canvas_idx == img_zone.canvas_idx,
+                    AlignmentImage.img_idx == img_zone.img_idx,
+                    AlignmentImage.zone_id == img_zone.zone_id
+                ).first()
+
+                # is there a text segment bound to this image zone?
+                if img_al is not None:
+                    text_content = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+                else:
+                    text_content = ""
+
+            else:
+                text_content = img_zone.note
+
             new_annotation = make_annotation(
                 manifest_url,
-                canvas["@id"], img_json, fragment_coords, res_uri, img_zone.note,
+                canvas["@id"], img_json, fragment_coords, res_uri, text_content,
                 format="text/plain"
             )
             annotations.append(new_annotation)
-
-        annotation_list = make_annotation_list(canvas_name, doc_id, annotations, zone_type.serialize())
+        annotation_list = make_annotation_list(request.base_url, annotations)
         return make_200(annotation_list)
 
     except Exception as e:
@@ -173,83 +167,8 @@ def api_documents_annotations_list(api_version, doc_id, canvas_name):
         return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/manifest/canvas/<canvas_name>/transcriptions')
-def api_documents_transcriptions_list(api_version, doc_id, canvas_name):
-    """
-    Fetch transcription segments formated as a sc:AnnotationList
-    :param canvas_name:
-    :param api_version: API version
-    :param doc_id: Document id
-    :return: a json object Obj with a sc:AnnotationList inside Obj["data"]. Return errors in Obj["errors"]
-    """
-    transcription_zone_type = ImageZoneType.query.filter(ImageZoneType.id == TR_ZONE_TYPE).one()
-
-    from app.api.transcriptions.routes import get_reference_transcription
-    tr = get_reference_transcription(doc_id)
-    if tr is None:
-        annotation_list = make_annotation_list(canvas_name, doc_id, [], transcription_zone_type.serialize())
-        return make_200(annotation_list)
-
-    try:
-        manifest = make_manifest(api_version, doc_id)
-        sequence = manifest["sequences"][0]
-
-        canvas_idx, canvas = None, None
-        for c_idx, c in enumerate(sequence["canvases"]):
-            if c["@id"].endswith("/" + canvas_name):
-                canvas_idx, canvas = c_idx, c
-                break
-
-        if canvas is None:
-            return make_404("Canvas %s not found" % canvas_name)
-
-        img = Image.query.filter(Image.doc_id == doc_id).first()
-        first_img = canvas["images"][0]
-        annotations = []
-
-        # transcription zone type
-        # TODO s'il y a plusieurs images dans un canvas
-        img = Image.query.filter(Image.manifest_url == img.manifest_url, Image.doc_id == doc_id,
-                                 Image.canvas_idx == canvas_idx).first()
-
-        zones = [z for z in img.zones if z.zone_type.id == transcription_zone_type.id]
-
-        for zone in zones:
-            kwargs = {
-                "api_version": api_version,
-                "doc_id": doc_id,
-                "zone_id": zone.zone_id
-            }
-            res_uri = request.host_url[:-1] + url_for("api_bp.api_documents_annotations_zone", **kwargs)
-
-            img_al = AlignmentImage.query.filter(
-                AlignmentImage.transcription_id == tr.id,
-                AlignmentImage.manifest_url == zone.manifest_url,
-                AlignmentImage.canvas_idx == zone.canvas_idx,
-                AlignmentImage.img_idx == zone.img_idx,
-                AlignmentImage.zone_id == zone.zone_id
-            ).first()
-
-            # is there a text segment bound to this image zone?
-            if img_al is not None:
-                tr_seg = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
-            else:
-                tr_seg = ""
-
-            url = current_app.with_url_prefix(url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id))
-            anno = make_annotation(url, canvas["@id"], first_img, zone.coords, res_uri, tr_seg, format="text/plain")
-            annotations.append(anno)
-
-        annotation_list = make_annotation_list(canvas_name, doc_id, annotations, transcription_zone_type.serialize())
-        return make_200(annotation_list)
-
-    except Exception as e:
-        print(str(e))
-        return make_400(str(e))
-
-
-@api_bp.route("/api/<api_version>/documents/<doc_id>/manifest/annotation-zones/<zone_id>")
-def api_documents_annotations_zone(api_version, doc_id, zone_id):
+@api_bp.route("/api/<api_version>/documents/<doc_id>/iiif/list/<motivation>-<canvas_idx>/annotation/<zone_id>")
+def api_documents_annotations(api_version, doc_id, motivation, canvas_idx, zone_id):
     """
 
     :param canvas_name:
@@ -272,13 +191,13 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
         # select annotations zones
         img_zone = ImageZone.query.filter(
             ImageZone.zone_id == zone_id,
-            ImageZone.manifest_url == img.manifest_url,
-            #ImageZone.canvas_idx == get_canvas_idx_from_name(api_version, doc_id, canvas_name)
+            ImageZone.manifest_url == img.manifest_url
         ).one()
 
         res_uri = current_app.with_url_prefix(request.path)
 
         # if the note content is empty, then you need to fetch a transcription segment
+        img_al = None
         if img_zone.note is None:
             try:
                 img_al = AlignmentImage.query.filter(
@@ -312,11 +231,12 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
         print(str(e))
         return make_400(str(e))
 
+
 #
-#@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>", methods=["POST"])
-#@jwt_required
-#@forbid_if_nor_teacher_nor_admin
-#def api_post_documents_annotations(api_version, doc_id, canvas_name):
+# @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>", methods=["POST"])
+# @jwt_required
+# @forbid_if_nor_teacher_nor_admin
+# def api_post_documents_annotations(api_version, doc_id, canvas_name):
 #    """
 #        {
 #            "data" : [{
@@ -577,11 +497,11 @@ def api_documents_annotations_zone(api_version, doc_id, zone_id):
 ##    return APIResponseFactory.jsonify(response)
 #
 #
-#@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>", methods=["DELETE"])
-#@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/<zone_id>/from-user/<user_id>", methods=["DELETE"])
-#@jwt_required
-#@forbid_if_nor_teacher_nor_admin
-#def api_delete_documents_annotations(api_version, doc_id, user_id, canvas_name=None, zone_id=None):
+# @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/from-user/<user_id>", methods=["DELETE"])
+# @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/<zone_id>/from-user/<user_id>", methods=["DELETE"])
+# @jwt_required
+# @forbid_if_nor_teacher_nor_admin
+# def api_delete_documents_annotations(api_version, doc_id, user_id, canvas_name=None, zone_id=None):
 #    """
 #    :param user_id:
 #    :param api_version:
@@ -648,10 +568,10 @@ def api_documents_images(api_version, doc_id):
     return APIResponseFactory.jsonify(response)
 
 
-#@api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=["POST"])
-#@jwt_required
-#@forbid_if_nor_teacher_nor_admin
-#def api_post_documents_images(api_version, doc_id):
+# @api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=["POST"])
+# @jwt_required
+# @forbid_if_nor_teacher_nor_admin
+# def api_post_documents_images(api_version, doc_id):
 #    """
 #    {
 #        "data" : {
@@ -731,10 +651,10 @@ def api_documents_images(api_version, doc_id):
 #    return APIResponseFactory.jsonify(response)
 #
 #
-#@api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=['DELETE'])
-#@jwt_required
-#@forbid_if_nor_teacher_nor_admin
-#def api_delete_documents_images(api_version, doc_id):
+# @api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=['DELETE'])
+# @jwt_required
+# @forbid_if_nor_teacher_nor_admin
+# def api_delete_documents_images(api_version, doc_id):
 #    response = None
 #
 #    user = current_app.get_current_user()
@@ -812,9 +732,9 @@ def get_bbox(coords, max_width, max_height):
     return min_x, min_y, width, height
 
 
-#@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/fragments/from-user/<user_id>")
-#@api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/fragments/<zone_id>/from-user/<user_id>")
-#def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, zone_id=None, user_id=None):
+# @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/fragments/from-user/<user_id>")
+# @api_bp.route("/api/<api_version>/documents/<doc_id>/annotations/<canvas_name>/fragments/<zone_id>/from-user/<user_id>")
+# def api_documents_annotation_image_fragments(api_version, doc_id, canvas_name, zone_id=None, user_id=None):
 #    """
 #    Fragment urls points to the IIIF Image API url of the area of an image
 #    :param api_version:
