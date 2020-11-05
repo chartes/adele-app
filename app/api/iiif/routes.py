@@ -35,14 +35,26 @@ def make_manifest(api_version, doc_id):
 
         canvas["otherContent"].extend([
             {
-                "@type": "sc:Layer",
-                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
-                                                       motivation="commenting", **kwargs)
+                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list_by_canvas",
+                                                       motivation="commenting", canvas_idx=canvas_idx, **kwargs),
+                "@type": "sc:AnnotationList",
+                "within": {
+                    "@type": "sc:Layer",
+                    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
+                                                           motivation="commenting", **kwargs),
+                    "label": "commenting"
+                }
             },
             {
-                "@type": "sc:Layer",
-                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
-                                                       motivation="describing", **kwargs)
+                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list_by_canvas",
+                                                       motivation="describing", canvas_idx=canvas_idx, **kwargs),
+                "@type": "sc:AnnotationList",
+                "within": {
+                    "@type": "sc:Layer",
+                    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
+                                                           motivation="describing", **kwargs),
+                    "label": "describing"
+                }
             }
         ])
 
@@ -53,7 +65,8 @@ def make_manifest(api_version, doc_id):
 def api_documents_manifest(api_version, doc_id):
     try:
         manifest = make_manifest(api_version, doc_id)
-        return make_200(manifest)
+        manifest["@id"] = request.base_url
+        return manifest
     except Exception as e:
         return make_400(str(e))
 

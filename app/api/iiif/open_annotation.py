@@ -122,7 +122,7 @@ def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
     return res
 
 
-def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, metadata=None, format="text/plain"):
+def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, metadata=None, format="text/html"):
     """
 
     :param metadata:
