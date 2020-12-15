@@ -1,3 +1,4 @@
+import math
 
 
 def make_annotation_layer(url, annotation_lists, motivation):
@@ -29,7 +30,7 @@ def make_annotation_list(url, annotations):
     }
 
 
-def make_specific_rectangular_resource(manifest_url, canvas_url, img, rect_coords):
+def make_specific_rectangular_selector(rect_coords):
     """
 
     :param canvas_url:
@@ -38,41 +39,15 @@ def make_specific_rectangular_resource(manifest_url, canvas_url, img, rect_coord
     :param rect_coords:
     :return:
     """
-    img_full = img["resource"]["@id"]
-    img_service_id = img["resource"]["service"]["@id"]
+    x,y,w,h = rect_coords.split(',')
 
-    left_part = img_full[0:img_full.rindex("/full/full")+1]
-    right_part = img_full[img_full.rindex("/full"):]
-    img_rect_uri = left_part + rect_coords + right_part
-
-    res = {
-        "@id": img_rect_uri,
-        "@type": "oa:SpecificResource",
-        "within": {
-            "@id": manifest_url,
-            "@type": "sc:Manifest"
-        },
-        "full": {
-            "@id": img_full,
-            "@type": "dctypes:Image",
-            "service": {
-                "@context": "http://iiif.io/api/image/2/context.json",
-                "@id": img_service_id,
-                "profile": "http://iiif.io/api/image/2/level2.json"
-            }
-        },
-        "selector": {
-            "@context": "http://iiif.io/api/annex/openannotation/context.json",
-            "@type": "iiif:ImageApiSelector",
-            "region": rect_coords
-        },
-        "on": canvas_url
+    return {
+        "@type": "oa:FragmentSelector",
+        "value": "xywh=" + ','.join([x, y, str(math.ceil(int(w)/2)), str(math.ceil(int(h)/2))])
     }
 
-    return res
 
-
-def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
+def make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords):
     """
 
     :param canvas_url:
@@ -81,9 +56,6 @@ def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
     :param fragment_coords:
     :return:
     """
-    img_service_id = img["resource"]["service"]["@id"]
-    img_full = img["resource"]["@id"]
-
     coords = fragment_coords.split(",")
 
     if len(coords) == 3:
@@ -102,25 +74,10 @@ def make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords):
 
     svg_data = "<svg xmlns='http://www.w3.org/2000/svg'>{0}</svg>".format(fig_path)
 
-    res = {
-        "@type": "oa:SpecificResource",
-        "within": {
-            "@id": manifest_url,
-            "@type": "sc:Manifest"
-        },
-        "full": {
-          "@id": img_full,
-          "@type": "dctypes:Image"
-        },
-        "selector": {
-          "@type":["oa:SvgSelector","cnt:ContentAsText"],
-          "chars": svg_data
-        },
-        "on": canvas_url
+    return {
+        "@type": "oa:SvgSelector",
+        "value": svg_data
     }
-
-    return res
-
 
 def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, metadata=None, format="text/html"):
     """
@@ -138,20 +95,28 @@ def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, con
     if metadata is None:
         metadata = {}
     if len(fragment_coords.split(",")) == 4:
-        specific_resource = make_specific_rectangular_resource(manifest_url, canvas_url, img, fragment_coords)
+        selector = make_specific_rectangular_selector(fragment_coords)
     else:
-        specific_resource = make_specific_svg_resource(manifest_url, canvas_url, img, fragment_coords)
+        #TODO ? ne semble pas fonctionner avec Mirador 3
+        return {}
+    #    selector = make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords)
 
     anno = {
         "@type": "oa:Annotation",
         "motivation": "sc:painting",
         "resource": {
-            "@type": "cnt:ContentAsText",
-            "chars": content,
-            "format": format,
-            "metadata": metadata
+            "@type": "dctypes:Text",
+            "chars": content
         },
-        "on": specific_resource
+        "on": {
+            "@type": "oa:SpecificResource",
+            "within": {
+                "@id": manifest_url,
+                "@type": "sc:Manifest"
+            },
+            "selector": selector,
+            "full": canvas_url
+        }
     }
     if res_uri is not None:
         anno["resource"]["@id"] = res_uri

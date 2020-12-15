@@ -99,7 +99,7 @@ def api_documents_annotations_layer(api_version, doc_id, motivation):
             "canvas_idx": canvas_idx
         }, _external=True))
     layer = make_annotation_layer(request.base_url, anno_lists, motivation)
-    return make_200(layer)
+    return layer
 
 
 @api_bp.route("/api/<api_version>/iiif/<doc_id>/list/<motivation>-<canvas_idx>")
@@ -111,7 +111,7 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
 
     if user.is_anonymous and doc.is_published is False:
         annotation_list = make_annotation_list(request.base_url, [])
-        return make_200(annotation_list)
+        return annotation_list
 
     try:
         manifest = make_manifest(api_version, doc_id)
@@ -137,12 +137,12 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
             res_uri = current_app.with_url_prefix(url_for("api_bp.api_documents_annotations", **kwargs))
             fragment_coords = img_zone.coords
 
-            if img_zone.zone_type.label == "commenting":
+            if img_zone.zone_type.label == "describing":
                 from app.api.transcriptions.routes import get_reference_transcription
                 tr = get_reference_transcription(doc_id)
                 if tr is None:
                     annotation_list = make_annotation_list(request.base_url, [])
-                    return make_200(annotation_list)
+                    return annotation_list
 
                 img_al = AlignmentImage.query.filter(
                     AlignmentImage.transcription_id == tr.id,
@@ -163,12 +163,16 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
 
             new_annotation = make_annotation(
                 manifest_url,
-                canvas["@id"], img_json, fragment_coords, res_uri, text_content,
-                format="text/plain"
+                canvas["@id"],
+                img_json,
+                fragment_coords,
+                res_uri,
+                content=text_content,
+                format="text/html"
             )
             annotations.append(new_annotation)
         annotation_list = make_annotation_list(request.base_url, annotations)
-        return make_200(annotation_list)
+        return annotation_list
 
     except Exception as e:
         print(str(e))
@@ -231,9 +235,9 @@ def api_documents_annotations(api_version, doc_id, zone_id):
             canvas["@id"], img_json, fragment_coords,
             res_uri,
             note_content,
-            format="text/plain"
+            format="text/html"
         )
-        return make_200(new_annotation)
+        return new_annotation
 
     except Exception as e:
         print(str(e))
@@ -566,15 +570,6 @@ def api_documents_annotations(api_version, doc_id, zone_id):
 #
 #    return APIResponseFactory.jsonify(response)
 #
-
-@api_bp.route("/api/<api_version>/iiif/<doc_id>/images")
-def api_documents_images(api_version, doc_id):
-    images = Image.query.filter(Image.doc_id == doc_id).all()
-
-    response = APIResponseFactory.make_response(data=[img.serialize() for img in images])
-
-    return APIResponseFactory.jsonify(response)
-
 
 # @api_bp.route("/api/<api_version>/documents/<doc_id>/images", methods=["POST"])
 # @jwt_required
