@@ -98,8 +98,8 @@ def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, con
         selector = make_specific_rectangular_selector(fragment_coords)
     else:
         #TODO ? ne semble pas fonctionner avec Mirador 3
-        return {}
-    #    selector = make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords)
+        #return {}
+        selector = make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords)
 
     anno = {
         "@type": "oa:Annotation",
