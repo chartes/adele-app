@@ -596,11 +596,13 @@ class SpeechPartType(db.Model):
 class Tradition(db.Model):
     id = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
+    definition = db.Column(db.Text)
 
     def serialize(self):
         return {
             'id': self.id,
-            'label': self.label
+            'label': self.label,
+            'definition': self.definition if self.definition else ''
         }
 
 
