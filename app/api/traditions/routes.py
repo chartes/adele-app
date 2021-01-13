@@ -62,7 +62,6 @@ def api_put_tradition(api_version):
                     modified_data.append(a)
                 db.session.commit()
             except Exception as e:
-                print(str(e), tradition)
                 db.session.rollback()
                 return make_409(str(e))
 
