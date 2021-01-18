@@ -13,19 +13,19 @@ from app.utils import make_401
 def refresh_token(user, resp=None):
     if not user.is_anonymous:
         access_token = create_access_token(identity=user.to_json(), fresh=True)
-        auth_headers = {'login': True, 'user': ''}
+        auth_headers = {'login': True, 'user-adele': ''}
         if resp:
             resp.headers["login"] = auth_headers["login"]
-            resp.headers["user"] = auth_headers["user"]
+            resp.headers["user-adele"] = auth_headers["user-adele"]
         else:
             resp = jsonify(auth_headers)
         set_access_cookies(resp, access_token)
         print("token refreshed")
     else:
-        auth_headers = {'logout': True, 'user': None}
+        auth_headers = {'logout': True, 'user-adele': None}
         if resp:
             resp.headers["logout"] = auth_headers["logout"]
-            resp.headers["user"] = auth_headers["user"]
+            resp.headers["user-adele"] = auth_headers["user-adele"]
         else:
             resp = jsonify(auth_headers)
         unset_jwt_cookies(resp)
