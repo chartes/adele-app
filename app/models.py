@@ -1,6 +1,6 @@
 import datetime
 from flask import current_app, url_for
-from sqlalchemy import ForeignKeyConstraint
+from sqlalchemy import ForeignKeyConstraint, desc
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from app import db
@@ -326,7 +326,16 @@ class Document(db.Model):
         }
 
     def serialize(self):
+
+        prev = db.session.query(Document.id).filter(Document.id < self.id).order_by(desc(Document.id)).first()
+        prev_doc_id = prev[0] if prev else None
+        next = db.session.query(Document.id).filter(Document.id > self.id).order_by(Document.id).first()
+        next_doc_id = next[0] if next else None
+
         return {
+            'prev_doc_id': prev_doc_id,
+            'next_doc_id': next_doc_id,
+
             'id': self.id,
             'user_id': self.user_id,
             'title': self.title,
