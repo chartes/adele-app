@@ -1,6 +1,4 @@
 # adele-app 
-[![Build Status](https://travis-ci.org/chartes/adele-app.png?branch=dev)](https://travis-ci.org/chartes/adele-app?branch=dev)
-[![Coverage Status](https://coveralls.io/repos/github/chartes/adele-app/badge.svg?branch=dev)](https://coveralls.io/github/chartes/adele-app?branch=dev)
 
 ```
 python3 -m venv venv
@@ -13,7 +11,7 @@ The database must be fetched from https://github.com/chartes/adele and put in th
 
 Starting the server in debug mode:
 ```
-gunicorn flask_app:flask_app -c gunicorn.conf.py
+python flask_app.py
 ```
 
 

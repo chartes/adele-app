@@ -3,13 +3,13 @@ from flask_jwt_extended import jwt_required
 from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import db, auth
-from app.api.documents.document_validation import commit_document_validation, unvalidate_all
+from app import db
+from app.api.documents.document_validation import unvalidate_all
 from app.api.routes import api_bp
-from app.models import Transcription, User, Document, AlignmentDiscours, \
-    Note, TranscriptionHasNote, TranslationHasNote, Translation, findNoteInDoc
+from app.models import Transcription, User, Document, \
+    Note, TranscriptionHasNote, TranslationHasNote, findNoteInDoc
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
-    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, is_closed, forbid_if_validation_step, \
+    forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, is_closed, \
     forbid_if_other_user, make_403, get_doc, check_no_XMLParserError
 
 """

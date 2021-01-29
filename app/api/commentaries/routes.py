@@ -8,7 +8,7 @@ from app.api.routes import api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text
 from app.models import Commentary, Document, Note, TranscriptionHasNote, CommentaryHasNote, Transcription, findNoteInDoc
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
-    make_400, get_doc, is_closed, check_no_XMLParserError
+    make_400, get_doc, is_closed, check_no_XMLParserError, forbid_if_nor_teacher_nor_admin, forbid_if_not_in_whitelist
 
 
 def get_commentaries(doc_id, user_id):
@@ -345,7 +345,7 @@ def api_put_commentary(api_version, doc_id):
                                                          CommentaryHasNote.commentary_id == c.id,
                                                          CommentaryHasNote.ptr_start == note["ptr_start"],
                                                          CommentaryHasNote.ptr_end == note["ptr_end"]
-                    ).first()
+                                                         ).first()
                     if chn is None:
                         # try to find a note in other contents
                         reused_note = findNoteInDoc(doc_id, current_user.id, note_id)
@@ -378,3 +378,59 @@ def api_put_commentary(api_version, doc_id):
         return make_200(data=c.serialize())
     else:
         return make_400("no data")
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/clone/from-user/<user_id>/and-type/<type_id>',
+              methods=['GET'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_clone_commentary(api_version, doc_id, user_id, type_id):
+    com_to_be_cloned = Commentary.query.filter(Commentary.user_id == user_id,
+                                               Commentary.doc_id == doc_id,
+                                               Commentary.type_id == type_id).first()
+    if not com_to_be_cloned:
+        return make_404()
+
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
+    if is_not_allowed:
+        return is_not_allowed
+
+    teacher = current_app.get_current_user()
+    teacher_com = Commentary.query.filter(Commentary.user_id == teacher.id,
+                                          Commentary.type_id == type_id,
+                                          Commentary.doc_id == doc_id).first()
+    if teacher_com is None:
+        teacher_com = Commentary(doc_id=doc_id, user_id=teacher.id, content=com_to_be_cloned.content)
+    else:
+        # replace the teacher's com content
+        teacher_com.content = com_to_be_cloned.content
+        # remove the old teacher's notes
+        #for note in teacher_com.notes:
+        #    # MUST delete commentary_has_note and not the note itself
+        #    # (since the latest might be used somewhere else)!
+        for chn in CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == teacher_com.id).all():
+            db.session.delete(chn)
+
+        # clone notes
+    for chn_to_be_cloned in com_to_be_cloned.commentary_has_note:
+        note = Note(type_id=chn_to_be_cloned.note.type_id, user_id=teacher.id,
+                    content=chn_to_be_cloned.note.content)
+        db.session.add(note)
+        db.session.flush()
+        teacher_com.transcription_has_note.append(
+            CommentaryHasNote(ptr_start=chn_to_be_cloned.ptr_start,
+                              ptr_end=chn_to_be_cloned.ptr_end,
+                              note_id=note.id,
+                              commentary_id=teacher_com.id),
+        )
+
+    db.session.add(teacher_com)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return make_400(str(e))
+
+    return make_200()
