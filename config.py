@@ -23,13 +23,11 @@ class Config(object):
     CSRF_ENABLED = True
 
     # Flask-Mail settings
-    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
-    MAIL_USERNAME = 'adele@chartes.psl.eu'
-    USER_EMAIL_SENDER_NAME = 'Adele'
-    USER_EMAIL_SENDER_EMAIL = 'adele@chartes.psl.eu'
-    MAIL_SERVER = 'smtp.chartes.psl.eu'
-    MAIL_PORT = 465
-    MAIL_USE_SSL = int(os.getenv('MAIL_USE_SSL') or True)
+    MAIL_SERVER = 'relay.huma-num.fr'
+    MAIL_PORT = 25
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = False
+    MAIL_DEFAULT_SENDER = 'adele.app@chartes.psl.eu'
 
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     JWT_TOKEN_LOCATION = ['cookies', 'headers']

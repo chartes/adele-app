@@ -1,13 +1,15 @@
 from flask import jsonify,  request, url_for
 from flask_jwt_extended import create_access_token, set_access_cookies, \
-    unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies
+    unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies, \
+    jwt_required
+from flask_mail import Message
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import api_bp, make_403, db
+from app import api_bp, make_403, db, mail
 from app.models import User
 
-from app.utils import make_401
+from app.utils import make_401, forbid_if_nor_teacher_nor_admin
 
 
 def refresh_token(user, resp=None):
@@ -93,7 +95,23 @@ def refresh(api_version):
     return resp, 200
 
 
+@api_bp.route('/api/<api_version>/invite-user', methods=['POST'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def invite_user(api_version):
+    json = request.get_json(force=True)
+
+    email = json.get('email', None)
+    if email is None:
+        print("Email unknown")
+        return make_401("Email unknown")
+
+    msg = Message('Hello', sender='yourId@gmail.com', recipients=[email])
+    msg.body = "Hello Flask message sent from Flask-Mail %s" % email
+    mail.send(msg)
+
 @api_bp.route('/api/<api_version>/update-user', methods=['POST'])
+@jwt_required
 def update_user(api_version):
     json = request.get_json(force=True)
 
