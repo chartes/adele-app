@@ -1,4 +1,4 @@
-from flask import jsonify,  request, url_for
+from flask import jsonify, request, url_for, app
 from flask_jwt_extended import create_access_token, set_access_cookies, \
     unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies, \
     jwt_required
@@ -106,7 +106,7 @@ def invite_user(api_version):
         print("Email unknown")
         return make_401("Email unknown")
 
-    msg = Message('Contribute to Adele', recipients=[email])
+    msg = Message('Contribute to Adele', sender=app.config['MAIL_USERNAME'], recipients=[email])
     msg.body = "Hello Flask message sent from Flask-Mail %s" % email
     return mail.send(msg), 200
 
