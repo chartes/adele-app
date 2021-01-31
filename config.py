@@ -27,7 +27,7 @@ class Config(object):
     MAIL_PORT = 25
     MAIL_USE_TLS = False
     MAIL_USE_SSL = False
-    MAIL_DEFAULT_SENDER = 'adele.app@chartes.psl.eu'
+    MAIL_USERNAME = 'adele.app@chartes.psl.eu'
 
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     JWT_TOKEN_LOCATION = ['cookies', 'headers']
