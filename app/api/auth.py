@@ -108,7 +108,7 @@ def invite_user(api_version):
 
     msg = Message('Hello', sender='yourId@gmail.com', recipients=[email])
     msg.body = "Hello Flask message sent from Flask-Mail %s" % email
-    mail.send(msg)
+    return mail.send(msg), 200
 
 @api_bp.route('/api/<api_version>/update-user', methods=['POST'])
 @jwt_required
