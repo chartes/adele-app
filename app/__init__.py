@@ -143,29 +143,4 @@ def create_app(config_name="dev"):
     from app.api import routes as api_routes
     app.register_blueprint(api_bp)
 
-    # with app.app_context():
-    #     from app.models import Document
-    #     for doc in Document.query.all():
-    #         from app.models import Transcription
-    #         for t in Transcription.query.filter(Transcription.doc_id == doc.id).all():
-    #             from app.models import Translation
-    #             t2 = Translation.query.filter(Translation.doc_id == doc.id, Translation.user_id == t.user_id).first()
-    #             if t2:
-    #                 # make new alignment
-    #                 from app.models import AlignmentTranslation
-    #                 old_al = AlignmentTranslation.query.filter(AlignmentTranslation.transcription_id == t.id,
-    #                                                            AlignmentTranslation.translation_id == t2.id).first()
-    #                 if old_al is None:
-    #                     new_al = AlignmentTranslation(
-    #                         transcription_id=t.id,
-    #                         translation_id=t2.id,
-    #                         ptr_transcription_start=0,
-    #                         ptr_transcription_end=len(t.content) - 1,
-    #                         ptr_translation_start=0,
-    #                         ptr_translation_end=len(t2.content) - 1
-    #                     )
-    #                     db.session.add(new_al)
-    #                     print("NEW AL", new_al)
-    #         db.session.commit()
-
     return app

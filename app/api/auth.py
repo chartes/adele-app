@@ -2,9 +2,9 @@ from flask import jsonify,  request, url_for
 from flask_jwt_extended import create_access_token, set_access_cookies, \
     unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies
 from sqlalchemy import or_
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import api_bp, make_403
+from app import api_bp, make_403, db
 from app.models import User
 
 from app.utils import make_401
@@ -93,3 +93,52 @@ def refresh(api_version):
     return resp, 200
 
 
+@api_bp.route('/api/<api_version>/update-user', methods=['POST'])
+def update_user(api_version):
+    json = request.get_json(force=True)
+
+    firstname = json.get('firstname', None)
+    lastname = json.get('lastname', None)
+    email = json.get('email', None)
+    username = json.get('username', None)
+    password = json.get('password', None)
+    password2 = json.get('password2', None)
+
+    user = User.query.filter(User.email == email).first()
+    print("trying to log in as", user)
+
+    if user is None:
+        print("User unknown")
+        return make_401("User unknown")
+
+    if password != password2:
+        print("Passwords do not match")
+        return make_401("Invalid credentials")
+
+    # passwords_match = check_password_hash(user.password, password)
+
+    try:
+        print('update info:', username, firstname, lastname, email)
+        user.password = generate_password_hash(password)
+        user.username = username if username else user.username
+        user.first_name = firstname if firstname else user.first_name
+        user.last_name = lastname if lastname else user.last_name
+        user.email = email if email else user.email
+        print('update user to', user.serialize())
+
+        db.session.add(user)
+        db.session.commit()
+
+        resp = {"error": None}
+    except Exception as e:
+        resp = {"error": str(e)}
+
+    data, access_token, refresh_token = create_tokens(user)
+
+    resp.update(data)
+    resp = jsonify(resp)
+
+    set_access_cookies(resp, access_token)
+    set_refresh_cookies(resp, refresh_token)
+
+    return resp, 200
