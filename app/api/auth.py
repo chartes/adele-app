@@ -106,7 +106,7 @@ def invite_user(api_version):
         print("Email unknown")
         return make_401("Email unknown")
 
-    msg = Message('Hello', sender='yourId@gmail.com', recipients=[email])
+    msg = Message('Contribute to Adele', recipients=[email])
     msg.body = "Hello Flask message sent from Flask-Mail %s" % email
     return mail.send(msg), 200
 
