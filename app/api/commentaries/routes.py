@@ -162,9 +162,9 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
         return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['POST'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>', methods=['POST'])
 @jwt_required
-def api_post_commentary(api_version, doc_id):
+def api_post_commentary(api_version, doc_id, user_id):
     """
     {
         "data":
@@ -197,7 +197,7 @@ def api_post_commentary(api_version, doc_id):
     if "data" in data:
         data = data["data"]
 
-        data["user_id"] = user.id
+        data["user_id"] = user_id # user.id
 
         try:
             c = None
@@ -206,13 +206,13 @@ def api_post_commentary(api_version, doc_id):
                 error = check_no_XMLParserError(data["content"])
                 if error:
                     raise Exception('Commentary content is malformed: %s', str(error))
-                c = Commentary(doc_id=doc_id, user_id=user.id, type_id=data["type_id"], content=data["content"])
+                c = Commentary(doc_id=doc_id, user_id=user_id, type_id=data["type_id"], content=data["content"])
                 db.session.add(c)
                 db.session.flush()
             # case 2) there's "notes" in data
             elif "notes" in data:
                 c = Commentary.query.filter(Commentary.doc_id == doc_id,
-                                            Commentary.user_id == user.id,
+                                            Commentary.user_id == user_id,
                                             Commentary.type_id == data["type_id"]).first()
 
             print(doc, c, user, data)
@@ -225,7 +225,7 @@ def api_post_commentary(api_version, doc_id):
                     # 1) simply reuse notes which come with an id
                     note_id = note.get('id', None)
                     if note_id is not None:
-                        reused_note = Note.query.filter(Note.id == note_id, Note.user_id == user.id).first()
+                        reused_note = Note.query.filter(Note.id == note_id, Note.user_id == user_id).first()
                         if reused_note is None:
                             return make_400(details="Wrong note id %s" % note_id)
                         db.session.add(reused_note)
@@ -248,7 +248,7 @@ def api_post_commentary(api_version, doc_id):
                         error = check_no_XMLParserError(note["content"])
                         if error:
                             raise Exception('Note content is malformed: %s', str(error))
-                        new_note = Note(type_id=note.get("type_id", 0), user_id=user.id, content=note["content"])
+                        new_note = Note(type_id=note.get("type_id", 0), user_id=user_id, content=note["content"])
                         db.session.add(new_note)
                         db.session.flush()
                         chn = CommentaryHasNote(commentary_id=c.id,
@@ -272,9 +272,9 @@ def api_post_commentary(api_version, doc_id):
         return make_400("no data")
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['PUT'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>', methods=['PUT'])
 @jwt_required
-def api_put_commentary(api_version, doc_id):
+def api_put_commentary(api_version, doc_id, user_id):
     """
         {
             "data":
@@ -306,11 +306,10 @@ def api_put_commentary(api_version, doc_id):
     data = request.get_json()
     if "data" in data:
         data = data["data"]
-        print(data)
         c = Commentary.query.filter(
             data["type_id"] == Commentary.type_id,
             doc_id == Commentary.doc_id,
-            current_user.id == Commentary.user_id,
+            user_id == Commentary.user_id,
         ).first()
 
         if c is None:
@@ -348,7 +347,7 @@ def api_put_commentary(api_version, doc_id):
                                                          ).first()
                     if chn is None:
                         # try to find a note in other contents
-                        reused_note = findNoteInDoc(doc_id, current_user.id, note_id)
+                        reused_note = findNoteInDoc(doc_id, user_id, note_id)
                         if reused_note is None:
                             raise Exception('Cannot reuse note: note %s unknown' % note_id)
                         chn = CommentaryHasNote(commentary_id=c.id,

@@ -13,7 +13,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app import api_bp, make_403, db, mail
 from app.models import User, Role
 
-from app.utils import make_401, forbid_if_nor_teacher_nor_admin, make_400
+from app.utils import make_401, forbid_if_nor_teacher_nor_admin, make_400, make_200
 
 
 def refresh_token(user, resp=None):
@@ -119,6 +119,8 @@ def invite_user(api_version):
     msg.body = "Vous avez été invité(e) à contribuer au projet Adele (" \
                "https://dev.chartes.psl.eu/adele/profile).\nIdentifiant: %s\nMot de passe: %s\nN'oubliez pas de " \
                "changer votre mot de passe après votre première connexion !" % (email, password)
+
+    print(email, role)
     print(msg.body)
 
     try:
@@ -145,8 +147,8 @@ def invite_user(api_version):
         db.session.rollback()
         return make_400("Cannot invite user: %s" % str(e))
 
-
-    return mail.send(msg), 200
+    mail.send(msg)
+    return make_200(msg)
 
 
 @api_bp.route('/api/<api_version>/update-user', methods=['POST'])

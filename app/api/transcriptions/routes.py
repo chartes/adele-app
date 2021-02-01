@@ -96,9 +96,9 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     :param doc_id:
     :return:
     """
-    forbid = forbid_if_other_user(current_app, user_id)
-    if forbid:
-        return forbid
+    #forbid = forbid_if_other_user(current_app, user_id)
+    #if forbid:
+    #    return forbid
 
     is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
     if is_not_allowed:
@@ -208,9 +208,9 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
      :param doc_id:
      :return:
      """
-    forbid = forbid_if_other_user(current_app, user_id)
-    if forbid:
-        return forbid
+    #forbid = forbid_if_other_user(current_app, user_id)
+    #if forbid:
+    #    return forbid
 
     is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
     if is_not_allowed:

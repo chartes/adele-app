@@ -97,9 +97,9 @@ def api_post_documents_translations(api_version, doc_id, user_id):
     :return:
     """
 
-    forbid = forbid_if_other_user(current_app, user_id)
-    if forbid:
-        return forbid
+    #forbid = forbid_if_other_user(current_app, user_id)
+    #if forbid:
+    #    return forbid
 
     # teachers can still post notes in validated translation
     current_user = current_app.get_current_user()
@@ -205,9 +205,9 @@ def api_put_documents_translations(api_version, doc_id, user_id):
      :param doc_id:
      :return:
      """
-    forbid = forbid_if_other_user(current_app, user_id)
-    if forbid:
-        return forbid
+    #forbid = forbid_if_other_user(current_app, user_id)
+    #if forbid:
+    #    return forbid
 
     # teachers can still update validated translation
     current_user = current_app.get_current_user()
