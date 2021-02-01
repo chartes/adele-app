@@ -1,3 +1,7 @@
+import datetime
+import string
+from random import randint, random, choice
+
 from flask import jsonify, request, url_for, app, current_app
 from flask_jwt_extended import create_access_token, set_access_cookies, \
     unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies, \
@@ -7,9 +11,9 @@ from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import api_bp, make_403, db, mail
-from app.models import User
+from app.models import User, Role
 
-from app.utils import make_401, forbid_if_nor_teacher_nor_admin
+from app.utils import make_401, forbid_if_nor_teacher_nor_admin, make_400
 
 
 def refresh_token(user, resp=None):
@@ -96,19 +100,43 @@ def refresh(api_version):
 
 
 @api_bp.route('/api/<api_version>/invite-user', methods=['POST'])
-@jwt_required
-@forbid_if_nor_teacher_nor_admin
+#@jwt_required
+#@forbid_if_nor_teacher_nor_admin
 def invite_user(api_version):
     json = request.get_json(force=True)
 
     email = json.get('email', None)
+    role = json.get('role', 'student')
+
     if email is None:
         print("Email unknown")
         return make_401("Email unknown")
 
+    username = email.split('@')[0]
+    password = ''.join(choice(string.ascii_letters) for i in range(5)) + str(randint(1, 100)).zfill(3)
+    try:
+        new_user = User(username=username, password=password, email=email,
+                        first_name=username, last_name=username,
+                        active=True, email_confirmed_at=datetime.datetime.now())
+
+        if role not in ('student', 'teacher', 'admin'):
+            role = 'student'
+        new_user.roles = [Role.query.filter(Role.name == role).first()]
+
+        db.session.add(new_user)
+        db.session.commit()
+    except Exception as e:
+        print(f'cannot invite user ({username}, {email}): {str(e)}')
+        db.session.rollback()
+        return make_400("Cannot invite user: %s" % str(e))
+
     msg = Message('Contribute to Adele', sender=current_app.config['MAIL_USERNAME'], recipients=[email])
-    msg.body = "Hello Flask message sent from Flask-Mail %s" % email
+    msg.body = "Vous avez été invité(e) à contribuer au projet Adele (" \
+               "https://dev.chartes.psl.eu/adele/profile).\nIdentifiant: %s\nMot de passe: %s\nN'oubliez pas de " \
+               "changer votre mot de passe après votre première connexion !" % (email, password)
+
     return mail.send(msg), 200
+
 
 @api_bp.route('/api/<api_version>/update-user', methods=['POST'])
 @jwt_required
