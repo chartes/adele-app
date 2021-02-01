@@ -114,14 +114,29 @@ def invite_user(api_version):
 
     username = email.split('@')[0]
     password = ''.join(choice(string.ascii_letters) for i in range(5)) + str(randint(1, 100)).zfill(3)
+
+    msg = Message('Contribute to Adele', sender=current_app.config['MAIL_USERNAME'], recipients=[email])
+    msg.body = "Vous avez été invité(e) à contribuer au projet Adele (" \
+               "https://dev.chartes.psl.eu/adele/profile).\nIdentifiant: %s\nMot de passe: %s\nN'oubliez pas de " \
+               "changer votre mot de passe après votre première connexion !" % (email, password)
+    print(msg.body)
+
     try:
-        new_user = User(username=username, password=password, email=email,
+        new_user = User(username=username, password=generate_password_hash(password), email=email,
                         first_name=username, last_name=username,
                         active=True, email_confirmed_at=datetime.datetime.now())
 
+        print('checkpassword:', check_password_hash(new_user.password, password))
+
         if role not in ('student', 'teacher', 'admin'):
             role = 'student'
-        new_user.roles = [Role.query.filter(Role.name == role).first()]
+
+        if role == 'admin':
+            new_user.roles = Role.query.filter(Role.id >= 1).all()
+        elif role == 'student':
+            new_user.roles = Role.query.filter(Role.id == 2).all()
+        elif role == 'teacher':
+            new_user.roles = Role.query.filter(Role.id >= 2).all()
 
         db.session.add(new_user)
         db.session.commit()
@@ -130,10 +145,6 @@ def invite_user(api_version):
         db.session.rollback()
         return make_400("Cannot invite user: %s" % str(e))
 
-    msg = Message('Contribute to Adele', sender=current_app.config['MAIL_USERNAME'], recipients=[email])
-    msg.body = "Vous avez été invité(e) à contribuer au projet Adele (" \
-               "https://dev.chartes.psl.eu/adele/profile).\nIdentifiant: %s\nMot de passe: %s\nN'oubliez pas de " \
-               "changer votre mot de passe après votre première connexion !" % (email, password)
 
     return mail.send(msg), 200
 
