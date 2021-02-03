@@ -74,9 +74,17 @@ def make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords):
 
     svg_data = "<svg xmlns='http://www.w3.org/2000/svg'>{0}</svg>".format(fig_path)
 
+    # TODO IIIF Presentation  or Mirador complient?
     return {
-        "@type": "oa:SvgSelector",
-        "value": svg_data
+        "@type": "oa:Choice",
+        "default": {
+            "@type": "oa:SvgSelector",
+            "value": svg_data
+        },
+        "item": {
+            "@type": "oa:SvgSelector",
+            "value": svg_data
+        }
     }
 
 def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, metadata=None, format="text/html"):
