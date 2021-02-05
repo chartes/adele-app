@@ -242,7 +242,7 @@ class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(), nullable=False, unique=False)
     subtitle = db.Column(db.String(), nullable=False, unique=False)
-    creation = db.Column(db.Integer)
+    creation = db.Column(db.String)
     creation_lab = db.Column(db.String())
     copy_year = db.Column(db.String())
     copy_cent = db.Column(db.Integer)
