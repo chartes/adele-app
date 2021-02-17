@@ -325,6 +325,30 @@ class Document(db.Model):
             'commentaries': self.is_commentaries_validated is True
         }
 
+    @property
+    def exist_flags(self):
+        # owner has content
+
+        tr = Transcription.query.filter(Transcription.doc_id == self.id,
+                                           Transcription.user_id == self.user_id).first()
+
+        tl = Translation.query.filter(Translation.doc_id == self.id,
+                                      Translation.user_id == self.user_id).first()
+
+        return {
+            'notice': True,
+            'transcription': tr is not None,
+            'translation': tl is not None,
+            'alignment-translation': tl is not None and tr is not None and AlignmentTranslation.query.filter(AlignmentTranslation.translation_id == tl.id,
+                                                                       AlignmentTranslation.transcription_id == tr.id).count() > 0,
+            'facsimile': tr is not None and AlignmentImage.query.filter(AlignmentImage.transcription_id == tr.id,
+                                                                        AlignmentImage.user_id == self.user_id).count() > 0,
+            'speech-parts': tr is not None and AlignmentDiscours.query.filter(AlignmentDiscours.transcription_id == self.id,
+                                                                              AlignmentDiscours.user_id == self.user_id).count() > 0,
+            'commentaries': Commentary.query.filter(Commentary.doc_id == self.id,
+                                                    Commentary.user_id == self.user_id).count() > 0,
+        }
+
     def serialize(self):
 
         prev = db.session.query(Document.id).filter(Document.id < self.id).order_by(desc(Document.id)).first()
@@ -363,7 +387,8 @@ class Document(db.Model):
             'languages': [lg.serialize() for lg in self.languages],
             'traditions': [tr.serialize() for tr in self.traditions],
             'whitelist': self.whitelist.serialize() if self.whitelist is not None else None,
-            'validation_flags': self.validation_flags
+            'validation_flags': self.validation_flags,
+            'exist_flags': self.exist_flags,
         }
 
 

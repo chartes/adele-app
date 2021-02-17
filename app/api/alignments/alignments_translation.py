@@ -180,7 +180,7 @@ def add_notes_refs(tr, tl):
                     overlapping_note = note  # note englobant au moins une ligne en totalité
                 elif (al_ptr_start <= int(note["ptr_start"]) <= al_ptr_end) and \
                         (al_ptr_start <= int(note["ptr_end"]) <= al_ptr_end):
-                    between_notes.append(note)
+                    between_notes.append(note) # note présente au sein d'un alignement
                 elif int(note["ptr_start"]) <= al_ptr_end <= int(note["ptr_end"]):
                     after_notes.append(note)  # note finissant sur la ligne suivante
                 elif int(note["ptr_start"]) <= al_ptr_start <= int(note["ptr_end"]):

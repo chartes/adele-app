@@ -135,9 +135,8 @@ def api_get_documents(api_version):
     # SORTS
     sorts = data.get("sorts", [])
 
-    pprint.pprint(data)
     query = query.filter(and_(*or_stmts))
-    print("query:", query)
+    print(query)
     count = query.count()
     docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
 
@@ -487,3 +486,4 @@ def api_post_document_manifest(api_version, doc_id):
 
 # IMPORT DOCUMENT VALIDATION STEP ROUTES
 from .document_validation import *
+from .document_management import *
