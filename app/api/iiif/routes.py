@@ -10,6 +10,7 @@ from app import db
 from app.api.iiif.open_annotation import make_annotation, make_annotation_list, make_annotation_layer
 from app.api.response import APIResponseFactory
 from app.api.routes import json_loads, api_bp
+from app.api.transcriptions.routes import get_reference_transcription
 from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl, ANNO_ZONE_TYPE, TR_ZONE_TYPE
 from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin, make_204, make_201
 
@@ -284,6 +285,13 @@ def api_documents_post_annotation(api_version, doc_id):
         doc_id = doc.id
         img_idx = data.get('img_idx', 0)
 
+        note = data.get('note', None)
+        ptr_start = data.get('ptr_start', None)
+        ptr_end = data.get('ptr_end', None)
+
+        if note is not None and (ptr_start is not None or ptr_end is not None):
+            raise Exception('ambiguous annotation type')
+
         # test if the image is in db first
         if Image.query.filter(
                 Image.manifest_url == url,
@@ -314,10 +322,40 @@ def api_documents_post_annotation(api_version, doc_id):
             zone_type_id=data['zone_type_id'],
 
             coords=data['coords'],
-            note=data.get('note', None)
+            note=note
         )
-
         db.session.add(new_anno)
+
+        if ptr_start is not None and ptr_end is not None:
+            tr = get_reference_transcription(doc_id)
+            if tr is None:
+                raise Exception('There is no reference transcription use in this annotation')
+
+            al = AlignmentImage.query.filter(
+                AlignmentImage.transcription_id == tr.id,
+                AlignmentImage.manifest_url == url,
+                AlignmentImage.canvas_idx == canvas_idx,
+                AlignmentImage.img_idx == img_idx,
+                AlignmentImage.ptr_transcription_start == ptr_start,
+                AlignmentImage.ptr_transcription_end == ptr_end
+            ).first()
+
+            if al is not None:
+                raise Exception('this alignment already exists: %s', [tr.id, ptr_start, ptr_end])
+
+            new_al = AlignmentImage(
+                transcription_id=tr.id,
+                user_id=doc.user_id,
+                zone_id=new_zone_id,
+                manifest_url=url,
+                canvas_idx=canvas_idx,
+                img_idx=img_idx,
+                ptr_transcription_start=ptr_start,
+                ptr_transcription_end=ptr_end
+            )
+
+            db.session.add(new_al)
+
         db.session.commit()
     except Exception as e:
         print(data, str(e))
@@ -325,6 +363,112 @@ def api_documents_post_annotation(api_version, doc_id):
         return make_400(details="Cannot build this new annotation: %s" % str(e))
 
     return make_201(data=new_anno.serialize())
+
+
+@api_bp.route("/api/<api_version>/iiif/<doc_id>/annotation/<zone_id>", methods=['PUT'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_documents_put_annotation(api_version, doc_id, zone_id):
+    """
+    expected format:
+
+    {
+        "manifest_url": "https://../manifest20.json",
+        "canvas_idx": 0,
+        // In case there are multiple images on a canvas, optionnal, default is 0
+        "img_idx": 0,
+        "zone_type_id": 2,
+        "coords': "620,128,788,159",
+
+        // in case of a COMMENTING motivation, the text content is embedded within the annotation,
+        // optionnal, default is none
+        "note": "Ceci est une majuscule"
+
+        // in case of a DESCRIBING motivation, the text content is a segment of the transcription
+        // (not yet implemented, so optionnal)
+        "ptr_start" : 3
+        "ptr_end" : 131
+    }
+
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+    data = request.get_json()
+
+    try:
+        doc = Document.query.filter(Document.id == doc_id).first()
+
+        url = data['manifest_url']
+        canvas_idx = data['canvas_idx']
+        doc_id = doc.id
+        img_idx = data.get('img_idx', 0)
+
+        note = data.get('note', None)
+        ptr_start = data.get('ptr_start', None)
+        ptr_end = data.get('ptr_end', None)
+
+        if note is not None and (ptr_start is not None or ptr_end is not None):
+            raise Exception('ambiguous annotation type')
+
+        img_zone = ImageZone.query.filter(
+            ImageZone.zone_id == zone_id,
+            ImageZone.manifest_url == url,
+            ImageZone.canvas_idx == canvas_idx,
+            ImageZone.img_idx == img_idx,
+            ImageZone.user_id == doc.user_id
+        ).first()
+
+        img_zone.note = note
+        img_zone.zone_type_id = data['zone_type_id']
+        img_zone.coords = data['coords']
+        print(img_zone)
+
+        tr = get_reference_transcription(doc_id)
+        if tr is None:
+            raise Exception('There is no reference transcription use in this annotation')
+
+        al = AlignmentImage.query.filter(
+            AlignmentImage.transcription_id == tr.id,
+            AlignmentImage.manifest_url == url,
+            AlignmentImage.canvas_idx == canvas_idx,
+            AlignmentImage.img_idx == img_idx,
+            AlignmentImage.zone_id == img_zone.zone_id
+        ).first()
+
+        if ptr_start is not None and ptr_end is not None:
+            if al is None:
+                print('new al')
+                note = None
+                new_al = AlignmentImage(
+                    transcription_id=tr.id,
+                    user_id=doc.user_id,
+                    zone_id=zone_id,
+                    manifest_url=url,
+                    canvas_idx=canvas_idx,
+                    img_idx=img_idx,
+                    ptr_transcription_start=ptr_start,
+                    ptr_transcription_end=ptr_end
+                )
+                db.session.add(new_al)
+            else:
+                print('update al')
+                al.ptr_transcription_start = ptr_start
+                al.ptr_transcription_end = ptr_end
+                db.session.add(al)
+        else:
+            # let's check if there is an old al to delete
+            if al is not None:
+                db.session.delete(al)
+
+        db.session.add(img_zone)
+        db.session.commit()
+    except Exception as e:
+        print(data, str(e))
+        db.session.rollback()
+        return make_400(details="Cannot update this annotation: %s" % str(e))
+
+    return make_200(data=img_zone.serialize())
 
 
 @api_bp.route("/api/<api_version>/iiif/<doc_id>/annotation/<zone_id>", methods=['DELETE'])
