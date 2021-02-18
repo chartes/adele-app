@@ -16,8 +16,9 @@ def api_get_dashboard_manage_documents(api_version):
 
     return make_200(data={"total": total, "documents": [
         {
+            "whitelist": {"id": d.whitelist.id, "label": d.whitelist.label},
             "id": d.id, "title": d.title, "pressmark": d.pressmark,
-            "user-id": d.user_id, "whitelist-id": d.whitelist_id,
+            "owner": d.user.serialize(),
             "is-published": d.is_published,
             "validation": d.validation_flags,
             "exist": d.exist_flags,
