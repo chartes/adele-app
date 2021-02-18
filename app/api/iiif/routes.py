@@ -2,6 +2,7 @@ import math
 
 import pprint
 from flask import url_for, request, current_app
+from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 from urllib.request import build_opener, urlopen
 
@@ -10,7 +11,7 @@ from app.api.iiif.open_annotation import make_annotation, make_annotation_list, 
 from app.api.response import APIResponseFactory
 from app.api.routes import json_loads, api_bp
 from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl, ANNO_ZONE_TYPE, TR_ZONE_TYPE
-from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin
+from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin, make_204
 
 """
 ===========================
@@ -242,6 +243,113 @@ def api_documents_annotations(api_version, doc_id, zone_id):
     except Exception as e:
         print(str(e))
         return make_400(str(e))
+
+
+@api_bp.route("/api/<api_version>/iiif/<doc_id>/annotations", methods=['POST'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_documents_post_annotation(api_version, doc_id):
+    """
+    expected format:
+
+    {
+        'manifest_url': 'https://../manifest20.json',
+        'canvas_idx': 0,
+        'img_idx': 0,       // In case there are multiple images on a canvas, optionnal, default is 0
+        'zone_type_id': 2,
+        'coords': '620,128,788,159',
+        // in case of a commenting motivation, the note is embedded within the annotation
+        'note': 'Ceci est une majuscule'  // optionnal, default is None
+    }
+
+    :param canvas_name:
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+    data = request.get_json()
+
+    try:
+        doc = Document.query.filter(Document.id == doc_id).first()
+
+        url = data['manifest_url']
+        canvas_idx = data['canvas_idx']
+        doc_id = doc.id
+        img_idx = data.get('img_idx', 0)
+
+        # test if the image is in db first
+        if Image.query.filter(
+                Image.manifest_url == url,
+                Image.canvas_idx == canvas_idx,
+                Image.doc_id == doc_id,
+                Image.img_idx == img_idx
+        ).first() is None:
+            raise Exception('image unknown: %s', [url, canvas_idx, doc_id, img_idx])
+
+        # compute relative zone id
+        last_zone = ImageZone.query.filter(
+            ImageZone.manifest_url == url,
+            ImageZone.canvas_idx == canvas_idx,
+            ImageZone.img_idx == img_idx
+        ).order_by(ImageZone.zone_id.desc()).first()
+
+        if last_zone is None:
+            new_zone_id = 1
+        else:
+            new_zone_id = int(last_zone.zone_id) + 1
+
+        new_anno = ImageZone(
+            zone_id=new_zone_id,
+            manifest_url=url,
+            canvas_idx=canvas_idx,
+            img_idx=img_idx,
+            user_id=doc.user_id,
+            zone_type_id=data['zone_type_id'],
+
+            coords=data['coords'],
+            note=data.get('note', None)
+        )
+
+        db.session.add(new_anno)
+        db.session.commit()
+    except Exception as e:
+        print(data, str(e))
+        db.session.rollback()
+        return make_400(details="Cannot build this new annotation: %s" % str(e))
+
+    return make_200(data=new_anno.serialize())
+
+
+@api_bp.route("/api/<api_version>/iiif/<doc_id>/annotation/<zone_id>", methods=['DELETE'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_documents_delete_annotation(api_version, doc_id, zone_id):
+    """
+    :param canvas_name:
+    :param api_version:
+    :param doc_id:
+    :param zone_id:
+    :return:
+    """
+    try:
+        img = Image.query.filter(Image.doc_id == doc_id).first()
+
+        anno_to_delete = ImageZone.query.filter(
+            ImageZone.zone_id == zone_id,
+            ImageZone.manifest_url == img.manifest_url,
+            ImageZone.canvas_idx == img.canvas_idx,
+            ImageZone.img_idx == img.img_idx
+        ).first()
+        print('anno to delete', anno_to_delete)
+        if anno_to_delete is None:
+            raise Exception('annotation %s not found ' % zone_id)
+        db.session.delete(anno_to_delete)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return make_400(details="Cannot delete the annotation %s : %s" % (zone_id, str(e)))
+
+    return make_200()
 
 
 #
