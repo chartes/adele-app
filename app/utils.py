@@ -80,6 +80,8 @@ def make_200(data=None):
 def make_204():
     return make_success(204)
 
+def make_201(data):
+    return make_success(data, status=201)
 
 def forbid_if_not_in_whitelist(app, doc):
     user = app.get_current_user()

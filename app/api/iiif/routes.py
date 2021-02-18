@@ -11,7 +11,7 @@ from app.api.iiif.open_annotation import make_annotation, make_annotation_list, 
 from app.api.response import APIResponseFactory
 from app.api.routes import json_loads, api_bp
 from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl, ANNO_ZONE_TYPE, TR_ZONE_TYPE
-from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin, make_204
+from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin, make_204, make_201
 
 """
 ===========================
@@ -253,16 +253,23 @@ def api_documents_post_annotation(api_version, doc_id):
     expected format:
 
     {
-        'manifest_url': 'https://../manifest20.json',
-        'canvas_idx': 0,
-        'img_idx': 0,       // In case there are multiple images on a canvas, optionnal, default is 0
-        'zone_type_id': 2,
-        'coords': '620,128,788,159',
-        // in case of a commenting motivation, the note is embedded within the annotation
-        'note': 'Ceci est une majuscule'  // optionnal, default is None
+        "manifest_url": "https://../manifest20.json",
+        "canvas_idx": 0,
+        // In case there are multiple images on a canvas, optionnal, default is 0
+        "img_idx": 0,
+        "zone_type_id": 2,
+        "coords': "620,128,788,159",
+
+        // in case of a COMMENTING motivation, the text content is embedded within the annotation,
+        // optionnal, default is none
+        "note": "Ceci est une majuscule"
+
+        // in case of a DESCRIBING motivation, the text content is a segment of the transcription
+        // (not yet implemented, so optionnal)
+        "ptr_start" : 3
+        "ptr_end" : 131
     }
 
-    :param canvas_name:
     :param api_version:
     :param doc_id:
     :return:
@@ -317,7 +324,7 @@ def api_documents_post_annotation(api_version, doc_id):
         db.session.rollback()
         return make_400(details="Cannot build this new annotation: %s" % str(e))
 
-    return make_200(data=new_anno.serialize())
+    return make_201(data=new_anno.serialize())
 
 
 @api_bp.route("/api/<api_version>/iiif/<doc_id>/annotation/<zone_id>", methods=['DELETE'])
@@ -325,7 +332,6 @@ def api_documents_post_annotation(api_version, doc_id):
 @forbid_if_nor_teacher_nor_admin
 def api_documents_delete_annotation(api_version, doc_id, zone_id):
     """
-    :param canvas_name:
     :param api_version:
     :param doc_id:
     :param zone_id:
