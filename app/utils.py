@@ -78,7 +78,7 @@ def make_200(data=None):
 
 
 def make_204():
-    return make_success(204)
+    return make_success(data={}, status=204)
 
 def make_201(data):
     return make_success(data, status=201)

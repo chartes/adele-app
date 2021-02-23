@@ -304,9 +304,9 @@ class Document(db.Model):
         if not self.date_closing:
             return False
         else:
-            user = current_app.get_current_user()
-            if (user.is_teacher and self.user_id == user.id) or user.is_admin:
-                return False
+            #user = current_app.get_current_user()
+            #if (user.is_teacher) or user.is_admin:
+            #    return False
             doc_closing_time = datetime.datetime.strptime(self.date_closing, '%Y-%m-%d %H:%M:%S')
             return datetime.datetime.now() > doc_closing_time
 
@@ -391,6 +391,14 @@ class Document(db.Model):
             'exist_flags': self.exist_flags,
         }
 
+    def serialize_status(self):
+        return {
+            'validation-flags': self.validation_flags,
+            'exist-flags': self.exist_flags,
+            'is-published': self.is_published,
+            'is-closed': self.is_closed,
+            'date-closing': self.date_closing
+        }
 
 class Editor(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

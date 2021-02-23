@@ -30,6 +30,14 @@ def api_documents(api_version, doc_id):
         return make_404("Document {0} not found".format(doc_id))
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/status')
+@jwt_required
+def api_documents_status(api_version, doc_id):
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+    return make_200(data=doc.serialize_status())
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/publish')
 @jwt_required
 @forbid_if_nor_teacher_nor_admin
@@ -45,10 +53,9 @@ def api_documents_publish(api_version, doc_id):
     try:
         doc.is_published = True
         db.session.commit()
-        return make_200(data=doc.serialize())
+        return make_200(data=doc.serialize_status())
     except Exception as e:
         return make_400(str(e))
-
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/unpublish')
 @jwt_required
@@ -64,7 +71,7 @@ def api_documents_unpublish(api_version, doc_id):
     try:
         doc.is_published = False
         db.session.commit()
-        return make_200(data=doc.serialize())
+        return make_200(data=doc.serialize_status())
     except Exception as e:
         return make_400(str(e))
 
@@ -292,13 +299,10 @@ def api_delete_documents(api_version, doc_id):
     if doc is None:
         return make_404("Document not found")
 
-    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
-    if is_not_allowed:
-        return is_not_allowed
-
     try:
         db.session.delete(doc)
         db.session.commit()
+        print("document", doc_id, "deleted")
     except Exception as e:
         db.session.rollback()
         return make_400("Cannot delete data: %s" % str(e))
@@ -364,6 +368,26 @@ def api_change_documents_whitelist(api_version, doc_id):
     return make_200(data=doc.serialize())
 
 
+@api_bp.route('/api/<api_version>/documents/<doc_id>/open')
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_change_documents_open(api_version, doc_id):
+    """
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+    doc = Document.query.filter(Document.id == doc_id).first()
+    if doc is None:
+        return make_404()
+
+    doc.date_closing = None
+    db.session.add(doc)
+    db.session.commit()
+
+    return make_200(data=doc.serialize_status())
+
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
 @jwt_required
 @forbid_if_nor_teacher_nor_admin
@@ -384,10 +408,6 @@ def api_change_documents_closing_date(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
-    if is_not_allowed:
-        return is_not_allowed
-
     data = request.get_json()
     data = data.get('data')
     try:
@@ -403,7 +423,7 @@ def api_change_documents_closing_date(api_version, doc_id):
     except Exception as e:
         return make_400(str(e))
 
-    return make_200(data=doc.serialize())
+    return make_200(data=doc.serialize_status())
 
 
 @api_bp.route('/api/<api_version>/documents/add', methods=['POST'])
@@ -420,7 +440,7 @@ def api_add_document(api_version):
         "subtitle": data.get('subtitle'),
         "user_id": user.id,
         "is_published": 1,
-        "whitelist_id": 34  # TODO
+        "whitelist_id": data.get('whitelist-id', 34)  # TODO
     }
 
     new_doc = Document(**kwargs)
