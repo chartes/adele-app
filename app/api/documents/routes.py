@@ -346,17 +346,12 @@ def api_change_documents_whitelist(api_version, doc_id):
     if doc is None:
         return make_404()
 
-    # maybe forbid to other teachers ?
-    is_not_allowed = forbid_if_not_in_whitelist(current_app, doc)
-    if is_not_allowed:
-        return is_not_allowed
-
     data = request.get_json()
     data = data.get('data')
 
     try:
         new_white_list_id = data.get('whitelist_id')
-        if new_white_list_id is None or int(new_white_list_id) == -1:
+        if new_white_list_id is None:
             doc.whitelist_id = None
         else:
             wl = Whitelist.query.filter(Whitelist.id == new_white_list_id).first()
@@ -365,7 +360,7 @@ def api_change_documents_whitelist(api_version, doc_id):
     except Exception as e:
         return make_400(str(e))
 
-    return make_200(data=doc.serialize())
+    return make_200()
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/open')

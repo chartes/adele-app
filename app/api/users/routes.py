@@ -1,6 +1,6 @@
 from flask import request, current_app
 from flask_jwt_extended import jwt_required
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import auth, db
@@ -46,6 +46,25 @@ def api_users(api_version, user_id):
     else:
         return make_404()
 
+
+@api_bp.route('/api/<api_version>/users')
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_all_users(api_version):
+    page_number = request.args.get('num-page', 1)
+    page_size = request.args.get('page-size', 50)
+
+    query = User.query
+    total = query.count()
+
+    sort = request.args.get('sort-by', None)
+    if sort:
+        field, order = sort.split('.')
+        query = query.order_by(text("%s %s" % (field, "desc" if order == "asc" else "asc")))
+
+    users = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
+
+    return make_200(data={"total": total, "users": [u.serialize() for u in users]})
 
 @api_bp.route('/api/<api_version>/users/<user_id>/roles')
 @jwt_required
@@ -157,26 +176,16 @@ def api_delete_users_roles(api_version, user_id):
         return make_400(str(e))
 
 
-@api_bp.route('/api/<api_version>/whitelists/<whitelist_id>/add-users', methods=['POST'])
+@api_bp.route('/api/<api_version>/whitelists/<whitelist_id>/add-user/<user_id>', methods=['GET'])
 @jwt_required
 @forbid_if_nor_teacher_nor_admin
-def add_user_to_whitelist(api_version, whitelist_id):
-    """
-    {
-        data: {
-            user_id : [1, 2]
-        }
-    }
-    :return:
-    """
-    data = request.get_json()
-    data = data["data"]
-    user_ids = data.get("user_id") or []
+def add_user_to_whitelist(api_version, whitelist_id, user_id):
 
     whitelist = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
-    users = User.query.filter(User.id.in_(user_ids)).all()
+    user = User.query.filter(User.id == user_id).first()
     # make sure you don't twice a same user
-    whitelist.users.extend([u for u in users if u.id not in [u.id for u in whitelist.users]])
+    if user not in whitelist.users:
+        whitelist.users.append(user)
 
     try:
         db.session.commit()
@@ -220,8 +229,15 @@ def api_get_whitelist(api_version, whitelist_id):
     if w is None:
         return make_404("whitelist unknown")
     else:
-        return make_200(data=[w.serialize()])
+        return make_200(data=w.serialize())
 
+
+@api_bp.route('/api/<api_version>/whitelists')
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_get_whitelist_all(api_version):
+    whitelists = Whitelist.query.order_by(Whitelist.label).all()
+    return make_200(data=[w.serialize() for w in whitelists])
 
 @api_bp.route('/api/<api_version>/whitelists', methods=['POST'])
 @jwt_required
@@ -229,24 +245,20 @@ def api_get_whitelist(api_version, whitelist_id):
 def api_post_whitelist(api_version):
     """
     {
-        data: [{
-            whitelist_name : 'My new whitelist'
-        }]
+        data: {
+            label : 'My new whitelist'
+        }
     }
     :return:
     """
     data = request.get_json()
 
     try:
-        wls = []
-        for d in data["data"]:
-            new_whitelist_name = d.get("whitelist_name")
-            whitelist = Whitelist(label=new_whitelist_name)
-            db.session.add(whitelist)
-            wls.append(whitelist)
-            db.session.flush()
+        new_whitelist_name = data.get("label")
+        whitelist = Whitelist(label=new_whitelist_name)
+        db.session.add(whitelist)
         db.session.commit()
-        return make_200(data=[w.serialize() for w in wls])
+        return make_200(data=whitelist.serialize())
     except Exception as e:
         db.session.rollback()
         print(str(e))
