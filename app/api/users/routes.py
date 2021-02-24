@@ -223,7 +223,6 @@ def remove_user_from_whitelist(api_version, whitelist_id, user_id):
 
 @api_bp.route('/api/<api_version>/whitelists/<whitelist_id>')
 @jwt_required
-@forbid_if_nor_teacher_nor_admin
 def api_get_whitelist(api_version, whitelist_id):
     w = Whitelist.query.filter(Whitelist.id == whitelist_id).first()
     if w is None:
@@ -234,7 +233,6 @@ def api_get_whitelist(api_version, whitelist_id):
 
 @api_bp.route('/api/<api_version>/whitelists')
 @jwt_required
-@forbid_if_nor_teacher_nor_admin
 def api_get_whitelist_all(api_version):
     whitelists = Whitelist.query.order_by(Whitelist.label).all()
     return make_200(data=[w.serialize() for w in whitelists])

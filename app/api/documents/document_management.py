@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, current_app
 from flask_jwt_extended import jwt_required
 from sqlalchemy import desc, asc, text
 
@@ -14,8 +14,13 @@ def api_get_dashboard_manage_documents(api_version):
     page_size = request.args.get('page-size', 50)
 
     query = Document.query
-    total = query.count()
 
+    user = current_app.get_current_user()
+    if user.is_student and not (user.is_admin or user.is_teacher):
+        query = query.filter(Document.whitelist_id.in_([w.id for w in user.whitelists]))
+    print(query)
+
+    total = query.count()
     sort = request.args.get('sort-by', None)
     if sort:
         field, order = sort.split('.')

@@ -32,6 +32,7 @@ class Config(object):
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     JWT_TOKEN_LOCATION = ['cookies', 'headers']
     JWT_COOKIE_CSRF_PROTECT = True
+    JWT_COOKIE_SECURE = True
 
     # JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(seconds=int(os.getenv(('JWT_ACCESS_TOKEN_EXPIRES'))))
 
@@ -46,6 +47,9 @@ class DevelopmentConfig(Config):
     SECRET_KEY = 'you-will-never-guess-but-please-change-me!'
 
     APP_URL_PREFIX = ""  # used to build correct iiif urls
+
+    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_SECURE = False
 
     @staticmethod
     def init_app(app):

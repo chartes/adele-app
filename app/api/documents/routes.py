@@ -4,7 +4,8 @@ from math import ceil
 from urllib.request import build_opener
 
 from flask import request,  current_app
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, verify_jwt_in_request_optional, jwt_optional
+from flask_jwt_extended.view_decorators import _decode_jwt_from_request
 from sqlalchemy import or_, and_, any_
 from sqlalchemy.testing import in_
 
@@ -142,8 +143,15 @@ def api_get_documents(api_version):
     # SORTS
     sorts = data.get("sorts", [])
 
-    query = query.filter(and_(*or_stmts))
-    print(query)
+    access_restrictions = []
+    print(verify_jwt_in_request_optional())
+    print(request.headers)
+    user = current_app.get_current_user()
+    print(user)
+    if user.is_anonymous:
+        access_restrictions.append(Document.is_published)
+
+    query = query.filter(and_(*or_stmts, *access_restrictions))
     count = query.count()
     docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
 

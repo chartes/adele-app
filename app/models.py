@@ -362,6 +362,7 @@ class Document(db.Model):
 
             'id': self.id,
             'user_id': self.user_id,
+            'user': self.user.serialize(),
             'title': self.title,
             'subtitle': self.subtitle,
             'creation': self.creation,
@@ -846,13 +847,12 @@ class User(db.Model):
 
     @property
     def documents_i_can_edit(self):
-
         if self.is_anonymous:
             return []
 
         all_docs = Document.query.all()
         docs = []
-        if self.is_admin:
+        if self.is_admin or self.is_teacher:
             docs = all_docs
         else:
             for doc in all_docs:

@@ -5,7 +5,7 @@ from random import randint, random, choice
 from flask import jsonify, request, url_for, app, current_app
 from flask_jwt_extended import create_access_token, set_access_cookies, \
     unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies, \
-    jwt_required
+    jwt_required, unset_refresh_cookies, unset_access_cookies
 from flask_mail import Message
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -53,6 +53,13 @@ def create_tokens(user):
     }
     return data, access_token, refresh_token,
 
+
+@api_bp.route('/api/<api_version>/logout')
+def logout(api_version):
+    resp = jsonify({})
+    unset_access_cookies(resp)
+    unset_refresh_cookies(resp)
+    return resp, 200
 
 @api_bp.route('/api/<api_version>/login', methods=['POST'])
 def login(api_version):
