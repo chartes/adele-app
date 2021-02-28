@@ -432,7 +432,8 @@ class ImageZone(db.Model):
     img_idx = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     zone_type_id = db.Column(db.Integer, db.ForeignKey('image_zone_type.id', ondelete='CASCADE'))
-    coords = db.Column(db.String)
+    fragment = db.Column(db.String)
+    svg = db.Column(db.String)
     note = db.Column(db.String)
 
     __table_args__ = (

@@ -126,7 +126,7 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
                                  Image.canvas_idx == canvas_idx).first()
 
         # TODO s'il y a plusieurs images dans un seul et même canvas ?
-        img_json = canvas["images"][0]
+        #img_json = canvas["images"][0]
         kwargs = {
             "doc_id": doc_id,
             "api_version": api_version
@@ -134,10 +134,10 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
 
         manifest_url = current_app.with_url_prefix(
             url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id))
+
         for img_zone in [zone for zone in img.zones if zone.zone_type.label == motivation]:
             kwargs["zone_id"] = img_zone.zone_id
             res_uri = current_app.with_url_prefix(url_for("api_bp.api_documents_annotations", **kwargs))
-            fragment_coords = img_zone.coords
 
             if img_zone.zone_type.label == "describing":
                 from app.api.transcriptions.routes import get_reference_transcription
@@ -166,8 +166,8 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
             new_annotation = make_annotation(
                 manifest_url,
                 canvas["@id"],
-                img_json,
-                fragment_coords,
+                img_zone.fragment,
+                img_zone.svg,
                 res_uri,
                 content=text_content,
                 format="text/html"
@@ -230,11 +230,12 @@ def api_documents_annotations(api_version, doc_id, zone_id):
         # TODO: gerer erreur si pas d'image dans le canvas
         canvas = sequence["canvases"][img_zone.canvas_idx]
         img_json = canvas["images"][img_zone.img_idx]
-        fragment_coords = img_zone.coords
         url = current_app.with_url_prefix(url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id))
         new_annotation = make_annotation(
             url,
-            canvas["@id"], img_json, fragment_coords,
+            canvas["@id"],
+            img_json.get('fragment', None),
+            img_json.get('svg', None),
             res_uri,
             note_content,
             format="text/html"
@@ -259,7 +260,9 @@ def api_documents_post_annotation(api_version, doc_id):
         // In case there are multiple images on a canvas, optionnal, default is 0
         "img_idx": 0,
         "zone_type_id": 2,
-        "coords': "620,128,788,159",
+
+        "fragment": "620,128,788,159",  // FragmentSelector
+        "svg": "<svg ...>"              // SvgSelector
 
         // in case of a COMMENTING motivation, the text content is embedded within the annotation,
         // optionnal, default is none
@@ -320,7 +323,8 @@ def api_documents_post_annotation(api_version, doc_id):
             user_id=doc.user_id,
             zone_type_id=data['zone_type_id'],
 
-            coords=data['coords'],
+            svg=data.get('svg', None),
+            fragment=data.get('fragment', None),
             note=note
         )
         db.session.add(new_anno)
@@ -365,8 +369,6 @@ def api_documents_post_annotation(api_version, doc_id):
 
 
 @api_bp.route("/api/<api_version>/iiif/<doc_id>/annotation/<zone_id>", methods=['PUT'])
-@jwt_required
-@forbid_if_nor_teacher_nor_admin
 def api_documents_put_annotation(api_version, doc_id, zone_id):
     """
     expected format:
@@ -377,7 +379,8 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
         // In case there are multiple images on a canvas, optionnal, default is 0
         "img_idx": 0,
         "zone_type_id": 2,
-        "coords': "620,128,788,159",
+        "fragment': "620,128,788,159",
+        "svg': "620,128,788,159, ...",
 
         // in case of a COMMENTING motivation, the text content is embedded within the annotation,
         // optionnal, default is none
@@ -419,7 +422,8 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
 
         img_zone.note = note
         img_zone.zone_type_id = data['zone_type_id']
-        img_zone.coords = data['coords']
+        img_zone.fragment = data.get('fragment', None),
+        img_zone.svg = data.get('svg', None)
         print(img_zone)
 
         tr = get_reference_transcription(doc_id)

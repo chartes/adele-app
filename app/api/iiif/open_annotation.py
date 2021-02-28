@@ -78,23 +78,24 @@ def make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords):
     return {
         "@type": "oa:Choice",
         "default": {
-            "@type": "oa:SvgSelector",
+            "@type": "oa:FragmentSelector",  # Fragment
             "value": svg_data
         },
-        "item": {
+        "item": {                       # SvgSelector
             "@type": "oa:SvgSelector",
             "value": svg_data
         }
     }
 
-def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, content, metadata=None, format="text/html"):
+def make_annotation(manifest_url, canvas_url, fragment, svg, res_uri, content, metadata=None, format="text/html"):
     """
 
     :param metadata:
     :param canvas_url:
     :param manifest_url:
     :param img:
-    :param fragment_coords:
+    :param fragment:
+    :param svg
     :param res_uri:
     :param content:
     :param format:
@@ -102,12 +103,32 @@ def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, con
     """
     if metadata is None:
         metadata = {}
-    if len(fragment_coords.split(",")) == 4:
-        selector = make_specific_rectangular_selector(fragment_coords)
+
+    default, item = None, None
+
+    if fragment:
+        default = {
+            "@type": "oa:FragmentSelector",
+            "value": fragment
+        }
     else:
-        #TODO ? ne semble pas fonctionner avec Mirador 3
-        #return {}
-        selector = make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords)
+        if svg:
+            default = {
+                "@type": "oa:SvgSelector",
+                "value": svg
+            }
+
+    if svg:
+        item = {
+            "@type": "oa:SvgSelector",
+            "value": svg
+        }
+    else:
+        if fragment:
+            item = {
+                "@type": "oa:FragmentSelector",
+                "value": fragment
+            }
 
     anno = {
         "@type": "oa:Annotation",
@@ -122,12 +143,35 @@ def make_annotation(manifest_url, canvas_url, img, fragment_coords, res_uri, con
                 "@id": manifest_url,
                 "@type": "sc:Manifest"
             },
-            "selector": selector,
             "full": canvas_url
         }
     }
+
+    if default and item:
+        anno["on"]["selector"] = {
+            "@type": "oa:Choice",
+            "default": default,
+            "item": item
+        }
+
+
     if res_uri is not None:
         anno["resource"]["@id"] = res_uri
+
+    import re
+    from app.models import ImageZone
+    from app import db
+
+    count = 0
+    for z in db.session.query(ImageZone).filter(ImageZone.svg != None).all():
+        s = z.svg.split(',')
+        if len(s) == 4:
+            print(z)
+            #z.fragment = "%s" % z.svg
+            #z.svg = None
+            count += 1
+    print('maj %s' % count)
+    db.session.commit()
 
     return anno
 
