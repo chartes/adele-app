@@ -254,6 +254,9 @@ def api_post_whitelist(api_version):
     try:
         new_whitelist_name = data.get("label")
         whitelist = Whitelist(label=new_whitelist_name)
+
+        whitelist.users = [current_app.get_current_user()]
+
         db.session.add(whitelist)
         db.session.commit()
         return make_200(data=whitelist.serialize())
