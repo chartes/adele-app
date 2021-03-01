@@ -456,7 +456,8 @@ class ImageZone(db.Model):
             'zone_id': self.zone_id,
             'user_id': self.user_id,
             'zone_type': self.zone_type.serialize(),
-            'coords': self.coords,
+            'fragment': self.fragment,
+            'svg': self.svg,
             'note': self.note
         }
 
@@ -517,7 +518,8 @@ class Image(db.Model):
                 {
                     "zone_id": z.zone_id,
                     "user_id": z.user_id,
-                    "coords": z.coords,
+                    "fragment": z.fragment,
+                    "svg": z.svg,
                     "note": z.note
 
                 } for z in self.zones
