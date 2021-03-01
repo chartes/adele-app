@@ -67,14 +67,15 @@ def api_all_commentary(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>')
 @jwt_required
 def api_commentary_from_user(api_version, doc_id, user_id):
+    print(current_app.get_current_user())
     forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
         return forbid
 
     # teachers can still post notes in validated transcription
-    current_user = current_app.get_current_user()
-    if not current_user.is_teacher and get_doc(doc_id).is_transcription_validated:
-        return make_403()
+    #current_user = current_app.get_current_user()
+    #if not current_user.is_teacher and get_doc(doc_id).is_transcription_validated:
+    #    return make_403()
 
     commentaries = Commentary.query.filter(
         Commentary.doc_id == doc_id,

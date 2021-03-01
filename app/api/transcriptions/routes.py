@@ -64,9 +64,9 @@ def api_documents_transcriptions(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>')
 @jwt_required
 def api_documents_transcriptions_from_user(api_version, doc_id, user_id=None):
-    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
-    if forbid:
-        return forbid
+    #forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    #if forbid:
+    #    return forbid
     tr = get_transcription(doc_id, user_id)
     if tr is None:
         return make_404()
@@ -438,9 +438,9 @@ def add_notes_refs_to_text(text, notes, btag=BTAG, etag=ETAG):
 @api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcriptions/from-user/<user_id>')
 def view_document_transcription(api_version, doc_id, user_id=None):
     if user_id is not None:
-        forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
-        if forbid:
-            return forbid
+    #    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    #    if forbid:
+    #        return forbid
         tr = get_transcription(doc_id, user_id)
     else:
         tr = get_reference_transcription(doc_id)
