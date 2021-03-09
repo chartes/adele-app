@@ -85,9 +85,7 @@ def make_201(data):
 
 def forbid_if_not_in_whitelist(app, doc):
     user = app.get_current_user()
-    if doc.whitelist is None:
-        return make_403(details="This document has no user whitelist")
-    else:
+    if doc.whitelist is not None:
         if doc.user_id == user.id or user in doc.whitelist.users or user.is_admin:
             return None
         else:

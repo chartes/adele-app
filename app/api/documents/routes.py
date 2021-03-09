@@ -1,19 +1,14 @@
 import datetime
-import pprint
 from math import ceil
 from urllib.request import build_opener
 
-from flask import request,  current_app
-from flask_jwt_extended import jwt_required, verify_jwt_in_request_optional, jwt_optional
-from flask_jwt_extended.view_decorators import _decode_jwt_from_request
-from sqlalchemy import or_, and_, any_
-from sqlalchemy.testing import in_
+from flask_jwt_extended import jwt_required
+from sqlalchemy import or_, and_
 
 from app.api.routes import api_bp, json_loads
-from app.models import Document, Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
+from app.models import Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
     ImageUrl, Image, Note
-from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_400, \
-    forbid_if_nor_teacher_nor_admin, make_204, make_409, forbid_if_not_in_whitelist, check_no_XMLParserError
+from app.utils import forbid_if_nor_teacher_nor_admin, make_204, make_409, check_no_XMLParserError
 
 """
 ===========================
@@ -38,6 +33,7 @@ def api_documents_status(api_version, doc_id):
     if doc is None:
         return make_404()
     return make_200(data=doc.serialize_status())
+
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/publish')
 @jwt_required
@@ -98,10 +94,14 @@ def api_get_documents(api_version):
             or_stmts.append(or_(*centuries))
 
     # same field on the model but dealing with years and not centuries
-    if "creationRange" in filters and filters.get("filterByCreationRange", True):
+    if "creationRange" in filters:
         start, end = filters["creationRange"]
-        print(start, end)
-        or_stmts.append(Document.creation.between(int(start), int(end)))
+        _ors_dates = [Document.creation.between(int(start), int(end))]
+        if filters.get("showDocsWithoutDates", False):
+            _ors_dates.append(Document.creation.is_(None))
+        print(_ors_dates)
+        or_stmts.append(or_(*_ors_dates))
+        print(filters)
 
     if "copyCenturies" in filters:
         centuries = []
@@ -144,10 +144,8 @@ def api_get_documents(api_version):
     sorts = data.get("sorts", [])
 
     access_restrictions = []
-    print(verify_jwt_in_request_optional())
-    print(request.headers)
     user = current_app.get_current_user()
-    print(user)
+
     if user.is_anonymous:
         access_restrictions.append(Document.is_published)
 
@@ -389,6 +387,21 @@ def api_change_documents_open(api_version, doc_id):
     db.session.commit()
 
     return make_200(data=doc.serialize_status())
+
+
+@api_bp.route('/api/<api_version>/documents/last-items')
+def api_change_documents_last_items(api_version):
+    """
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+    user = current_app.get_current_user()
+
+    access_restrictions = [Document.is_published] if user.is_anonymous else []
+    docs = Document.query.filter(*access_restrictions).order_by(Document.id.desc()).limit(4).all()
+
+    return make_200(data=[d.serialize() for d in docs])
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
