@@ -99,9 +99,7 @@ def api_get_documents(api_version):
         _ors_dates = [Document.creation.between(int(start), int(end))]
         if filters.get("showDocsWithoutDates", False):
             _ors_dates.append(Document.creation.is_(None))
-        print(_ors_dates)
         or_stmts.append(or_(*_ors_dates))
-        print(filters)
 
     if "copyCenturies" in filters:
         centuries = []
@@ -399,7 +397,7 @@ def api_change_documents_last_items(api_version):
     user = current_app.get_current_user()
 
     access_restrictions = [Document.is_published] if user.is_anonymous else []
-    docs = Document.query.filter(*access_restrictions).order_by(Document.id.desc()).limit(4).all()
+    docs = Document.query.filter(*access_restrictions).order_by(Document.id.desc()).limit(3).all()
 
     return make_200(data=[d.serialize() for d in docs])
 
