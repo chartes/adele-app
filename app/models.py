@@ -349,14 +349,14 @@ class Document(db.Model):
                                                     Commentary.user_id == self.user_id).count() > 0,
         }
 
-    def serialize(self):
+    def serialize(self, zones=True, whitelist=True):
 
         prev = db.session.query(Document.id).filter(Document.id < self.id).order_by(desc(Document.id)).first()
         prev_doc_id = prev[0] if prev else None
         next = db.session.query(Document.id).filter(Document.id > self.id).order_by(Document.id).first()
         next_doc_id = next[0] if next else None
 
-        return {
+        data = {
             'prev_doc_id': prev_doc_id,
             'next_doc_id': next_doc_id,
 
@@ -374,23 +374,27 @@ class Document(db.Model):
             'date_insert': self.date_insert,
             'date_update': self.date_update,
             'date_closing': self.date_closing,
+            'images': [im.serialize(zones) for im in self.images],
             'is_published': self.is_published,
             'is_closed': self.is_closed,
             'institution_id': self.institution.id if self.institution is not None else None,
             'institution': self.institution.serialize() if self.institution is not None else None,
             'manifest_url': self.manifest_url,
             'manifest_origin_url': self.images[0].manifest_url if len(self.images) > 0 else None,
-            'images': [im.serialize() for im in self.images],
             'acte_types': [at.serialize() for at in self.acte_types],
             'countries': [co.serialize() for co in self.countries],
             'districts': [di.serialize() for di in self.districts],
             'editors': [ed.serialize() for ed in self.editors],
             'languages': [lg.serialize() for lg in self.languages],
             'traditions': [tr.serialize() for tr in self.traditions],
-            'whitelist': self.whitelist.serialize() if self.whitelist is not None else None,
             'validation_flags': self.validation_flags,
             'exist_flags': self.exist_flags,
         }
+
+        if whitelist:
+            data['whitelist'] = self.whitelist.serialize() if self.whitelist is not None else None
+
+        return data
 
     def serialize_status(self):
         return {
@@ -508,13 +512,20 @@ class Image(db.Model):
     def url(self):
         return self._image_url.img_url
 
-    def serialize(self):
-        return {
+    def serialize(self, zones=True):
+        data = {
             'canvas_idx': self.canvas_idx,
             'img_idx': self.img_idx,
             'doc_id': self.doc_id,
             'manifest_url': self.manifest_url,
-            'zones': [
+
+            'url': self.url,
+            'thumbnail_url': self.url.replace("full/full", "full/800,"),
+            # first approx; should rather open the manifest and seek the real thumbnail url
+            'info': self._image_url.img_url[:self._image_url.img_url.rfind('/full/full/')] + '/info.json'
+        }
+        if zones:
+            data['zones'] = [
                 {
                     "zone_id": z.zone_id,
                     "user_id": z.user_id,
@@ -523,12 +534,8 @@ class Image(db.Model):
                     "note": z.note
 
                 } for z in self.zones
-            ],
-            'url': self.url,
-            'thumbnail_url': self.url.replace("full/full", "full/800,"),
-            # first approx; should rather open the manifest and seek the real thumbnail url
-            'info': self._image_url.img_url[:self._image_url.img_url.rfind('/full/full/')] + '/info.json'
-        }
+            ]
+        return data
 
 
 class Institution(db.Model):

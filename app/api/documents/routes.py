@@ -76,6 +76,8 @@ def api_documents_unpublish(api_version, doc_id):
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])
 def api_get_documents(api_version):
     data = request.get_json()
+    if data is None:
+        data = {}
     page_size = max(data.get("pageSize", 20), 1)
     page_number = max(data.get("pageNum", 1), 1)
 
@@ -139,7 +141,19 @@ def api_get_documents(api_version):
             or_stmts.append(Document.institution.has(Institution.id.in_(asked_institutions)))
 
     # SORTS
-    sorts = data.get("sorts", [])
+    sorts = []
+    for s in data.get("sorts", []):
+        if s.startswith('-'):
+            isDesc = True
+            s = s[1:]
+        else:
+            isDesc = False
+
+        field = getattr(Document, s)
+        if isDesc:
+            field = field.desc()
+        sorts.append(field)
+    print(sorts)
 
     access_restrictions = []
     user = current_app.get_current_user()
@@ -149,9 +163,29 @@ def api_get_documents(api_version):
 
     query = query.filter(and_(*or_stmts, *access_restrictions))
     count = query.count()
+    if len(sorts) > 0:
+        query = query.order_by(*sorts)
     docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
 
-    return make_200(data={"meta": {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count/page_size)}, "data": [doc.serialize() for doc in docs]})
+    return make_200(data={"meta": {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count/page_size)},
+                          "data": [
+                              doc.serialize(zones=False, whitelist=False) for doc in docs
+                          ]})
+
+
+@api_bp.route('/api/<api_version>/documents/last-items')
+def api_get_documents_last_items(api_version):
+    """
+    :param api_version:
+    :param doc_id:
+    :return:
+    """
+    user = current_app.get_current_user()
+
+    access_restrictions = [Document.is_published] if user.is_anonymous else []
+    docs = Document.query.filter(*access_restrictions).order_by(Document.id.desc()).limit(3).all()
+
+    return make_200(data=[d.serialize() for d in docs])
 
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])
@@ -385,21 +419,6 @@ def api_change_documents_open(api_version, doc_id):
     db.session.commit()
 
     return make_200(data=doc.serialize_status())
-
-
-@api_bp.route('/api/<api_version>/documents/last-items')
-def api_change_documents_last_items(api_version):
-    """
-    :param api_version:
-    :param doc_id:
-    :return:
-    """
-    user = current_app.get_current_user()
-
-    access_restrictions = [Document.is_published] if user.is_anonymous else []
-    docs = Document.query.filter(*access_restrictions).order_by(Document.id.desc()).limit(3).all()
-
-    return make_200(data=[d.serialize() for d in docs])
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/close', methods=['POST'])
