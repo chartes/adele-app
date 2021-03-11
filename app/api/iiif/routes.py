@@ -1,18 +1,14 @@
-import math
-
-import pprint
 from flask import url_for, request, current_app
 from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
-from urllib.request import build_opener, urlopen
+from urllib.request import  urlopen
 
 from app import db
 from app.api.iiif.open_annotation import make_annotation, make_annotation_list, make_annotation_layer
-from app.api.response import APIResponseFactory
 from app.api.routes import json_loads, api_bp
 from app.api.transcriptions.routes import get_reference_transcription
-from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document, ImageUrl, ANNO_ZONE_TYPE, TR_ZONE_TYPE
-from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin, make_204, make_201
+from app.models import AlignmentImage, ImageZone, Image, ImageZoneType, Document
+from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_admin, make_201
 
 """
 ===========================
@@ -47,17 +43,17 @@ def make_manifest(api_version, doc_id):
                     "label": "commenting"
                 }
             },
-            {
-                "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list_by_canvas",
-                                                       motivation="describing", canvas_idx=canvas_idx, **kwargs),
-                "@type": "sc:AnnotationList",
-                "within": {
-                    "@type": "sc:Layer",
-                    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
-                                                           motivation="describing", **kwargs),
-                    "label": "describing"
-                }
-            }
+            #{
+            #    "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_list_by_canvas",
+            #                                           motivation="describing", canvas_idx=canvas_idx, **kwargs),
+            #    "@type": "sc:AnnotationList",
+            #    "within": {
+            #        "@type": "sc:Layer",
+            #        "@id": request.host_url[:-1] + url_for("api_bp.api_documents_annotations_layer",
+            #                                               motivation="describing", **kwargs),
+            #        "label": "describing"
+            #    }
+            #}
         ])
 
     return data
@@ -367,8 +363,9 @@ def api_documents_post_annotation(api_version, doc_id):
 
     return make_201(data=new_anno.serialize())
 
-
 @api_bp.route("/api/<api_version>/iiif/<doc_id>/annotation/<zone_id>", methods=['PUT'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
 def api_documents_put_annotation(api_version, doc_id, zone_id):
     """
     expected format:
@@ -412,30 +409,34 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
         if note is not None and (ptr_start is not None or ptr_end is not None):
             raise Exception('ambiguous annotation type')
 
-        img_zone = ImageZone.query.filter(
+        img_zone = ImageZone.query.with_for_update(nowait=True).filter(
             ImageZone.zone_id == zone_id,
             ImageZone.manifest_url == url,
             ImageZone.canvas_idx == canvas_idx,
             ImageZone.img_idx == img_idx,
             ImageZone.user_id == doc.user_id
-        ).first()
+        ).one()
 
+        img_zone.zone_id = int(zone_id)
         img_zone.note = note
-        img_zone.zone_type_id = data['zone_type_id']
-        img_zone.fragment = data.get('fragment', None),
+        img_zone.zone_type_id = data.get('zone_type_id', 2)
+        img_zone.fragment = data.get('fragment', None)
         img_zone.svg = data.get('svg', None)
-        print(img_zone)
+
+        db.session.flush()
+        #db.session.add(img_zone)
 
         tr = get_reference_transcription(doc_id)
         if tr is None:
-            raise Exception('There is no reference transcription use in this annotation')
+            raise Exception('There is no reference transcription to use in this annotation')
 
+        print('finding existing al')
         al = AlignmentImage.query.filter(
             AlignmentImage.transcription_id == tr.id,
             AlignmentImage.manifest_url == url,
             AlignmentImage.canvas_idx == canvas_idx,
             AlignmentImage.img_idx == img_idx,
-            AlignmentImage.zone_id == img_zone.zone_id
+            AlignmentImage.zone_id == zone_id
         ).first()
 
         if ptr_start is not None and ptr_end is not None:
@@ -461,9 +462,10 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
         else:
             # let's check if there is an old al to delete
             if al is not None:
+                print("delete old al")
                 db.session.delete(al)
 
-        db.session.add(img_zone)
+        #db.session.add(img_zone)
         db.session.commit()
     except Exception as e:
         print(data, str(e))

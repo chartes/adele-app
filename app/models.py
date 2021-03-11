@@ -432,8 +432,8 @@ class ImageZoneType(db.Model):
 class ImageZone(db.Model):
     zone_id = db.Column(db.Integer, primary_key=True)
     manifest_url = db.Column(db.String, primary_key=True)
-    canvas_idx = db.Column(db.Integer)
-    img_idx = db.Column(db.Integer)
+    canvas_idx = db.Column(db.Integer, primary_key=True)
+    img_idx = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     zone_type_id = db.Column(db.Integer, db.ForeignKey('image_zone_type.id', ondelete='CASCADE'))
     fragment = db.Column(db.String)

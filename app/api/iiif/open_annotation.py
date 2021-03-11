@@ -41,13 +41,10 @@ def make_specific_rectangular_selector(rect_coords):
     """
     x,y,w,h = rect_coords.split(',')
 
-    return {
-        "@type": "oa:FragmentSelector",
-        "value": "xywh=" + ','.join([x, y, str(math.ceil(int(w)/2)), str(math.ceil(int(h)/2))])
-    }
+    return "xywh=" + ','.join([x, y, str(math.ceil(int(w)/2)), str(math.ceil(int(h)/2))])
 
 
-def make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords):
+def make_specific_svg_selector(fragment_coords):
     """
 
     :param canvas_url:
@@ -56,6 +53,9 @@ def make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords):
     :param fragment_coords:
     :return:
     """
+    if fragment_coords.startswith("<svg"):
+        return fragment_coords
+
     coords = fragment_coords.split(",")
 
     if len(coords) == 3:
@@ -75,17 +75,7 @@ def make_specific_svg_selector(manifest_url, canvas_url, img, fragment_coords):
     svg_data = "<svg xmlns='http://www.w3.org/2000/svg'>{0}</svg>".format(fig_path)
 
     # TODO IIIF Presentation  or Mirador complient?
-    return {
-        "@type": "oa:Choice",
-        "default": {
-            "@type": "oa:FragmentSelector",  # Fragment
-            "value": svg_data
-        },
-        "item": {                       # SvgSelector
-            "@type": "oa:SvgSelector",
-            "value": svg_data
-        }
-    }
+    return svg_data
 
 def make_annotation(manifest_url, canvas_url, fragment, svg, res_uri, content, metadata=None, format="text/html"):
     """
@@ -109,25 +99,25 @@ def make_annotation(manifest_url, canvas_url, fragment, svg, res_uri, content, m
     if fragment:
         default = {
             "@type": "oa:FragmentSelector",
-            "value": fragment
+            "value": make_specific_rectangular_selector(fragment)
         }
     else:
         if svg:
             default = {
                 "@type": "oa:SvgSelector",
-                "value": svg
+                "value": make_specific_svg_selector(svg)
             }
 
     if svg:
         item = {
             "@type": "oa:SvgSelector",
-            "value": svg
+            "value": make_specific_svg_selector(svg)
         }
     else:
         if fragment:
             item = {
                 "@type": "oa:FragmentSelector",
-                "value": fragment
+                "value": make_specific_rectangular_selector(fragment)
             }
 
     anno = {
@@ -166,11 +156,7 @@ def make_annotation(manifest_url, canvas_url, fragment, svg, res_uri, content, m
     for z in db.session.query(ImageZone).filter(ImageZone.svg != None).all():
         s = z.svg.split(',')
         if len(s) == 4:
-            print(z)
-            #z.fragment = "%s" % z.svg
-            #z.svg = None
             count += 1
-    print('maj %s' % count)
     db.session.commit()
 
     return anno
