@@ -131,10 +131,11 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
         manifest_url = current_app.with_url_prefix(
             url_for("api_bp.api_documents_manifest", api_version=1.0, doc_id=doc_id))
 
-        for img_zone in [zone for zone in img.zones if zone.zone_type.label == motivation]:
+        for img_zone in [zone for zone in img.zones]:
             kwargs["zone_id"] = img_zone.zone_id
             res_uri = current_app.with_url_prefix(url_for("api_bp.api_documents_annotations", **kwargs))
 
+            print(img_zone, img_zone.zone_type.label)
             if img_zone.zone_type.label == "describing":
                 from app.api.transcriptions.routes import get_reference_transcription
                 tr = get_reference_transcription(doc_id)
