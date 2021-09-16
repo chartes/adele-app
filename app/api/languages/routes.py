@@ -12,7 +12,7 @@ from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_
 @api_bp.route('/api/<api_version>/languages/<language_code>')
 def api_language(api_version, language_code=None):
     if language_code is None:
-        languages = Language.query.all()
+        languages = Language.query.order_by(Language.label).all()
     else:
         # single
         at = Language.query.filter(Language.code == language_code).first()

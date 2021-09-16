@@ -21,7 +21,7 @@ def api_district(api_version, country_id=None, district_id=None):
         country_id = District.country_id
 
     if district_id is None:
-        districts = District.query.filter(District.country_id == country_id).all()
+        districts = District.query.filter(District.country_id == country_id).order_by(District.label).all()
     else:
         # single
         at = District.query.filter(District.country_id == country_id, District.id == district_id).first()

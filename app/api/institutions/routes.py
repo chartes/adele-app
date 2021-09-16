@@ -12,7 +12,7 @@ from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_
 @api_bp.route('/api/<api_version>/institutions/<institution_id>')
 def api_institution(api_version, institution_id=None):
     if institution_id is None:
-        institutions = Institution.query.all()
+        institutions = Institution.query.order_by(Institution.name).all()
     else:
         # single
         at = Institution.query.filter(Institution.id == institution_id).first()

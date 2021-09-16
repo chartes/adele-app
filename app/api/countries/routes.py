@@ -12,7 +12,7 @@ from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_
 @api_bp.route('/api/<api_version>/countries/<country_id>')
 def api_country(api_version, country_id=None):
     if country_id is None:
-        countries = Country.query.all()
+        countries = Country.query.order_by(Country.label).all()
     else:
         # single
         at = Country.query.filter(Country.id == country_id).first()

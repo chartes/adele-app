@@ -12,7 +12,7 @@ from app.utils import forbid_if_nor_teacher_nor_admin, make_404, make_200, make_
 @api_bp.route('/api/<api_version>/traditions/<tradition_id>')
 def api_tradition(api_version, tradition_id=None):
     if tradition_id is None:
-        traditions = Tradition.query.all()
+        traditions = Tradition.query.order_by(Tradition.label).all()
     else:
         # single
         at = Tradition.query.filter(Tradition.id == tradition_id).first()

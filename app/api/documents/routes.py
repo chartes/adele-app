@@ -192,9 +192,8 @@ def api_get_documents(api_version):
         access_restrictions.append(Document.is_published)
 
     # compute the query count independently for each row for the selected filter
+    filterCount = {}
     if filters_to_count:
-        filterCount = {}
-
         for filter_to_count in filters_to_count:
             stmts = [v for k, v in filter_stmts.items() if v is not None and k != filter_to_count]
             model = filter_models[filter_to_count]
@@ -219,13 +218,11 @@ def api_get_documents(api_version):
         if len(sorts) > 0:
             query = query.order_by(*sorts)
         docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
-    else:
-        count = 0
-        docs = []
 
-    meta = {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count / page_size)}
-    if filters_to_count:
-        meta["filterCount"] = filterCount
+        meta = {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count / page_size)}
+    else:
+        meta = {"filterCount": filterCount}
+        docs = []
 
     return make_200(data={"meta": meta,
                           "data": [
