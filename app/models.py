@@ -555,6 +555,10 @@ class Language(db.Model):
     code = db.Column(db.String, primary_key=True)
     label = db.Column(db.String)
 
+    @property
+    def id(self):
+        return self.code
+
     def serialize(self):
         return {
             'code': self.code,

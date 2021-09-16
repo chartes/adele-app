@@ -84,7 +84,38 @@ def api_get_documents(api_version):
     query = Document.query
 
     filters = data.get("filters", [])
-    or_stmts = []
+
+    countMode = data.get('countOnly', False)
+    filters_to_count = filters.get("filtersToCount", None)
+
+    filter_stmts = {
+        "centuries": None,
+        "creationRange": None,
+        "copyCenturies": None,
+        "traditions": None,
+        "languages": None,
+        "acteTypes": None,
+        "countries": None,
+        "districts": None,
+        "institutions": None
+    }
+    filter_models = {
+        "traditions": Tradition,
+        "languages": Language,
+        "acteTypes": ActeType,
+        "countries": Country,
+        "districts": District,
+        "institutions": Institution
+    }
+
+    filter_checks = {
+        "traditions": Document.traditions.any,
+        "languages": Document.languages.any,
+        "acteTypes": Document.acte_types.any,
+        "countries": Document.countries.any,
+        "districts": Document.districts.any,
+        "institutions": Document.institution.has
+    }
 
     # FILTERS
     if "centuries" in filters:
@@ -93,7 +124,7 @@ def api_get_documents(api_version):
             s = int(c["id"])
             centuries.append(Document.creation.between((s-1) * 100, s * 100))
         if len(centuries) > 0:
-            or_stmts.append(or_(*centuries))
+            filter_stmts["centuries"] = or_(*centuries)
 
     # same field on the model but dealing with years and not centuries
     if "creationRange" in filters:
@@ -101,44 +132,44 @@ def api_get_documents(api_version):
         _ors_dates = [Document.creation.between(int(start), int(end))]
         if filters.get("showDocsWithoutDates", False):
             _ors_dates.append(Document.creation.is_(None))
-        or_stmts.append(or_(*_ors_dates))
+        filter_stmts["creationRange"] = or_(*_ors_dates)
 
     if "copyCenturies" in filters:
         centuries = []
         for c in filters["copyCenturies"]:
             centuries.append(Document.copy_cent == int(c["id"]))
         if len(centuries) > 0:
-            or_stmts.append(or_(*centuries))
+            filter_stmts["copyCenturies"] = or_(*centuries)
 
     if "languages" in filters:
         asked_codes = [c["code"] for c in filters["languages"]]
         if len(asked_codes) > 0:
-            or_stmts.append(Document.languages.any(Language.code.in_(asked_codes)))
+            filter_stmts["languages"] = Document.languages.any(Language.code.in_(asked_codes))
 
     if "traditions" in filters:
         asked_traditions = [c["id"] for c in filters["traditions"]]
         if len(asked_traditions) > 0:
-            or_stmts.append(Document.traditions.any(Tradition.id.in_(asked_traditions)))
+            filter_stmts["traditions"] = Document.traditions.any(Tradition.id.in_(asked_traditions))
 
     if "acteTypes" in filters:
         asked_acteTypes = [c["id"] for c in filters["acteTypes"]]
         if len(asked_acteTypes) > 0:
-            or_stmts.append(Document.acte_types.any(ActeType.id.in_(asked_acteTypes)))
+            filter_stmts["acteTypes"] = Document.acte_types.any(ActeType.id.in_(asked_acteTypes))
 
     if "countries" in filters:
         asked_countries = [c["id"] for c in filters["countries"]]
         if len(asked_countries) > 0:
-            or_stmts.append(Document.countries.any(Country.id.in_(asked_countries)))
+            filter_stmts["countries"] = Document.countries.any(Country.id.in_(asked_countries))
 
     if "districts" in filters:
         asked_districts = [c["id"] for c in filters["districts"]]
         if len(asked_districts) > 0:
-            or_stmts.append(Document.districts.any(District.id.in_(asked_districts)))
+             filter_stmts["districts"] = Document.districts.any(District.id.in_(asked_districts))
 
     if "institutions" in filters:
         asked_institutions = [c["id"] for c in filters["institutions"]]
         if len(asked_institutions) > 0:
-            or_stmts.append(Document.institution.has(Institution.id.in_(asked_institutions)))
+            filter_stmts["institutions"] = Document.institution.has(Institution.id.in_(asked_institutions))
 
     # SORTS
     sorts = []
@@ -153,7 +184,6 @@ def api_get_documents(api_version):
         if isDesc:
             field = field.desc()
         sorts.append(field)
-    print(sorts)
 
     access_restrictions = []
     user = current_app.get_current_user()
@@ -161,13 +191,43 @@ def api_get_documents(api_version):
     if user.is_anonymous:
         access_restrictions.append(Document.is_published)
 
-    query = query.filter(and_(*or_stmts, *access_restrictions))
-    count = query.count()
-    if len(sorts) > 0:
-        query = query.order_by(*sorts)
-    docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
+    # compute the query count independently for each row for the selected filter
+    if filters_to_count:
+        filterCount = {}
 
-    return make_200(data={"meta": {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count/page_size)},
+        for filter_to_count in filters_to_count:
+            stmts = [v for k, v in filter_stmts.items() if v is not None and k != filter_to_count]
+            model = filter_models[filter_to_count]
+
+            model_id = model.id if filter_to_count != "languages" else model.code
+            print(filter_to_count, model_id)
+
+            check = filter_checks[filter_to_count]
+
+            filterCount[filter_to_count] = {}
+            print("======= count %s =======" % filter_to_count)
+            for obj in model.query.all():
+                or_stmts = stmts +[check(model_id.in_([obj.id]))]
+                q = query.filter(and_(*or_stmts, *access_restrictions))
+                filterCount[filter_to_count][obj.id] = q.count()
+            print("--->", filterCount[filter_to_count])
+
+    if not countMode:
+        s = [v for k, v in filter_stmts.items() if v is not None]
+        query = query.filter(and_(*s, *access_restrictions))
+        count = query.count()
+        if len(sorts) > 0:
+            query = query.order_by(*sorts)
+        docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
+    else:
+        count = 0
+        docs = []
+
+    meta = {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count / page_size)}
+    if filters_to_count:
+        meta["filterCount"] = filterCount
+
+    return make_200(data={"meta": meta,
                           "data": [
                               doc.serialize(zones=False, whitelist=False) for doc in docs
                           ]})
