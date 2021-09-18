@@ -230,8 +230,8 @@ def api_get_documents(api_version):
                           ]})
 
 
-@api_bp.route('/api/<api_version>/documents/last-items')
-def api_get_documents_last_items(api_version):
+@api_bp.route('/api/<api_version>/documents/bookmarks')
+def api_get_documents_get_bookmarks(api_version):
     """
     :param api_version:
     :param doc_id:
@@ -240,9 +240,50 @@ def api_get_documents_last_items(api_version):
     user = current_app.get_current_user()
 
     access_restrictions = [Document.is_published] if user.is_anonymous else []
-    docs = Document.query.filter(*access_restrictions).order_by(Document.id.desc()).limit(3).all()
+    docs = Document.query.filter(*access_restrictions, Document.bookmark_order).order_by(Document.bookmark_order).all()
 
     return make_200(data=[d.serialize() for d in docs])
+
+
+@api_bp.route('/api/<api_version>/dashboard/bookmarks/<doc_id>/toggle', methods=['GET'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_dashboard_bookmark_document(api_version, doc_id):
+    doc = Document.query.filter(Document.id == doc_id).first()
+    row = db.session.query(func.max(Document.bookmark_order).label('last_id')).first()
+
+    print('update bookmark:', doc_id, doc.bookmark_order)
+    if doc.bookmark_order is None:
+        doc.bookmark_order = 1 if row.last_id is None else row.last_id + 1
+    else:
+        doc.bookmark_order = None
+    # db.session.add(doc)
+    db.session.commit()
+
+    print('--->', doc_id, doc.bookmark_order)
+
+    return make_200(data={'new_order': doc.bookmark_order})
+
+
+@api_bp.route('/api/<api_version>/dashboard/bookmarks/reorder', methods=['POST'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_dashboard_reorder_bookmark_document(api_version):
+    data = request.get_json()
+
+    for doc in data['bookmarks']:
+        old = Document.query.filter(Document.bookmark_order == doc['bookmark_order']).first()
+        old.bookmark_order = None
+
+    db.session.commit()
+
+    for doc in data['bookmarks']:
+        new = Document.query.filter(Document.id == doc['docId']).first()
+        new.bookmark_order = doc['bookmark_order']
+
+    db.session.commit()
+
+    return make_200()
 
 
 @api_bp.route('/api/<api_version>/documents', methods=['POST'])
@@ -256,7 +297,7 @@ def api_post_documents(api_version):
     tmp_doc = {
         "title": "Sans titre"
     }
-    for key in ("title", "subtitle", "argument", "pressmark",
+    for key in ("title", "subtitle", "argument", "attribution", "pressmark",
                 "creation", "creation_lab", "copy_year", "copy_cent"):
         if key in data:
             tmp_doc[key] = data[key]
@@ -336,6 +377,7 @@ def api_put_documents(api_version, doc_id):
 
     if "title" in data: tmp_doc.title = data["title"]
     if "subtitle" in data: tmp_doc.subtitle = data["subtitle"]
+    if "attribution" in data: tmp_doc.attribution = data["attribution"]
 
     if "argument" in data:
         error = check_no_XMLParserError(data["argument"])

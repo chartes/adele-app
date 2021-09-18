@@ -248,6 +248,8 @@ class Document(db.Model):
     copy_cent = db.Column(db.Integer)
     pressmark = db.Column(db.String())
     argument = db.Column(db.Text())
+    attribution = db.Column(db.Text())
+    bookmark_order = db.Column(db.Integer, unique=True)
     date_insert = db.Column(db.String())
     date_update = db.Column(db.String())
     date_closing = db.Column(db.String())
@@ -371,6 +373,8 @@ class Document(db.Model):
             'copy_cent': self.copy_cent,
             'pressmark': self.pressmark,
             'argument': self.argument,
+            'attribution': self.attribution,
+            'bookmark_order': self.bookmark_order,
             'date_insert': self.date_insert,
             'date_update': self.date_update,
             'date_closing': self.date_closing,
