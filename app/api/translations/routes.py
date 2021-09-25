@@ -290,9 +290,7 @@ def api_put_documents_translations(api_version, doc_id, user_id):
         return make_400("no data")
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["DELETE"])
-@jwt_required
-def api_delete_documents_translations(api_version, doc_id, user_id):
+def delete_document_translation(doc_id, user_id):
     forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
         return forbid
@@ -337,10 +335,13 @@ def api_delete_documents_translations(api_version, doc_id, user_id):
     return make_200(data=doc.validation_flags)
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/clone/from-user/<user_id>', methods=['GET'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["DELETE"])
 @jwt_required
-@forbid_if_nor_teacher_nor_admin
-def api_documents_clone_translation(api_version, doc_id, user_id):
+def api_delete_documents_translations(api_version, doc_id, user_id):
+    return delete_document_translation(doc_id, user_id)
+
+
+def clone_translation(doc_id, user_id):
     print("cloning translation (doc %s) from user %s" % (doc_id, user_id))
 
     tr_to_be_cloned = Translation.query.filter(Translation.user_id == user_id,
@@ -385,6 +386,13 @@ def api_documents_clone_translation(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200()
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/translations/clone/from-user/<user_id>', methods=['GET'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_documents_clone_translation(api_version, doc_id, user_id):
+    return clone_translation(doc_id, user_id)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/view/translations')

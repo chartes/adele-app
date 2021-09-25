@@ -123,6 +123,18 @@ def forbid_if_nor_teacher_nor_admin(view_function):
     return wrapped_f
 
 
+def forbid_if_not_admin(view_function):
+    @wraps(view_function)
+    def wrapped_f(*args, **kwargs):
+        user = current_app.get_current_user()
+        if user.is_anonymous or not user.is_admin:
+            msg = "This resource is only available to teachers and admins"
+            print(msg)
+            return make_403(details=msg)
+        return view_function(*args, **kwargs)
+
+    return wrapped_f
+
 def get_doc(doc_id):
     from app.models import Document
     return Document.query.filter(Document.id == doc_id).first()

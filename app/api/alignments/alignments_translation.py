@@ -5,8 +5,9 @@ from markupsafe import Markup
 from app import auth, db, api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text, ETAG, BTAG
 from app.api.translations.routes import get_reference_translation
-from app.models import AlignmentTranslation
-from app.utils import forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, make_200, make_400
+from app.models import AlignmentTranslation, Transcription, Document, Translation
+from app.utils import forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, make_200, make_400, \
+    forbid_if_not_in_whitelist
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>')
@@ -246,3 +247,52 @@ def view_document_translation_alignment(api_version, doc_id):
         "notes": notes
     })
 
+
+def clone_translation_alignments(doc_id, old_user_id, user_id):
+    old_tr = Transcription.query.filter(Transcription.user_id == old_user_id,
+                                    Transcription.doc_id == doc_id).first()
+
+    old_tl = Translation.query.filter(Translation.user_id == old_user_id,
+                                  Translation.doc_id == doc_id).first()
+
+    new_tr = Transcription.query.filter(Transcription.user_id == user_id,
+                                        Transcription.doc_id == doc_id).first()
+
+    new_tl = Translation.query.filter(Translation.user_id == user_id,
+                                      Translation.doc_id == doc_id).first()
+
+    if not old_tr or not old_tl or not new_tr or not new_tl:
+        return make_404()
+
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
+    if is_not_allowed:
+        return is_not_allowed
+
+    # clone translation alignments
+    old_alignments = AlignmentTranslation.query.filter(
+        AlignmentTranslation.transcription_id == old_tr.id,
+        AlignmentTranslation.translation_id == old_tl.id,
+    ).all()
+
+    new_alignments = [
+        AlignmentTranslation(
+            transcription_id=new_tr.id,
+            translation_id=new_tl.id,
+            ptr_transcription_start=ol.ptr_transcription_start,
+            ptr_transcription_end=ol.ptr_transcription_end,
+            ptr_translation_start=ol.ptr_translation_start,
+            ptr_translation_end=ol.ptr_translation_end
+        )
+        for ol in old_alignments
+    ]
+
+    db.session.bulk_save_objects(new_alignments)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return make_400(str(e))
+
+    return make_200()

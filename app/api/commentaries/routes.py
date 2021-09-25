@@ -115,13 +115,7 @@ def view_document_commentaries(api_version, doc_id, user_id=None):
     } for com, annotated in commentaries])
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['DELETE'])
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>', methods=['DELETE'])
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>', methods=['DELETE'])
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>',
-              methods=['DELETE'])
-@jwt_required
-def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
+def delete_commentary(doc_id, user_id, type_id):
     user = current_app.get_current_user()
 
     # only teacher and admin can see everything
@@ -161,6 +155,16 @@ def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
     except (Exception, KeyError) as e:
         db.session.rollback()
         return make_400(str(e))
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/of-type/<type_id>', methods=['DELETE'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>/and-type/<type_id>',
+              methods=['DELETE'])
+@jwt_required
+def api_delete_commentary(api_version, doc_id, user_id=None, type_id=None):
+    return delete_commentary(doc_id, user_id, type_id)
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/from-user/<user_id>', methods=['POST'])
@@ -380,11 +384,7 @@ def api_put_commentary(api_version, doc_id, user_id):
         return make_400("no data")
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/clone/from-user/<user_id>/and-type/<type_id>',
-              methods=['GET'])
-@jwt_required
-@forbid_if_nor_teacher_nor_admin
-def api_clone_commentary(api_version, doc_id, user_id, type_id):
+def clone_commentary(doc_id, user_id, type_id):
     com_to_be_cloned = Commentary.query.filter(Commentary.user_id == user_id,
                                                Commentary.doc_id == doc_id,
                                                Commentary.type_id == type_id).first()
@@ -405,7 +405,7 @@ def api_clone_commentary(api_version, doc_id, user_id, type_id):
         # replace the teacher's com content
         teacher_com.content = com_to_be_cloned.content
         # remove the old teacher's notes
-        #for note in teacher_com.notes:
+        # for note in teacher_com.notes:
         #    # MUST delete commentary_has_note and not the note itself
         #    # (since the latest might be used somewhere else)!
         for chn in CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == teacher_com.id).all():
@@ -434,3 +434,11 @@ def api_clone_commentary(api_version, doc_id, user_id, type_id):
         return make_400(str(e))
 
     return make_200()
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/commentaries/clone/from-user/<user_id>/and-type/<type_id>',
+              methods=['GET'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_clone_commentary(api_version, doc_id, user_id, type_id):
+    return clone_commentary(doc_id, user_id, type_id)

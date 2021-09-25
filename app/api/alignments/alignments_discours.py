@@ -4,8 +4,9 @@ from markupsafe import Markup
 
 from app import api_bp, db
 from app.api.transcriptions.routes import get_reference_transcription
-from app.models import AlignmentDiscours
-from app.utils import make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_200, make_400
+from app.models import AlignmentDiscours, Transcription, Document
+from app.utils import make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_200, make_400, \
+    forbid_if_not_in_whitelist
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/speech-parts')
@@ -214,3 +215,47 @@ def api_delete_speechparts_alignments(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200(data=[])
+
+
+def clone_speechparts(doc_id, old_user_id, user_id):
+    old_tr = Transcription.query.filter(Transcription.user_id == old_user_id,
+                                    Transcription.doc_id == doc_id).first()
+
+    new_tr = Transcription.query.filter(Transcription.user_id == user_id,
+                                        Transcription.doc_id == doc_id).first()
+
+    if not old_tr or not new_tr:
+        return make_404()
+
+    is_not_allowed = forbid_if_not_in_whitelist(current_app, Document.query.filter(Document.id == doc_id).first())
+    if is_not_allowed:
+        return is_not_allowed
+
+    # clone speechparts
+    old_alignments = AlignmentDiscours.query.filter(
+        AlignmentDiscours.transcription_id == old_tr.id,
+        AlignmentDiscours.user_id == old_user_id,
+    ).all()
+
+    new_alignments = [
+        AlignmentDiscours(
+            transcription_id=new_tr.id,
+            user_id=user_id,
+            speech_part_type_id=ol.speech_part_type_id,
+            note=ol.note,
+            ptr_start=ol.ptr_start,
+            ptr_end=ol.ptr_end
+        )
+        for ol in old_alignments
+    ]
+
+    db.session.bulk_save_objects(new_alignments)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return make_400(str(e))
+
+    return make_200()

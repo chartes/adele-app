@@ -298,9 +298,7 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
         return make_400("no data")
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>', methods=["DELETE"])
-@jwt_required
-def api_delete_documents_transcriptions(api_version, doc_id, user_id):
+def delete_document_transcription(doc_id, user_id):
     forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
     if forbid:
         return forbid
@@ -322,8 +320,8 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
         return is_not_allowed
 
     # forbid students to delete a transcription when there is a valid transcription
-    #user = current_app.get_current_user()
-    #if not user.is_teacher and get_doc(doc_id).is_transcription_validated:
+    # user = current_app.get_current_user()
+    # if not user.is_teacher and get_doc(doc_id).is_transcription_validated:
     #    return make_403()
 
     tr = get_transcription(doc_id=doc_id, user_id=user_id)
@@ -350,10 +348,12 @@ def api_delete_documents_transcriptions(api_version, doc_id, user_id):
     return make_200(data=doc.validation_flags)
 
 
-@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/clone/from-user/<user_id>', methods=['GET'])
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>', methods=["DELETE"])
 @jwt_required
-@forbid_if_nor_teacher_nor_admin
-def api_documents_clone_transcription(api_version, doc_id, user_id):
+def api_delete_documents_transcriptions(api_version, doc_id, user_id):
+    return delete_document_transcription(doc_id, user_id)
+
+def clone_transcription(doc_id, user_id):
     print("cloning transcription (doc %s) from user %s" % (doc_id, user_id))
 
     tr_to_be_cloned = Transcription.query.filter(Transcription.user_id == user_id,
@@ -377,7 +377,7 @@ def api_documents_clone_transcription(api_version, doc_id, user_id):
         # remove the old teacher's notes
         for note in teacher_tr.notes:
             db.session.delete(note)
-        #teacher_tr.notes = []
+        # teacher_tr.notes = []
 
     # clone notes
     for thn_to_be_cloned in tr_to_be_cloned.transcription_has_note:
@@ -402,6 +402,13 @@ def api_documents_clone_transcription(api_version, doc_id, user_id):
         return make_400(str(e))
 
     return make_200()
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/clone/from-user/<user_id>', methods=['GET'])
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_documents_clone_transcription(api_version, doc_id, user_id):
+    return clone_transcription(doc_id, user_id)
 
 
 # tags to represent notes in view mode

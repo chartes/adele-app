@@ -7,8 +7,15 @@ from sqlalchemy import or_, and_
 
 from app.api.routes import api_bp, json_loads
 from app.models import Institution, Editor, Country, District, ActeType, Language, Tradition, Whitelist, \
-    ImageUrl, Image, Note
-from app.utils import forbid_if_nor_teacher_nor_admin, make_204, make_409, check_no_XMLParserError
+    ImageUrl, Image, Note, CommentaryType, User, CommentaryHasNote, AlignmentTranslation, TranslationHasNote, \
+    TranscriptionHasNote, ImageZone
+from app.utils import forbid_if_nor_teacher_nor_admin, make_204, make_409, check_no_XMLParserError, forbid_if_not_admin
+from ..alignments.alignment_images import clone_alignment_image
+from ..alignments.alignments_discours import clone_speechparts
+from ..alignments.alignments_translation import clone_translation_alignments
+from ..commentaries.routes import clone_commentary, delete_commentary
+from ..transcriptions.routes import clone_transcription, get_reference_transcription, delete_document_transcription
+from ..translations.routes import clone_translation, delete_document_translation
 
 """
 ===========================
@@ -634,6 +641,177 @@ def api_post_document_manifest(api_version, doc_id):
         return make_400(details=str(e))
 
     return make_200(data=[i.serialize() for i in doc.images])
+
+
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/transfer-ownership/<user_id>', methods=['GET'])
+@jwt_required
+@forbid_if_not_admin
+def api_transfer_document_ownership(api_version, doc_id, user_id):
+    doc = Document.query.filter(Document.id == doc_id).first()
+
+    validation_flags = doc.validation_flags
+
+    current_owner = User.query.filter(User.id == doc.user_id).first()
+    new_owner = User.query.filter(User.id == user_id).first()
+    transfered_items = {}
+
+    if new_owner.is_teacher:
+        # 0) check the current owner has some content to transfer...
+        tr = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == current_owner.id).first()
+        if tr:
+
+            # 1) delete the current content of the new_owner
+            current_coms = Commentary.query.filter(Commentary.doc_id == doc_id, Commentary.user_id == new_owner.id).all()
+            for pcom in current_coms:
+                resp = delete_commentary(doc_id, new_owner.id, pcom.type_id)
+                print('delete commentary...', resp.status_code)
+
+            resp = delete_document_translation(doc_id, new_owner.id)
+            print('delete translation...', resp.status_code)
+
+            resp = delete_document_transcription(doc_id, new_owner.id)
+            print('delete transcription...', resp.status_code)
+
+            # 2) transfer the ownership from the current_owner to the new_owner
+            doc.user_id = new_owner.id
+            transfered_items['document'] = doc.id
+            db.session.commit()
+
+            # 3) transfer the content from the current_owner to the new_owner
+
+            # transcription
+            tr.user_id = new_owner.id
+            transfered_items['transcription'] = {tr.id: []}
+            # transcription notes
+            notes = [thn.note for thn in
+                     TranscriptionHasNote.query.filter(TranscriptionHasNote.transcription_id == tr.id).all()]
+            for note in notes:
+                note.user_id = new_owner.id
+                transfered_items['transcription'][tr.id].append(note.id)
+
+            # translation
+            tl = Translation.query.filter(Translation.doc_id == doc_id,
+                                          Translation.user_id == current_owner.id).first()
+            if tl:
+                tl.user_id = new_owner.id
+                transfered_items['translation'] = {tl.id: []}
+
+                # translation notes
+                notes = [thn.note for thn in
+                         TranslationHasNote.query.filter(TranslationHasNote.translation_id == tl.id).all()]
+                for note in notes:
+                    note.user_id = new_owner.id
+                    transfered_items['translation'][tl.id].append(note.id)
+
+            # translation alignments not needed becaues the tr and tl ids dont change
+
+            # commentaries
+            transfered_items['commentaries'] = {}
+            for com in Commentary.query.filter(Commentary.doc_id == doc_id,
+                                               Commentary.user_id == current_owner.id).all():
+                com.user_id = new_owner.id
+                transfered_items['commentaries'][com.id] = []
+
+                # commentary notes
+                notes = [chn.note for chn in CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == com.id).all()]
+                for note in notes:
+                    note.user_id = new_owner.id
+                    transfered_items['commentaries'][com.id].append(note.id)
+
+            # speech parts
+            transfered_items['speechparts'] = []
+            for al in AlignmentDiscours.query.filter(AlignmentDiscours.transcription_id == tr.id,
+                                                      AlignmentDiscours.user_id == current_owner.id).all():
+                al.user_id = new_owner.id
+                transfered_items['speechparts'].append(al.id)
+
+            # image alignments
+            for al in AlignmentImage.query.filter(AlignmentImage.transcription_id == tr.id,
+                                                   AlignmentImage.user_id == current_owner.id).all():
+
+                # image zone
+                zone = ImageZone.query.filter(ImageZone.zone_id == al.zone_id,
+                                       ImageZone.manifest_url == al.manifest_url,
+                                       ImageZone.canvas_idx == al.canvas_idx,
+                                       ImageZone.img_idx == al.img_idx,
+                                       ImageZone.user_id == current_owner.id).first()
+
+                new_zone = ImageZone(
+                    zone_id=zone.zone_id,
+                    manifest_url=zone.manifest_url,
+                    canvas_idx=zone.canvas_idx,
+                    img_idx=zone.img_idx,
+                    user_id=new_owner.id,
+                    zone_type_id=zone.zone_type_id,
+                    fragment=zone.fragment,
+                    svg=zone.svg,
+                    note=zone.note
+                )
+                new_al = AlignmentImage(
+                    transcription_id=al.transcription_id,
+                    user_id=new_owner.id,
+                    zone_id=al.zone_id,
+                    manifest_url=al.manifest_url,
+                    canvas_idx=al.canvas_idx,
+                    img_idx=al.img_idx,
+                    ptr_transcription_start=al.ptr_transcription_start,
+                    ptr_transcription_end=al.ptr_transcription_end
+                )
+
+                db.session.delete(zone)
+                db.session.commit()
+
+                db.session.add(new_zone)
+                db.session.commit()
+                db.session.add(new_al)
+
+                transfered_items['image-als'] = new_al.zone_id
+
+            # restore validation flags
+            doc.is_notice_validated = validation_flags['notice']
+            doc.is_transcription_validated = validation_flags['transcription']
+            doc.is_translation_validated = validation_flags['translation']
+            doc.is_facsimile_validated = validation_flags['facsimile']
+            doc.is_speechparts_validated = validation_flags['speech-parts']
+            doc.is_commentaries_validated = validation_flags['commentaries']
+
+            db.session.commit()
+
+        return make_200(data=transfered_items)
+    else:
+        return make_403(details="User must be a teacher")
+
+
+@api_bp.route('/api/<api_version>/document/<doc_id>/clone-contents', methods=['GET'])
+@jwt_required
+@forbid_if_not_admin
+def api_document_clone_contents(api_version, doc_id):
+    user = current_app.get_current_user()
+
+    doc = Document.query.filter(Document.id == doc_id).first()
+    old_user_id = doc.user_id
+
+    resp = clone_transcription(doc_id, user.id)
+    print("clone transcription status:", resp.status)
+
+    if resp.status == 200:
+
+        resp = clone_translation(doc_id, user.id)
+        print("clone translation status:", resp.status)
+
+        for com_typ in CommentaryType.query.all():
+            resp = clone_commentary(doc_id, user.id, com_typ.id)
+            print("clone commentary status:", com_typ.id, resp.status)
+
+        resp = clone_speechparts(doc_id, old_user_id, user.id)
+        print("clone speechparts status:", resp.status)
+
+        resp = clone_alignment_image(doc_id, old_user_id, user.id)
+        print("clone image alignments status:", resp.status)
+
+        resp = clone_translation_alignments(doc_id, old_user_id, user.id)
+        print("clone translation alignments status:", resp.status)
 
 
 # IMPORT DOCUMENT VALIDATION STEP ROUTES
