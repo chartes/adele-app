@@ -1,4 +1,5 @@
 import datetime
+import pprint
 from math import ceil
 from urllib.request import build_opener
 
@@ -643,7 +644,6 @@ def api_post_document_manifest(api_version, doc_id):
     return make_200(data=[i.serialize() for i in doc.images])
 
 
-
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transfer-ownership/<user_id>', methods=['GET'])
 @jwt_required
 @forbid_if_not_admin
@@ -677,6 +677,8 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
             doc.user_id = new_owner.id
             transfered_items['document'] = doc.id
             db.session.commit()
+
+            print('current owner:', current_owner, " new owner:", new_owner)
 
             # 3) transfer the content from the current_owner to the new_owner
 
@@ -778,6 +780,8 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
 
             db.session.commit()
 
+        print('transfered items:')
+        pprint.pprint(transfered_items)
         return make_200(data=transfered_items)
     else:
         return make_403(details="User must be a teacher")

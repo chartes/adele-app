@@ -66,6 +66,15 @@ def api_all_users(api_version):
 
     return make_200(data={"total": total, "users": [u.serialize() for u in users]})
 
+
+@api_bp.route('/api/<api_version>/teachers')
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
+def api_all_teachers(api_version):
+    teachers = [u.serialize() for u in User.query.order_by(User.username).all() if u.is_teacher]
+    return make_200(data={"users": teachers})
+
+
 @api_bp.route('/api/<api_version>/users/<user_id>/roles')
 @jwt_required
 def api_users_roles(api_version, user_id):
