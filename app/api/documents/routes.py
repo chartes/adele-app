@@ -656,6 +656,9 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
     new_owner = User.query.filter(User.id == user_id).first()
     transfered_items = {}
 
+    if new_owner.id == current_owner.id:
+        return make_200(data=transfered_items)
+
     if new_owner.is_teacher:
         # 0) check the current owner has some content to transfer...
         tr = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == current_owner.id).first()
