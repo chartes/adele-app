@@ -107,8 +107,8 @@ def refresh(api_version):
 
 
 @api_bp.route('/api/<api_version>/invite-user', methods=['POST'])
-#@jwt_required
-#@forbid_if_nor_teacher_nor_admin
+@jwt_required
+@forbid_if_nor_teacher_nor_admin
 def invite_user(api_version):
     json = request.get_json(force=True)
 
