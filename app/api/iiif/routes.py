@@ -19,6 +19,9 @@ from app.utils import make_404, make_200, make_400, forbid_if_nor_teacher_nor_ad
 
 def make_manifest(api_version, doc_id):
     img = Image.query.filter(Image.doc_id == doc_id).first()
+    if img is None:
+        return {}
+
     manifest_data = urlopen(img.manifest_url).read()
     data = json_loads(manifest_data)
 
