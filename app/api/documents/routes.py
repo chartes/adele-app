@@ -657,13 +657,14 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
     transfered_items = {}
 
     if new_owner.id == current_owner.id:
+        print("[ownership transfer] same user")
         return make_200(data=transfered_items)
 
     if new_owner.is_teacher:
+        print("[ownership transfer] the new user is a teacher")
         # 0) check the current owner has some content to transfer...
         tr = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == current_owner.id).first()
         if tr:
-
             # 1) delete the current content of the new_owner
             current_coms = Commentary.query.filter(Commentary.doc_id == doc_id, Commentary.user_id == new_owner.id).all()
             for pcom in current_coms:
@@ -781,6 +782,11 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
             doc.is_speechparts_validated = validation_flags['speech-parts']
             doc.is_commentaries_validated = validation_flags['commentaries']
 
+            db.session.commit()
+        else:
+            # 1) transfer the ownership from the current_owner to the new_owner
+            doc.user_id = new_owner.id
+            transfered_items['document'] = doc.id
             db.session.commit()
 
         print('transfered items:')
