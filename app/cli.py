@@ -1,4 +1,4 @@
-from pprint import pprint
+import pprint
 from urllib.request import urlopen
 
 import click
