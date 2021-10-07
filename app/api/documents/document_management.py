@@ -9,7 +9,6 @@ from app.utils import make_200, forbid_if_nor_teacher_nor_admin
 
 @api_bp.route('/api/<api_version>/dashboard/document-management', methods=['GET'])
 @jwt_required
-@forbid_if_nor_teacher_nor_admin
 def api_get_dashboard_manage_documents(api_version):
     page_number = request.args.get('num-page', 1)
     page_size = request.args.get('page-size', 50)
@@ -18,6 +17,7 @@ def api_get_dashboard_manage_documents(api_version):
 
     user = current_app.get_current_user()
     if user.is_student and not (user.is_admin or user.is_teacher):
+        print("filter docs by wl", [w.id for w in user.whitelists])
         query = query.filter(Document.whitelist_id.in_([w.id for w in user.whitelists]))
 
     total = query.count()
