@@ -575,12 +575,15 @@ def api_add_document(api_version):
     data = data["data"]
 
     user = current_app.get_current_user()
+
+    wl = Whitelist.query.order_by(Whitelist.id.desc()).first()  # TODO
+
     kwargs = {
         "title": data.get('title'),
         "subtitle": data.get('subtitle'),
         "user_id": user.id,
-        "is_published": 1,
-        "whitelist_id": data.get('whitelist-id', 34)  # TODO
+        "is_published": 0,
+        "whitelist_id": data.get('whitelist-id', wl.id)
     }
 
     new_doc = Document(**kwargs)
