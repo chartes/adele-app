@@ -95,6 +95,7 @@ def api_get_documents(api_version):
 
     countMode = data.get('countOnly', False)
     filters_to_count = filters.get("filtersToCount", None)
+    print('filters', filters)
 
     filter_stmts = {
         "centuries": None,
@@ -105,7 +106,8 @@ def api_get_documents(api_version):
         "acteTypes": None,
         "countries": None,
         "districts": None,
-        "institutions": None
+        "institutions": None,
+        "availableCommentaries": None
     }
     filter_models = {
         "traditions": Tradition,
@@ -113,7 +115,8 @@ def api_get_documents(api_version):
         "acteTypes": ActeType,
         "countries": Country,
         "districts": District,
-        "institutions": Institution
+        "institutions": Institution,
+        "availableCommentaries": Commentary
     }
 
     filter_checks = {
@@ -122,7 +125,8 @@ def api_get_documents(api_version):
         "acteTypes": Document.acte_types.any,
         "countries": Document.countries.any,
         "districts": Document.districts.any,
-        "institutions": Document.institution.has
+        "institutions": Document.institution.has,
+        "availableCommentaries": Document.validated_commentaries.any
     }
 
     # FILTERS
@@ -158,6 +162,13 @@ def api_get_documents(api_version):
         asked_traditions = [c["id"] for c in filters["traditions"]]
         if len(asked_traditions) > 0:
             filter_stmts["traditions"] = Document.traditions.any(Tradition.id.in_(asked_traditions))
+
+    if "availableCommentaries" in filters:
+        asked_com_types = [c["id"] for c in filters["availableCommentaries"]]
+        if len(asked_com_types) > 0:
+            filter_stmts["availableCommentaries"] = Document.validated_commentaries.any(
+                Commentary.type_id.in_(asked_com_types)
+            )
 
     if "acteTypes" in filters:
         asked_acteTypes = [c["id"] for c in filters["acteTypes"]]
@@ -206,7 +217,15 @@ def api_get_documents(api_version):
             stmts = [v for k, v in filter_stmts.items() if v is not None and k != filter_to_count]
             model = filter_models[filter_to_count]
 
-            model_id = model.id if filter_to_count != "languages" else model.code
+            if filter_to_count in ("languages", "availableCommentaries"):
+                if filter_to_count == "languages":
+                    model_id = model.code
+                elif filter_to_count == "availableCommentaries":
+                    model_id = model.type_id
+                else:
+                    raise Exception('wrong filter_to_count:', filter_to_count)
+            else:
+                model_id = model.id
             print(filter_to_count, model_id)
 
             check = filter_checks[filter_to_count]
@@ -225,6 +244,8 @@ def api_get_documents(api_version):
         count = query.count()
         if len(sorts) > 0:
             query = query.order_by(*sorts)
+
+        print(query)
         docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
 
         meta = {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count / page_size)}

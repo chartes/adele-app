@@ -188,7 +188,7 @@ class CommentaryType(db.Model):
 class Commentary(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
-    type_id = db.Column(db.Integer, db.ForeignKey('commentary_type.id', ondelete='CASCADE'))
+    type_id = db.Column(db.Integer, db.ForeignKey('commentary_type.id', ondelete='CASCADE'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
@@ -301,6 +301,9 @@ class Document(db.Model):
                                        primaryjoin=(association_document_linked_to_document.c.doc_id == id),
                                        secondaryjoin=(association_document_linked_to_document.c.linked_doc_id == id))
 
+    validated_commentaries = db.relationship("Commentary",
+                          primaryjoin="and_(Commentary.user_id == Document.user_id,Commentary.doc_id == Document.id, Document.is_commentaries_validated == True)")
+
     @property
     def is_closed(self):
         if not self.date_closing:
@@ -408,6 +411,15 @@ class Document(db.Model):
             'is-closed': self.is_closed,
             'date-closing': self.date_closing
         }
+
+    @property
+    def validated_commentaries_types(self):
+        t = []
+        for c in self.validated_commentaries:
+            if c.type:
+                t.append(c.type)
+        return t
+
 
 class Editor(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
