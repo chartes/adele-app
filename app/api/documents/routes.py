@@ -100,7 +100,7 @@ def api_get_documents(api_version):
     filter_stmts = {
         "centuries": None,
         "creationRange": None,
-        "copyCenturies": None,
+        "copyRange": None,
         "traditions": None,
         "languages": None,
         "acteTypes": None,
@@ -142,16 +142,16 @@ def api_get_documents(api_version):
     if "creationRange" in filters:
         start, end = filters["creationRange"]
         _ors_dates = [Document.creation.between(int(start), int(end))]
-        if filters.get("showDocsWithoutDates", False):
+        if filters.get("showDocsWithoutCreationDate", False):
             _ors_dates.append(Document.creation.is_(None))
         filter_stmts["creationRange"] = or_(*_ors_dates)
 
-    if "copyCenturies" in filters:
-        centuries = []
-        for c in filters["copyCenturies"]:
-            centuries.append(Document.copy_cent == int(c["id"]))
-        if len(centuries) > 0:
-            filter_stmts["copyCenturies"] = or_(*centuries)
+    if "copyRange" in filters:
+        start, end = filters["copyRange"]
+        _ors_dates = [Document.copy_cent.between(int(start), int(end))]
+        if filters.get("showDocsWithoutCopyDate", False):
+            _ors_dates.append(Document.copy_cent.is_(None))
+        filter_stmts["copyRange"] = or_(*_ors_dates)
 
     if "languages" in filters:
         asked_codes = [c["code"] for c in filters["languages"]]
