@@ -2,6 +2,8 @@ import datetime
 from flask import current_app, url_for
 from sqlalchemy import ForeignKeyConstraint, desc
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql import case
 
 from app import db
 
@@ -303,6 +305,17 @@ class Document(db.Model):
 
     validated_commentaries = db.relationship("Commentary",
                           primaryjoin="and_(Commentary.user_id == Document.user_id,Commentary.doc_id == Document.id, Document.is_commentaries_validated == True)")
+
+    @hybrid_property
+    def witness_date(self):
+        d = self.copy_cent if (self.copy_cent - 1) * 100  else self.creation
+        print(d)
+        return d
+    @witness_date.expression
+    def witness_date(cls):
+        return case([
+            (cls.copy_cent != None, (cls.copy_cent - 1) * 100),
+        ], else_=cls.creation)
 
     @property
     def is_closed(self):

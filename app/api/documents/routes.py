@@ -95,6 +95,8 @@ def api_get_documents(api_version):
 
     countMode = data.get('countOnly', False)
     filters_to_count = filters.get("filtersToCount", None)
+    date_mode = filters.get('dateMode', 'witness')
+
     print('filters', filters)
 
     filter_stmts = {
@@ -130,28 +132,56 @@ def api_get_documents(api_version):
     }
 
     # FILTERS
-    if "centuries" in filters:
-        centuries = []
-        for c in filters["centuries"]:
-            s = int(c["id"])
-            centuries.append(Document.creation.between((s-1) * 100, s * 100))
-        if len(centuries) > 0:
-            filter_stmts["centuries"] = or_(*centuries)
+    # if "centuries" in filters:
+    #     centuries = []
+    #     for c in filters["centuries"]:
+    #         s = int(c["id"])
+    #         centuries.append(Document.creation.between((s-1) * 100, s * 100))
+    #     if len(centuries) > 0:
+    #         filter_stmts["centuries"] = or_(*centuries)
 
-    # same field on the model but dealing with years and not centuries
-    if "creationRange" in filters:
-        start, end = filters["creationRange"]
-        _ors_dates = [Document.creation.between(int(start), int(end))]
-        if filters.get("showDocsWithoutCreationDate", False):
-            _ors_dates.append(Document.creation.is_(None))
-        filter_stmts["creationRange"] = or_(*_ors_dates)
 
-    if "copyRange" in filters:
-        start, end = filters["copyRange"]
-        _ors_dates = [Document.copy_cent.between(int(start), int(end))]
-        if filters.get("showDocsWithoutCopyDate", False):
-            _ors_dates.append(Document.copy_cent.is_(None))
-        filter_stmts["copyRange"] = or_(*_ors_dates)
+    # ----------------------------
+    #   dateMode
+    # ----------------------------
+    #   witness : date de l'état présenté (date de la copie s'il s'agit d'une copie, date de l'original sinon)
+    #   creation-only : date de l'original
+    #   copy-only : date de la copie
+    #   creation-and-copy : date de l'original ET date de la copie
+
+    if date_mode == 'witness':
+        showDocsWithoutDate = filters.get("showDocsWithoutCreationDate", False)
+
+        startCreation, endCreation = filters["creationRange"]
+        _ors_creation_dates = [Document.witness_date.between(int(startCreation), int(endCreation))]
+        print('creation between', int(startCreation), int(endCreation))
+        if showDocsWithoutDate:
+            _ors_creation_dates.append(Document.witness_date.is_(None))
+
+        # deals with centuries and reuse the creationRange slider
+        #startCopy, endCopy = startCreation / 100 + 1, endCreation / 100 + 1
+        #print('copy_cent between', int(startCopy), int(endCopy))
+        #_ors_copy_dates = [Document.copy_cent.between(int(startCopy), int(endCopy))]
+        #if showDocsWithoutDate:
+        #    _ors_copy_dates.append(Document.copy_cent.is_(None))
+
+        filter_stmts['witness'] = or_(*_ors_creation_dates)
+    else:
+        if "creationRange" in filters and date_mode not in ('copy-only'):
+            start, end = filters["creationRange"]
+            _ors_dates = [Document.creation.between(int(start), int(end))]
+            if filters.get("showDocsWithoutCreationDate", False):
+                _ors_dates.append(Document.creation.is_(None))
+            filter_stmts["creationRange"] = or_(*_ors_dates)
+
+        if "copyRange" in filters and date_mode not in ('creation-only'):
+            start, end = filters["copyRange"]
+            _ors_dates = [Document.copy_cent.between(int(start), int(end))]
+            if filters.get("showDocsWithoutCopyDate", False):
+                _ors_dates.append(Document.copy_cent.is_(None))
+            filter_stmts["copyRange"] = or_(*_ors_dates)
+
+    print('filter statements:', filter_stmts)
 
     if "languages" in filters:
         asked_codes = [c["code"] for c in filters["languages"]]
@@ -215,7 +245,9 @@ def api_get_documents(api_version):
     if filters_to_count:
         for filter_to_count in filters_to_count:
             stmts = [v for k, v in filter_stmts.items() if v is not None and k != filter_to_count]
-            model = filter_models[filter_to_count]
+            model = filter_models.get(filter_to_count, None)
+            if model is None:
+                continue
 
             if filter_to_count in ("languages", "availableCommentaries"):
                 if filter_to_count == "languages":
