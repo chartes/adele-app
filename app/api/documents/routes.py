@@ -177,8 +177,6 @@ def api_get_documents(api_version):
         if "copyRange" in filters and date_mode not in ('creation-only'):
             start, end = filters["copyRange"]
             _ors_dates = [Document.copy_cent.between(int(start), int(end))]
-            if filters.get("showDocsWithoutCopyDate", False):
-                _ors_dates.append(Document.copy_cent.is_(None))
             filter_stmts["copyRange"] = or_(*_ors_dates)
 
     print('filter statements:', filter_stmts)
