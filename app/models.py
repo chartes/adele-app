@@ -919,15 +919,6 @@ class User(db.Model):
         return docs
 
 
-class UserInvitation(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    # UserInvitation email information. The collation='NOCASE' is required
-    # to search case insensitively when USER_IFIND_MODE is 'nocase_collation'.
-    email = db.Column(db.String(255, collation='NOCASE'), nullable=False)
-    # save the user of the invitee
-    invited_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
-
-
 class Whitelist(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(), nullable=False, server_default='Whitelist')

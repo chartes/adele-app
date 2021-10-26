@@ -256,17 +256,17 @@ def api_get_documents(api_version):
                     raise Exception('wrong filter_to_count:', filter_to_count)
             else:
                 model_id = model.id
-            print(filter_to_count, model_id)
+            #print(filter_to_count, model_id)
 
             check = filter_checks[filter_to_count]
 
             filterCount[filter_to_count] = {}
-            print("======= count %s =======" % filter_to_count)
+            #print("======= count %s =======" % filter_to_count)
             for obj in model.query.all():
                 or_stmts = stmts +[check(model_id.in_([obj.id]))]
                 q = query.filter(and_(*or_stmts, *access_restrictions))
                 filterCount[filter_to_count][obj.id] = q.count()
-            print("--->", filterCount[filter_to_count])
+            #print("--->", filterCount[filter_to_count])
 
     if not countMode:
         s = [v for k, v in filter_stmts.items() if v is not None]
