@@ -3,9 +3,11 @@ import string
 from random import randint, random, choice
 
 from flask import jsonify, request, url_for, app, current_app
-from flask_jwt_extended import create_access_token, set_access_cookies, \
-    unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies, \
-    jwt_required, unset_refresh_cookies, unset_access_cookies
+from flask_jwt_extended import (
+    jwt_required,
+    unset_refresh_cookies,
+    unset_access_cookies
+)
 from flask_mail import Message
 import jwt
 from sqlalchemy import or_
@@ -15,29 +17,6 @@ from app import api_bp, make_403, db, mail
 from app.models import User, Role
 
 from app.utils import make_401, forbid_if_nor_teacher_nor_admin, make_400, make_200
-
-
-def refresh_token(user, resp=None):
-    if not user.is_anonymous:
-        access_token = create_access_token(identity=user.to_json(), fresh=True)
-        auth_headers = {'login': True, 'user-adele': ''}
-        if resp:
-            resp.headers["login"] = auth_headers["login"]
-            resp.headers["user-adele"] = auth_headers["user-adele"]
-        else:
-            resp = jsonify(auth_headers)
-        set_access_cookies(resp, access_token)
-        print("token refreshed")
-    else:
-        auth_headers = {'logout': True, 'user-adele': None}
-        if resp:
-            resp.headers["logout"] = auth_headers["logout"]
-            resp.headers["user-adele"] = auth_headers["user-adele"]
-        else:
-            resp = jsonify(auth_headers)
-        unset_jwt_cookies(resp)
-        print("token cleared")
-    return resp, 200
 
 
 @api_bp.route('/api/<api_version>/logout')
