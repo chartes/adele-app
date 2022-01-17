@@ -89,21 +89,6 @@ def login(api_version):
     return resp, 200
 
 
-@api_bp.route('/api/<api_version>/refresh', methods=['POST'])
-@jwt_refresh_token_required
-def refresh(api_version):
-    user = get_jwt_identity()
-    user = User.query.filter(User.username == user).first()
-    if user is None:
-        return make_403("User not found")
-
-    data, access_token, refresh_token = create_tokens(user)
-
-    resp = jsonify(data)
-    set_access_cookies(resp, access_token)
-    print("token refreshed")
-
-    return resp, 200
 
 
 @api_bp.route('/api/<api_version>/invite-user', methods=['POST'])
