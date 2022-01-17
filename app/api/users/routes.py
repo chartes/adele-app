@@ -34,7 +34,7 @@ def api_current_user(api_version):
 
     print("token", auth_headers, token)
     data = jwt.decode(token, current_app.config['SECRET_KEY'])
-    user = User.query.filter_by(username=data['sub']).first()
+    user = User.query.filter_by(email=data['sub']).first()
 
     if not user:
         return jsonify({'message': 'Invalid credentials', 'authenticated': False}), 401

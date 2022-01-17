@@ -65,7 +65,7 @@ def login(api_version):
         return make_401("Invalid credentials")
 
     token = jwt.encode({
-        'sub': user.username,
+        'sub': user.email,
         'iat': datetime.datetime.utcnow(),
         'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60*24)},
         current_app.config['SECRET_KEY'])

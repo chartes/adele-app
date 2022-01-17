@@ -31,7 +31,7 @@ def get_current_user():
     if identity is None:
         user = AnonymousUser()
     else:
-        user = User.query.filter(User.username == identity).first()
+        user = User.query.filter(User.email == identity).first()
         if user is None:
             user = AnonymousUser()
 

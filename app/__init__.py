@@ -107,7 +107,7 @@ def create_app(config_name="dev"):
     # of the access token should be.
     @app.jwt.user_identity_loader
     def user_identity_lookup(user):
-        return user["username"]
+        return user["email"]
 
     """
     ========================================================
