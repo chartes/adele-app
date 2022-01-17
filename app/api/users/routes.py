@@ -1,5 +1,6 @@
-from flask import request, current_app
+from flask import request, current_app, jsonify
 from flask_jwt_extended import jwt_required
+import jwt
 from sqlalchemy import func, text
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -25,11 +26,20 @@ def get_auth_token(api_version):
     return make_200(data=[{'token': token.decode('ascii')}])
 
 
-@api_bp.route('/api/<api_version>/user')
-@jwt_required
+@api_bp.route('/api/<api_version>/current-user')
 def api_current_user(api_version):
-    user = current_app.get_current_user()
-    return make_200(data=[user.serialize()])
+    auth_headers = request.headers.get('Authorization', '').split()
+
+    token = auth_headers[1]
+
+    print("token", auth_headers, token)
+    data = jwt.decode(token, current_app.config['SECRET_KEY'])
+    user = User.query.filter_by(username=data['sub']).first()
+
+    if not user:
+        return jsonify({'message': 'Invalid credentials', 'authenticated': False}), 401
+
+    return jsonify({'token': token, 'user_data': user.serialize()})
 
 
 @api_bp.route('/api/<api_version>/users/<user_id>')

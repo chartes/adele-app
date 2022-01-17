@@ -33,6 +33,7 @@ class Config(object):
     JWT_TOKEN_LOCATION = ['cookies', 'headers']
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_COOKIE_SECURE = True
+    JWT_IDENTITY_CLAIM = 'sub'
 
     # JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(seconds=int(os.getenv(('JWT_ACCESS_TOKEN_EXPIRES'))))
 

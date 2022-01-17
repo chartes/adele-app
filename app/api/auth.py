@@ -7,6 +7,7 @@ from flask_jwt_extended import create_access_token, set_access_cookies, \
     unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies, \
     jwt_required, unset_refresh_cookies, unset_access_cookies
 from flask_mail import Message
+import jwt
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -39,21 +40,6 @@ def refresh_token(user, resp=None):
     return resp, 200
 
 
-def create_tokens(user):
-    u = user.serialize()
-    access_token = create_access_token(identity=u, fresh=True)
-    refresh_token = create_refresh_token(u)
-    data = {
-        'username': user.username,
-        'firstname': user.first_name,
-        'lastname': user.last_name,
-        'id': user.id,
-        'email': user.email,
-        'roles': [r.name for r in user.roles]
-    }
-    return data, access_token, refresh_token,
-
-
 @api_bp.route('/api/<api_version>/logout')
 def logout(api_version):
     resp = jsonify({})
@@ -63,7 +49,6 @@ def logout(api_version):
 
 @api_bp.route('/api/<api_version>/login', methods=['POST'])
 def login(api_version):
-
     json = request.get_json(force=True)
     username = json.get('email', None)
     password = json.get('password', None)
@@ -79,16 +64,13 @@ def login(api_version):
         print("Invalid credentials")
         return make_401("Invalid credentials")
 
-    data, access_token, refresh_token = create_tokens(user)
+    token = jwt.encode({
+        'sub': user.username,
+        'iat': datetime.datetime.utcnow(),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60*24)},
+        current_app.config['SECRET_KEY'])
 
-    resp = jsonify(data)
-
-    set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
-
-    return resp, 200
-
-
+    return jsonify({'token': token.decode('UTF-8'), 'user_data': user.serialize()})
 
 
 @api_bp.route('/api/<api_version>/invite-user', methods=['POST'])
@@ -184,12 +166,7 @@ def update_user(api_version):
     except Exception as e:
         resp = {"error": str(e)}
 
-    data, access_token, refresh_token = create_tokens(user)
-
-    resp.update(data)
+    resp.update(user.serialize())
     resp = jsonify(resp)
-
-    set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
 
     return resp, 200
