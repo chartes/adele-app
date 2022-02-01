@@ -3,10 +3,14 @@ import string
 from random import randint, random, choice
 
 from flask import jsonify, request, url_for, app, current_app
-from flask_jwt_extended import create_access_token, set_access_cookies, \
-    unset_jwt_cookies, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, set_refresh_cookies, \
-    jwt_required, unset_refresh_cookies, unset_access_cookies
+from flask_jwt_extended import (
+    jwt_required,
+    unset_refresh_cookies,
+    unset_access_cookies
+)
 from flask_mail import Message
+import jwt
+import jwt.exceptions
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -14,44 +18,7 @@ from app import api_bp, make_403, db, mail
 from app.models import User, Role
 
 from app.utils import make_401, forbid_if_nor_teacher_nor_admin, make_400, make_200
-
-
-def refresh_token(user, resp=None):
-    if not user.is_anonymous:
-        access_token = create_access_token(identity=user.to_json(), fresh=True)
-        auth_headers = {'login': True, 'user-adele': ''}
-        if resp:
-            resp.headers["login"] = auth_headers["login"]
-            resp.headers["user-adele"] = auth_headers["user-adele"]
-        else:
-            resp = jsonify(auth_headers)
-        set_access_cookies(resp, access_token)
-        print("token refreshed")
-    else:
-        auth_headers = {'logout': True, 'user-adele': None}
-        if resp:
-            resp.headers["logout"] = auth_headers["logout"]
-            resp.headers["user-adele"] = auth_headers["user-adele"]
-        else:
-            resp = jsonify(auth_headers)
-        unset_jwt_cookies(resp)
-        print("token cleared")
-    return resp, 200
-
-
-def create_tokens(user):
-    u = user.serialize()
-    access_token = create_access_token(identity=u, fresh=True)
-    refresh_token = create_refresh_token(u)
-    data = {
-        'username': user.username,
-        'firstname': user.first_name,
-        'lastname': user.last_name,
-        'id': user.id,
-        'email': user.email,
-        'roles': [r.name for r in user.roles]
-    }
-    return data, access_token, refresh_token,
+from .. import config
 
 
 @api_bp.route('/api/<api_version>/logout')
@@ -63,7 +30,6 @@ def logout(api_version):
 
 @api_bp.route('/api/<api_version>/login', methods=['POST'])
 def login(api_version):
-
     json = request.get_json(force=True)
     username = json.get('email', None)
     password = json.get('password', None)
@@ -79,31 +45,13 @@ def login(api_version):
         print("Invalid credentials")
         return make_401("Invalid credentials")
 
-    data, access_token, refresh_token = create_tokens(user)
+    token = jwt.encode({
+        'sub': user.email,
+        'iat': datetime.datetime.utcnow(),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60*24)},
+        current_app.config['SECRET_KEY'])
 
-    resp = jsonify(data)
-
-    set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
-
-    return resp, 200
-
-
-@api_bp.route('/api/<api_version>/refresh', methods=['POST'])
-@jwt_refresh_token_required
-def refresh(api_version):
-    user = get_jwt_identity()
-    user = User.query.filter(User.username == user).first()
-    if user is None:
-        return make_403("User not found")
-
-    data, access_token, refresh_token = create_tokens(user)
-
-    resp = jsonify(data)
-    set_access_cookies(resp, access_token)
-    print("token refreshed")
-
-    return resp, 200
+    return jsonify({'token': token.decode('UTF-8'), 'user_data': user.serialize()})
 
 
 @api_bp.route('/api/<api_version>/invite-user', methods=['POST'])
@@ -199,12 +147,70 @@ def update_user(api_version):
     except Exception as e:
         resp = {"error": str(e)}
 
-    data, access_token, refresh_token = create_tokens(user)
-
-    resp.update(data)
+    resp.update(user.serialize())
     resp = jsonify(resp)
 
-    set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
-
     return resp, 200
+
+
+@api_bp.route('/api/<api_version>/send-password-reset-link', methods=['POST'])
+def send_password_reset_link(api_version):
+    json = request.get_json(force=True)
+    email = json.get('email', None)
+    user = User.query.filter(User.email == email).first()
+
+    response = jsonify({"error": None})
+
+    if user is None:
+        print("User unknown")
+        # Don't leak existing users to client
+        return response, 200
+
+    print("Sending password reset link to ", user)
+
+    token = jwt.encode({
+        'sub': user.email,
+        'iat': datetime.datetime.utcnow(),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=20)},
+        current_app.config['SECRET_KEY']).decode('ascii')
+    link = current_app.with_url_prefix('/reset-password?token=%s' % token)
+
+    msg = Message(
+        'Adele - Demande de récupération de mot de passe',
+        sender=current_app.config['MAIL_USERNAME'],
+        recipients=[email])
+    msg.body = "Vous avez demandé à réinitialiser votre mot de passe. "\
+               "Vous pouvez choisir un nouveau mot de passe en suivant ce lien: %s " \
+               "\nSi vous n'avez pas fait cette demande vous pouvez ignorer cet email." % link
+    mail.send(msg)
+    return response, 200
+
+
+@api_bp.route('/api/<api_version>/reset-password', methods=['POST'])
+def reset_password(api_version):
+    json = request.get_json(force=True)
+    password = json.get('password', None)
+    password2 = json.get('password2', None)
+
+    if password != password2:
+        print("Passwords do not match")
+        return jsonify({"error": "Les mots de passe ne sont pas identiques."}), 422
+
+    token = json.get('token', None)
+    try:
+        email = jwt.decode(token, key=current_app.config['SECRET_KEY'])['sub']
+    except jwt.exceptions.ExpiredSignatureError:
+        return jsonify({"error": "Ce lien est expiré, veuillez refaire une demande."}), 401
+    except jwt.exceptions.DecodeError:
+        return jsonify({
+            "error": "Ce lien n'est pas valide, essayez de copier/coller le"\
+                     "lien que vous avez reçu par mail dans la barre d'URL ou de refaire une demande."
+        }), 422
+
+    user = User.query.filter(User.email == email).first()
+    user.password = generate_password_hash(password)
+    db.session.add(user)
+    db.session.commit()
+
+    response = jsonify({"error": None})
+    return response, 200
