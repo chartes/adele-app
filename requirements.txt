@@ -38,7 +38,7 @@ py-bcrypt==0.4
 pycparser==2.18
 pycryptodome==3.6.6
 Pygments==2.7.4
-PyJWT==1.7.1
+PyJWT==2.4.0
 pyOpenSSL==19.0.0
 pyparsing==2.2.0
 python-dateutil==2.6.1
