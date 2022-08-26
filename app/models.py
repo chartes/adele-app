@@ -956,3 +956,22 @@ class AlignmentDiscours(db.Model):
             'ptr_end': self.ptr_end,
             'note': self.note
         }
+
+
+class SpeechParts(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('doc_id', 'user_id', name='uix_user', ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    content = db.Column(db.Text)
+
+    def serialize_for_user(self, user_id):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'user_id': self.user_id,
+            'content': self.content,
+        }

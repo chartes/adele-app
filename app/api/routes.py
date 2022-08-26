@@ -79,6 +79,7 @@ from app.api.traditions import routes
 from app.api.transcriptions import routes
 from app.api.translations import routes
 from app.api.users import routes
+from app.api.speech_parts import routes
 
 from app.api.alignments import alignments_translation
 from app.api.alignments import alignment_images
