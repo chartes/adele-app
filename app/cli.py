@@ -59,6 +59,19 @@ def make_cli():
             db.session.commit()
             click.echo("Dropped then recreated the database")
 
+    @click.command("load-fixtures")
+    def db_load_fixtures():
+        """ Reload fixtures
+        """
+        with app.app_context():
+            from app import db
+            from tests.data.entities import load_fixtures
+
+            load_fixtures(db)
+
+            db.session.commit()
+            click.echo("Fixtures (re)loaded")
+
     @click.command("add-manifest")
     @click.option('--manifest-url', required=True)
     @click.option('--doc-id', required=True)
@@ -144,6 +157,7 @@ def make_cli():
     cli.add_command(db_create)
     cli.add_command(db_recreate)
     cli.add_command(db_add_manifest)
+    cli.add_command(db_load_fixtures)
 
     cli.add_command(run)
 
