@@ -75,6 +75,7 @@ from app.api.institutions import routes
 from app.api.languages import routes
 #from app.api.notes import routes
 from app.api.speech_part_types import routes
+from app.api.speech_parts import routes
 from app.api.traditions import routes
 from app.api.transcriptions import routes
 from app.api.translations import routes
