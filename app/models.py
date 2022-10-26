@@ -732,6 +732,25 @@ class Transcription(db.Model):
         }
 
 
+class SpeechParts(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('doc_id', 'user_id', name='uix_user', ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    content = db.Column(db.Text)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'user_id': self.user_id,
+            'content': self.content,
+        }
+
+
 class TranslationHasNote(db.Model):
     translation_id = db.Column(db.Integer, db.ForeignKey('translation.id', ondelete='CASCADE'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
