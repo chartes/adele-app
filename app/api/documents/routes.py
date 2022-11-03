@@ -11,12 +11,10 @@ from app.models import Institution, Editor, Country, District, ActeType, Languag
     ImageUrl, Image, Note, CommentaryType, User, CommentaryHasNote, AlignmentTranslation, TranslationHasNote, \
     TranscriptionHasNote, ImageZone
 from app.utils import forbid_if_nor_teacher_nor_admin, make_204, make_409, check_no_XMLParserError, forbid_if_not_admin
-from ..alignments.alignment_images import clone_alignment_image
-from ..alignments.alignments_discours import clone_speechparts
 from ..alignments.alignments_translation import clone_translation_alignments
-from ..commentaries.routes import clone_commentary, delete_commentary
-from ..transcriptions.routes import clone_transcription, get_reference_transcription, delete_document_transcription
-from ..translations.routes import clone_translation, delete_document_translation
+from ..commentaries.routes import delete_commentary
+from ..transcriptions.routes import get_reference_transcription, delete_document_transcription
+from ..translations.routes import delete_document_translation
 
 """
 ===========================
@@ -848,37 +846,6 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
         return make_200(data=transfered_items)
     else:
         return make_403(details="User must be a teacher")
-
-
-@api_bp.route('/api/<api_version>/document/<doc_id>/clone-contents', methods=['GET'])
-@jwt_required
-@forbid_if_not_admin
-def api_document_clone_contents(api_version, doc_id):
-    user = current_app.get_current_user()
-
-    doc = Document.query.filter(Document.id == doc_id).first()
-    old_user_id = doc.user_id
-
-    resp = clone_transcription(doc_id, user.id)
-    print("clone transcription status:", resp.status)
-
-    if resp.status == 200:
-
-        resp = clone_translation(doc_id, user.id)
-        print("clone translation status:", resp.status)
-
-        for com_typ in CommentaryType.query.all():
-            resp = clone_commentary(doc_id, user.id, com_typ.id)
-            print("clone commentary status:", com_typ.id, resp.status)
-
-        resp = clone_speechparts(doc_id, old_user_id, user.id)
-        print("clone speechparts status:", resp.status)
-
-        resp = clone_alignment_image(doc_id, old_user_id, user.id)
-        print("clone image alignments status:", resp.status)
-
-        resp = clone_translation_alignments(doc_id, old_user_id, user.id)
-        print("clone translation alignments status:", resp.status)
 
 
 # IMPORT DOCUMENT VALIDATION STEP ROUTES
