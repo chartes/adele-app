@@ -229,7 +229,7 @@ def api_delete_documents_speech_parts(api_version, doc_id, user_id):
     return delete_document_speech_parts(doc_id, user_id)
 
 
-@api_bp.route("/api/<api_version>/documents/<doc_id>/view/speech-parts")
+@api_bp.route("/api/<api_version>/documents/<doc_id>/view/speech-parts-content")
 @api_bp.route(
     "/api/<api_version>/documents/<doc_id>/view/speech-parts-content/from-user/<user_id>"
 )
