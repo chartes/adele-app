@@ -361,8 +361,8 @@ class Document(db.Model):
                                                                        AlignmentTranslation.transcription_id == tr.id).count() > 0,
             'facsimile': tr is not None and AlignmentImage.query.filter(AlignmentImage.transcription_id == tr.id,
                                                                         AlignmentImage.user_id == self.user_id).count() > 0,
-            'speech-parts': tr is not None and AlignmentDiscours.query.filter(AlignmentDiscours.transcription_id == self.id,
-                                                                              AlignmentDiscours.user_id == self.user_id).count() > 0,
+            'speech-parts': tr is not None and SpeechParts.query.filter(SpeechParts.doc_id == self.id,
+                                                                              SpeechParts.user_id == self.user_id).count() > 0,
             'commentaries': Commentary.query.filter(Commentary.doc_id == self.id,
                                                     Commentary.user_id == self.user_id).count() > 0,
         }
