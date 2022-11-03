@@ -244,8 +244,7 @@ def view_document_speech_parts(api_version, doc_id, user_id=None):
 
     if user_id is None:
         user_id = sp.user_id
-
-    return make_200(
+    return make_200(data=
         {
             "doc_id": sp.doc_id,
             "user_id": user_id,
