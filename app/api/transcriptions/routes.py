@@ -135,10 +135,11 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
 
             if "notes" in data:
                 print("======= notes =======")
+                tmp_note_id_to_db_note_id = {}
                 for note in data["notes"]:
                         # 1) simply reuse notes which come with an id
                     note_id = note.get('id', None)
-                    if note_id is not None:
+                    if note_id > 0:
                         reused_note = Note.query.filter(Note.id == note_id, Note.user_id == current_user.id).first()
                         if reused_note is None:
                             return make_400(details="Wrong note id %s" % note_id)
@@ -170,10 +171,13 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
                                                    ptr_start=note["ptr_start"],
                                                    ptr_end=note["ptr_end"])
                         db.session.add(thn)
+                        tmp_note_id_to_db_note_id[note_id] = new_note.id
                         print("make:", thn.transcription_id, thn.note_id)
                 db.session.flush()
                 print("thn:", [thn.note.id for thn in tr.transcription_has_note])
                 print("====================")
+                for old_id, new_id in tmp_note_id_to_db_note_id.items():
+                    tr.content = tr.content.replace(str(old_id), str(new_id))
             db.session.add(tr)
             db.session.commit()
         except Exception as e:
@@ -459,11 +463,10 @@ def view_document_transcription(api_version, doc_id, user_id=None):
         user_id = tr.user_id
 
     _tr = tr.serialize_for_user(user_id)
-    _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])
 
     return make_200({
         "doc_id": tr.doc_id,
         "user_id": tr.user_id,
-        "content": Markup(_content) if tr.content is not None else "",
+        "content": Markup(_tr["content"]) if tr.content is not None else "",
         "notes": {"{:010d}".format(n["id"]): n["content"] for n in _tr["notes"]}
     })
