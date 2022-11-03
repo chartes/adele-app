@@ -134,29 +134,24 @@ def load_transcriptions(db, _docs, _users, _notes, _segments=False, _pos_u0=Fals
 
     _seg = '<segment />' if _segments else ''
 
-    _pos = [[
-        f"<speechpart user_id='{u['id']}' type_id='1' note='Ceci est une note sur une PoS de type 1 rédigée par {u['username']}'>",
-        f"<speechpart user_id='{u['id']}' type_id='2' note='Ceci est une note sur une PoS de type 2 rédigée par {u['username']}'>",
-    ] for u in _users]
-
     _transcriptions = [
         {
             "id": 99050000,
             "doc_id": _docs[0]["id"],
             "user_id": _users[0]["id"],
-            "content": f"<p>{_pos[0][0] if _pos_u0 else ''}<note id='{_notes[0]['id']}'>Transcr<ex>iption</ex></note> init<note id='{_notes[1]['id']}'>iale</note> du professeur Jones{'</speechpart>' if _pos_u0 else ''}</p>{_seg}<p>{_pos[0][1] if _pos_u0 else ''}Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.{'</speechpart>' if _pos_u0 else ''}</p>"
+            "content": f"<p><note id='{_notes[0]['id']}'>Transcr<ex>iption</ex></note> init<note id='{_notes[1]['id']}'>iale</note> du professeur Jones</p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 99050001,
             "doc_id": _docs[0]["id"],
             "user_id": _users[1]["id"],
-            "content": f"<p>{_pos[1][0] if _pos_u1 else ''}Transcr<ex>iption</ex> <note id='{_notes[2]['id']}'>initiale</note> de {_users[1]['username']}{'</speechpart>' if _pos_u1 else ''}</p><p>{_pos[1][1] if _pos_u1 else ''}Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; {'</speechpart>' if _pos_u1 else ''} peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Transcr<ex>iption</ex> <note id='{_notes[2]['id']}'>initiale</note> de {_users[1]['username']}</p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ;  peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 99050002,
             "doc_id": _docs[0]["id"],
             "user_id": _users[2]["id"],
-            "content": f"<p>{_pos[2][0] if _pos_u2 else ''}Transcr<ex>iption</ex> <note id='{_notes[3]['id']}'>initiale</note> de {_users[2]['username']}{'</speechpart>' if _pos_u2 else ''}</p><p>{_pos[2][1] if _pos_u2 else ''}Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus.{'</speechpart>' if _pos_u2 else ''} Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Transcr<ex>iption</ex> <note id='{_notes[3]['id']}'>initiale</note> de {_users[2]['username']}</p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         }
     ]
 
