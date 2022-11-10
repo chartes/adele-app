@@ -222,7 +222,6 @@ def add_notes_refs(tr, tl):
 
     return tr_w_notes, tl_w_notes, notes, len(all_al)
 
-
 @api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription-alignment')
 def view_document_translation_alignment(api_version, doc_id):
     translation = get_reference_translation(doc_id)
@@ -231,7 +230,7 @@ def view_document_translation_alignment(api_version, doc_id):
     if not transcription or not translation:
         return make_404()
 
-    tr_w_notes, tl_w_notes, notes, num_al = add_notes_refs(
+    tr_w_notes, tl_w_notes, num_al = add_notes_refs(
         transcription.serialize_for_user(transcription.user_id),
         translation.serialize_for_user(translation.user_id)
     )
@@ -244,7 +243,6 @@ def view_document_translation_alignment(api_version, doc_id):
         #"transcription": Markup("".join(tr_w_notes)),
         #"translation": Markup("".join(tl_w_notes)),
         "alignments": [z for z in zip(tr_w_notes, tl_w_notes)],
-        "notes": notes
     })
 
 

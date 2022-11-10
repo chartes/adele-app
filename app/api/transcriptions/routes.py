@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 from flask import request, current_app
 from flask_jwt_extended import jwt_required
 from markupsafe import Markup
@@ -8,7 +7,7 @@ from app import db
 from app.api.documents.document_validation import unvalidate_all
 from app.api.routes import api_bp
 from app.models import Transcription, User, Document, \
-    Note, TranscriptionHasNote, TranslationHasNote, findNoteInDoc
+    Note, TranscriptionHasNote, TranslationHasNote, findNoteInDoc, set_notes_from_content
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, is_closed, \
     forbid_if_other_user, make_403, get_doc, check_no_XMLParserError
@@ -72,14 +71,6 @@ def api_documents_transcriptions_from_user(api_version, doc_id, user_id=None):
     if tr is None:
         return make_404()
     return make_200(data=tr.serialize_for_user(user_id))
-
-
-def set_notes_from_content(notes_holder):
-    """ find notes used in content and assign it to the container
-    """
-    dom = BeautifulSoup(notes_holder.content, "html.parser")
-    notes_ids  = (note_element['id'] for note_element in dom.find_all('adele-note'))
-    notes_holder.notes = set(Note.query.filter(Note.id.in_(notes_ids)).all())
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/from-user/<user_id>', methods=["POST"])

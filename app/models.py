@@ -1,4 +1,6 @@
 import datetime
+
+from bs4 import BeautifulSoup
 from flask import current_app, url_for
 from sqlalchemy import ForeignKeyConstraint, desc
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -767,15 +769,13 @@ class Translation(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship('Note', secondary='translation_has_note', back_populates='translations')
-
-    # notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan")
+    notes = db.relationship('Note', secondary='translation_has_note', back_populates='translations', collection_class=set)
 
     def notes_of_user(self, user_id):
         return [
             note.serialize()
             for note in self.notes
-            if thn.note.user_id == int(user_id)
+            if note.user_id == int(user_id)
         ]
 
     def serialize_for_user(self, user_id):
@@ -972,3 +972,10 @@ class AlignmentDiscours(db.Model):
             'ptr_end': self.ptr_end,
             'note': self.note
         }
+
+def set_notes_from_content(notes_holder):
+    """ find notes used in content and assign it to the container
+    """
+    dom = BeautifulSoup(notes_holder.content, "html.parser")
+    notes_ids  = (note_element['id'] for note_element in dom.find_all('adele-note'))
+    notes_holder.notes = set(Note.query.filter(Note.id.in_(notes_ids)).all())
