@@ -206,7 +206,7 @@ class Commentary(db.Model):
     def notes_of_user(self, user_id):
         return [
             note.serialize()
-            for note in self.notes if chn.note.user_id == int(user_id)]
+            for note in self.notes if note.user_id == int(user_id)]
 
     def serialize(self):
         return {
