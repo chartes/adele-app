@@ -3,6 +3,7 @@ import pprint
 from math import ceil
 from urllib.request import build_opener
 
+from bs4 import BeautifulSoup
 from flask_jwt_extended import jwt_required
 from sqlalchemy import or_, and_
 
@@ -485,6 +486,7 @@ def api_put_documents(api_version, doc_id):
     return make_200(data=tmp_doc.serialize())
 
 
+
 @api_bp.route('/api/<api_version>/documents/<doc_id>', methods=['DELETE'])
 @jwt_required
 @forbid_if_nor_teacher_nor_admin
@@ -503,23 +505,118 @@ def api_delete_documents(api_version, doc_id):
 
     return make_204()
 
+def remove_note_from_content(content, note_id):
+    dom = BeautifulSoup(content, "html.parser")
+    for note_element in dom.find_all(f'adele-note',id=note_id):
+        note_element.unwrap()
+    return str(dom)
+
+
 @api_bp.route('/api/<api_version>/documents/notes/<note_id>', methods=["DELETE"])
 @jwt_required
 def api_delete_notes(api_version, note_id):
     current_user = current_app.get_current_user()
     note = Note.query.filter(Note.id == note_id).first()
     if note is None:
-        return make_400('This note does not exist')
+        return make_204()
     if current_user.is_admin or current_user.is_teacher or note.user_id == current_user.id:
         try:
+            for transcription in note.transcriptions:
+                transcription.content = remove_note_from_content(transcription.content, note_id)
+            for translation in note.translations:
+                translation.content = remove_note_from_content(translation.content, note_id)
+            for commentary in note.commentaries:
+                commentary.content = remove_note_from_content(commentary.content, note_id)
             db.session.delete(note)
             db.session.commit()
-            return make_200()
+            return make_204()
         except Exception as e:
             db.session.rollback()
             return make_400("Cannot delete data: %s" % str(e))
     else:
         return make_403('You cannot delete this note')
+
+@api_bp.route('/api/<api_version>/documents/<doc_id>/notes/from-user/<user_id>',)
+@jwt_required
+def api_get_notes(api_version, doc_id, user_id):
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
+    transcription_notes = Note.query.filter(
+        Note.user_id == user_id,
+        TranscriptionHasNote.note_id == Note.id,
+        Transcription.id == TranscriptionHasNote.transcription_id,
+        Transcription.doc_id == doc_id
+    ).all()
+    translation_notes = Note.query.filter(
+        Note.user_id == user_id,
+        TranslationHasNote.note_id == Note.id,
+        Translation.id == TranslationHasNote.translation_id,
+        Translation.doc_id == doc_id
+    ).all()
+    commentary_notes = Note.query.filter(
+        Note.user_id == user_id,
+        CommentaryHasNote.note_id == Note.id,
+        Commentary.id == CommentaryHasNote.commentary_id,
+        Commentary.doc_id == doc_id
+    ).all()
+    notes = [note.serialize() for note in [*transcription_notes, *translation_notes, *commentary_notes]]
+    return make_200(data=notes)
+
+@api_bp.route('/api/<api_version>/documents/notes/from-user/<user_id>', methods=['POST'])
+@jwt_required
+def api_post_note(api_version, user_id):
+    """
+    {
+        "data" : {
+            "content": "A content",
+            "type_id": 0
+        }
+    }
+    :param api_version:
+    :param user_id:
+    :return:
+    """
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
+    try:
+        note_json = request.get_json().get('data')
+        note = Note(content=note_json['content'], user_id=user_id, type_id=note_json['type_id'])
+        db.session.add(note)
+        db.session.commit()
+        return make_200(data=note.serialize())
+    except Exception as e:
+        return make_400(str(e))
+
+@api_bp.route('/api/<api_version>/documents/notes/from-user/<user_id>', methods=['PUT'])
+@jwt_required
+def api_put_note(api_version, user_id):
+    """
+    {
+        "data" : {
+            "content": "A content",
+            "type_id": 0
+        }
+    }
+    :param api_version:
+    :param user_id:
+    :return:
+    """
+    forbid = forbid_if_nor_teacher_nor_admin_and_wants_user_data(current_app, user_id)
+    if forbid:
+        return forbid
+    try:
+        note_json = request.get_json().get('data')
+        note = Note.query.filter(Note.id == note_json['id']).one()
+        note.content = note_json['content']
+        note.type_id = note_json['type_id']
+        db.session.add(note)
+        db.session.commit()
+        return make_200(data=note.serialize())
+    except Exception as e:
+        return make_400(str(e))
+
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/whitelist', methods=['POST'])
 @jwt_required

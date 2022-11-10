@@ -155,4 +155,3 @@ def forbid_if_validation_step(doc_id, gte):
     if doc and doc.validation_step >= gte:
         print("Validation step error:", doc.validation_step, ">=", gte)
         return make_403(details="Validation step")
-
