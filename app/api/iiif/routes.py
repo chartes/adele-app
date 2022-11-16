@@ -158,7 +158,7 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
                 # is there a text segment bound to this image zone?
                 if img_al is not None:
                     parsed_content = BeautifulSoup(tr.content, "html.parser")
-                    note_node = parsed_content.find(
+                    note_nodes = parsed_content.find_all(
                         "adele-annotation",
                         {
                             "manifest-url": img_al.manifest_url,
@@ -167,7 +167,9 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
                             "canvas-idx": str(img_al.canvas_idx),
                         }
                     )
-                    text_content = str(note_node)
+                    text_content = ""
+                    for node in note_nodes:
+                        text_content += str(node)
                 else:
                     text_content = ""
 
@@ -231,7 +233,7 @@ def api_documents_annotations(api_version, doc_id, zone_id):
                     AlignmentImage.user_id == tr.user_id,
                     AlignmentImage.manifest_url == img.manifest_url
                 ).one()
-                note_node = parsed_content.find(
+                note_nodes = parsed_content.find_all(
                     "adele-annotation",
                     {
                         "manifest-url": img_al.manifest_url,
@@ -240,9 +242,11 @@ def api_documents_annotations(api_version, doc_id, zone_id):
                         "canvas-idx": str(img_al.canvas_idx),
                     }
                 )
-                if not note_node:
+                if not note_nodes:
                     return make_404(details="This annotation does not exist on this transcription".format(doc_id))
-                note_content = str(note_node)
+                note_content = ""
+                for note in note_nodes:
+                    note_content += str(note)
             except NoResultFound:
                 return make_404(details="This transcription zone has no text fragment attached to it".format(doc_id))
         # else it is a mere image note
@@ -500,7 +504,7 @@ def api_documents_delete_annotation(api_version, doc_id, zone_id):
         tr = get_reference_transcription(doc_id)
         if tr is not None:
             parsed_content = BeautifulSoup(tr.content, "html.parser")
-            note_node = parsed_content.find(
+            note_nodes = parsed_content.find_all(
                 "adele-annotation",
                 {
                     "manifest-url": anno_to_delete.manifest_url,
@@ -509,8 +513,9 @@ def api_documents_delete_annotation(api_version, doc_id, zone_id):
                     "canvas-idx": str(anno_to_delete.canvas_idx),
                 }
             )
-            if note_node:
-                note_node.replace_with_children()
+            if note_nodes:
+                for node in note_nodes:
+                    node.replace_with_children()
                 tr.content = str(parsed_content)
                 db.session.add(tr)
         db.session.delete(anno_to_delete)
