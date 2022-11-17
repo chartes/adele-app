@@ -132,7 +132,7 @@ def load_transcriptions(db, _docs, _users, _notes, _segments=False, _pos_u0=Fals
     # and parts of speech (teacher and student 2)
     # ====================================================================
 
-    _seg = '<segment />' if _segments else ''
+    _seg = '<adele-segment />' if _segments else ''
 
     _transcriptions = [
         {
@@ -166,26 +166,26 @@ def load_translations(db, _users, _docs, _notes, _segments=False):
     # load translations with notes and segmentation (teacher only)
     # =============================================================
 
-    _seg = '<segment />' if _segments else ''
+    _seg = '<adele-segment/>' if _segments else ''
 
     _translations = [
         {
             "id": 22050000,
             "doc_id": _docs[0]["id"],
             "user_id": _users[0]["id"],
-            "content": f"<p>Traduction init<note id='{_notes[1]['id']}'>iale</note> du professeur Jones </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Traduction init<adele-note id='{_notes[1]['id']}'>iale</adele-note> du professeur Jones </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 22050001,
             "doc_id": _docs[0]["id"],
             "user_id": _users[1]["id"],
-            "content": f"<p>{_users[1]['username']} traduit <note id='{_notes[2]['id']}'>ainsi</note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>{_users[1]['username']} traduit <adele-note id='{_notes[2]['id']}'>ainsi</adele-note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 22050002,
             "doc_id": _docs[0]["id"],
             "user_id": _users[2]["id"],
-            "content": f"<p>{_users[2]['username']} traduit <note id='{_notes[3]['id']}'>ainsi</note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>{_users[2]['username']} traduit <adele-note id='{_notes[3]['id']}'>ainsi</adele-note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         }
     ]
 
@@ -206,21 +206,21 @@ def load_commentaries(db, _docs, _users, _notes):
             "doc_id": _docs[0]["id"],
             "type_id": 1,
             "user_id": _users[1]["id"],
-            "content": f"<p>commentaire diplomatique <note id='{_notes[2]['id']}'>initial</note> de l'utilisateur {_users[1]['username']}</p>"
+            "content": f"<p>commentaire diplomatique <adele-note id='{_notes[2]['id']}'>initial</adele-note> de l'utilisateur {_users[1]['username']}</p>"
         },
         {
             "id": 10003002,
             "doc_id": _docs[0]["id"],
             "type_id": 2,
             "user_id": _users[1]["id"],
-            "content": f"<p>commentaire historique <note id='{_notes[2]['id']}'>initial</note> de l'utilisateur {_users[1]['username']}</p>"
+            "content": f"<p>commentaire historique <adele-note id='{_notes[2]['id']}'>initial</adele-note> de l'utilisateur {_users[1]['username']}</p>"
         },
         {
             "id": 10004001,
             "doc_id": _docs[0]["id"],
             "type_id": 1,
             "user_id": _users[2]["id"],
-            "content": f"<p>commentaire diplomatique <note id='{_notes[3]['id']}'>initial</note> de l'utilisateur {_users[2]['username']}</p>"
+            "content": f"<p>commentaire diplomatique <adele-note id='{_notes[3]['id']}'>initial</adele-note> de l'utilisateur {_users[2]['username']}</p>"
         },
     ]
     for com in _commentaries:
