@@ -14,7 +14,8 @@ from app.utils import forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_
     forbid_if_not_in_whitelist
 
 
-SEGMENT_REGEX = re.compile('<adele-segment\W*/>')
+SEGMENT_REGEX = re.compile('<\W*adele-segment\W*>\W*<\/\W*adele-segment\W*>')
+
 
 def _build_segment(str_segment, tags_to_reopen, tags_to_close):
     segment_parts = []

@@ -132,7 +132,7 @@ def load_transcriptions(db, _docs, _users, _notes, _segments=False, _pos_u0=Fals
     # and parts of speech (teacher and student 2)
     # ====================================================================
 
-    _seg = '<adele-segment />' if _segments else ''
+    _seg = '<adele-segment></adele-segment>' if _segments else ''
 
     _transcriptions = [
         {
@@ -145,13 +145,13 @@ def load_transcriptions(db, _docs, _users, _notes, _segments=False, _pos_u0=Fals
             "id": 99050001,
             "doc_id": _docs[0]["id"],
             "user_id": _users[1]["id"],
-            "content": f"<p>Transcr<ex>iption</ex> <adele-note id='{_notes[2]['id']}'>initiale</adele-note> de {_users[1]['username']}</p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ;  peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Transcr<ex>iption</ex> <adele-note id='{_notes[2]['id']}'>initiale</adele-note> de {_users[1]['username']}</p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ;  peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 99050002,
             "doc_id": _docs[0]["id"],
             "user_id": _users[2]["id"],
-            "content": f"<p>Transcr<ex>iption</ex> <adele-note id='{_notes[3]['id']}'>initiale</adele-note> de {_users[2]['username']}</p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Transcr<ex>iption</ex> <adele-note id='{_notes[3]['id']}'>initiale</adele-note> de {_users[2]['username']}</p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         }
     ]
 
@@ -166,7 +166,7 @@ def load_translations(db, _users, _docs, _notes, _segments=False):
     # load translations with notes and segmentation (teacher only)
     # =============================================================
 
-    _seg = '<adele-segment/>' if _segments else ''
+    _seg = '<adele-segment></adele-segment>' if _segments else ''
 
     _translations = [
         {
@@ -179,13 +179,13 @@ def load_translations(db, _users, _docs, _notes, _segments=False):
             "id": 22050001,
             "doc_id": _docs[0]["id"],
             "user_id": _users[1]["id"],
-            "content": f"<p>{_users[1]['username']} traduit <adele-note id='{_notes[2]['id']}'>ainsi</adele-note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>{_users[1]['username']} traduit <adele-note id='{_notes[2]['id']}'>ainsi</adele-note> : </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 22050002,
             "doc_id": _docs[0]["id"],
             "user_id": _users[2]["id"],
-            "content": f"<p>{_users[2]['username']} traduit <adele-note id='{_notes[3]['id']}'>ainsi</adele-note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>{_users[2]['username']} traduit <adele-note id='{_notes[3]['id']}'>ainsi</adele-note> : </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         }
     ]
 
