@@ -332,10 +332,22 @@ class Document(db.Model):
 
     @property
     def validation_flags(self):
+        tr = Transcription.query.filter(Transcription.doc_id == self.id,
+                                           Transcription.user_id == self.user_id).first()
+
+        tl = Translation.query.filter(Translation.doc_id == self.id,
+                                      Translation.user_id == self.user_id).first()
+
+        alignment_translation_validated = False
+        if tr is not None and tl is not None:
+            tr_alignments_count = len(BeautifulSoup(tr.content, 'html.parser').find_all('adele-segment'))
+            tl_alignments_count = len(BeautifulSoup(tl.content, 'html.parser').find_all('adele-segment'))
+            alignment_translation_validated = tr_alignments_count == tl_alignments_count
         return {
             'notice': self.is_notice_validated is True,
             'transcription': self.is_transcription_validated is True,
             'translation': self.is_translation_validated is True,
+            'alignment-translation': alignment_translation_validated,
             'facsimile': self.is_facsimile_validated is True,
             'speech-parts': self.is_speechparts_validated is True,
             'commentaries': self.is_commentaries_validated is True
@@ -351,12 +363,17 @@ class Document(db.Model):
         tl = Translation.query.filter(Translation.doc_id == self.id,
                                       Translation.user_id == self.user_id).first()
 
+        alignment_translation_exists = False
+        if tr is not None and tl is not None:
+            has_tr_alignment = len(BeautifulSoup(tr.content, 'html.parser').find_all('adele-segment')) > 0
+            has_tl_alignment = len(BeautifulSoup(tl.content, 'html.parser').find_all('adele-segment')) > 0
+            alignment_translation_exists = has_tr_alignment and has_tl_alignment
+
         return {
             'notice': True,
             'transcription': tr is not None,
             'translation': tl is not None,
-            'alignment-translation': tl is not None and tr is not None and AlignmentTranslation.query.filter(AlignmentTranslation.translation_id == tl.id,
-                                                                       AlignmentTranslation.transcription_id == tr.id).count() > 0,
+            'alignment-translation': alignment_translation_exists,
             'facsimile': tr is not None and AlignmentImage.query.filter(AlignmentImage.transcription_id == tr.id,
                                                                         AlignmentImage.user_id == self.user_id).count() > 0,
             'speech-parts': tr is not None and SpeechParts.query.filter(SpeechParts.doc_id == self.id,
