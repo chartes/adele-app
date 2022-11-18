@@ -169,7 +169,7 @@ def api_post_documents_translations(api_version, doc_id, user_id):
                         db.session.add(thn)
                         print("make:", thn.translation_id, thn.note_id)
                 db.session.flush()
-                print("thn:", [thn.note.id for thn in tr.translation_has_note])
+                print("note:", [_note.id for _note in tr.notes])
                 print("====================")
             db.session.add(tr)
             db.session.commit()
@@ -266,13 +266,13 @@ def delete_document_translation(doc_id, user_id):
         return make_404()
 
     try:
-        for thn in tr.translation_has_note:
-            if thn.note.user_id == int(user_id):
+        for note in tr.notes:
+            if note.user_id == int(user_id):
                 exist_in_transcription = TranscriptionHasNote.query.filter(
-                    TranscriptionHasNote.note_id == thn.note.id
+                    TranscriptionHasNote.note_id == note.id
                 ).first()
                 if not exist_in_transcription:
-                    db.session.delete(thn.note)
+                    db.session.delete(note)
         db.session.delete(tr)
         doc.is_translation_validated = False
         db.session.commit()
@@ -281,7 +281,7 @@ def delete_document_translation(doc_id, user_id):
         print(str(e))
         return make_400(str(e))
 
-    return make_200(data=doc.validation_flags)
+    return make_200(data={"validation_flags": doc.validation_flags})
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["DELETE"])
@@ -313,17 +313,12 @@ def clone_translation(doc_id, user_id):
         # teacher_tr.notes = []
 
     # clone notes
-    for thn_to_be_cloned in tr_to_be_cloned.translation_has_note:
-        note = Note(type_id=thn_to_be_cloned.note.type_id, user_id=teacher.id,
-                    content=thn_to_be_cloned.note.content)
+    for note_to_be_cloned in tr_to_be_cloned.notes:
+        note = Note(type_id=note_to_be_cloned.note.type_id, user_id=teacher.id,
+                    content=note_to_be_cloned.note.content)
         db.session.add(note)
         db.session.flush()
-        teacher_tr.translation_has_note.append(
-            TranslationHasNote(ptr_start=thn_to_be_cloned.ptr_start,
-                               ptr_end=thn_to_be_cloned.ptr_end,
-                               note_id=note.id,
-                               translation_id=teacher_tr.id),
-        )
+        teacher_tr.notes.append(note)
 
     db.session.add(teacher_tr)
 

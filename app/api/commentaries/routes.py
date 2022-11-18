@@ -302,12 +302,7 @@ def clone_commentary(doc_id, user_id, type_id):
                     content=chn_to_be_cloned.note.content)
         db.session.add(note)
         db.session.flush()
-        teacher_com.transcription_has_note.append(
-            CommentaryHasNote(ptr_start=chn_to_be_cloned.ptr_start,
-                              ptr_end=chn_to_be_cloned.ptr_end,
-                              note_id=note.id,
-                              commentary_id=teacher_com.id),
-        )
+        teacher_com.notes.append(note)
 
     db.session.add(teacher_com)
 

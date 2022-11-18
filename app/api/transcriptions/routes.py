@@ -261,17 +261,12 @@ def clone_transcription(doc_id, user_id):
         # teacher_tr.notes = []
 
     # clone notes
-    for thn_to_be_cloned in tr_to_be_cloned.transcription_has_note:
-        note = Note(type_id=thn_to_be_cloned.note.type_id, user_id=teacher.id,
-                    content=thn_to_be_cloned.note.content)
+    for note_to_be_cloned in tr_to_be_cloned.notes:
+        note = Note(type_id=note_to_be_cloned.type_id, user_id=teacher.id,
+                    content=note_to_be_cloned.content)
         db.session.add(note)
         db.session.flush()
-        teacher_tr.transcription_has_note.append(
-            TranscriptionHasNote(ptr_start=thn_to_be_cloned.ptr_start,
-                                 ptr_end=thn_to_be_cloned.ptr_end,
-                                 note_id=note.id,
-                                 transcription_id=teacher_tr.id),
-        )
+        teacher_tr.notes.append(note)
 
     db.session.add(teacher_tr)
 
