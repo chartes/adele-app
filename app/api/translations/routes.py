@@ -6,7 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import db
 from app.api.routes import api_bp
 from app.models import User, Document, Translation, \
-    Note, TranslationHasNote, TranscriptionHasNote, findNoteInDoc
+    Note, TranslationHasNote, TranscriptionHasNote, findNoteInDoc, set_notes_from_content
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, make_403, is_closed, \
     forbid_if_other_user, get_doc, check_no_XMLParserError
@@ -169,7 +169,7 @@ def api_post_documents_translations(api_version, doc_id, user_id):
                         db.session.add(thn)
                         print("make:", thn.translation_id, thn.note_id)
                 db.session.flush()
-                print("thn:", [thn.note.id for thn in tr.translation_has_note])
+                print("note:", [_note.id for _note in tr.notes])
                 print("====================")
             db.session.add(tr)
             db.session.commit()
@@ -191,13 +191,6 @@ def api_put_documents_translations(api_version, doc_id, user_id):
          "data":
              {
                  "content" :  "My first translation"
-                 "notes": [{
-                    "id": 1,
-                    "type_id": 0 (by default),
-                    "content": "aaa",
-                    "ptr_start": 3,
-                    "ptr_end": 12
-                 }]
              }
      }
      :param user_id:
@@ -221,71 +214,27 @@ def api_put_documents_translations(api_version, doc_id, user_id):
     data = request.get_json()
     if "data" in data:
         data = data["data"]
-        tr = get_translation(doc_id=doc_id, user_id=user_id)
-        if tr is None:
+        translation = get_translation(doc_id=doc_id, user_id=user_id)
+        if translation is None:
             return make_404()
         try:
             if "content" in data:
                 error = check_no_XMLParserError(data["content"])
                 if error:
                     raise Exception('Translation content is malformed: %s', str(error))
-                tr.content = data["content"]
-                db.session.add(tr)
-                db.session.commit()
-            if "notes" in data:
-                current_translation_notes = TranslationHasNote.query.filter(
-                    TranslationHasNote.translation_id == tr.id).all()
-                # remove all notes not present anymore in the translation
-                print("current thn", current_translation_notes)
-                for current_thn in current_translation_notes:
-                    if (current_thn.note.id, current_thn.ptr_start, current_thn.ptr_end) not in \
-                            [(note.get('id', None), note["ptr_start"], note["ptr_end"])
-                             for note in data["notes"]]:
-                        note = current_thn.note
-                        db.session.delete(current_thn)
-                        print("delete thn", note)
-                        db.session.flush()
-                        note.delete_if_unused()
-
-                for note in data["notes"]:
-                    note_id = note.get('id', None)
-                    thn = TranslationHasNote.query.filter(TranslationHasNote.note_id == note_id,
-                                                          TranslationHasNote.translation_id == tr.id,
-                                                          TranslationHasNote.ptr_start == note["ptr_start"],
-                                                          TranslationHasNote.ptr_end == note["ptr_end"]
-                                                          ).first()
-                    if thn is None or note_id is None:
-                        # try to find the note in other contents
-                        reused_note = findNoteInDoc(doc_id, user_id, note_id)
-                        if reused_note is None:
-                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
-
-                        # bind the note on the translation side
-                        thn = TranslationHasNote(translation_id=tr.id,
-                                                 note_id=reused_note.id,
-                                                 ptr_start=note["ptr_start"],
-                                                 ptr_end=note["ptr_end"])
-                        db.session.add(thn)
-                        db.session.flush()
-
-                    error = check_no_XMLParserError(note["content"])
-                    if error:
-                        raise Exception('Note content is malformed: %s', str(error))
-
-                    thn.ptr_start = note['ptr_start']
-                    thn.ptr_end = note['ptr_end']
-                    thn.note.content = note['content']
-                    thn.note.type_id = note['type_id']
-
-                    db.session.add(thn)
-                    db.session.add(thn.note)
-
+                translation.content = data["content"]
+                notes = set(translation.notes)
+                set_notes_from_content(translation)
+                db.session.flush()
+                for note in notes:
+                    note.delete_if_unused()
+                db.session.add(translation)
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print('Error', str(e))
             return make_400(str(e))
-        return make_200(data=tr.serialize_for_user(user_id))
+        return make_200(data=translation.serialize_for_user(user_id))
     else:
         return make_400("no data")
 
@@ -317,13 +266,13 @@ def delete_document_translation(doc_id, user_id):
         return make_404()
 
     try:
-        for thn in tr.translation_has_note:
-            if thn.note.user_id == int(user_id):
+        for note in tr.notes:
+            if note.user_id == int(user_id):
                 exist_in_transcription = TranscriptionHasNote.query.filter(
-                    TranscriptionHasNote.note_id == thn.note.id
+                    TranscriptionHasNote.note_id == note.id
                 ).first()
                 if not exist_in_transcription:
-                    db.session.delete(thn.note)
+                    db.session.delete(note)
         db.session.delete(tr)
         doc.is_translation_validated = False
         db.session.commit()
@@ -332,7 +281,7 @@ def delete_document_translation(doc_id, user_id):
         print(str(e))
         return make_400(str(e))
 
-    return make_200(data=doc.validation_flags)
+    return make_200(data={"validation_flags": doc.validation_flags})
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/translations/from-user/<user_id>', methods=["DELETE"])
@@ -364,17 +313,12 @@ def clone_translation(doc_id, user_id):
         # teacher_tr.notes = []
 
     # clone notes
-    for thn_to_be_cloned in tr_to_be_cloned.translation_has_note:
-        note = Note(type_id=thn_to_be_cloned.note.type_id, user_id=teacher.id,
-                    content=thn_to_be_cloned.note.content)
+    for note_to_be_cloned in tr_to_be_cloned.notes:
+        note = Note(type_id=note_to_be_cloned.note.type_id, user_id=teacher.id,
+                    content=note_to_be_cloned.note.content)
         db.session.add(note)
         db.session.flush()
-        teacher_tr.translation_has_note.append(
-            TranslationHasNote(ptr_start=thn_to_be_cloned.ptr_start,
-                               ptr_end=thn_to_be_cloned.ptr_end,
-                               note_id=note.id,
-                               translation_id=teacher_tr.id),
-        )
+        teacher_tr.notes.append(note)
 
     db.session.add(teacher_tr)
 
@@ -414,11 +358,10 @@ def view_document_translation(api_version, doc_id, user_id=None):
 
     _tr = tr.serialize_for_user(user_id)
     from app.api.transcriptions.routes import add_notes_refs_to_text
-    _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])
 
     return make_200({
         "doc_id": tr.doc_id,
         "user_id": tr.user_id,
-        "content": Markup(_content) if tr.content is not None else "",
+        "content": Markup(tr.content) if tr.content is not None else "",
         "notes": {"{:010d}".format(n["id"]): n["content"] for n in _tr["notes"]}
     })

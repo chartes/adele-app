@@ -6,7 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import db
 from app.api.routes import api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text
-from app.models import Commentary, Document, Note, TranscriptionHasNote, CommentaryHasNote, Transcription, findNoteInDoc
+from app.models import Commentary, Document, Note, TranscriptionHasNote, CommentaryHasNote, Transcription, findNoteInDoc, set_notes_from_content
 from app.utils import make_403, make_200, make_404, forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_409, \
     make_400, get_doc, is_closed, check_no_XMLParserError, forbid_if_nor_teacher_nor_admin, forbid_if_not_in_whitelist
 
@@ -103,16 +103,14 @@ def view_document_commentaries(api_version, doc_id, user_id=None):
         return make_404()
 
     _coms = [c.serialize() for c in coms]
-    _coms_content = [add_notes_refs_to_text(c["content"], c["notes"]) for c in _coms]
-    commentaries = zip(_coms, _coms_content)
 
     return make_200(data=[{
         "doc_id": com["doc_id"],
         "user_id": com["user_id"],
         "type": com["type"],
-        "content": Markup(annotated) if annotated is not None else "",
+        "content": Markup(com['content']) if com['content'] is not None else "",
         "notes": {"{:010d}".format(n["id"]): n["content"] for n in com["notes"]}
-    } for com, annotated in commentaries])
+    } for com in _coms])
 
 
 def delete_commentary(doc_id, user_id, type_id):
@@ -176,13 +174,6 @@ def api_post_commentary(api_version, doc_id, user_id):
             {
                 "type_id": 2,
                 "content" : "This is a commentary",
-                "notes": [
-                        {
-                           "content": "note1 content",
-                           "ptr_start": 5,
-                           "ptr_end": 7
-                       }
-                ]
             }
     }
     :param api_version:
@@ -207,64 +198,12 @@ def api_post_commentary(api_version, doc_id, user_id):
         try:
             c = None
             # case 1) "content" in data
-            if "content" in data:
-                error = check_no_XMLParserError(data["content"])
-                if error:
-                    raise Exception('Commentary content is malformed: %s', str(error))
-                c = Commentary(doc_id=doc_id, user_id=user_id, type_id=data["type_id"], content=data["content"])
-                db.session.add(c)
-                db.session.flush()
-            # case 2) there's "notes" in data
-            elif "notes" in data:
-                c = Commentary.query.filter(Commentary.doc_id == doc_id,
-                                            Commentary.user_id == user_id,
-                                            Commentary.type_id == data["type_id"]).first()
-
-            print(doc, c, user, data)
-            if c is None:
-                return make_404()
-
-            if "notes" in data:
-                print("======= notes =======")
-                for note in data["notes"]:
-                    # 1) simply reuse notes which come with an id
-                    note_id = note.get('id', None)
-                    if note_id is not None:
-                        reused_note = Note.query.filter(Note.id == note_id, Note.user_id == user_id).first()
-                        if reused_note is None:
-                            return make_400(details="Wrong note id %s" % note_id)
-                        db.session.add(reused_note)
-                        db.session.flush()
-                        chn = CommentaryHasNote.query.filter(CommentaryHasNote.note_id == reused_note.id,
-                                                             CommentaryHasNote.commentary_id == c.id).first()
-                        # 1.a) the note is already present in the commentary, so update its ptrs
-                        if chn is not None:
-                            raise Exception("Commentary note already exists. Consider using PUT method")
-                        else:
-                            # 1.b) the note is not present on the transcription side, so create it
-                            chn = CommentaryHasNote(commentary_id=c.id,
-                                                    note_id=reused_note.id,
-                                                    ptr_start=note["ptr_start"],
-                                                    ptr_end=note["ptr_end"])
-                        db.session.add(chn)
-                        print("reuse:", chn.transcription_id, chn.note_id)
-                    else:
-                        # 2) make new note
-                        error = check_no_XMLParserError(note["content"])
-                        if error:
-                            raise Exception('Note content is malformed: %s', str(error))
-                        new_note = Note(type_id=note.get("type_id", 0), user_id=user_id, content=note["content"])
-                        db.session.add(new_note)
-                        db.session.flush()
-                        chn = CommentaryHasNote(commentary_id=c.id,
-                                                note_id=new_note.id,
-                                                ptr_start=note["ptr_start"],
-                                                ptr_end=note["ptr_end"])
-                        db.session.add(chn)
-                        print("make:", chn.commentary_id, chn.note_id)
-                    db.session.flush()
-                    print("====================")
-                    db.session.add(chn)
+            error = check_no_XMLParserError(data["content"])
+            if error:
+                raise Exception('Commentary content is malformed: %s', str(error))
+            c = Commentary(doc_id=doc_id, user_id=user_id, type_id=data["type_id"], content=data["content"])
+            set_notes_from_content(c)
+            db.session.add(c)
             db.session.commit()
 
         except (Exception, KeyError) as e:
@@ -285,13 +224,6 @@ def api_put_commentary(api_version, doc_id, user_id):
             "data":
                 {
                     "content" :  "My first transcription"
-                    "notes": [{
-                       "id": 1,
-                       "type_id": 0 (by default),
-                       "content": "aaa",
-                       "ptr_start": 3,
-                       "ptr_end": 12
-                    }]
                 }
         }
         :param api_version:
@@ -321,60 +253,13 @@ def api_put_commentary(api_version, doc_id, user_id):
             return make_404()
 
         try:
-            if "content" in data:
-                error = check_no_XMLParserError(data["content"])
-                if error:
-                    raise Exception('Commentary content is malformed: %s', str(error))
-                c.content = data["content"]
-                db.session.add(c)
-                db.session.commit()
-            if "notes" in data:
-
-                current_commentary_notes = CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == c.id).all()
-                # remove all notes not present in the transcription anymore
-                for current_chn in current_commentary_notes:
-                    if (current_chn.note.id, current_chn.ptr_start, current_chn.ptr_end) not in \
-                            [(note.get('id', None), note["ptr_start"], note["ptr_end"])
-                             for note in data["notes"]]:
-                        note = current_chn.note
-                        db.session.delete(current_chn)
-                        print("delete chn", note)
-                        db.session.flush()
-                        note.delete_if_unused()
-
-                for note in data["notes"]:
-
-                    note_id = note.get('id', None)
-                    chn = CommentaryHasNote.query.filter(CommentaryHasNote.note_id == note_id,
-                                                         CommentaryHasNote.commentary_id == c.id,
-                                                         CommentaryHasNote.ptr_start == note["ptr_start"],
-                                                         CommentaryHasNote.ptr_end == note["ptr_end"]
-                                                         ).first()
-                    if chn is None:
-                        # try to find a note in other contents
-                        reused_note = findNoteInDoc(doc_id, user_id, note_id)
-                        if reused_note is None:
-                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
-                        chn = CommentaryHasNote(commentary_id=c.id,
-                                                note_id=reused_note.id,
-                                                ptr_start=note["ptr_start"],
-                                                ptr_end=note["ptr_end"])
-                        db.session.add(chn)
-                        db.session.flush()
-
-                    error = check_no_XMLParserError(note["content"])
-                    if error:
-                        raise Exception('Note content is malformed: %s', str(error))
-
-                    chn.ptr_start = note['ptr_start']
-                    chn.ptr_end = note['ptr_end']
-                    chn.note.content = note['content']
-                    chn.note.type_id = note['type_id']
-
-                    db.session.add(chn)
-                    db.session.add(chn.note)
-
-                db.session.commit()
+            error = check_no_XMLParserError(data["content"])
+            if error:
+                raise Exception('Commentary content is malformed: %s', str(error))
+            c.content = data["content"]
+            set_notes_from_content(c)
+            db.session.add(c)
+            db.session.commit()
         except Exception as e:
             db.session.rollback()
             print('Error', str(e))
@@ -417,12 +302,7 @@ def clone_commentary(doc_id, user_id, type_id):
                     content=chn_to_be_cloned.note.content)
         db.session.add(note)
         db.session.flush()
-        teacher_com.transcription_has_note.append(
-            CommentaryHasNote(ptr_start=chn_to_be_cloned.ptr_start,
-                              ptr_end=chn_to_be_cloned.ptr_end,
-                              note_id=note.id,
-                              commentary_id=teacher_com.id),
-        )
+        teacher_com.notes.append(note)
 
     db.session.add(teacher_com)
 

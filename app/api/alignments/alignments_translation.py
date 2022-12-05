@@ -1,6 +1,10 @@
+from itertools import zip_longest
+import re
+
 from flask import current_app, request
 from flask_jwt_extended import jwt_required
 from markupsafe import Markup
+from bs4 import BeautifulSoup
 
 from app import auth, db, api_bp
 from app.api.transcriptions.routes import get_reference_transcription, add_notes_refs_to_text, ETAG, BTAG
@@ -8,6 +12,50 @@ from app.api.translations.routes import get_reference_translation
 from app.models import AlignmentTranslation, Transcription, Document, Translation
 from app.utils import forbid_if_nor_teacher_nor_admin_and_wants_user_data, make_404, make_200, make_400, \
     forbid_if_not_in_whitelist
+
+
+SEGMENT_REGEX = re.compile('<\W*adele-segment\W*>\W*<\/\W*adele-segment\W*>')
+
+
+def _build_segment(str_segment, tags_to_reopen, tags_to_close):
+    segment_parts = []
+    for tag in tags_to_reopen:
+        segment_parts.append(f"<{tag['name']}")
+        for name, value in tag["attr"].items():
+            segment_parts.append(f' {name}="{value}"')
+        segment_parts.append(">")
+    segment_parts.append(str_segment)
+    for tag in tags_to_close:
+        segment_parts.append(f"</{tag['name']}>")
+    return "".join(segment_parts)
+
+
+def split_segments(html):
+    dom = BeautifulSoup(html, "html.parser")
+    raw_segments = SEGMENT_REGEX.split(html)
+    segments = []
+    tags_to_reopen = []
+    for idx, segment in enumerate(dom.find_all("adele-segment")):
+        encountered_tags = []
+        for tag in segment.parents:
+            if not tag or type(tag) == BeautifulSoup:
+                continue
+            encountered_tags.append(
+                {
+                    "name": tag.name,
+                    "attr": tag.attrs,
+                }
+            )
+        segments.append(
+            # we use ::-1 to reverse the list, because what we first close will be last opened
+            _build_segment(raw_segments[idx], tags_to_reopen[::-1], encountered_tags)
+        )
+        tags_to_reopen = encountered_tags
+    segments.append(
+        # we use ::-1 to reverse the list, because what we first close will be last opened
+        _build_segment(raw_segments[-1], tags_to_reopen[::-1], [])
+    )
+    return segments
 
 
 @api_bp.route('/api/<api_version>/documents/<doc_id>/transcriptions/alignments/from-user/<user_id>')
@@ -222,7 +270,6 @@ def add_notes_refs(tr, tl):
 
     return tr_w_notes, tl_w_notes, notes, len(all_al)
 
-
 @api_bp.route('/api/<api_version>/documents/<doc_id>/view/transcription-alignment')
 def view_document_translation_alignment(api_version, doc_id):
     translation = get_reference_translation(doc_id)
@@ -230,21 +277,16 @@ def view_document_translation_alignment(api_version, doc_id):
 
     if not transcription or not translation:
         return make_404()
+    splitted_transcription = split_segments(transcription.content)
+    splitted_translation = split_segments(translation.content)
+    alignments = list(zip_longest(splitted_transcription, splitted_translation, fillvalue=''))
 
-    tr_w_notes, tl_w_notes, notes, num_al = add_notes_refs(
-        transcription.serialize_for_user(transcription.user_id),
-        translation.serialize_for_user(translation.user_id)
-    )
-
-    if num_al <= 0:
+    if len(alignments) <= 1:
         return make_404(details="Aucun alignement")
 
     return make_200({
         "doc_id": doc_id,
-        #"transcription": Markup("".join(tr_w_notes)),
-        #"translation": Markup("".join(tl_w_notes)),
-        "alignments": [z for z in zip(tr_w_notes, tl_w_notes)],
-        "notes": notes
+        "alignments": alignments
     })
 
 

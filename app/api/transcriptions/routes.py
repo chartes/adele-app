@@ -7,7 +7,7 @@ from app import db
 from app.api.documents.document_validation import unvalidate_all
 from app.api.routes import api_bp
 from app.models import Transcription, User, Document, \
-    Note, TranscriptionHasNote, TranslationHasNote, findNoteInDoc
+    Note, TranscriptionHasNote, TranslationHasNote, findNoteInDoc, set_notes_from_content
 from app.utils import make_404, make_200, forbid_if_nor_teacher_nor_admin_and_wants_user_data, \
     forbid_if_nor_teacher_nor_admin, make_400, forbid_if_not_in_whitelist, is_closed, \
     forbid_if_other_user, make_403, get_doc, check_no_XMLParserError
@@ -82,13 +82,6 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
         "data":
             {
                 "content" :  "My first transcription"
-                "notes": [
-                        {
-                           "content": "note1 content",
-                           "ptr_start": 5,
-                           "ptr_end": 7
-                       }
-                ]
             }
     }
     :param user_id:
@@ -117,63 +110,11 @@ def api_post_documents_transcriptions(api_version, doc_id, user_id):
     if "data" in data:
         data = data["data"]
         try:
-            tr = None
-            # case 1) "content" in data
-            if "content" in data:
-                error = check_no_XMLParserError(data["content"])
-                if error:
-                    raise Exception('Transcription content is malformed: %s', str(error))
-                tr = Transcription(doc_id=doc_id, content=data["content"], user_id=user_id)
-                db.session.add(tr)
-                db.session.flush()
-            # case 2) there's "notes" in data
-            if "notes" in data:
-                tr = Transcription.query.filter(Transcription.doc_id == doc_id,
-                                                Transcription.user_id == user_id).first()
-            if tr is None:
-                return make_404()
-
-            if "notes" in data:
-                print("======= notes =======")
-                for note in data["notes"]:
-                        # 1) simply reuse notes which come with an id
-                    note_id = note.get('id', None)
-                    if note_id is not None:
-                        reused_note = Note.query.filter(Note.id == note_id, Note.user_id == current_user.id).first()
-                        if reused_note is None:
-                            return make_400(details="Wrong note id %s" % note_id)
-                        db.session.add(reused_note)
-                        db.session.flush()
-                        thn = TranscriptionHasNote.query.filter(TranscriptionHasNote.note_id == reused_note.id,
-                                                                TranscriptionHasNote.transcription_id == tr.id).first()
-                        # 1.a) the note is already present in the transcription, so update its ptrs
-                        if thn is not None:
-                            raise Exception("Transcription note already exists. Consider using PUT method")
-                        else:
-                            # 1.b) the note is not present on the transcription side, so create it
-                            thn = TranscriptionHasNote(transcription_id=tr.id,
-                                                       note_id=reused_note.id,
-                                                       ptr_start=note["ptr_start"],
-                                                       ptr_end=note["ptr_end"])
-                        db.session.add(thn)
-                        print("reuse:", thn.transcription_id, thn.note_id)
-                    else:
-                        # 2) make new note
-                        error = check_no_XMLParserError(note["content"])
-                        if error:
-                            raise Exception('Note content is malformed: %s', str(error))
-                        new_note = Note(type_id=note.get("type_id", 0), user_id=user_id, content=note["content"])
-                        db.session.add(new_note)
-                        db.session.flush()
-                        thn = TranscriptionHasNote(transcription_id=tr.id,
-                                                   note_id=new_note.id,
-                                                   ptr_start=note["ptr_start"],
-                                                   ptr_end=note["ptr_end"])
-                        db.session.add(thn)
-                        print("make:", thn.transcription_id, thn.note_id)
-                db.session.flush()
-                print("thn:", [thn.note.id for thn in tr.transcription_has_note])
-                print("====================")
+            error = check_no_XMLParserError(data["content"])
+            if error:
+                raise Exception('Transcription content is malformed: %s', str(error))
+            tr = Transcription(doc_id=doc_id, content=data["content"], user_id=user_id)
+            set_notes_from_content(tr)
             db.session.add(tr)
             db.session.commit()
         except Exception as e:
@@ -194,13 +135,6 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
          "data":
              {
                  "content" :  "My first transcription"
-                 "notes": [{
-                    "id": 1,
-                    "type_id": 0 (by default),
-                    "content": "aaa",
-                    "ptr_start": 3,
-                    "ptr_end": 12
-                 }]
              }
      }
      :param user_id:
@@ -228,72 +162,26 @@ def api_put_documents_transcriptions(api_version, doc_id, user_id):
     data = request.get_json()
     if "data" in data:
         data = data["data"]
-        tr = get_transcription(doc_id=doc_id, user_id=user_id)
-        if tr is None:
+        transcription = get_transcription(doc_id=doc_id, user_id=user_id)
+        if transcription is None:
             return make_404()
         try:
-            if "content" in data:
                 error = check_no_XMLParserError(data["content"])
                 if error:
                     raise Exception('Transcription content is malformed: %s', str(error))
-                tr.content = data["content"]
-                db.session.add(tr)
-                db.session.commit()
-            if "notes" in data:
-                current_transcription_notes = TranscriptionHasNote.query.filter(
-                    TranscriptionHasNote.transcription_id == tr.id).all()
-                # remove all notes not present in the transcription anymore
-                for current_thn in current_transcription_notes:
-                    if (current_thn.note.id, current_thn.ptr_start, current_thn.ptr_end) not in \
-                            [(note.get('id', None), note["ptr_start"], note["ptr_end"])
-                             for note in data["notes"]]:
-                        note = current_thn.note
-                        db.session.delete(current_thn)
-                        print("delete thn", note)
-                        db.session.flush()
-                        note.delete_if_unused()
-
-
-                for note in data["notes"]:
-                    note_id = note.get('id', None)
-                    thn = TranscriptionHasNote.query.filter(
-                        TranscriptionHasNote.note_id == note_id,
-                        TranscriptionHasNote.transcription_id == tr.id,
-                        TranscriptionHasNote.ptr_start == note["ptr_start"],
-                        TranscriptionHasNote.ptr_end == note["ptr_end"]
-                    ).first()
-                    if thn is None:
-                        # try to find the note in other contents
-                        reused_note = findNoteInDoc(doc_id, user_id, note_id)
-                        if reused_note is None:
-                            raise Exception('Cannot reuse note: note %s unknown' % note_id)
-
-                        # bind the note on the transcription side
-                        thn = TranscriptionHasNote(transcription_id=tr.id,
-                                                       note_id=reused_note.id,
-                                                       ptr_start=note["ptr_start"],
-                                                       ptr_end=note["ptr_end"])
-                        db.session.add(thn)
-                        db.session.flush()
-
-                    error = check_no_XMLParserError(note["content"])
-                    if error:
-                        raise Exception('Note content is malformed: %s', str(error))
-
-                    thn.ptr_start = note['ptr_start']
-                    thn.ptr_end = note['ptr_end']
-                    thn.note.content = note['content']
-                    thn.note.type_id = note['type_id']
-
-                    db.session.add(thn)
-                    db.session.add(thn.note)
-
+                transcription.content = data["content"]
+                notes = set(transcription.notes)
+                set_notes_from_content(transcription)
+                db.session.flush()
+                for note in notes:
+                    note.delete_if_unused()
+                db.session.add(transcription)
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print('Error', str(e))
             return make_400(str(e))
-        return make_200(data=tr.serialize_for_user(user_id))
+        return make_200(data=transcription.serialize_for_user(user_id))
     else:
         return make_400("no data")
 
@@ -329,13 +217,6 @@ def delete_document_transcription(doc_id, user_id):
         return make_404()
 
     try:
-        for thn in tr.transcription_has_note:
-            if thn.note.user_id == int(user_id):
-                exist_in_translation = TranslationHasNote.query.filter(
-                    TranslationHasNote.note_id == thn.note.id
-                ).first()
-                if not exist_in_translation:
-                    db.session.delete(thn.note)
         db.session.delete(tr)
         doc = unvalidate_all(doc)
         db.session.add(doc)
@@ -380,17 +261,12 @@ def clone_transcription(doc_id, user_id):
         # teacher_tr.notes = []
 
     # clone notes
-    for thn_to_be_cloned in tr_to_be_cloned.transcription_has_note:
-        note = Note(type_id=thn_to_be_cloned.note.type_id, user_id=teacher.id,
-                    content=thn_to_be_cloned.note.content)
+    for note_to_be_cloned in tr_to_be_cloned.notes:
+        note = Note(type_id=note_to_be_cloned.type_id, user_id=teacher.id,
+                    content=note_to_be_cloned.content)
         db.session.add(note)
         db.session.flush()
-        teacher_tr.transcription_has_note.append(
-            TranscriptionHasNote(ptr_start=thn_to_be_cloned.ptr_start,
-                                 ptr_end=thn_to_be_cloned.ptr_end,
-                                 note_id=note.id,
-                                 transcription_id=teacher_tr.id),
-        )
+        teacher_tr.notes.append(note)
 
     db.session.add(teacher_tr)
 
@@ -459,11 +335,10 @@ def view_document_transcription(api_version, doc_id, user_id=None):
         user_id = tr.user_id
 
     _tr = tr.serialize_for_user(user_id)
-    _content = add_notes_refs_to_text(_tr["content"], _tr["notes"])
 
     return make_200({
         "doc_id": tr.doc_id,
         "user_id": tr.user_id,
-        "content": Markup(_content) if tr.content is not None else "",
+        "content": Markup(_tr["content"]) if tr.content is not None else "",
         "notes": {"{:010d}".format(n["id"]): n["content"] for n in _tr["notes"]}
     })
