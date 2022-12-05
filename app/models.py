@@ -1,4 +1,6 @@
 import datetime
+
+from bs4 import BeautifulSoup
 from flask import current_app, url_for
 from sqlalchemy import ForeignKeyConstraint, desc
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -195,7 +197,7 @@ class Commentary(db.Model):
     content = db.Column(db.Text)
 
     type = db.relationship("CommentaryType", backref="commentary")
-    notes = association_proxy('commentary_has_note', 'note')
+    notes = db.relationship('Note', secondary='commentary_has_note', back_populates='commentaries', collection_class=set)
 
     __table_args__ = (
         db.UniqueConstraint('doc_id', 'user_id', 'type_id', name='UniqueCommentaryType'),
@@ -203,8 +205,8 @@ class Commentary(db.Model):
 
     def notes_of_user(self, user_id):
         return [
-            dict({"ptr_start": chn.ptr_start, "ptr_end": chn.ptr_end}, **(chn.note.serialize()))
-            for chn in self.commentary_has_note if chn.note.user_id == int(user_id)]
+            note.serialize()
+            for note in self.notes if note.user_id == int(user_id)]
 
     def serialize(self):
         return {
@@ -221,10 +223,6 @@ class CommentaryHasNote(db.Model):
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer, primary_key=True)
     ptr_end = db.Column(db.Integer, primary_key=True)
-
-    note = db.relationship("Note")
-    commentary = db.relationship("Commentary", backref=db.backref("commentary_has_note",
-                                                                  cascade="all, delete-orphan"))
 
 
 class District(db.Model):
@@ -334,10 +332,22 @@ class Document(db.Model):
 
     @property
     def validation_flags(self):
+        tr = Transcription.query.filter(Transcription.doc_id == self.id,
+                                           Transcription.user_id == self.user_id).first()
+
+        tl = Translation.query.filter(Translation.doc_id == self.id,
+                                      Translation.user_id == self.user_id).first()
+
+        alignment_translation_validated = False
+        if tr is not None and tl is not None:
+            tr_alignments_count = len(BeautifulSoup(tr.content, 'html.parser').find_all('adele-segment'))
+            tl_alignments_count = len(BeautifulSoup(tl.content, 'html.parser').find_all('adele-segment'))
+            alignment_translation_validated = tr_alignments_count == tl_alignments_count
         return {
             'notice': self.is_notice_validated is True,
             'transcription': self.is_transcription_validated is True,
             'translation': self.is_translation_validated is True,
+            'alignment-translation': alignment_translation_validated,
             'facsimile': self.is_facsimile_validated is True,
             'speech-parts': self.is_speechparts_validated is True,
             'commentaries': self.is_commentaries_validated is True
@@ -353,16 +363,21 @@ class Document(db.Model):
         tl = Translation.query.filter(Translation.doc_id == self.id,
                                       Translation.user_id == self.user_id).first()
 
+        alignment_translation_exists = False
+        if tr is not None and tl is not None:
+            has_tr_alignment = len(BeautifulSoup(tr.content, 'html.parser').find_all('adele-segment')) > 0
+            has_tl_alignment = len(BeautifulSoup(tl.content, 'html.parser').find_all('adele-segment')) > 0
+            alignment_translation_exists = has_tr_alignment and has_tl_alignment
+
         return {
             'notice': True,
             'transcription': tr is not None,
             'translation': tl is not None,
-            'alignment-translation': tl is not None and tr is not None and AlignmentTranslation.query.filter(AlignmentTranslation.translation_id == tl.id,
-                                                                       AlignmentTranslation.transcription_id == tr.id).count() > 0,
+            'alignment-translation': alignment_translation_exists,
             'facsimile': tr is not None and AlignmentImage.query.filter(AlignmentImage.transcription_id == tr.id,
                                                                         AlignmentImage.user_id == self.user_id).count() > 0,
-            'speech-parts': tr is not None and AlignmentDiscours.query.filter(AlignmentDiscours.transcription_id == self.id,
-                                                                              AlignmentDiscours.user_id == self.user_id).count() > 0,
+            'speech-parts': tr is not None and SpeechParts.query.filter(SpeechParts.doc_id == self.id,
+                                                                              SpeechParts.user_id == self.user_id).count() > 0,
             'commentaries': Commentary.query.filter(Commentary.doc_id == self.id,
                                                     Commentary.user_id == self.user_id).count() > 0,
         }
@@ -603,21 +618,28 @@ class Note(db.Model):
 
     note_type = db.relationship("NoteType", backref=db.backref('note', passive_deletes=True))
 
-    transcription = association_proxy('transcription_has_note', 'transcription')
-
-    # transcription_has_note = db.relationship("TranscriptionHasNote")#, back_populates="note", cascade="all, delete-orphan", passive_deletes=True)
-
-    translation = db.relationship("TranslationHasNote", back_populates="note", cascade="all, delete-orphan",
-                                  passive_deletes=True)
-    commentary = db.relationship("CommentaryHasNote", back_populates="note", cascade="all, delete-orphan",
-                                 passive_deletes=True)
+    transcriptions = db.relationship(
+        "Transcription",
+        secondary='transcription_has_note',
+        back_populates="notes",
+    )
+    translations = db.relationship(
+        "Translation", 
+        secondary='translation_has_note',
+        back_populates="notes",
+    )
+    commentaries = db.relationship(
+        "Commentary",
+        secondary='commentary_has_note',
+        back_populates="notes",
+    )
 
     def serialize(self):
         return {
             'id': self.id,
             'user_id': self.user_id,
             'content': self.content,
-            'note_type': self.note_type.serialize()
+            'type_id': self.type_id,
         }
 
     def delete_if_unused(self):
@@ -698,10 +720,6 @@ class TranscriptionHasNote(db.Model):
     ptr_start = db.Column(db.Integer, primary_key=True)
     ptr_end = db.Column(db.Integer, primary_key=True)
 
-    transcription = db.relationship("Transcription", backref=db.backref("transcription_has_note",
-                                                                        cascade="all, delete-orphan"))
-    note = db.relationship("Note")
-
 
 class Transcription(db.Model):
     __table_args__ = (
@@ -713,14 +731,14 @@ class Transcription(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = association_proxy('transcription_has_note', 'note')
-
-    # notes = db.relationship("TranscriptionHasNote", back_populates="transcription", cascade="all, delete-orphan")
+    notes = db.relationship('Note', secondary='transcription_has_note', back_populates='transcriptions', collection_class=set)
 
     def notes_of_user(self, user_id):
         return [
-            dict({"ptr_start": thn.ptr_start, "ptr_end": thn.ptr_end}, **(thn.note.serialize()))
-            for thn in self.transcription_has_note if thn.note.user_id == int(user_id)]
+            note.serialize()
+            for note in self.notes
+            if note.user_id == int(user_id)
+        ]
 
     def serialize_for_user(self, user_id):
         return {
@@ -732,15 +750,30 @@ class Transcription(db.Model):
         }
 
 
+class SpeechParts(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('doc_id', 'user_id', name='uix_user', ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doc_id = db.Column(db.Integer, db.ForeignKey('document.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    content = db.Column(db.Text)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'doc_id': self.doc_id,
+            'user_id': self.user_id,
+            'content': self.content,
+        }
+
+
 class TranslationHasNote(db.Model):
     translation_id = db.Column(db.Integer, db.ForeignKey('translation.id', ondelete='CASCADE'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
     ptr_start = db.Column(db.Integer, primary_key=True)
     ptr_end = db.Column(db.Integer, primary_key=True)
-
-    translation = db.relationship("Translation", backref=db.backref("translation_has_note",
-                                                                    cascade="all, delete-orphan"))
-    note = db.relationship("Note")
 
 
 class Translation(db.Model):
@@ -753,14 +786,14 @@ class Translation(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = association_proxy('translation_has_note', 'note')
-
-    # notes = db.relationship("TranslationHasNote", back_populates="translation", cascade="all, delete-orphan")
+    notes = db.relationship('Note', secondary='translation_has_note', back_populates='translations', collection_class=set)
 
     def notes_of_user(self, user_id):
         return [
-            dict({"ptr_start": thn.ptr_start, "ptr_end": thn.ptr_end}, **(thn.note.serialize()))
-            for thn in self.translation_has_note if thn.note.user_id == int(user_id)]
+            note.serialize()
+            for note in self.notes
+            if note.user_id == int(user_id)
+        ]
 
     def serialize_for_user(self, user_id):
         return {
@@ -956,3 +989,10 @@ class AlignmentDiscours(db.Model):
             'ptr_end': self.ptr_end,
             'note': self.note
         }
+
+def set_notes_from_content(notes_holder):
+    """ find notes used in content and assign it to the container
+    """
+    dom = BeautifulSoup(notes_holder.content, "html.parser")
+    notes_ids  = (note_element['id'] for note_element in dom.find_all('adele-note'))
+    notes_holder.notes = set(Note.query.filter(Note.id.in_(notes_ids)).all())

@@ -132,31 +132,26 @@ def load_transcriptions(db, _docs, _users, _notes, _segments=False, _pos_u0=Fals
     # and parts of speech (teacher and student 2)
     # ====================================================================
 
-    _seg = '<segment />' if _segments else ''
-
-    _pos = [[
-        f"<speechpart user_id='{u['id']}' type_id='1' note='Ceci est une note sur une PoS de type 1 rédigée par {u['username']}'>",
-        f"<speechpart user_id='{u['id']}' type_id='2' note='Ceci est une note sur une PoS de type 2 rédigée par {u['username']}'>",
-    ] for u in _users]
+    _seg = '<adele-segment></adele-segment>' if _segments else ''
 
     _transcriptions = [
         {
             "id": 99050000,
             "doc_id": _docs[0]["id"],
             "user_id": _users[0]["id"],
-            "content": f"<p>{_pos[0][0] if _pos_u0 else ''}<note id='{_notes[0]['id']}'>Transcr<ex>iption</ex></note> init<note id='{_notes[1]['id']}'>iale</note> du professeur Jones{'</speechpart>' if _pos_u0 else ''}</p>{_seg}<p>{_pos[0][1] if _pos_u0 else ''}Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.{'</speechpart>' if _pos_u0 else ''}</p>"
+            "content": f"<p><adele-note id='{_notes[0]['id']}'>Transcr<ex>iption</ex></adele-note> init<adele-note id='{_notes[1]['id']}'>iale</adele-note> du professeur Jones</p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 99050001,
             "doc_id": _docs[0]["id"],
             "user_id": _users[1]["id"],
-            "content": f"<p>{_pos[1][0] if _pos_u1 else ''}Transcr<ex>iption</ex> <note id='{_notes[2]['id']}'>initiale</note> de {_users[1]['username']}{'</speechpart>' if _pos_u1 else ''}</p><p>{_pos[1][1] if _pos_u1 else ''}Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; {'</speechpart>' if _pos_u1 else ''} peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Transcr<ex>iption</ex> <adele-note id='{_notes[2]['id']}'>initiale</adele-note> de {_users[1]['username']}</p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ;  peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 99050002,
             "doc_id": _docs[0]["id"],
             "user_id": _users[2]["id"],
-            "content": f"<p>{_pos[2][0] if _pos_u2 else ''}Transcr<ex>iption</ex> <note id='{_notes[3]['id']}'>initiale</note> de {_users[2]['username']}{'</speechpart>' if _pos_u2 else ''}</p><p>{_pos[2][1] if _pos_u2 else ''}Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus.{'</speechpart>' if _pos_u2 else ''} Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Transcr<ex>iption</ex> <adele-note id='{_notes[3]['id']}'>initiale</adele-note> de {_users[2]['username']}</p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         }
     ]
 
@@ -171,26 +166,26 @@ def load_translations(db, _users, _docs, _notes, _segments=False):
     # load translations with notes and segmentation (teacher only)
     # =============================================================
 
-    _seg = '<segment />' if _segments else ''
+    _seg = '<adele-segment></adele-segment>' if _segments else ''
 
     _translations = [
         {
             "id": 22050000,
             "doc_id": _docs[0]["id"],
             "user_id": _users[0]["id"],
-            "content": f"<p>Traduction init<note id='{_notes[1]['id']}'>iale</note> du professeur Jones </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>Traduction init<adele-note id='{_notes[1]['id']}'>iale</adele-note> du professeur Jones </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 22050001,
             "doc_id": _docs[0]["id"],
             "user_id": _users[1]["id"],
-            "content": f"<p>{_users[1]['username']} traduit <note id='{_notes[2]['id']}'>ainsi</note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>{_users[1]['username']} traduit <adele-note id='{_notes[2]['id']}'>ainsi</adele-note> : </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         },
         {
             "id": 22050002,
             "doc_id": _docs[0]["id"],
             "user_id": _users[2]["id"],
-            "content": f"<p>{_users[2]['username']} traduit <note id='{_notes[3]['id']}'>ainsi</note> : </p><p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
+            "content": f"<p>{_users[2]['username']} traduit <adele-note id='{_notes[3]['id']}'>ainsi</adele-note> : </p>{_seg}<p>Pour les citoyens d'Ankh-Morpork, l'orthographe était pour ainsi dire en sus. Ils y croyaient comme ils croyaient à la ponctuation ; peu importait où on la plaçait du moment qu'elle était là.</p>"
         }
     ]
 
@@ -211,21 +206,21 @@ def load_commentaries(db, _docs, _users, _notes):
             "doc_id": _docs[0]["id"],
             "type_id": 1,
             "user_id": _users[1]["id"],
-            "content": f"<p>commentaire diplomatique <note id='{_notes[2]['id']}'>initial</note> de l'utilisateur {_users[1]['username']}</p>"
+            "content": f"<p>commentaire diplomatique <adele-note id='{_notes[2]['id']}'>initial</adele-note> de l'utilisateur {_users[1]['username']}</p>"
         },
         {
             "id": 10003002,
             "doc_id": _docs[0]["id"],
             "type_id": 2,
             "user_id": _users[1]["id"],
-            "content": f"<p>commentaire historique <note id='{_notes[2]['id']}'>initial</note> de l'utilisateur {_users[1]['username']}</p>"
+            "content": f"<p>commentaire historique <adele-note id='{_notes[2]['id']}'>initial</adele-note> de l'utilisateur {_users[1]['username']}</p>"
         },
         {
             "id": 10004001,
             "doc_id": _docs[0]["id"],
             "type_id": 1,
             "user_id": _users[2]["id"],
-            "content": f"<p>commentaire diplomatique <note id='{_notes[3]['id']}'>initial</note> de l'utilisateur {_users[2]['username']}</p>"
+            "content": f"<p>commentaire diplomatique <adele-note id='{_notes[3]['id']}'>initial</adele-note> de l'utilisateur {_users[2]['username']}</p>"
         },
     ]
     for com in _commentaries:

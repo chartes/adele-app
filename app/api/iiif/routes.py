@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from flask import url_for, request, current_app
 from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
@@ -156,7 +157,19 @@ def api_documents_annotations_list_by_canvas(api_version, doc_id, motivation, ca
 
                 # is there a text segment bound to this image zone?
                 if img_al is not None:
-                    text_content = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+                    parsed_content = BeautifulSoup(tr.content, "html.parser")
+                    note_nodes = parsed_content.find_all(
+                        "adele-annotation",
+                        {
+                            "manifest-url": img_al.manifest_url,
+                            "img-idx": str(img_al.img_idx),
+                            "zone-id": str(img_al.zone_id),
+                            "canvas-idx": str(img_al.canvas_idx),
+                        }
+                    )
+                    text_content = ""
+                    for node in note_nodes:
+                        text_content += str(node)
                 else:
                     text_content = ""
 
@@ -192,7 +205,6 @@ def api_documents_annotations(api_version, doc_id, zone_id):
     :return:
     """
 
-    from app.api.transcriptions.routes import get_reference_transcription
     tr = get_reference_transcription(doc_id)
     if tr is None:
         return make_404()
@@ -213,6 +225,7 @@ def api_documents_annotations(api_version, doc_id, zone_id):
         # if the note content is empty, then you need to fetch a transcription segment
         img_al = None
         if img_zone.note is None:
+            parsed_content = BeautifulSoup(tr.content, "html.parser")
             try:
                 img_al = AlignmentImage.query.filter(
                     AlignmentImage.transcription_id == tr.id,
@@ -220,7 +233,20 @@ def api_documents_annotations(api_version, doc_id, zone_id):
                     AlignmentImage.user_id == tr.user_id,
                     AlignmentImage.manifest_url == img.manifest_url
                 ).one()
-                note_content = tr.content[img_al.ptr_transcription_start:img_al.ptr_transcription_end]
+                note_nodes = parsed_content.find_all(
+                    "adele-annotation",
+                    {
+                        "manifest-url": img_al.manifest_url,
+                        "img-idx": str(img_al.img_idx),
+                        "zone-id": str(img_al.zone_id),
+                        "canvas-idx": str(img_al.canvas_idx),
+                    }
+                )
+                if not note_nodes:
+                    return make_404(details="This annotation does not exist on this transcription".format(doc_id))
+                note_content = ""
+                for note in note_nodes:
+                    note_content += str(note)
             except NoResultFound:
                 return make_404(details="This transcription zone has no text fragment attached to it".format(doc_id))
         # else it is a mere image note
@@ -269,8 +295,6 @@ def api_documents_post_annotation(api_version, doc_id):
         "note": "Ceci est une majuscule"
 
         // in case of a DESCRIBING motivation, the text content is a segment of the transcription
-        "ptr_start" : 3
-        "ptr_end" : 131
     }
 
     :param api_version:
@@ -288,10 +312,9 @@ def api_documents_post_annotation(api_version, doc_id):
         img_idx = data.get('img_idx', 0)
 
         note = data.get('note', None)
-        ptr_start = data.get('ptr_start', None)
-        ptr_end = data.get('ptr_end', None)
+        zone_type_id = data['zone_type_id']
 
-        if note is not None and (ptr_start is not None or ptr_end is not None):
+        if note is not None and zone_type_id == 1:
             raise Exception('ambiguous annotation type')
 
         # test if the image is in db first
@@ -321,30 +344,17 @@ def api_documents_post_annotation(api_version, doc_id):
             canvas_idx=canvas_idx,
             img_idx=img_idx,
             user_id=doc.user_id,
-            zone_type_id=data['zone_type_id'],
-
+            zone_type_id=zone_type_id,
             svg=data.get('svg', None),
             fragment=data.get('fragment', None),
             note=note
         )
         db.session.add(new_anno)
 
-        if ptr_start is not None and ptr_end is not None:
+        if zone_type_id == 1:
             tr = get_reference_transcription(doc_id)
             if tr is None:
                 raise Exception('There is no reference transcription use in this annotation')
-
-            al = AlignmentImage.query.filter(
-                AlignmentImage.transcription_id == tr.id,
-                AlignmentImage.manifest_url == url,
-                AlignmentImage.canvas_idx == canvas_idx,
-                AlignmentImage.img_idx == img_idx,
-                AlignmentImage.ptr_transcription_start == ptr_start,
-                AlignmentImage.ptr_transcription_end == ptr_end
-            ).first()
-
-            if al is not None:
-                raise Exception('this alignment already exists: %s', [tr.id, ptr_start, ptr_end])
 
             new_al = AlignmentImage(
                 transcription_id=tr.id,
@@ -353,8 +363,6 @@ def api_documents_post_annotation(api_version, doc_id):
                 manifest_url=url,
                 canvas_idx=canvas_idx,
                 img_idx=img_idx,
-                ptr_transcription_start=ptr_start,
-                ptr_transcription_end=ptr_end
             )
 
             db.session.add(new_al)
@@ -388,8 +396,6 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
         "note": "Ceci est une majuscule"
 
         // in case of a DESCRIBING motivation, the text content is a segment of the transcription
-        "ptr_start" : 3
-        "ptr_end" : 131
     }
 
     :param api_version:
@@ -407,10 +413,9 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
         img_idx = data.get('img_idx', 0)
 
         note = data.get('note', None)
-        ptr_start = data.get('ptr_start', None)
-        ptr_end = data.get('ptr_end', None)
+        zone_type_id = data['zone_type_id']
 
-        if note is not None and (ptr_start is not None or ptr_end is not None):
+        if note is not None and zone_type_id == 1:
             raise Exception('ambiguous annotation type')
 
         img_zone = ImageZone.query.with_for_update(nowait=True).filter(
@@ -443,10 +448,9 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
             AlignmentImage.zone_id == zone_id
         ).first()
 
-        if ptr_start is not None and ptr_end is not None:
+        if zone_type_id == 1:
             if al is None:
                 print('new al')
-                note = None
                 new_al = AlignmentImage(
                     transcription_id=tr.id,
                     user_id=doc.user_id,
@@ -454,14 +458,10 @@ def api_documents_put_annotation(api_version, doc_id, zone_id):
                     manifest_url=url,
                     canvas_idx=canvas_idx,
                     img_idx=img_idx,
-                    ptr_transcription_start=ptr_start,
-                    ptr_transcription_end=ptr_end
                 )
                 db.session.add(new_al)
             else:
                 print('update al')
-                al.ptr_transcription_start = ptr_start
-                al.ptr_transcription_end = ptr_end
                 db.session.add(al)
         else:
             # let's check if there is an old al to delete
@@ -501,6 +501,23 @@ def api_documents_delete_annotation(api_version, doc_id, zone_id):
         print('anno to delete', anno_to_delete)
         if anno_to_delete is None:
             raise Exception('annotation %s not found ' % zone_id)
+        tr = get_reference_transcription(doc_id)
+        if tr is not None:
+            parsed_content = BeautifulSoup(tr.content, "html.parser")
+            note_nodes = parsed_content.find_all(
+                "adele-annotation",
+                {
+                    "manifest-url": anno_to_delete.manifest_url,
+                    "img-idx": str(anno_to_delete.img_idx),
+                    "zone-id": str(anno_to_delete.zone_id),
+                    "canvas-idx": str(anno_to_delete.canvas_idx),
+                }
+            )
+            if note_nodes:
+                for node in note_nodes:
+                    node.replace_with_children()
+                tr.content = str(parsed_content)
+                db.session.add(tr)
         db.session.delete(anno_to_delete)
         db.session.commit()
     except Exception as e:
