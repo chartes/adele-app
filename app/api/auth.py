@@ -40,6 +40,10 @@ def login(api_version):
         print("User unknown")
         return make_401("User unknown")
 
+    if not user.active:
+        print("Not active user")
+        return make_401("User has been deactivated")
+
     passwords_match = check_password_hash(user.password, password)
     if not passwords_match:
         print("Invalid credentials")
