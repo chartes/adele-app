@@ -18,7 +18,6 @@ from app import api_bp, make_403, db, mail
 from app.models import User, Role
 
 from app.utils import make_401, forbid_if_nor_teacher_nor_admin, make_400, make_200
-from .. import config
 
 
 @api_bp.route('/api/<api_version>/logout')

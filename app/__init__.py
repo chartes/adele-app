@@ -1,6 +1,7 @@
 import datetime
 import uuid
 
+from dotenv import load_dotenv
 from flask import Flask, Blueprint
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
@@ -8,7 +9,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 
 from app.utils import make_403
-from config import config
 from app.api.response import APIResponseFactory
 from flask_httpauth import HTTPBasicAuth
 
@@ -59,8 +59,17 @@ def create_app(config_name="dev"):
     """ Create the application """
     app = Flask( __name__)
     if not isinstance(config_name, str):
+        from config import config
         app.config.from_object(config)
     else:
+        print("Load environment variables for config '%s'" % config_name)
+        # It is important to load the .env file before parsing the config file
+        import os
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        env_filename = os.path.join(dir_path, '..', '%s.env' % config_name)
+        print(".env file to be loaded : ", env_filename)
+        load_dotenv(env_filename, verbose=True)
+        from config import config
         app.config.from_object(config[config_name])
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
