@@ -2,6 +2,7 @@ from flask import request, current_app
 from flask_jwt_extended import jwt_required
 from markupsafe import Markup
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import make_transient
 
 from app import db
 from app.api.documents.document_validation import unvalidate_all
@@ -213,6 +214,7 @@ def delete_document_transcription(doc_id, user_id):
     #    return make_403()
 
     tr = get_transcription(doc_id=doc_id, user_id=user_id)
+    #print("delete_document_transcription / doc_id / user_id", tr, doc_id, user_id)
     if tr is None:
         return make_404()
 
@@ -250,23 +252,40 @@ def clone_transcription(doc_id, user_id):
     teacher = current_app.get_current_user()
     teacher_tr = Transcription.query.filter(Transcription.user_id == teacher.id,
                                             Transcription.doc_id == doc_id).first()
+
     if teacher_tr is None:
         teacher_tr = Transcription(doc_id=doc_id, user_id=teacher.id, content=tr_to_be_cloned.content)
+        #print("cloning transcription teacher_tr id / content when None:", teacher_tr.id, teacher_tr.content)
     else:
-        # replace the teacher's tr content
-        teacher_tr.content = tr_to_be_cloned.content
+        #print("cloning transcription teacher_tr id / content :", teacher_tr.id, teacher_tr.content)
         # remove the old teacher's notes
         for note in teacher_tr.notes:
+            #print("clone_transcription, previous notes removal note", teacher_tr.notes, note)
             db.session.delete(note)
-        # teacher_tr.notes = []
 
-    # clone notes
+    # clone new notes (! their former ids -linked to the former owner user_id- will need to replaced in tr)
     for note_to_be_cloned in tr_to_be_cloned.notes:
+        #print("clone_transcription note_to_be_cloned / note_to_be_cloned.id : ", note_to_be_cloned, note_to_be_cloned.id)
+
         note = Note(type_id=note_to_be_cloned.type_id, user_id=teacher.id,
                     content=note_to_be_cloned.content)
+        #print("note ", note)
+
+        # push the note to the db in order to obtain its id and update transcription content accordingly
         db.session.add(note)
         db.session.flush()
-        teacher_tr.notes.append(note)
+        # now the new note id for the teacher is available
+
+        # make teacher_tr transient to be able to update it & allow db.session.add(teacher_tr) below
+        make_transient(teacher_tr)
+
+        # replace the teacher's transcription content WITH NEW notes' ids
+        teacher_tr.content = tr_to_be_cloned.content.replace(str(note_to_be_cloned.id), str(note.id))
+        #print("clone_transcription replace note id in tr with current user : ", teacher_tr.content)
+        #print("teacher_tr teacher_tr.notes / type(teacher_tr.notes) : ", teacher_tr, teacher_tr.notes, type(teacher_tr.notes))
+
+        # add the notes also to the relationships
+        teacher_tr.notes.add(note)
 
     db.session.add(teacher_tr)
 
