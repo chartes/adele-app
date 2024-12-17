@@ -93,8 +93,11 @@ def api_get_documents(api_version):
     filters = data.get("filters", [])
 
     countMode = data.get('countOnly', False)
+    #print("\n countMode : ", countMode)
     filters_to_count = filters.get("filtersToCount", None)
+    #print("\n filters_to_count : ", filters_to_count)
     date_mode = filters.get('dateMode', 'witness')
+    #print("\n date_mode : ", date_mode)
 
     print('filters', filters)
 
@@ -156,6 +159,8 @@ def api_get_documents(api_version):
         print('creation between', int(startCreation), int(endCreation))
         if showDocsWithoutDate:
             _ors_creation_dates.append(Document.witness_date.is_(None))
+            #for item in _ors_creation_dates:
+                #print("_ors_creation_dates item : ", str(item))
 
         # deals with centuries and reuse the creationRange slider
         #startCopy, endCopy = startCreation / 100 + 1, endCreation / 100 + 1
@@ -269,14 +274,26 @@ def api_get_documents(api_version):
 
     if not countMode:
         s = [v for k, v in filter_stmts.items() if v is not None]
+        #print("\n SSSS : ", str(s[0]))
+        #docs3 = query.filter(*access_restrictions).order_by(desc(Document.id)).paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
+        #for doc3 in docs3:
+        #    print("/n Doc3 IC : ", doc3.id)
+
         query = query.filter(and_(*s, *access_restrictions))
+        #query2 = query
         count = query.count()
+        #count2 = query2.count()
         if len(sorts) > 0:
             query = query.order_by(*sorts)
+        #    query2 = query2.order_by(*sorts)
 
         print(query)
         docs = query.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
-
+        #docs2 = query2.paginate(int(page_number), int(page_size), max_per_page=100, error_out=False).items
+        #for doc in docs:
+        #    print("/n Doc IC : ", doc.id)
+        #for doc2 in docs2:
+        #    print("/n Doc2 IC : ", doc2.id)
         meta = {"totalCount": count, "currentPage": page_number, "nbPages": ceil(count / page_size)}
     else:
         meta = {"filterCount": filterCount}
@@ -812,18 +829,20 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
     if new_owner.is_teacher:
         print("[ownership transfer] the new user is a teacher")
         # 0) check the current owner has some content to transfer...
-        tr = Transcription.query.filter(Transcription.doc_id == doc_id, Transcription.user_id == current_owner.id).first()
+        #print("[ownership transfer] check the current owner has some content for doc :", doc.id)
+        tr = Transcription.query.filter(Transcription.doc_id == doc.id, Transcription.user_id == current_owner.id).first()
+        #pprint.pprint(tr)
         if tr:
             # 1) delete the current content of the new_owner
-            current_coms = Commentary.query.filter(Commentary.doc_id == doc_id, Commentary.user_id == new_owner.id).all()
+            current_coms = Commentary.query.filter(Commentary.doc_id == doc.id, Commentary.user_id == new_owner.id).all()
             for pcom in current_coms:
-                resp = delete_commentary(doc_id, new_owner.id, pcom.type_id)
+                resp = delete_commentary(doc.id, new_owner.id, pcom.type_id)
                 print('delete commentary...', resp.status_code)
 
-            resp = delete_document_translation(doc_id, new_owner.id)
+            resp = delete_document_translation(doc.id, new_owner.id)
             print('delete translation...', resp.status_code)
 
-            resp = delete_document_transcription(doc_id, new_owner.id)
+            resp = delete_document_transcription(doc.id, new_owner.id)
             print('delete transcription...', resp.status_code)
 
             # 2) transfer the ownership from the current_owner to the new_owner
@@ -839,23 +858,25 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
             tr.user_id = new_owner.id
             transfered_items['transcription'] = {tr.id: []}
             # transcription notes
-            notes = [thn.note for thn in
+            notes_ids = [thn.note_id for thn in
                      TranscriptionHasNote.query.filter(TranscriptionHasNote.transcription_id == tr.id).all()]
-            for note in notes:
+            for note_id in notes_ids:
+                note = Note.query.filter(Note.id == note_id).first()
                 note.user_id = new_owner.id
                 transfered_items['transcription'][tr.id].append(note.id)
 
             # translation
-            tl = Translation.query.filter(Translation.doc_id == doc_id,
+            tl = Translation.query.filter(Translation.doc_id == doc.id,
                                           Translation.user_id == current_owner.id).first()
             if tl:
                 tl.user_id = new_owner.id
                 transfered_items['translation'] = {tl.id: []}
 
                 # translation notes
-                notes = [thn.note for thn in
+                notes_ids = [thn.note_id for thn in
                          TranslationHasNote.query.filter(TranslationHasNote.translation_id == tl.id).all()]
-                for note in notes:
+                for note_id in notes_ids:
+                    note = Note.query.filter(Note.id == note_id).first()
                     note.user_id = new_owner.id
                     transfered_items['translation'][tl.id].append(note.id)
 
@@ -863,14 +884,15 @@ def api_transfer_document_ownership(api_version, doc_id, user_id):
 
             # commentaries
             transfered_items['commentaries'] = {}
-            for com in Commentary.query.filter(Commentary.doc_id == doc_id,
+            for com in Commentary.query.filter(Commentary.doc_id == doc.id,
                                                Commentary.user_id == current_owner.id).all():
                 com.user_id = new_owner.id
                 transfered_items['commentaries'][com.id] = []
 
                 # commentary notes
-                notes = [chn.note for chn in CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == com.id).all()]
-                for note in notes:
+                notes_ids = [chn.note_id for chn in CommentaryHasNote.query.filter(CommentaryHasNote.commentary_id == com.id).all()]
+                for note_id in notes_ids:
+                    note = Note.query.filter(Note.id == note_id).first()
                     note.user_id = new_owner.id
                     transfered_items['commentaries'][com.id].append(note.id)
 

@@ -622,6 +622,8 @@ class Note(db.Model):
         "Transcription",
         secondary='transcription_has_note',
         back_populates="notes",
+        collection_class = set,
+        cascade="delete"
     )
     translations = db.relationship(
         "Translation", 
@@ -717,8 +719,8 @@ class Tradition(db.Model):
 class TranscriptionHasNote(db.Model):
     transcription_id = db.Column(db.Integer, db.ForeignKey('transcription.id', ondelete='CASCADE'), primary_key=True)
     note_id = db.Column(db.Integer, db.ForeignKey('note.id', ondelete='CASCADE'), primary_key=True)
-    ptr_start = db.Column(db.Integer, primary_key=True)
-    ptr_end = db.Column(db.Integer, primary_key=True)
+    ptr_start = db.Column(db.Integer)
+    ptr_end = db.Column(db.Integer)
 
 
 class Transcription(db.Model):
@@ -731,7 +733,7 @@ class Transcription(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     content = db.Column(db.Text)
 
-    notes = db.relationship('Note', secondary='transcription_has_note', back_populates='transcriptions', collection_class=set)
+    notes = db.relationship('Note', secondary='transcription_has_note', back_populates='transcriptions', collection_class=set, cascade="delete")
 
     def notes_of_user(self, user_id):
         return [
