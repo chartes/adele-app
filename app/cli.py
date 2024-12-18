@@ -82,7 +82,7 @@ def make_cli():
         manifest_data = urlopen(manifest_url).read()
         data = json_loads(manifest_data)
 
-        if data['@context'] == "http://iiif.io/api/presentation/3/context.json":
+        if data['@context'] == "https://iiif.io/api/presentation/3/context.json":
             print('IIIF Presentation v3 detected')
 
             with app.app_context():
@@ -113,7 +113,7 @@ def make_cli():
 
                 db.session.commit()
 
-        elif data['@context'] == "http://iiif.io/api/presentation/2/context.json":
+        elif data['@context'] == "https://iiif.io/api/presentation/2/context.json":
             print('IIIF Presentation v2 detected')
             with app.app_context():
                 from app import db
