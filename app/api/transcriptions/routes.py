@@ -250,20 +250,25 @@ def clone_transcription(doc_id, user_id):
         return is_not_allowed
 
     teacher = current_app.get_current_user()
-    teacher_tr = Transcription.query.filter(Transcription.user_id == teacher.id,
+    teacher_tr = db.session.query(Transcription).filter(Transcription.user_id == teacher.id,
                                             Transcription.doc_id == doc_id).first()
 
     if teacher_tr is None:
+        # create a transcription object with the cloned content
         teacher_tr = Transcription(doc_id=doc_id, user_id=teacher.id, content=tr_to_be_cloned.content)
         #print("cloning transcription teacher_tr id / content when None:", teacher_tr.id, teacher_tr.content)
     else:
         #print("cloning transcription teacher_tr id / content :", teacher_tr.id, teacher_tr.content)
-        # remove the old teacher's notes
-        for note in teacher_tr.notes:
-            #print("clone_transcription, previous notes removal note", teacher_tr.notes, note)
-            db.session.delete(note)
+        # remove the old teacher's transcription (its notes will be cascade deleted)
+        db.session.delete(teacher_tr)
+        db.session.flush()
 
-    # clone new notes (! their former ids -linked to the former owner user_id- will need to replaced in tr)
+    # make teacher_tr transient to be able to update it & allow db.session.add(teacher_tr) below
+    make_transient(teacher_tr)
+    # replace the teacher's transcription content TEXT
+    teacher_tr.content = tr_to_be_cloned.content
+
+    # clone new notes (! their former ids -linked to the source owner user_id- will need to replaced the in transcription)
     for note_to_be_cloned in tr_to_be_cloned.notes:
         #print("clone_transcription note_to_be_cloned / note_to_be_cloned.id : ", note_to_be_cloned, note_to_be_cloned.id)
 
@@ -271,20 +276,17 @@ def clone_transcription(doc_id, user_id):
                     content=note_to_be_cloned.content)
         #print("note ", note)
 
-        # push the note to the db in order to obtain its id and update transcription content accordingly
+        # push the note to db to obtain its id and update the note's id within the transcription content
         db.session.add(note)
         db.session.flush()
         # now the new note id for the teacher is available
 
-        # make teacher_tr transient to be able to update it & allow db.session.add(teacher_tr) below
-        make_transient(teacher_tr)
-
-        # replace the teacher's transcription content WITH NEW notes' ids
-        teacher_tr.content = tr_to_be_cloned.content.replace(str(note_to_be_cloned.id), str(note.id))
+        # replace the teacher's transcription content WITH NEW notes' ids (recursively using teacher_tr.content)
+        teacher_tr.content = teacher_tr.content.replace(str(note_to_be_cloned.id), str(note.id))
         #print("clone_transcription replace note id in tr with current user : ", teacher_tr.content)
         #print("teacher_tr teacher_tr.notes / type(teacher_tr.notes) : ", teacher_tr, teacher_tr.notes, type(teacher_tr.notes))
 
-        # add the notes also to the relationships
+        # add the notes also to the db relationships
         teacher_tr.notes.add(note)
 
     db.session.add(teacher_tr)
