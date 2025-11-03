@@ -47,15 +47,6 @@ class Config(object):
         pass
 
 
-class DevelopmentConfig(Config):
-    ENV = 'development'
-    DEBUG = True
-
-    @staticmethod
-    def init_app(app):
-        print('THIS APP IS IN PRE-PROD MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
-
-
 class LocalConfig(Config):
     ENV = 'development'
     DEBUG = True
@@ -63,6 +54,14 @@ class LocalConfig(Config):
     @staticmethod
     def init_app(app):
         print('THIS APP IS IN LOCAL DEV MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
+
+class StagingConfig(Config):
+    ENV = 'development'
+    DEBUG = True
+
+    @staticmethod
+    def init_app(app):
+        print('THIS APP IS IN PRE-PROD MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
 
 class TestConfig(Config):
@@ -94,7 +93,7 @@ class TestConfig(Config):
 
 config = {
     "local": LocalConfig,
-    "dev": DevelopmentConfig,
+    "staging": StagingConfig,
     "prod": Config,
     "test": TestConfig
 }

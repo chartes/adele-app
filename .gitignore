@@ -1,6 +1,6 @@
 __pycache__
 .DS_Store
-venv
+venv*
 db
 adele.sqlite
 .idea

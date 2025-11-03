@@ -55,7 +55,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 auth.auth_error_callback = make_403
 
 
-def create_app(config_name="dev"):
+def create_app(config_name: str):
     """ Create the application """
     app = Flask( __name__)
     if not isinstance(config_name, str):
