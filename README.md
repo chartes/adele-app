@@ -35,15 +35,20 @@ Adele application API (collaborative diplomatic edition) ([Adele](https://adele.
     - to check whether wheel is installed: `pip show wheel`
     - to install it if required: `pip install wheel`
 
+## Copy the database:
+- Fetch the latest database
+- Create the /db folder as <b><i>path/to/adele-app</i></b>/db
+- Copy the database with appropriate rights to this /db folder
+
 ## Launch the app:
 
 > :warning: Below commands are mainly for local launch.
 > For servers, apps may be started via processes management tools, refer to the servers documentation
   - Reactivate the virtual environment if needed (<code>source <b><i>your_venv_name</i></b>/bin/activate</code>)
   - Launch:
-  from the subfolder containing flask_app.py (<code>cd <b><i>path/to/adele_app</i></b></code>)
+  from the subfolder containing flask_app.py (<code>cd <b><i>path/to/adele-app</i></b></code>)
     <code>python flask_app.py (--config=<b><i>local/staging/prod/test</i></b>)</code>
-  - Then visit http://localhost:5000/api/1.0/documents?192 to test it is running
+  - Then visit http://localhost:5000/api/1.0/languages to test it is running
 
 
 
